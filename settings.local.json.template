@@ -1,0 +1,5 @@
+{
+  "env": {
+    "SECOND_BRAIN_VAULT": "<absolute path to your Obsidian vault>"
+  }
+}

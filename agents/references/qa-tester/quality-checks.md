@@ -7,3 +7,4 @@ Before handing off, verify that:
 - Regression rounds ran the full suite
 - Every bug has repro steps, expected vs actual, AC id and owner
 - The `<brain>` note is written
+- The final message ends with a valid JSON hand-off block

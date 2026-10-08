@@ -88,3 +88,17 @@ A packaged set of instructions, workflows, and best practices for a specific tas
 ### 🎯 When to Use Skills?
 
 Use skills when a task has a standard methodology (testing, design review, code review, writing docs, debugging, etc.). Skills transform ad-hoc approaches into repeatable patterns.
+
+---
+
+## Development & Quality Gates
+
+```bash
+npm test            # prompt/link lint + offline evals (also runs in CI)
+npm run package     # stage a clean copy in dist/muffy (no .git, no personal config)
+```
+
+- **Personal config**: copy `settings.local.json.template` → `.claude/settings.local.json` (gitignored)
+- **Structured hand-offs**: every agent ends with a JSON block validated by `skills/muffy/schemas/handoff.schema.json`
+- **Loops & fallbacks**: 3 fix loops per point, repeated-blocker early stop, user escalation — see `skills/muffy/references/loops.md`
+- **Evals & mock scenarios**: see [evals/README.md](evals/README.md)

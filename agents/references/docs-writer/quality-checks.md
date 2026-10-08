@@ -6,3 +6,4 @@ Before handing off, verify that:
 - Every example matches the code in the diff
 - Release notes cover breaking changes, migrations and rollback
 - The `<brain>` note is written
+- The final message ends with a valid JSON hand-off block

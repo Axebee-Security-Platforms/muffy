@@ -1,0 +1,35 @@
+{
+  "id": "missing-handoff-block",
+  "description": "Final message had no JSON hand-off block at all",
+  "task": "login-flow",
+  "defaults": {
+    "role": "code-reviewer",
+    "task": "login-flow",
+    "step": "6",
+    "round": 1,
+    "status": "done",
+    "paths_written": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "step": "6",
+      "role": "code-reviewer"
+    },
+    {
+      "step": "6",
+      "role": "code-reviewer"
+    }
+  ],
+  "expect": {
+    "outcome": "escalated",
+    "trigger": "invalid-handoff",
+    "actions": [
+      "retry:invalid-handoff",
+      "escalate:invalid-handoff"
+    ]
+  }
+}

@@ -7,3 +7,4 @@
 - Every key risk has evidence or has been turned into a clear spike/open question
 - Every claim from outside the repo has a source URL
 - The `<brain>` note is written
+- The final message ends with a valid JSON hand-off block

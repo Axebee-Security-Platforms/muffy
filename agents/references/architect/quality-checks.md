@@ -7,3 +7,4 @@ Before handing off, verify that:
 - Runtime + version in Stack match `deploy.md`
 - Every file that FE/BE/devops will touch has exactly one owner
 - The `<brain>` note is written
+- The final message ends with a valid JSON hand-off block

@@ -1,0 +1,55 @@
+{
+  "id": "quality-check-failed-twice",
+  "description": "Agent self-reports a failed quality check twice: stop and ask",
+  "task": "login-flow",
+  "defaults": {
+    "role": "code-reviewer",
+    "task": "login-flow",
+    "step": "6",
+    "round": 1,
+    "status": "done",
+    "paths_written": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "verdict": "Approve",
+        "status": "not-ready",
+        "blockers": [],
+        "quality_checks": {
+          "passed": false,
+          "failed": [
+            "Second brain section missing"
+          ]
+        },
+        "summary": "not ready"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Approve",
+        "status": "not-ready",
+        "blockers": [],
+        "quality_checks": {
+          "passed": false,
+          "failed": [
+            "Second brain section missing"
+          ]
+        },
+        "summary": "not ready"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "escalated",
+    "trigger": "quality-check-failed-twice",
+    "actions": [
+      "retry:quality-check-failed",
+      "escalate:quality-check-failed-twice"
+    ]
+  }
+}

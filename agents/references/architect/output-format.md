@@ -5,3 +5,5 @@
 - `<brain>/agents/architect/<task>.md`
 
 Final message: paths + list of endpoints + files owned by FE/BE
+
+End the final message with the one-line JSON hand-off block (`.claude/skills/muffy/schemas/handoff.schema.json`). It does not count toward the line limit above.

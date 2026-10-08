@@ -1,0 +1,16 @@
+{
+  "goal": "devops step for login-flow",
+  "task": "login-flow",
+  "brain": "<vault>/Projects/muffy/",
+  "read": [
+    ".team/login-flow/brief.md",
+    "docs/plan/login-flow.md",
+    "ops/login-flow"
+  ],
+  "write": [
+    ".team/login-flow/devops.out"
+  ],
+  "dont_touch": [
+    "other agents' brain folders"
+  ]
+}

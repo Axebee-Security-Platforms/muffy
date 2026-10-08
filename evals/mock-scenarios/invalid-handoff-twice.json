@@ -1,0 +1,41 @@
+{
+  "id": "invalid-handoff-twice",
+  "description": "Two invalid hand-offs in a row: escalate",
+  "task": "login-flow",
+  "defaults": {
+    "role": "code-reviewer",
+    "task": "login-flow",
+    "step": "6",
+    "round": 1,
+    "status": "done",
+    "paths_written": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "verdict": "Maybe",
+        "blockers": [],
+        "summary": "???"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Maybe",
+        "blockers": [],
+        "summary": "???"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "escalated",
+    "trigger": "invalid-handoff",
+    "actions": [
+      "retry:invalid-handoff",
+      "escalate:invalid-handoff"
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "id": "review-partial-fix-not-escalated",
+  "description": "Same blocker survives one failed fix, then is closed: no escalation",
+  "task": "login-flow",
+  "defaults": {
+    "role": "code-reviewer",
+    "task": "login-flow",
+    "step": "6",
+    "round": 1,
+    "status": "done",
+    "paths_written": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 1"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 2"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Approve",
+        "blockers": [],
+        "summary": "Approve"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "fix:BE",
+      "fix:BE",
+      "accept"
+    ],
+    "loops": {
+      "6:code-reviewer": 2
+    }
+  }
+}

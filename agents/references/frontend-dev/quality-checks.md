@@ -7,3 +7,4 @@ Before handing off, verify that:
 - Lint, type check and tests were actually run and the reported results are real
 - Only FE-owned files were touched
 - The `<brain>` note is written
+- The final message ends with a valid JSON hand-off block

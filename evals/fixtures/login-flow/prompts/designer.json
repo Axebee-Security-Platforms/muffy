@@ -1,0 +1,15 @@
+{
+  "goal": "designer step for login-flow",
+  "task": "login-flow",
+  "brain": "<vault>/Projects/muffy/",
+  "read": [
+    ".team/login-flow/ac.md",
+    ".team/login-flow/contract.md"
+  ],
+  "write": [
+    ".team/login-flow/designer.out"
+  ],
+  "dont_touch": [
+    "other agents' brain folders"
+  ]
+}

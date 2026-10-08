@@ -1,3 +1,9 @@
 .DS_Store
 __MACOSX/
+# personal config - copy settings.local.json.template to .claude/settings.local.json
 settings.local.json
+team-flow-settings-template.json
+launch.json
+*.local.json
+dist/
+node_modules/

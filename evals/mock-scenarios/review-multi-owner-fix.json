@@ -1,0 +1,59 @@
+{
+  "id": "review-multi-owner-fix",
+  "description": "One reject with FE and BE blockers fans fix rounds out to both owners",
+  "task": "login-flow",
+  "defaults": {
+    "role": "code-reviewer",
+    "task": "login-flow",
+    "step": "6",
+    "round": 1,
+    "status": "done",
+    "paths_written": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "FE"
+          },
+          {
+            "id": "B-2",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 1"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Approve",
+        "blockers": [],
+        "summary": "Approve"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "fix:BE+FE",
+      "accept"
+    ]
+  }
+}

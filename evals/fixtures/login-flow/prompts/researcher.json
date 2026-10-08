@@ -1,0 +1,14 @@
+{
+  "goal": "researcher step for login-flow",
+  "task": "login-flow",
+  "brain": "<vault>/Projects/muffy/",
+  "read": [
+    ".team/login-flow/"
+  ],
+  "write": [
+    ".team/login-flow/researcher.out"
+  ],
+  "dont_touch": [
+    "other agents' brain folders"
+  ]
+}

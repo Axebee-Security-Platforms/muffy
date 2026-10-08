@@ -1,0 +1,50 @@
+{
+  "id": "run-profile-skips-design",
+  "description": "No-UI feature: design gate skipped by profile, backend proceeds",
+  "task": "login-flow",
+  "skip": [
+    "3b",
+    "3c"
+  ],
+  "defaults": {
+    "task": "login-flow",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "devops",
+        "mode": 2,
+        "step": "3d",
+        "summary": "smoke pass",
+        "verdict": "Pass"
+      }
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "summary": "built api"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "accept",
+      "accept"
+    ]
+  }
+}

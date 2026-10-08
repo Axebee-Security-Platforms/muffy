@@ -1,0 +1,100 @@
+{
+  "id": "review-loop-limit",
+  "description": "Four rejections with new blockers each time: stop at the 4th and ask the user",
+  "task": "login-flow",
+  "defaults": {
+    "role": "code-reviewer",
+    "task": "login-flow",
+    "step": "6",
+    "round": 1,
+    "status": "done",
+    "paths_written": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 1"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-2",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 2"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-3",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 3"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-4",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 4"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "escalated",
+    "trigger": "loop-limit",
+    "actions": [
+      "fix:BE",
+      "fix:BE",
+      "fix:BE",
+      "escalate:loop-limit"
+    ],
+    "loops": {
+      "6:code-reviewer": 4
+    }
+  }
+}

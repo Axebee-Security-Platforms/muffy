@@ -8,3 +8,4 @@ Before handing off, verify that:
 - Only BE-owned files were touched
 - Migrations are reversible
 - The `<brain>` note is written
+- The final message ends with a valid JSON hand-off block

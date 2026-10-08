@@ -7,3 +7,5 @@
 - `<brain>/agents/designer/<task>.md`
 
 Final message: paths + list of artboards/screens + data the UI needs from the API + what is still a placeholder + design system changes (tokens/components added or changed) + the Quality Checks checklist with the status of each item
+
+End the final message with the one-line JSON hand-off block (`.claude/skills/muffy/schemas/handoff.schema.json`). It does not count toward the line limit above.

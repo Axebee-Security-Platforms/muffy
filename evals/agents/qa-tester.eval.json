@@ -1,0 +1,51 @@
+{
+  "role": "qa-tester",
+  "step": "7",
+  "handoff_fixture": "evals/fixtures/login-flow/.team/login-flow/handoff/7-qa-tester-r1.json",
+  "artifacts": [
+    {
+      "path": ".team/{task}/qa-report.md",
+      "must_match": [
+        "AC id",
+        "^#{1,4}\\s*Results",
+        "^#{1,4}\\s*Bugs"
+      ],
+      "must_not_match": []
+    }
+  ],
+  "final_message": {
+    "max_lines": 10,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "Every AC has at least one test",
+    "The runtime/version used matches what `deploy.md` pins",
+    "Regression rounds ran the full suite",
+    "Every bug has repro steps, expected vs actual, AC id and owner",
+    "The `<brain>` note is written",
+    "The final message ends with a valid JSON hand-off block"
+  ],
+  "live_scenarios": [
+    {
+      "id": "untested-ac",
+      "input": "AC-3 has no test yet.",
+      "must": [
+        "writes a test for AC-3"
+      ],
+      "must_not": [
+        "Pass with AC-3 untested"
+      ]
+    },
+    {
+      "id": "regression-round",
+      "input": "Fix round after one bug.",
+      "must": [
+        "runs the full suite",
+        "every bug has repro, expected vs actual, AC id, owner"
+      ],
+      "must_not": [
+        "runs only the failing test"
+      ]
+    }
+  ]
+}

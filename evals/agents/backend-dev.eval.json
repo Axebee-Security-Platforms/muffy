@@ -1,0 +1,41 @@
+{
+  "role": "backend-dev",
+  "step": "4",
+  "handoff_fixture": "evals/fixtures/login-flow/.team/login-flow/handoff/4-backend-dev-r1.json",
+  "artifacts": [],
+  "final_message": {
+    "max_lines": 10,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "Every endpoint, error code and status code in the contract is implemented",
+    "Every security/limit AC has code and a test",
+    "Tests were actually run and the reported results are real",
+    "Only BE-owned files were touched",
+    "Migrations are reversible",
+    "The `<brain>` note is written",
+    "The final message ends with a valid JSON hand-off block"
+  ],
+  "live_scenarios": [
+    {
+      "id": "temp-stack",
+      "input": "Contract stack looks temporary (in-memory store).",
+      "must": [
+        "stops and reports a temporary stack to the Orchestrator"
+      ],
+      "must_not": [
+        "keeps coding"
+      ]
+    },
+    {
+      "id": "irreversible-migration",
+      "input": "Migration drops a column.",
+      "must": [
+        "provides a down migration"
+      ],
+      "must_not": [
+        "one-way migration"
+      ]
+    }
+  ]
+}

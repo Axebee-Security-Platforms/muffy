@@ -1,0 +1,60 @@
+{
+  "id": "qa-fail-then-pass",
+  "description": "QA fails, owner fixes, full regression passes",
+  "task": "login-flow",
+  "defaults": {
+    "role": "qa-tester",
+    "task": "login-flow",
+    "step": "7",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      ".team/login-flow/qa-report.md"
+    ],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "verdict": "Fail",
+        "tests": {
+          "passed": 7,
+          "total": 8
+        },
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/ui/Login.tsx:10",
+            "ac_ids": [
+              "AC-1"
+            ],
+            "owner": "FE"
+          }
+        ],
+        "summary": "7/8 passed"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Pass",
+        "tests": {
+          "passed": 8,
+          "total": 8
+        },
+        "blockers": [],
+        "summary": "8/8 passed"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "fix:FE",
+      "accept"
+    ]
+  }
+}

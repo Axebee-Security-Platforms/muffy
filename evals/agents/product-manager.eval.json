@@ -1,0 +1,53 @@
+{
+  "role": "product-manager",
+  "step": "2",
+  "handoff_fixture": "evals/fixtures/login-flow/.team/login-flow/handoff/2-product-manager-r1.json",
+  "artifacts": [
+    {
+      "path": ".team/{task}/ac.md",
+      "must_match": [
+        "AC-1",
+        "Given[\\s\\S]*When[\\s\\S]*Then",
+        "^#{1,4}\\s*Out of scope",
+        "^#{1,4}\\s*Traceability"
+      ],
+      "must_not_match": []
+    }
+  ],
+  "final_message": {
+    "max_lines": 10,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "Every AC is in Given/When/Then form and testable",
+    "Every must-not-miss requirement in the brief maps to an AC",
+    "The plan has phases, and every task has a priority",
+    "No P0 task depends on a P1/P2 task",
+    "At least one ADR covers the MVP scope",
+    "The `<brain>` note is written",
+    "The final message ends with a valid JSON hand-off block"
+  ],
+  "live_scenarios": [
+    {
+      "id": "vague-brief",
+      "input": "brief.md with 3 must-not-miss reqs, one ambiguous.",
+      "must": [
+        "each requirement maps to an AC",
+        "lists the open question for the user"
+      ],
+      "must_not": [
+        "AC without Given/When/Then"
+      ]
+    },
+    {
+      "id": "priority-trap",
+      "input": "Plan where P0 login depends on P2 theming.",
+      "must": [
+        "reorders so no P0 depends on P1/P2"
+      ],
+      "must_not": [
+        "leaves the dependency"
+      ]
+    }
+  ]
+}
