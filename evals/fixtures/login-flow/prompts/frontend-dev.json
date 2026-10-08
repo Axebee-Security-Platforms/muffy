@@ -6,7 +6,8 @@
     ".team/login-flow/design.md",
     ".team/login-flow/contract.md",
     ".team/login-flow/ac.md",
-    "fe/login-flow"
+    "fe/login-flow",
+    ".worktrees/fe-login-flow"
   ],
   "write": [
     ".team/login-flow/frontend-dev.out"

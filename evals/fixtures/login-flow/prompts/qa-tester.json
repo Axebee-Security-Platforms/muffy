@@ -4,7 +4,8 @@
   "brain": "<vault>/Projects/muffy/",
   "read": [
     ".team/login-flow/ac.md",
-    ".team/login-flow/design.md"
+    ".team/login-flow/design.md",
+    ".worktrees/qa-login-flow"
   ],
   "write": [
     ".team/login-flow/qa-tester.out"

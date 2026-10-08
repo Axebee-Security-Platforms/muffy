@@ -9,3 +9,15 @@
 | Answer and pattern already in the repo/vault | researcher stops at L0 |
 
 Never skip: review (6), QA (7), staging (9), Human gate (10). Record skipped steps and why in `tasks/<task>.md`.
+
+## Named pauses
+
+A pause stops the flow on purpose. It has an id, a resume condition, and one line in checkpoint `## Status`: `paused at pause:<id> · resume when <condition>`. Only these exist:
+
+| Pause | Where | Stop until |
+|---|---|---|
+| `pause:scope` | setup, after scope confirmation | the user confirms scope (or edits it) |
+| `pause:staging-credentials` | before step 9 makes any live call to an external API or OAuth provider | the user approves each live call in chat, and the keys are confirmed present by name and prefix |
+| `pause:human-gate` | step 10 | Approve / Reject answer |
+
+A pause is not a finish line: the final message says which pause the run is at and what unblocks it. Never make a live external call inside a pause without its approval.

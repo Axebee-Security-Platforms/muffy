@@ -20,7 +20,7 @@ The repo wins over the vault: an ADR overrides a vault note.
 
 ## Checkpoint
 
-`.team/<task>/checkpoint.md` is the Orchestrator's compressed memory of the run. It is **rewritten, never appended**, and stays ≤ 40 lines. Rewrite it after: setup, steps 3d / 6 (Approve) / 9, every fix round, every escalation answer, and whenever the conversation has grown long (also before `/compact` and when resuming).
+`.team/<task>/checkpoint.md` is the Orchestrator's compressed memory of the run. It is **rewritten, never appended**, and stays ≤ 40 lines. Rewrite it after: setup, steps 3d / 6 (Approve) / 9, every fix round, every escalation answer, every named pause ([run-profile.md](run-profile.md#named-pauses)), and whenever the conversation has grown long (also before `/compact` and when resuming). Each named pause also updates the vault task note's status before the run waits, so the vault never lags a stop.
 
 ```
 # Checkpoint: <task>
