@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-// Install the muffy agent team into another repo. Zero dependencies, Node 18+.
-//   node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force]
+// Install or update the muffy agent team in another repo. Zero dependencies, Node 18+.
+//   node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean]
 // Copies agents/ -> <target>/.claude/agents/ and skills/muffy/ -> <target>/.claude/skills/muffy/.
+// Writes .claude/skills/muffy/VERSION and MANIFEST.json (the agent files this install owns).
+// --clean removes the previous install first, including agent files that a newer version dropped.
 // Creates .claude/settings.local.json only when missing, and adds ignore lines to .gitignore.
 // It never edits hooks: the snippets to add by hand are printed at the end.
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync, statSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync, statSync } from 'node:fs';
 import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,7 +20,8 @@ const valueOf = (name) => {
 };
 const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--vault');
 const dryRun = flag('--dry-run');
-const force = flag('--force');
+const clean = flag('--clean');
+const force = flag('--force') || clean; // --clean always replaces the files it installs
 const vault = valueOf('--vault');
 
 const log = (msg) => console.log(`${dryRun ? '[dry-run] ' : ''}${msg}`);
@@ -28,6 +31,11 @@ const die = (msg) => {
   process.exit(1);
 };
 const rel = (p, base) => relative(base, p).split('\\').join('/') || '.';
+const listFiles = (dir, base = dir) =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const p = join(dir, e.name);
+    return e.isDirectory() ? listFiles(p, base) : [rel(p, base)];
+  });
 
 const major = Number(process.versions.node.split('.')[0]);
 if (major < 18) die(`Node 18+ required, found ${process.versions.node}`);
@@ -35,11 +43,13 @@ if (major < 18) die(`Node 18+ required, found ${process.versions.node}`);
 if (flag('--help') || positional.length === 0) {
   console.log(`muffy ${pkg.version} installer
 
-usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force]
+usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean]
 
   --vault    path to the Obsidian vault (written to .claude/settings.local.json)
   --dry-run  print what would change, write nothing
-  --force    overwrite .claude/agents and .claude/skills/muffy if they already exist`);
+  --force    overwrite .claude/agents and .claude/skills/muffy if they already exist
+  --clean    update: remove the previous muffy install first (files from its MANIFEST.json,
+             plus the whole .claude/skills/muffy folder), then install. Implies --force`);
   process.exit(positional.length === 0 && !flag('--help') ? 2 : 0);
 }
 
@@ -48,19 +58,58 @@ if (!existsSync(target) || !statSync(target).isDirectory()) die(`target is not a
 if (!existsSync(join(target, '.git'))) warn(`${target} has no .git — run this from the repo root`);
 if (vault && !existsSync(vault)) warn(`vault path does not exist yet: ${vault}`);
 
-// 1. agents and skill
+const agentsSrc = join(here, 'agents');
+const agentsDst = join(target, '.claude', 'agents');
+const skillSrc = join(here, 'skills', 'muffy');
+const skillDst = join(target, '.claude', 'skills', 'muffy');
+const manifestPath = join(skillDst, 'MANIFEST.json');
+const packagedAgents = listFiles(agentsSrc);
+
+// 1. --clean: remove what the previous install owned
+if (clean) {
+  const prev = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null;
+  if (prev) log(`previous install: muffy ${prev.version ?? 'unknown'}`);
+  else warn('no MANIFEST.json from an earlier install: only files the new package ships are removed, older leftovers stay');
+  const owned = [...new Set([...(prev?.agents ?? []), ...packagedAgents])];
+  for (const f of owned) {
+    const p = join(agentsDst, f);
+    if (existsSync(p)) {
+      log(`remove: ${rel(p, target)}`);
+      if (!dryRun) rmSync(p, { force: true });
+    }
+  }
+  if (existsSync(skillDst)) {
+    log(`remove: ${rel(skillDst, target)}`);
+    if (!dryRun) rmSync(skillDst, { recursive: true, force: true });
+  }
+}
+
+// 2. agents and skill
 const copy = (src, dst) => {
   if (existsSync(dst) && !force) {
-    log(`skip (exists, use --force to overwrite): ${rel(dst, target)}`);
-    return;
+    log(`skip (exists, use --force or --clean to overwrite): ${rel(dst, target)}`);
+    return false;
   }
   log(`${existsSync(dst) ? 'overwrite' : 'copy'}: ${rel(src, here)} -> ${rel(dst, target)}`);
   if (!dryRun) cpSync(src, dst, { recursive: true });
+  return true;
 };
-copy(join(here, 'agents'), join(target, '.claude', 'agents'));
-copy(join(here, 'skills', 'muffy'), join(target, '.claude', 'skills', 'muffy'));
+copy(agentsSrc, agentsDst);
+const skillCopied = copy(skillSrc, skillDst);
 
-// 2. personal settings: only when missing, never overwritten
+// 3. version record, written only when the skill was (re)installed
+if (skillCopied) {
+  log(`write: ${rel(join(skillDst, 'VERSION'), target)} (${pkg.version})`);
+  log(`write: ${rel(manifestPath, target)} (${packagedAgents.length} agent files)`);
+  if (!dryRun) {
+    writeFileSync(join(skillDst, 'VERSION'), `${pkg.version}\n`);
+    writeFileSync(manifestPath, `${JSON.stringify({ version: pkg.version, agents: packagedAgents }, null, 2)}\n`);
+  }
+} else if (existsSync(join(skillDst, 'VERSION'))) {
+  log(`installed version stays ${readFileSync(join(skillDst, 'VERSION'), 'utf8').trim()} (package is ${pkg.version}; use --clean to update)`);
+}
+
+// 4. personal settings: only when missing, never overwritten
 const settingsPath = join(target, '.claude', 'settings.local.json');
 if (existsSync(settingsPath)) {
   log(`keep existing ${rel(settingsPath, target)} (not modified)`);
@@ -73,7 +122,7 @@ if (existsSync(settingsPath)) {
   }
 }
 
-// 3. ignore lines: add only the ones missing
+// 5. ignore lines: add only the ones missing
 const ignoreLines = ['.claude/settings.local.json', '.worktrees/', '.team/**/diff*.patch'];
 const gitignore = join(target, '.gitignore');
 const current = existsSync(gitignore) ? readFileSync(gitignore, 'utf8') : '';
@@ -88,7 +137,7 @@ if (missing.length) {
   log('.gitignore already has the muffy ignore lines');
 }
 
-// 4. next steps
+// 6. next steps
 const hooks = JSON.parse(readFileSync(join(here, 'team-flow-settings-template.json'), 'utf8')).hooks;
 console.log(`
 Done${dryRun ? ' (dry run, nothing written)' : ''}. Remaining manual steps:
