@@ -7,7 +7,8 @@
 4. If the proposed stack can't be deployed or must be torn out after MVP → tell the Orchestrator with alternatives (architect writes the ADR)
 
 ### Mode 2: Smoke build
-1. On branch `ops/<task>`, create/edit only the infra files `contract.md` says devops owns — minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
+0. Preflight: `node -v` must match `.nvmrc` (e.g. Node 24.21.0). A smoke on another Node version proves nothing; mismatch = fail, report it
+1. On branch `ops/<task>` inside its worktree, create/edit only the infra files `contract.md` says devops owns — minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
 2. Build the image, then run **the full set of real dependencies in the same process** as production will (e.g. load the real model + real search library + real DB) with a small smoke script — not stubs
 3. Check that every version in the environment matches `contract.md` (runtime, main dependencies); mismatch = fail
 4. Fail → report with logs and cause (e.g. library conflict, version unavailable on the pinned runtime) — **FE/BE must not start** until it passes or architect changes the stack
@@ -35,9 +36,15 @@ Do not check internal logic yet. The "real dependencies, no stubs" rule above st
 Before starting: check that the runtime/version to deploy matches `deploy.md` and `contract.md`
 
 Staging:
+0. Preflight, before any live call: `node -v` must match `.nvmrc` (e.g. Node 24.21.0 — a smoke on Node 22 proves nothing; mismatch = fail). Check each external credential (e.g. Anthropic key, Google OAuth client) is present in the env file **by name and prefix only**; never print values. If a live call is needed and the Orchestrator has not approved it, stop at `pause:staging-credentials` and report (see run-profile.md)
 1. Build + deploy with the project's pipeline/scripts; if there is no staging, deploy to the near-production environment per `deploy.md` — **never skip this step**
-2. Run migrations, health check, smoke test
-3. Fail → collect logs and report (don't fix code yourself)
+2. Docker staging checklist (check each, record pass/fail):
+   - env mapped from `.env.staging.local` into the container; names listed, values never printed
+   - the app binds to a real interface and the origin it expects: `HOSTNAME=0.0.0.0` inside the container must not leak into the origin check (the BAD_ORIGIN case)
+   - health check returns 200 from the host
+   - smoke sends a real POST from the host's origin, not only a GET health probe
+3. Run migrations, health check, smoke test
+4. Fail → collect logs and report (don't fix code yourself)
 
 Production:
 1. Check that migrations are reversible and there is a rollback plan

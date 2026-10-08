@@ -5,7 +5,8 @@
   "read": [
     ".team/login-flow/brief.md",
     "docs/plan/login-flow.md",
-    "ops/login-flow"
+    "ops/login-flow",
+    ".worktrees/ops-login-flow"
   ],
   "write": [
     ".team/login-flow/devops.out"

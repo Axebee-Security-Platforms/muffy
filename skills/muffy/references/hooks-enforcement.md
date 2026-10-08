@@ -46,4 +46,22 @@ git commit --no-verify  # Skip commit check
 git push --force        # Force to main (after Human gate approval)
 ```
 
-All five rules are **non-negotiable**.
+## 6. Secrets — never read `.env*` in full
+**Rule:** no agent Reads, greps or prints a `.env*` file's contents. Checks use names and prefixes only, e.g. `grep -q '^ANTHROPIC_API_KEY=sk-ant-' .env.local && echo present` (prints nothing secret). A value that appears in a transcript is treated as leaked: rotate it, and record the rotation in checkpoint `## Open blockers`.
+
+Enforced by a PreToolUse hook. The guard is [scripts/guard-env.mjs](../scripts/guard-env.mjs) (exit 2 = block). It blocks:
+- `Read` on an `.env*` file (`.env.example`, `.template`, `.sample` are allowed)
+- `Grep` on `.env*` in `content` mode (`files_with_matches` and `count` are allowed)
+- `Bash` / `PowerShell` that print an `.env*` file (`cat`, `Get-Content`, `type`, `<`, …), `findstr` over it, `grep`/`rg` over it without `-q`/`-c`/`-l`, `Select-String` over it without `-Quiet`/`-List`/`-Count`, or a search with no `NAME=` pattern
+- `echo`/`printf` of a secret-named variable (`$…KEY`, `TOKEN`, `SECRET`, `PASSWORD`)
+
+Known limits: reads through `node -e`, `python -c` or .NET calls are not caught. Keep those out of agent prompts; the rule in §6 still applies.
+
+Install (persistent config — the user approves it; never add it silently):
+```json
+"PreToolUse": [
+  { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }
+]
+```
+
+All six rules are **non-negotiable**.

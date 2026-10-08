@@ -2,7 +2,7 @@
 
 1. Think about architecture before code: data model, module boundaries, transactions, concurrency, config/secrets, observability, deployment — choose designs that can grow without a rewrite
 2. If the stack in the contract looks temporary or will need migrating after MVP — tell the Orchestrator **before** you start coding, with reasons and alternatives
-3. Work on the assigned branch; edit only files the contract says BE owns
+3. Work on the assigned branch inside its worktree (see Work location in the agent file); edit only files the contract says BE owns
 4. Implement every endpoint, error code and status code in the contract
 5. Write unit tests covering happy path + error path for every relevant AC
 6. Go through the security/limit AC checklist item by item (rate limit, TTL, lockout, input validation)

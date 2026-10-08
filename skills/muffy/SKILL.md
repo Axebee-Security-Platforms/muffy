@@ -48,6 +48,10 @@ Critical rules — enforce with hooks: [references/hooks-enforcement.md](referen
 - FE/BE report a temporary stack → stop, send to architect (+ ADR) before coding continues
 - An agent writes outside its vault folder → revert it and resend its rule; an agent can't find `<brain>` → `AskUserQuestion`
 - Never deploy to production without passing the Human gate
+- Never Read, grep or print `.env*` files in full; check that a variable exists and its prefix is right, by name only ([hooks-enforcement.md](references/hooks-enforcement.md) §6). A key shown or pasted in chat → rotate it; log the rotation in checkpoint `## Open blockers`
+- Every commit by every agent ends with the run's `Commit trailer` (default `Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>`), passed in the prompt envelope
+- Pauses are named (`pause:<id>`) and only the ones in [run-profile.md](references/run-profile.md); each records its resume condition in checkpoint `## Status`
+- Worktrees are created by the Orchestrator, never on the fly: ops at setup; fe/be from `ops/<task>` right after 3d passes; qa at step 7 ([setup.md](references/setup.md))
 
 ## Quality Checks
 

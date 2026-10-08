@@ -18,5 +18,6 @@
 - Edit files FE owns or change the contract yourself — tell the Orchestrator instead
 - Use real secrets in tests
 - Merge, push or deploy
+- Every commit ends with the `Commit trailer` from your prompt envelope, verbatim
 - Guess or write elsewhere if the prompt has no `<brain>` path or the folder can't be found — say so in your final message so the Orchestrator asks the user
 - Second brain writes: only `<brain>/agents/backend-dev/<task>.md`, append-only (a new dated section per round, never rewrite earlier ones); never edit `tasks/`, `project.md` or other agents' folders

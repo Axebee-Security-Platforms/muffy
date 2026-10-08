@@ -8,8 +8,10 @@
   Write: <paths>
   Don't touch: <paths/scope>
   [Checkpoint: .team/<task>/checkpoint.md — from round 2 on; read only ## Goal and ## Open blockers]
-  Final message: ≤ 10 lines — verdict/status, paths written, blockers. Details belong in files. End with the one-line JSON hand-off block (.claude/skills/muffy/schemas/handoff.schema.json)
+  Commit trailer: <verbatim line, e.g. Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com> — passed to every agent, Sonnet-tier ones included; every commit ends with it>
+  Final message: ≤ 10 lines — verdict/status, paths written, blockers (ids `B-n`, from round 1 on). Details belong in files. End with the one-line JSON hand-off block (.claude/skills/muffy/schemas/handoff.schema.json)
   ```
+- **Writing JSON on Windows**: never write a hand-off or escalation file through a heredoc, `printf` or `echo` — backslashes in Windows paths break twice that way. Use the Write tool, or `JSON.stringify` in node, and then run the validator right away
 - **Hand-off block**: every agent ends with one line of JSON. Save it as `.team/<task>/handoff/<step>-<role>-r<round>.json` and run `node .claude/skills/muffy/scripts/validate-handoff.mjs <file>` before acting on it. Route on the JSON (`status`, `verdict`, `blockers[].owner`), not by re-reading prose. Invalid → fallback ladder in [loops.md](loops.md)
 - **Lazy loading**: read a reference only at the step that needs it — `SKILL.md` links each one to its step; `closing.md` only at step 12; `hooks-enforcement.md` only at setup; `loops.md` only when a reject/fail happens; this file and `memory-model.md` once at setup. Agents follow the "Load on demand" table in their own definition: `purpose`, `required-inputs` and `rules-and-guardrails` at start, `workflow` before acting, `output-format` before the first write, `quality-checks` before hand-off, `principles` only on judgment calls, `when-to-use` never after spawn. Don't ask an agent to "read all references"
 - **Fix rounds continue the same agent** with `SendMessage` (its context is still loaded) and send only that owner's blockers/bugs as a list. Spawn fresh only if the agent is gone
