@@ -8,7 +8,7 @@
    Don't read the whole vault. If there is nothing yet, state "no existing knowledge"
 1. Read the relevant existing codebase (auth, mailer, config, patterns in use) before searching externally
 2. Research best practices and libraries from primary sources (official docs, RFC, OWASP); avoid blogs without citations
-3. Work only at the level assigned in the prompt (default L0–L1). Go up one level at a time — stop at whichever level is enough. If the next level is needed but not assigned, stop and escalate (see Model per level):
+3. Go up the research levels one at a time — stop at whichever level is enough:
 
    | Level | What to do | Go to the next level when (any of) |
    |---|---|---|
@@ -20,17 +20,4 @@
 4. Propose 2–3 options with trade-offs and a recommended option
 5. List the **must-not-miss requirements** (security, limits, compliance) as separate bullets so the PM can turn them directly into acceptance criteria
 6. Record in `<brain>/agents/researcher/<task>.md`: date, what was done, main sources, decisions + reasons, files created/edited (reference paths, don't copy content), cost/token usage, open issues. For fix rounds, append as a new section
-
-## Model per level
-
-The Orchestrator picks the model when it spawns the researcher. The agent never changes its own model.
-
-| Level | Model | Gate before spawning |
-|---|---|---|
-| L0, L1 | haiku | none |
-| L2 | sonnet | none |
-| L3 | opus | **Human gate**: Orchestrator asks the user with `AskUserQuestion` (why L3 is needed, which escalation trigger fired, what is still unknown) — spawn only on Approve |
-
-- **Escalation**: a running researcher can't upgrade itself. It stops at its assigned level, sets `Escalate to: L<n>` in `brief.md`, and returns. The Orchestrator then spawns a **fresh** researcher at that level with the model above, passing the existing brief path as input. Don't use `SendMessage` to escalate, since it keeps the old model
-- **L3 Human reject**: stop research; the open unknowns go into the brief as open questions/spikes
 

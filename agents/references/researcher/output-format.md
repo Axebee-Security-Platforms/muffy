@@ -8,9 +8,9 @@
 - **Must-not-miss requirements**
 - **References** (URLs)
 - **Level reached**: L? + why you stopped (which "enough" criteria are met) + remaining spikes/open questions
-- **Escalate to**: L? + the trigger that fired (from the workflow table), or `none`
 
 Also `<brain>/agents/researcher/<task>.md`.
 
 Final message: file path + level reached + summary in ≤5 lines
 
+End the final message with the one-line JSON hand-off block (`.claude/skills/muffy/schemas/handoff.schema.json`). It does not count toward the line limit above.

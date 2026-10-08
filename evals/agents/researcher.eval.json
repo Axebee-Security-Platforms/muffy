@@ -1,0 +1,60 @@
+{
+  "role": "researcher",
+  "step": "1",
+  "handoff_fixture": "evals/fixtures/login-flow/.team/login-flow/handoff/1-researcher-r1.json",
+  "artifacts": [
+    {
+      "path": ".team/{task}/brief.md",
+      "must_match": [
+        "^#{1,4}\\s*Context",
+        "^#{1,4}\\s*From the second brain",
+        "^#{1,4}\\s*Options",
+        "^#{1,4}\\s*Must-not-miss requirements",
+        "^#{1,4}\\s*References",
+        "^#{1,4}\\s*Level reached",
+        "Level reached[\\s\\S]*L[0-3]"
+      ],
+      "must_not_match": [
+        "\\[verify\\]"
+      ]
+    }
+  ],
+  "final_message": {
+    "max_lines": 5,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "The user's request can be answered and the PM can write AC without guessing",
+    "Every hard-to-reverse decision has evidence from L1 or above (none still marked `[verify]`)",
+    "Every key risk has evidence or has been turned into a clear spike/open question",
+    "Every claim from outside the repo has a source URL",
+    "The `<brain>` note is written",
+    "The final message ends with a valid JSON hand-off block"
+  ],
+  "live_scenarios": [
+    {
+      "id": "codebase-only",
+      "input": "Request: add login. Min level L0. Repo already has an auth ADR.",
+      "must": [
+        "stops at L0",
+        "cites path:line",
+        "follows the ADR over the vault note"
+      ],
+      "must_not": [
+        "invents URLs",
+        "leaves [verify] on stack choice"
+      ]
+    },
+    {
+      "id": "hard-decision",
+      "input": "Request: pick a payments provider (hard to reverse).",
+      "must": [
+        "reaches L1 or above",
+        "every outside claim has a URL"
+      ],
+      "must_not": [
+        "recommends without evidence"
+      ]
+    }
+  ]
+}

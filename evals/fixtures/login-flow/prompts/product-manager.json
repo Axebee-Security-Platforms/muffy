@@ -1,0 +1,14 @@
+{
+  "goal": "product-manager step for login-flow",
+  "task": "login-flow",
+  "brain": "<vault>/Projects/muffy/",
+  "read": [
+    ".team/login-flow/brief.md"
+  ],
+  "write": [
+    ".team/login-flow/product-manager.out"
+  ],
+  "dont_touch": [
+    "other agents' brain folders"
+  ]
+}

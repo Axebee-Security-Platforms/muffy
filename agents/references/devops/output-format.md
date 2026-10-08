@@ -10,3 +10,5 @@
 - **Mode 2:** commits on `ops/<task>`; final message: **Pass / Fail**, build/run commands, versions verified, failing log excerpts
 - **Mode 3:** final message: environment, version/commit, health check results, whether rolled back, links to logs/dashboard
 - All modes: `<brain>/agents/devops/<task>.md`
+
+End the final message with the one-line JSON hand-off block (`.claude/skills/muffy/schemas/handoff.schema.json`). It does not count toward the line limit above.

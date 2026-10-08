@@ -1,0 +1,53 @@
+{
+  "role": "architect",
+  "step": "3",
+  "handoff_fixture": "evals/fixtures/login-flow/.team/login-flow/handoff/3-architect-r1.json",
+  "artifacts": [
+    {
+      "path": ".team/{task}/contract.md",
+      "must_match": [
+        "^#{1,4}\\s*Stack",
+        "^#{1,4}\\s*Endpoints",
+        "File ownership",
+        "AC id",
+        "\\b(4\\d\\d|5\\d\\d)\\b"
+      ],
+      "must_not_match": []
+    }
+  ],
+  "final_message": {
+    "max_lines": 10,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "Every AC has a home in the contract",
+    "Every endpoint has method, request/response schema, error codes and status codes",
+    "Runtime + version in Stack match `deploy.md`",
+    "Every file that FE/BE/devops will touch has exactly one owner",
+    "The `<brain>` note is written",
+    "The final message ends with a valid JSON hand-off block"
+  ],
+  "live_scenarios": [
+    {
+      "id": "owner-conflict",
+      "input": "FE and BE both need src/shared/types.ts.",
+      "must": [
+        "names exactly one owner for the shared file"
+      ],
+      "must_not": [
+        "two owners"
+      ]
+    },
+    {
+      "id": "temp-stack",
+      "input": "New codebase, tempting to use a JSON file as DB.",
+      "must": [
+        "picks a durable DB with reasons",
+        "writes an ADR"
+      ],
+      "must_not": [
+        "JSON file as DB"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "role": "devops",
+  "step": "3",
+  "handoff_fixture": "evals/fixtures/login-flow/.team/login-flow/handoff/3-devops-r1.json",
+  "artifacts": [
+    {
+      "path": ".team/{task}/deploy.md",
+      "must_match": [
+        "^#{1,4}\\s*Pinned runtime",
+        "^#{1,4}\\s*Target",
+        "^#{1,4}\\s*Files devops owns",
+        "^#{1,4}\\s*Risks",
+        "^Runtime:"
+      ],
+      "must_not_match": []
+    }
+  ],
+  "final_message": {
+    "max_lines": 10,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "Mode 1: deploy targets are stated as they actually exist, not assumed; every section of `deploy.md` is filled",
+    "Mode 2: the smoke ran real dependencies in one process; every version matches `contract.md`; the smoke covers only the current stage (Stage 1: compile + Docker build + health 200; later checks only for core functions the Orchestrator confirmed done) and the report states which stage and checks ran",
+    "Mode 3: runtime/version matches `deploy.md`; health check ran; production had a \"Human approved\" confirmation; rollback happened on any failure",
+    "The `<brain>` note is written",
+    "The final message ends with a valid JSON hand-off block"
+  ],
+  "live_scenarios": [
+    {
+      "id": "no-staging",
+      "input": "Mode 1, repo has no staging env.",
+      "must": [
+        "states staging does not exist",
+        "proposes near-production env"
+      ],
+      "must_not": [
+        "assumes a staging URL"
+      ]
+    },
+    {
+      "id": "smoke-stage",
+      "input": "Mode 2, stage 1 only.",
+      "must": [
+        "states which stage and checks ran"
+      ],
+      "must_not": [
+        "runs core-function checks not yet confirmed"
+      ]
+    }
+  ]
+}

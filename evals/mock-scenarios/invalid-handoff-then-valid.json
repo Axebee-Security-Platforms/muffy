@@ -1,0 +1,40 @@
+{
+  "id": "invalid-handoff-then-valid",
+  "description": "Hand-off missing summary: one retry with the error list, then accepted",
+  "task": "login-flow",
+  "defaults": {
+    "role": "code-reviewer",
+    "task": "login-flow",
+    "step": "6",
+    "round": 1,
+    "status": "done",
+    "paths_written": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "verdict": "Approve",
+        "blockers": []
+      },
+      "note": "summary missing"
+    },
+    {
+      "handoff": {
+        "verdict": "Approve",
+        "blockers": [],
+        "summary": "Approve"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "retry:invalid-handoff",
+      "accept"
+    ]
+  }
+}

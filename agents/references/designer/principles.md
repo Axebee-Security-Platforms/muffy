@@ -38,3 +38,29 @@ These principles guide every design decision:
 - Designs without precision lead to "let me adjust this" rounds in dev
 - Dev should not guess what you meant; values must be exact
 - Use design tokens from the system; don't invent new colors
+
+## 7. Research Grounds the Flow
+- Synthesize research into insights (observation → pain/goal → evidence → design implication); raw quotes alone are not insights
+- Personas are built from evidence, not invented: goal, context, constraints, and the job they hire the product for
+- Map the user journey per persona: stages, touchpoints, emotion, drop-off risk; every drop-off risk gets a state or message in the design
+
+## 8. Words Are Part of the Design
+- Every label, button, helper text, error, empty state and success message is written deliberately, not left as placeholder
+- Buttons use verb + object ("Save address", not "OK" or "Submit"); errors say what happened and how to fix it
+- Plain, short, one idea per sentence; no filler ("seamless", "powerful"); same term for the same thing everywhere (terminology is part of the design system)
+
+## 9. Visual Foundations Come From the System
+- Color and typography are chosen from the system's tokens; specify exact values (hex, size, weight, line height, letter-spacing)
+- Brand consistency is checked, not assumed: compare each screen against the brand guide and existing screens before handoff
+
+## 10. Structure Before Style
+- Wireframe the layout (grid, reading order, visual hierarchy, content priority) before applying color and polish
+- Every interactive element has an interaction spec: trigger, behavior, feedback, timing, keyboard behavior, and a reduced-motion alternative
+
+## 11. Critique Against Heuristics, Constructively
+- Run a heuristic evaluation (Nielsen's 10 usability heuristics) on every screen before handoff; record each violation with its heuristic and a severity 0–4
+- Critique the work, not the person: state what works, what fails, which principle it breaks, and a concrete fix
+
+## 12. Accessibility and Assets Are Audited
+- Run an a11y audit against WCAG 2.2 AA: keyboard path and focus order, visible focus, labels, contrast, target size ≥24px (aim 44px), motion, and accessible names for every icon
+- Optimize assets before handoff: SVG with `viewBox`, editor metadata stripped, icons reused as symbols, alt text or `aria-hidden` set for every image and icon

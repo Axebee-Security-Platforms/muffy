@@ -1,5 +1,5 @@
 {
-  "comment": "Copy this to .claude/settings.local.json to enforce team-flow rules automatically",
+  "comment": "MERGE the \"hooks\" key into .claude/settings.local.json next to the \"env\" block from settings.local.json.template - do not overwrite that file",
   "hooks": {
     "before_merge": {
       "command": "echo '[team-flow rule] Only Orchestrator merges. Are you the main session (not a subagent)? If yes, continue. If no, STOP.' && exit 1",

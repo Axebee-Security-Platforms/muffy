@@ -12,4 +12,11 @@ Definition of done (gate before handing off to FE). The work is **not done** unt
 - [ ] Every component on the canvas is mapped to the project's component library (e.g. shadcn/ui Button, shadcn/ui Input); no custom base components unless the library doesn't have it
 - [ ] Semantic color pairs meet contrast in both light and dark
 - [ ] The same state uses the same pattern on every screen
+- [ ] Persona and journey map exist; every journey drop-off risk has a designed state or message
+- [ ] Every button, error, empty state and helper text is final copy (verb + object buttons, actionable errors, consistent terminology)
+- [ ] Interaction spec covers every interactive element (trigger, feedback, timing, keyboard, reduced motion)
+- [ ] Heuristic evaluation done; no open violation with severity ≥3
+- [ ] A11y audit (WCAG 2.2 AA) passed: keyboard path, focus order, accessible names, target size, contrast
+- [ ] Icons and illustrations are optimized SVG with `viewBox`, metadata stripped, alt text or `aria-hidden` set
 - [ ] The `<brain>` note is written
+- [ ] The final message ends with a valid JSON hand-off block

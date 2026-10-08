@@ -1,0 +1,46 @@
+{
+  "id": "design-gate-blocks-coding",
+  "description": "Step 4 must not start while 3c has not passed",
+  "task": "login-flow",
+  "defaults": {
+    "task": "login-flow",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "devops",
+        "mode": 2,
+        "step": "3d",
+        "summary": "smoke pass",
+        "verdict": "Pass"
+      }
+    },
+    {
+      "handoff": {
+        "role": "frontend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "summary": "built login ui"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "blocked",
+    "actions": [
+      "accept",
+      "block:gate-not-passed"
+    ]
+  }
+}

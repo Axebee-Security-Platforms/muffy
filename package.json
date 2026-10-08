@@ -1,0 +1,14 @@
+{
+  "name": "muffy-skill",
+  "private": true,
+  "type": "module",
+  "description": "Dev tooling for the muffy agent team: lint, offline evals, packaging. No runtime dependencies.",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "lint": "node scripts/lint.mjs",
+    "eval": "node scripts/eval.mjs",
+    "eval:sync": "node scripts/eval.mjs --update-rubric",
+    "test": "node scripts/lint.mjs && node scripts/eval.mjs",
+    "package": "node scripts/package.mjs"
+  }
+}

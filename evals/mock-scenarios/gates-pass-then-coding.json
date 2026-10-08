@@ -1,0 +1,54 @@
+{
+  "id": "gates-pass-then-coding",
+  "description": "3c and 3d passed, step 4 proceeds",
+  "task": "login-flow",
+  "defaults": {
+    "task": "login-flow",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "designer",
+        "step": "3c",
+        "summary": "design gate ok"
+      }
+    },
+    {
+      "handoff": {
+        "role": "devops",
+        "mode": 2,
+        "step": "3d",
+        "summary": "smoke pass",
+        "verdict": "Pass"
+      }
+    },
+    {
+      "handoff": {
+        "role": "frontend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "summary": "built login ui"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "accept",
+      "accept",
+      "accept"
+    ]
+  }
+}

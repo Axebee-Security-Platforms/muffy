@@ -6,3 +6,5 @@
 - `<brain>/agents/product-manager/<task>.md`
 
 Final message: all paths + number of ACs + phase/priority summary, one line per phase + ADRs created + questions still to ask the user (if any)
+
+End the final message with the one-line JSON hand-off block (`.claude/skills/muffy/schemas/handoff.schema.json`). It does not count toward the line limit above.

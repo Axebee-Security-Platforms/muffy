@@ -2,7 +2,7 @@
 
 | # | Agent | Input | Output |
 |---|---|---|---|
-| 1 | `researcher` (L0–L1 haiku; L2 sonnet; L3 opus after **Human gate**) | request (+ assigned level) | `brief.md` + level reached + `Escalate to`; `[verify]` left on a hard-to-reverse decision → Orchestrator spawns fresh at the next level (L3 only after Human gate); spikes → devops in 3d |
+| 1 | `researcher` | request (+ min level) | `brief.md` + level reached; `[verify]` left on a hard-to-reverse decision → send back for the next level; spikes → devops in 3d |
 | 2 | `product-manager` | `brief.md` | `ac.md`, `docs/plan/<task>.md` (phases + P0/P1/P2), `docs/adr/NNNN-*.md` |
 | 3 | `designer` ∥ `architect` ∥ `devops` mode 1 — one message | `ac.md`, `brief.md`, plan | `design.md`, `contract.md`, `deploy.md`; then architect aligns the contract with `deploy.md` (pinned runtime, devops-owned files) |
 | 3b | Orchestrator | `.team/<task>/canvas/` | Publish the canvas on Claude Design (Artifact type "Design", `quickstart` intent `design`), put the URL in `design.md`; after `contract.md`, designer aligns fields and you republish |

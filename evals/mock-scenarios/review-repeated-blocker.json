@@ -1,0 +1,82 @@
+{
+  "id": "review-repeated-blocker",
+  "description": "Same blocker id open in 3 consecutive rejects: escalate early instead of burning the 4th-rejection budget",
+  "task": "login-flow",
+  "defaults": {
+    "role": "code-reviewer",
+    "task": "login-flow",
+    "step": "6",
+    "round": 1,
+    "status": "done",
+    "paths_written": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 1"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 2"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Reject",
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "Missing rate limit on POST /login",
+            "file": "src/auth/login.ts:42",
+            "ac_ids": [
+              "AC-2"
+            ],
+            "owner": "BE"
+          }
+        ],
+        "summary": "Reject round 3"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "escalated",
+    "trigger": "repeated-blocker",
+    "actions": [
+      "fix:BE",
+      "fix:BE",
+      "escalate:repeated-blocker"
+    ],
+    "loops": {
+      "6:code-reviewer": 3
+    }
+  }
+}

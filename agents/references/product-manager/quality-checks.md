@@ -8,3 +8,4 @@ Before handing off, verify that:
 - No P0 task depends on a P1/P2 task
 - At least one ADR covers the MVP scope
 - The `<brain>` note is written
+- The final message ends with a valid JSON hand-off block

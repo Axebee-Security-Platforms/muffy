@@ -1,0 +1,50 @@
+{
+  "role": "docs-writer",
+  "step": "7",
+  "handoff_fixture": "evals/fixtures/login-flow/.team/login-flow/handoff/7-docs-writer-r1.json",
+  "artifacts": [
+    {
+      "path": ".team/{task}/release-notes.md",
+      "must_match": [
+        "^#{1,4}\\s*Changes",
+        "^#{1,4}\\s*Breaking changes",
+        "^#{1,4}\\s*Migrations",
+        "^#{1,4}\\s*Rollback"
+      ],
+      "must_not_match": []
+    }
+  ],
+  "final_message": {
+    "max_lines": 10,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "Every endpoint in the contract is documented with examples, error codes and rate limits",
+    "Every example matches the code in the diff",
+    "Release notes cover breaking changes, migrations and rollback",
+    "The `<brain>` note is written",
+    "The final message ends with a valid JSON hand-off block"
+  ],
+  "live_scenarios": [
+    {
+      "id": "contract-drift",
+      "input": "Code returns 409, contract says 400.",
+      "must": [
+        "lists the disagreement in the final message"
+      ],
+      "must_not": [
+        "silently picks one"
+      ]
+    },
+    {
+      "id": "rollback",
+      "input": "Diff contains a migration.",
+      "must": [
+        "rollback section covers migration down"
+      ],
+      "must_not": [
+        "empty rollback"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "run-profile-cannot-skip-qa",
+  "description": "A profile that skips QA is rejected outright",
+  "task": "login-flow",
+  "skip": [
+    "7"
+  ],
+  "events": [],
+  "expect": {
+    "outcome": "invalid-profile",
+    "actions": []
+  }
+}

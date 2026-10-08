@@ -1,0 +1,16 @@
+{
+  "goal": "docs-writer step for login-flow",
+  "task": "login-flow",
+  "brain": "<vault>/Projects/muffy/",
+  "read": [
+    ".team/login-flow/contract.md",
+    ".team/login-flow/diff.patch",
+    ".team/login-flow/ac.md"
+  ],
+  "write": [
+    ".team/login-flow/docs-writer.out"
+  ],
+  "dont_touch": [
+    "other agents' brain folders"
+  ]
+}

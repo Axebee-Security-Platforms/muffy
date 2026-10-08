@@ -1,0 +1,52 @@
+{
+  "role": "code-reviewer",
+  "step": "6",
+  "handoff_fixture": "evals/fixtures/login-flow/.team/login-flow/handoff/6-code-reviewer-r1.json",
+  "artifacts": [
+    {
+      "path": ".team/{task}/review-1.md",
+      "must_match": [
+        "Verdict:\\s*\\**\\s*(Approve|Reject)",
+        "Blockers",
+        "Suggestions",
+        "### Second brain"
+      ],
+      "must_not_match": []
+    }
+  ],
+  "final_message": {
+    "max_lines": 40,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "Every AC id appears with `file:line` or is listed as a blocker",
+    "Every finding has `file:line` and an owner",
+    "Fix rounds: every previous blocker is confirmed closed or re-listed",
+    "The `### Second brain` section is present",
+    "The final message ends with a valid JSON hand-off block"
+  ],
+  "live_scenarios": [
+    {
+      "id": "missing-ac",
+      "input": "Diff implements AC-1 only; ac.md has AC-1..AC-3.",
+      "must": [
+        "Reject",
+        "AC-2 and AC-3 listed as blockers with owner"
+      ],
+      "must_not": [
+        "Approve"
+      ]
+    },
+    {
+      "id": "fix-round",
+      "input": "Round 2 diff fixes B-1 but not B-2.",
+      "must": [
+        "B-1 confirmed closed",
+        "B-2 re-listed with the same id"
+      ],
+      "must_not": [
+        "new id for B-2"
+      ]
+    }
+  ]
+}

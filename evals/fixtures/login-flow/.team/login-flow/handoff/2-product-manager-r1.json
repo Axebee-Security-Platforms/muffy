@@ -1,0 +1,1 @@
+{"role":"product-manager","task":"login-flow","step":"2","round":1,"status":"done","paths_written":[".team/login-flow/ac.md","docs/plan/login-flow.md","docs/adr/0001-session-auth.md"],"blockers":[],"quality_checks":{"passed":true,"failed":[]},"brain_note":"<brain>/agents/product-manager/login-flow.md","summary":"product-manager done"}

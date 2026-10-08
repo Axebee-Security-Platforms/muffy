@@ -1,0 +1,15 @@
+{
+  "goal": "qa-tester step for login-flow",
+  "task": "login-flow",
+  "brain": "<vault>/Projects/muffy/",
+  "read": [
+    ".team/login-flow/ac.md",
+    ".team/login-flow/design.md"
+  ],
+  "write": [
+    ".team/login-flow/qa-tester.out"
+  ],
+  "dont_touch": [
+    "other agents' brain folders"
+  ]
+}

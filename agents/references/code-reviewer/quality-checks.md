@@ -6,3 +6,4 @@ Before returning the verdict, verify that:
 - Every finding has `file:line` and an owner
 - Fix rounds: every previous blocker is confirmed closed or re-listed
 - The `### Second brain` section is present
+- The final message ends with a valid JSON hand-off block
