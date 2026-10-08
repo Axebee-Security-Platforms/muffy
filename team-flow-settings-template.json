@@ -1,0 +1,17 @@
+{
+  "comment": "Copy this to .claude/settings.local.json to enforce team-flow rules automatically",
+  "hooks": {
+    "before_merge": {
+      "command": "echo '[team-flow rule] Only Orchestrator merges. Are you the main session (not a subagent)? If yes, continue. If no, STOP.' && exit 1",
+      "description": "Enforce: only Orchestrator merges branches"
+    },
+    "before_commit": {
+      "command": "STAGED=$(git diff --cached --name-only); if echo \"$STAGED\" | grep -q -E '\\.(ts|tsx|js|jsx|py|go|rs)$'; then if ! echo \"$STAGED\" | grep -q -E '(review-|qa-report|design\\.md|contract\\.md)'; then echo '[team-flow rule] Code changes require review-N.md or qa-report.md in same commit'; exit 1; fi; fi; exit 0",
+      "description": "Require review/QA artifact with code commits"
+    },
+    "before_push": {
+      "command": "BRANCH=$(git rev-parse --abbrev-ref HEAD); case \"$BRANCH\" in main|master|production|prod) echo '[team-flow rule] Cannot push to main/prod. Use feature/<task> branch and let Orchestrator merge after Human gate.' && exit 1;; esac",
+      "description": "Prevent direct pushes to main or production"
+    }
+  }
+}
