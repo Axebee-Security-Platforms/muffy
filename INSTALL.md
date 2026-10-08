@@ -50,7 +50,14 @@ Caveats:
 
 ## After install
 
-1. **Hooks are not installed.** Add the env guard to `.claude/settings.local.json` yourself:
+1. **Hooks are not installed by default.** To add the env guard, re-run the installer with `--with-guard` (or add it by hand):
+
+   ```bash
+   node install.mjs /path/to/your-repo --with-guard --dry-run   # shows the JSON to merge
+   node install.mjs /path/to/your-repo --with-guard
+   ```
+
+   This merges one entry into `hooks.PreToolUse` of `.claude/settings.local.json` and keeps every other key. It is idempotent. If `PreToolUse` already exists, the installer leaves it alone and prints the entry for you to add by hand:
 
    ```json
    "PreToolUse": [
