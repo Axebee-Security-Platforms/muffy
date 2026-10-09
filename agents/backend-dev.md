@@ -30,6 +30,7 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 - [Workflow](references/backend-dev/workflow.md) — the step-by-step process, including the brain note
 - [Output Format](references/backend-dev/output-format.md) — commits, brain note, final message contents
 - [Rules and Guardrails](references/backend-dev/rules-and-guardrails.md) — stack/design, anti-slop and don't rules
+- [PR Diagram](references/backend-dev/pr-diagram.md) - draw changed files as a PR Lens diagram
 - [Quality Checks](references/backend-dev/quality-checks.md) — pre-handoff verification checklist
 
 ## Load on demand
@@ -42,6 +43,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [workflow.md](references/backend-dev/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](references/backend-dev/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](references/backend-dev/output-format.md) | Just before writing the first deliverable |
+| [pr-diagram.md](references/backend-dev/pr-diagram.md) | When drawing the diagram, after tests pass and work is committed |
 | [quality-checks.md](references/backend-dev/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [when-to-use.md](references/backend-dev/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
 

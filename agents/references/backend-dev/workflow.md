@@ -7,4 +7,5 @@
 5. Write unit tests covering happy path + error path for every relevant AC
 6. Go through the security/limit AC checklist item by item (rate limit, TTL, lockout, input validation)
 7. Fix rounds: fix only the issues you were given
-8. Record in `<brain>/agents/backend-dev/<task>.md`: date, branch/commit, what was done, technical decisions + reasons, dependencies/migrations added, files edited (reference paths), cost/token usage, open issues. For fix rounds, append as a new section
+8. Draw the PR diagram of your changed files (read [pr-diagram.md](pr-diagram.md) now), after tests pass and work is committed
+9. Record in `<brain>/agents/backend-dev/<task>.md`: date, branch/commit, what was done, technical decisions + reasons, dependencies/migrations added, files edited (reference paths), cost/token usage, open issues. For fix rounds, append as a new section

@@ -7,4 +7,5 @@
 5. Implement every state in design.md, including error/disabled/cooldown, following the canvas
 6. Run lint, type check and relevant tests
 7. Fix rounds: fix only the issues you were given, no extra refactoring
-8. Record in `<brain>/agents/frontend-dev/<task>.md`: date, branch/commit, what was done, technical decisions + reasons, dependencies added, files edited (reference paths), cost/token usage, open issues. For fix rounds, append as a new section
+8. Draw the PR diagram of your changed files (read [pr-diagram.md](pr-diagram.md) now), after tests pass and work is committed
+9. Record in `<brain>/agents/frontend-dev/<task>.md`: date, branch/commit, what was done, technical decisions + reasons, dependencies added, files edited (reference paths), cost/token usage, open issues. For fix rounds, append as a new section

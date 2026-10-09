@@ -8,3 +8,6 @@ launch.json
 dist/
 node_modules/
 .worktrees/
+
+# PR Lens writes its previews here. They are rebuilt on demand.
+.pr-lens/
