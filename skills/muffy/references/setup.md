@@ -1,6 +1,6 @@
 # Setup
 
-1. Create `.team/<task>/` and `.team/<task>/handoff/`. `<brain>` = `<vault>/Projects/<repo-name>/`; create `project.md`, `tasks/`, `agents/<role>/` (one per agent) if missing
+1. Create `.team/<task>/`, `.team/<task>/handoff/` and `.team/<task>/rounds/`. `<brain>` = `<vault>/Projects/<repo-name>/`; create `project.md`, `tasks/`, `agents/<role>/` (one per agent) if missing
 2. Create `<brain>/tasks/<task>.md` (frontmatter `project`, `task`, `date`, `status` + `[[agents/<role>/<task>]]` links); add the task to `project.md` → `## Tasks` as `in progress`
 3. Read `project.md` (Lessons, Open issues, backlog). Resuming: read `.team/<task>/checkpoint.md` + `tasks/<task>.md` instead to find the step reached
 4. **Confirm scope** (`pause:scope`): state the feature slice in one or two lines and the explicit out-of-scope list; `AskUserQuestion` until the user confirms. Multi-feature requests are cut to one slice here, never inside a step

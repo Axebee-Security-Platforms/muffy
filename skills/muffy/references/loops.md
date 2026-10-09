@@ -42,3 +42,5 @@ A reject that is not repeated and is under the limit is handled by the loop bull
 ## Context checkpoints in loops
 
 Long loops lose the original goal. After every fix round and at steps 3d, 6 (on Approve) and 9, rewrite `.team/<task>/checkpoint.md` per [memory-model.md](memory-model.md#checkpoint). From round 2 on, every prompt carries `Checkpoint: <path>` and the owner reads only its `## Goal` and `## Open blockers` sections. Keep only the latest round's blockers in full; older rounds shrink to one `## History` line each.
+
+Order inside a fix round: write `.team/<task>/rounds/<step>-r<n>.md` first, then rewrite `checkpoint.md` with its one-line `## History` entry and `[label]` definition, then run `node .claude/skills/muffy/scripts/check-checkpoint.mjs .team/<task>`.
