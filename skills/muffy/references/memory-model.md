@@ -32,10 +32,26 @@ Updated: step <n> · round <n>
 ## Decisions in force        ADR ids, stack, runtime pin (from deploy.md)
 ## Loop counters             <step>:<owner> n/3, one line per point used
 ## Open blockers             id · file:line · owner · rounds open (latest round only, in full)
-## History                   one line per closed round or escalation
+## History                   one line per closed round or escalation, with a [label] link
 ```
 
-- **Summarize on a schedule**, not when memory happens to fail: after any loop round ≥ 2, collapse earlier rounds into `## History` one-liners; drop details already captured in `review-<n>.md` / `qa-report.md`
+Link definitions go at the very end of the file, after the sections above.
+
+- **Round details live in `.team/<task>/rounds/<step>-r<n>.md`**, one file per closed round, written once and never edited again. Each is ≤ 100 lines with a fixed shape: `Owner`, `Hand-off` (path), `Verdict` (status, blocker ids), `Artifacts` (paths), `Notes` (≤ 5 lines). No narrative
+- **Link references, not inline detail.** `## History` and `## Open blockers` hold one line per item and end with a reference-style link. Every label is defined once, at the bottom of `checkpoint.md`, in one block:
+
+  ```markdown
+  ## History
+  - step 3d r1: gate FAIL, Node pin mismatch [3d-r1]
+  - step 4 r2: fe + be merged, 187/187 tests [4-r2]
+
+  [3d-r1]: rounds/3d-r1.md
+  [4-r2]: rounds/4-r2.md
+  ```
+
+  Labels use `<step>-r<n>` (`3d-r1`, `4-r2`). A label used in the text must have a definition, and a definition with no use is removed
+- **Summarize on a schedule**, not when memory happens to fail: after any loop round ≥ 2, the round's details go to `rounds/` and `## History` keeps only its one-liner; drop details already captured in `review-<n>.md` / `qa-report.md`
+- **Size limits** (checked by [scripts/check-checkpoint.mjs](../scripts/check-checkpoint.mjs)): `checkpoint.md` ≤ 40 lines; every `rounds/*.md` ≤ 100 lines; every `[label]` has a matching definition and the target file exists
 - **`## Goal` is never summarized.** It is what a looping agent forgets first
 - **Resume or `/compact`**: read `checkpoint.md` + `<brain>/tasks/<task>.md` instead of replaying the conversation or re-reading finished artifacts
 - Agents see it only from round 2 (`Checkpoint:` line in the prompt) and read only `## Goal` and `## Open blockers`

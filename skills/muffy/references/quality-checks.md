@@ -9,5 +9,6 @@ After every step:
 - Test/QA runtime matches the `deploy.md` pin
 - Gates 3c and 3d passed before step 4 (unless the run profile skipped them, recorded with the reason)
 - `checkpoint.md` was rewritten at the boundaries listed in [memory-model.md](memory-model.md#checkpoint)
+- `node .claude/skills/muffy/scripts/check-checkpoint.mjs .team/<task>` passes: checkpoint ≤ 40 lines, every `rounds/*.md` ≤ 100 lines, every `[label]` defined and every target file present
 
 Before finishing: every check in `closing.md` is done, and skipped or failed steps are reported as such.

@@ -19,6 +19,7 @@
 - **Read narrowly**: for gates and traceability checks, grep or read only the section needed (e.g. the `AC id →` table) instead of whole files; don't re-read a file you already checked unless it changed
 - **Don't relay**: never copy one agent's output into another's prompt — give the path
 - **Checkpoint instead of history**: from round 2 on, point to `checkpoint.md`; don't replay earlier rounds ([memory-model.md](memory-model.md#checkpoint))
+- **Follow a link, don't load the folder**: an agent opens `rounds/<step>-r<n>.md` only when its own prompt names that label or path. Never Read or Glob all of `rounds/`
 - **Model tiers**: only `haiku` and `sonnet` are allowed — never pass `opus` or `fable`. Agent frontmatter sets the default (`docs-writer` = haiku, the rest = sonnet). When spawning fresh (not `SendMessage`), pass `model: "haiku"` for:
   - `qa-tester` re-running existing tests only (no new tests to write)
   - `frontend-dev` / `backend-dev` fix rounds where every bug names a file + line and the expected fix
