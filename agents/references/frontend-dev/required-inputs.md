@@ -4,3 +4,4 @@
 - Fix rounds: review comments or QA bugs sent by the Orchestrator
 - Branch name (e.g. `fe/<task>`) and worktree path (e.g. `.worktrees/fe-<task>`); if the path is missing, create the worktree as the Work location section of `frontend-dev.md` says
 - `<brain>` path from the Orchestrator
+- Read `ac (only the endpoints your screens call).md` / `contract.md` first and open a linked part file (`ac/AC-<n>.md`, `contract/endpoints/<slug>.md`) only when your work touches it.

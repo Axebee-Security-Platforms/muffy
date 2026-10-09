@@ -10,5 +10,6 @@ After every step:
 - Gates 3c and 3d passed before step 4 (unless the run profile skipped them, recorded with the reason)
 - `checkpoint.md` was rewritten at the boundaries listed in [memory-model.md](memory-model.md#checkpoint)
 - `node .claude/skills/muffy/scripts/check-checkpoint.mjs .team/<task>` passes: checkpoint ≤ 40 lines, every `rounds/*.md` ≤ 100 lines, every `[label]` defined and every target file present
+- `node .claude/skills/muffy/scripts/check-artifacts.mjs .team/<task>` passes: `ac.md` / `brief.md` / `contract.md` ≤ 60 lines, part files ≤ 120, links resolve, every AC id is in `contract.md` ([memory-model.md](memory-model.md#splitting-large-artifacts))
 
 Before finishing: every check in `closing.md` is done, and skipped or failed steps are reported as such.

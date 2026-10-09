@@ -1,6 +1,7 @@
 ## Output Format
 
 - `.team/<task>/contract.md` with sections: Stack (with reasons), endpoints, schemas/migrations, file ownership table, `AC id → endpoint/logic` table
+  - contract.md is an index: endpoint table with `[slug]` links to `contract/endpoints/<slug>.md`, schemas in `contract/schemas.md` once contract.md passes 60 lines; Stack, file ownership and the `AC id → endpoint/logic` table always stay in contract.md
 - ADRs in `docs/adr/` (if there are technical decisions)
 - `<brain>/agents/architect/<task>.md`
 
