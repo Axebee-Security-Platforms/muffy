@@ -1,86 +1,123 @@
-# 🎯 Muffy — Feature Development Agent Team
+<h1 align="center">Muffy</h1>
 
-muffy is a hub-and-spoke subagent team plus one skill (`muffy`). The main Claude Code session is the **Orchestrator**; it runs one feature from research to production through 10 specialist agents. Subagents never talk to each other: work moves between them as files in `.team/<task>/`.
+<p align="center">Feature development agent team: one skill, ten subagents, one feature from research to production.</p>
 
-> Source: [skills/muffy/SKILL.md](skills/muffy/SKILL.md) · flow details: [skills/muffy/references/steps.md](skills/muffy/references/steps.md) · how skills work: [skills/muffy/how-skill-work.html](skills/muffy/how-skill-work.html)
+<blockquote>
 
----
+**Summary.** The `muffy` skill runs a 12-step team of subagents (research, product, design, architecture, devops, frontend, backend, review, QA, docs) for one feature. It replaces ad-hoc multi-agent prompts with a fixed flow, gated hand-offs, and fix-loop limits, so unreviewed code and lost hand-offs stop reaching `main`.
 
-## Install
+</blockquote>
+
+<h2>With and without the skill</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Topic</th>
+      <th align="left">With muffy</th>
+      <th align="left">Without muffy</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Order of work</td>
+      <td>Fixed 12-step flow; each step has an owner and inputs</td>
+      <td>Agents run in whatever order the prompt suggests</td>
+    </tr>
+    <tr>
+      <td>Hand-offs</td>
+      <td>Files in <code>.team/&lt;task&gt;/</code> plus a validated JSON block</td>
+      <td>Chat summaries that the next agent may misread</td>
+    </tr>
+    <tr>
+      <td>Review</td>
+      <td>Code review and QA gates; Human gate before production</td>
+      <td>Depends on whether someone remembers to ask</td>
+    </tr>
+    <tr>
+      <td>Failures</td>
+      <td>Max 3 fix loops, early stop on a repeated blocker, then escalation</td>
+      <td>Retries continue until the user intervenes</td>
+    </tr>
+    <tr>
+      <td>Instructions</td>
+      <td>Loaded per step from references</td>
+      <td>Every agent gets the full brief in its prompt</td>
+    </tr>
+    <tr>
+      <td>Reuse</td>
+      <td>Same flow for every feature and repo</td>
+      <td>Rebuilt for each feature</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>How to install</h2>
+
+Requires Node 18+. Run from anywhere, pointing at the target repo root:
 
 ```bash
 node install.mjs /path/to/your-repo --vault "/absolute/path/to/Obsidian Vault"
-node install.mjs /path/to/your-repo --clean     # update an existing install
 ```
 
-Full steps (dry-run, `--force`, `--clean` caveats, hooks to add by hand) are in [INSTALL.md](INSTALL.md).
+- Preview first with `--dry-run`. Update an existing install with `--clean`.
+- Hooks are not installed automatically. Merge `team-flow-settings-template.json` into `.claude/settings.local.json` by hand.
+- Full steps: [INSTALL.md](INSTALL.md).
 
----
+<h2>Key concepts</h2>
 
-## Agents
+<table>
+  <thead>
+    <tr>
+      <th align="left">Concept</th>
+      <th align="left">What it is</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Orchestrator</strong></td>
+      <td>The main Claude Code session. It starts each step, routes hand-offs, runs the gates, and is the only role that merges.</td>
+    </tr>
+    <tr>
+      <td><strong>Subagents</strong></td>
+      <td>Ten specialists in <code>.claude/agents/</code>. They never talk to each other; all work goes through the Orchestrator.</td>
+    </tr>
+    <tr>
+      <td><strong>Gates</strong></td>
+      <td>Design gate (3c), smoke build (3d), code review (6, 8), QA, staging, and the Human gate (10). Only the Human gate approves production.</td>
+    </tr>
+    <tr>
+      <td><strong>Hand-off JSON</strong></td>
+      <td>Each agent ends with a JSON block validated against <code>handoff.schema.json</code>. An invalid block is sent back.</td>
+    </tr>
+    <tr>
+      <td><strong>Loops</strong></td>
+      <td>Max 3 fix rounds per point. A repeated blocker stops the loop early and escalates to the user.</td>
+    </tr>
+    <tr>
+      <td><strong>Memory</strong></td>
+      <td>Repo docs in <code>docs/</code>, working files in <code>.team/&lt;task&gt;/</code>, notes in the Obsidian vault set by <code>SECOND_BRAIN_VAULT</code>.</td>
+    </tr>
+  </tbody>
+</table>
 
-| Agent | Model | Tools | Role |
-|---|---|---|---|
-| `researcher` | sonnet | Read, Grep, Glob, WebSearch, WebFetch, Write | Research the request → `brief.md` |
-| `product-manager` | sonnet | Read, Grep, Glob, Write | Acceptance criteria (`ac.md`) and plan |
-| `architect` | sonnet | Read, Grep, Glob, Write | API/data contract, aligned with deploy |
-| `designer` | sonnet | Read, Grep, Glob, Edit, Write | UX/UI from AC → design canvas (`design.md`) |
-| `devops` | sonnet | Read, Grep, Glob, Edit, Write, Bash | Deployability check, smoke build, staging, production |
-| `frontend-dev` | sonnet | Read, Grep, Glob, Edit, Write, Bash | FE implementation on `fe/<task>` |
-| `backend-dev` | sonnet | Read, Grep, Glob, Edit, Write, Bash | BE implementation on `be/<task>` |
-| `code-reviewer` | sonnet | Read, Grep, Glob | Approve / Reject diffs (cannot write files) |
-| `qa-tester` | sonnet | Read, Grep, Glob, Edit, Write, Bash | Tests and `qa-report.md` |
-| `docs-writer` | haiku | Read, Grep, Glob, Edit, Write | Docs and `release-notes.md` |
+<h2>Example</h2>
 
-Agent definitions live in `agents/<role>.md`; their per-role references (principles, workflow, quality checks) live in `agents/references/<role>/`.
+Request in the main session: `/muffy add password reset, task name password-reset`
 
-### Skills
+<details open>
+<summary><strong>Walkthrough</strong></summary>
 
-Skills are declared in an agent's frontmatter `skills:` list and load when that agent runs. Right now only one is declared:
+1. **Setup.** The Orchestrator confirms the scope with you and creates `.team/password-reset/`.
+2. **Research and plan.** `researcher` writes `brief.md`. `product-manager` writes `ac.md` and `docs/plan/password-reset.md`.
+3. **Parallel design.** `designer`, `architect`, and `devops` run together and produce `design.md`, `contract.md`, and `deploy.md`. The design gate must pass before code starts.
+4. **Build.** `frontend-dev` and `backend-dev` work on `fe/password-reset` and `be/password-reset`. The Orchestrator merges them into `feature/password-reset`.
+5. **Review and QA.** `code-reviewer` approves or rejects. `qa-tester` writes `qa-report.md` while `docs-writer` writes the docs and release notes.
+6. **Release.** `devops` deploys to staging. You approve at the Human gate, then `devops` rolls out to production with a canary and a rollback path.
 
-| Agent | Declared skills |
-|---|---|
-| `designer` | `impeccable` |
+</details>
 
-Everything else is plain agent workflow, with no extra skill.
-
----
-
-## Workflow (Steps 1–12)
-
-Full input/output per step: [skills/muffy/references/steps.md](skills/muffy/references/steps.md).
-
-| # | Agent | Output |
-|---|---|---|
-| 1 | `researcher` | `brief.md` |
-| 2 | `product-manager` | `ac.md`, `docs/plan/<task>.md`, `docs/adr/NNNN-*.md` |
-| 3 | `designer` ∥ `architect` ∥ `devops` (mode 1) | `design.md`, `contract.md`, `deploy.md` |
-| 3c | **Design gate** | blocks step 4 until `design.md` is complete |
-| 3d | `devops` (mode 2) on `ops/<task>` | Pass/Fail smoke build; blocks step 4 |
-| 4 | `frontend-dev` ∥ `backend-dev` | branches `fe/<task>`, `be/<task>` |
-| 5 | Orchestrator | merge into `feature/<task>` (`--no-ff`) |
-| 6 | `code-reviewer` | Approve / Reject |
-| 7 | `qa-tester` ∥ `docs-writer` | `qa-report.md`, docs, `release-notes.md` |
-| 8 | `code-reviewer` | Approve / Reject on docs and fix diff |
-| 9 | `devops` (staging) | staging health and smoke result |
-| 10 | **Human gate** | approve / reject via `AskUserQuestion` |
-| 11 | `devops` (production) | canary → 100%, or rollback |
-| 12 | Orchestrator | closing checks and final message |
-
-Run profiles can skip some steps, but review, QA, staging and the Human gate are never skipped.
-
----
-
-## Key Concepts
-
-- **Hand-off JSON:** every agent ends with a JSON block validated by [skills/muffy/schemas/handoff.schema.json](skills/muffy/schemas/handoff.schema.json).
-- **Loops & fallbacks:** max 3 fix loops per point, early stop on a repeated blocker, then escalation to the user. See [skills/muffy/references/loops.md](skills/muffy/references/loops.md).
-- **Memory:** repo (`docs/`), task folder (`.team/<task>/`), and Obsidian vault (`SECOND_BRAIN_VAULT`). See [skills/muffy/references/memory-model.md](skills/muffy/references/memory-model.md).
-- **Hooks:** the installer does not add them. The env guard and team-flow rules are in `team-flow-settings-template.json` and must be merged by hand.
-
----
-
-## Development & Quality Gates
+<h2>Development</h2>
 
 ```bash
 npm test             # lint + offline evals (also runs in CI)
@@ -90,6 +127,6 @@ npm run eval:sync    # re-copy each agent's rubric from its quality-checks.md
 npm run package      # stage a clean copy in dist/muffy (no .git, no personal config)
 ```
 
-- **Personal config:** copy `settings.local.json.template` → `.claude/settings.local.json` (gitignored).
-- **CI:** [.github/workflows/ci.yml](.github/workflows/ci.yml) runs lint, evals and the package check on every push and PR.
-- **Evals:** see [evals/README.md](evals/README.md).
+- Personal config: copy `settings.local.json.template` to `.claude/settings.local.json` (gitignored).
+- CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) runs lint, evals, and the package check on every push and PR.
+- Details: [SKILL.md](skills/muffy/SKILL.md) · [steps](skills/muffy/references/steps.md) · [loops](skills/muffy/references/loops.md) · [evals](evals/README.md)
