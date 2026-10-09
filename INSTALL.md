@@ -67,8 +67,9 @@ Caveats:
 
    The team-flow rules are in `team-flow-settings-template.json`; merge its `hooks` key by hand.
 2. Check `SECOND_BRAIN_VAULT` in `.claude/settings.local.json`.
-3. Add the repo's own docs the flow uses: `docs/plan/`, `docs/adr/`, `docs/design-system/`, and `.nvmrc` if devops should check the runtime.
-4. Start a feature from the main Claude Code session: `/muffy <feature request>` with a kebab-case task name.
+3. Existing codebase: run `/muffy onboard` once (add `--scan` to the installer to pre-generate its input). It writes `docs/architecture/baseline.md` and an ADR for the stack you already have, and waits for your review. See [onboard.md](skills/muffy/references/onboard.md).
+4. Add the repo's own docs the flow uses: `docs/plan/`, `docs/adr/`, `docs/design-system/`, and `.nvmrc` if devops should check the runtime.
+5. Start a feature from the main Claude Code session: `/muffy <feature request>` with a kebab-case task name.
 
 ## Not for
 
