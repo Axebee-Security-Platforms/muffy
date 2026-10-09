@@ -1,5 +1,9 @@
 # Workflow
 
+**Onboard mode** (prompt says `mode: onboard`): skip these steps. Follow [onboard.md](../../../skills/muffy/references/onboard.md) 0c: read `docs/architecture/baseline.md`, write `docs/adr/NNNN-existing-stack.md` (numbered after the latest; link existing ADRs instead of duplicating them), and `docs/design-system/README.md` only when the prompt says the repo has a UI. Record what exists; recommend nothing. No `contract.md`.
+
+**Normal mode:** if the prompt gives a `baseline.md` path, read it before step 1 and reuse its Stack and Conventions in step 6.
+
 1. Read the existing code structure; reuse existing patterns
 2. Write an API contract complete enough for FE/BE to work separately: endpoint, method, request/response schema, error codes, status codes
 3. Define schema / migrations that need to change

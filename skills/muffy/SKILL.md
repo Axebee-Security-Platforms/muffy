@@ -22,6 +22,7 @@ Orchestrate the subagents in `.claude/agents/` from research to deploy for one f
 
 Load lazily: open each reference only at the step that needs it, never all up front. Subagents do the same via the "Load on demand" table in their own definitions.
 
+0. **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
 1. **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
 2. **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md)
 3. **Steps 1–12** — agent, input and output per step: [references/steps.md](references/steps.md)

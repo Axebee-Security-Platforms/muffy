@@ -5,7 +5,9 @@
 // Writes .claude/skills/muffy/VERSION and MANIFEST.json (the agent files this install owns).
 // --clean removes the previous install first, including agent files that a newer version dropped.
 // Creates .claude/settings.local.json only when missing, and adds ignore lines to .gitignore.
+// --scan runs the repo scanner after install and writes .team/onboard/scan.json (input for /muffy onboard).
 // Hooks are not added by default. --with-guard merges only the env guard into hooks.PreToolUse.
+import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync, statSync } from 'node:fs';
 import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +26,7 @@ const clean = flag('--clean');
 const force = flag('--force') || clean; // --clean always replaces the files it installs
 const vault = valueOf('--vault');
 const withGuard = flag('--with-guard');
+const scan = flag('--scan');
 
 const log = (msg) => console.log(`${dryRun ? '[dry-run] ' : ''}${msg}`);
 const warn = (msg) => console.warn(`warning: ${msg}`);
@@ -44,11 +47,12 @@ if (major < 18) die(`Node 18+ required, found ${process.versions.node}`);
 if (flag('--help') || positional.length === 0) {
   console.log(`muffy ${pkg.version} installer
 
-usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean] [--with-guard]
+usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean] [--with-guard] [--scan]
 
   --vault       path to the Obsidian vault (written to .claude/settings.local.json)
   --with-guard  merge the env guard (guard-env.mjs) into hooks.PreToolUse of .claude/settings.local.json
                 never overwrites other keys; skipped with a message if PreToolUse already exists
+  --scan        scan the target repo and write .team/onboard/scan.json, the input for /muffy onboard
   --dry-run     print what would change (incl. the hook JSON to merge), write nothing
   --force    overwrite .claude/agents and .claude/skills/muffy if they already exist
   --clean    update: remove the previous muffy install first (files from its MANIFEST.json,
@@ -152,6 +156,22 @@ if (settingsChanged && !dryRun) {
   writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
 }
 
+// 4b. optional scan of an existing codebase (facts for /muffy onboard)
+let scanSummary = '';
+if (scan) {
+  const scanOut = join(target, '.team', 'onboard', 'scan.json');
+  log(`scan: ${rel(scanOut, target)}`);
+  if (!dryRun) {
+    try {
+      execFileSync(process.execPath, [join(skillDst, 'scripts', 'scan-repo.mjs'), target, '--out', scanOut], { stdio: 'pipe' });
+      const r = JSON.parse(readFileSync(scanOut, 'utf8'));
+      scanSummary = r.hasCode ? `Scan found ${r.sourceFiles.total} source files.` : 'Scan found no source files (new repo): onboarding is not needed.';
+    } catch (e) {
+      warn(`scan failed: ${String(e.message).split(/\r?\n/)[0]}`);
+    }
+  }
+}
+
 // 5. ignore lines: add only the ones missing
 const ignoreLines = ['.claude/settings.local.json', '.worktrees/', '.team/**/diff*.patch'];
 const gitignore = join(target, '.gitignore');
@@ -176,4 +196,6 @@ Done${dryRun ? ' (dry run, nothing written)' : ''}. Remaining manual steps:
    - team-flow rules (${Object.keys(hooks).join(', ')}) are in team-flow-settings-template.json — merge the "hooks" key by hand.
 2. Set SECOND_BRAIN_VAULT in .claude/settings.local.json if it still shows the placeholder.
 3. Make sure the repo has docs/plan/, docs/adr/, docs/design-system/ (where the flow needs them) and .nvmrc if devops checks the runtime.
-4. Start a feature from the main session: /muffy <feature request> with a kebab-case <task> name.`);
+4. Existing codebase? Run /muffy onboard once before the first feature${scan ? ' (scan.json is ready).' : '; add --scan to this installer to pre-generate its input.'}${scanSummary ? ' ' + scanSummary : ''}
+   It writes docs/architecture/baseline.md and an ADR for the stack you already have, then waits for your review.
+5. Start a feature from the main session: /muffy <feature request> with a kebab-case <task> name.`);

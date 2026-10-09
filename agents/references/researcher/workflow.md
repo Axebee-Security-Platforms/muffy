@@ -1,5 +1,9 @@
 ## Workflow
 
+**Onboard mode** (prompt says `mode: onboard`): skip this workflow. Follow [onboard.md](../../../skills/muffy/references/onboard.md) 0b: read `.team/onboard/scan.json`, confirm and extend it from the code, write `docs/architecture/baseline.md`, mark anything unconfirmed `[verify]`. Record facts, not recommendations; never run the build or tests.
+
+**Normal mode:** if the prompt gives a `baseline.md` path, read it first; it is L0 knowledge for the codebase. If the code contradicts it, trust the code and note the drift in the brief.
+
 0. **Read the second brain first**, narrowest to widest — stop when you have what you need:
    1. `<vault>/Projects/<repo-name>/project.md` (Lessons, Open issues, Tasks)
    2. Other projects' `<vault>/Projects/*/project.md` only when their domain/stack overlaps with this work

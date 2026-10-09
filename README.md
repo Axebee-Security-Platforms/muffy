@@ -60,6 +60,7 @@ Requires Node 18+. Run from anywhere, pointing at the target repo root:
 node install.mjs /path/to/your-repo --vault "/absolute/path/to/Obsidian Vault"
 ```
 
+- Existing codebase? Add `--scan`, then run `/muffy onboard` once to record the current stack as a baseline doc and ADR before the first feature.
 - Preview first with `--dry-run`. Update an existing install with `--clean`.
 - Hooks are not installed automatically. Merge `team-flow-settings-template.json` into `.claude/settings.local.json` by hand.
 - Full steps: [INSTALL.md](INSTALL.md).

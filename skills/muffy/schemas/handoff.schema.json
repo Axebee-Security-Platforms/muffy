@@ -9,7 +9,7 @@
   "properties": {
     "role": { "enum": ["researcher", "product-manager", "designer", "architect", "devops", "frontend-dev", "backend-dev", "code-reviewer", "qa-tester", "docs-writer"] },
     "task": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
-    "step": { "type": "string", "pattern": "^([1-9]|1[0-2])[a-d]?$" },
+    "step": { "type": "string", "pattern": "^(0|[1-9]|1[0-2])[a-d]?$" },
     "mode": { "enum": [1, 2, 3], "description": "devops only" },
     "round": { "type": "integer", "minimum": 1, "description": "1 = first attempt; +1 per fix round" },
     "status": { "enum": ["done", "blocked", "needs-input", "not-ready"] },
