@@ -1,104 +1,95 @@
-# 🎯 Skill Lifecycle & Muffy Agent Workflow
+# 🎯 Muffy — Feature Development Agent Team
 
-How skills power the team flow in muffy.
+muffy is a hub-and-spoke subagent team plus one skill (`muffy`). The main Claude Code session is the **Orchestrator**; it runs one feature from research to production through 10 specialist agents. Subagents never talk to each other: work moves between them as files in `.team/<task>/`.
 
-> Source: [skills/muffy/how-skill-work.html](skills/muffy/how-skill-work.html)
-
----
-
-## How Muffy Agents Invoke Skills
-
-### Example 1: Designer → `impeccable`
-
-- **Orchestrator:** `"Design the login flow"`
-- **Agent definition includes:** `skills: [impeccable]`
-- **Workflow:** Designer creates canvas → uses `impeccable` skill to review visual hierarchy, accessibility, consistency with design system → polishes & reports
-
-> 💡 Skill is declared in agent definition; activates during workflow
-
-### Example 2: Frontend-dev → `impeccable`
-
-- **Orchestrator:** `"Build the login UI per design.md"`
-- **Agent definition includes:** `skills: [impeccable]`
-- **Workflow:** Frontend-dev builds components using shadcn/ui → uses `impeccable` skill to review responsive design, contrast, accessibility → refines & commits
-
-> 💡 FE developer can invoke skill to polish UI before code review
-
-### Example 3: QA-tester → blocker triage
-
-- **Orchestrator:** `"Test login feature on fe/login branch"`
-- **QA workflow (no explicit skill call):** Write tests → Run tests → Separate blockers (breaks AC) from non-blockers (polish)
-- **Result:** QA reports blockers to Orchestrator → Orchestrator routes blockers to FE/BE → QA retests when fixed
-
-> 💡 QA's methodology is built into the agent's workflow; prioritization rules replace an external skill
-
-### 🎯 Key Pattern: Skills in Muffy
-
-- **Each agent has a defined set of skills** in its agent definition (e.g., `.claude/agents/designer.md`)
-- **Skills activate at specific workflow steps** (e.g., Designer loads `impeccable` before handing off to Frontend)
-- **When FE/BE need a skill**, it's listed in their agent definition or invoked during workflow based on task needs
+> Source: [skills/muffy/SKILL.md](skills/muffy/SKILL.md) · flow details: [skills/muffy/references/steps.md](skills/muffy/references/steps.md) · how skills work: [skills/muffy/how-skill-work.html](skills/muffy/how-skill-work.html)
 
 ---
 
-## With Skill vs Without Skill
+## Install
 
-| ✓ With Skill | ✗ Without Skill |
+```bash
+node install.mjs /path/to/your-repo --vault "/absolute/path/to/Obsidian Vault"
+node install.mjs /path/to/your-repo --clean     # update an existing install
+```
+
+Full steps (dry-run, `--force`, `--clean` caveats, hooks to add by hand) are in [INSTALL.md](INSTALL.md).
+
+---
+
+## Agents
+
+| Agent | Model | Tools | Role |
+|---|---|---|---|
+| `researcher` | sonnet | Read, Grep, Glob, WebSearch, WebFetch, Write | Research the request → `brief.md` |
+| `product-manager` | sonnet | Read, Grep, Glob, Write | Acceptance criteria (`ac.md`) and plan |
+| `architect` | sonnet | Read, Grep, Glob, Write | API/data contract, aligned with deploy |
+| `designer` | sonnet | Read, Grep, Glob, Edit, Write | UX/UI from AC → design canvas (`design.md`) |
+| `devops` | sonnet | Read, Grep, Glob, Edit, Write, Bash | Deployability check, smoke build, staging, production |
+| `frontend-dev` | sonnet | Read, Grep, Glob, Edit, Write, Bash | FE implementation on `fe/<task>` |
+| `backend-dev` | sonnet | Read, Grep, Glob, Edit, Write, Bash | BE implementation on `be/<task>` |
+| `code-reviewer` | sonnet | Read, Grep, Glob | Approve / Reject diffs (cannot write files) |
+| `qa-tester` | sonnet | Read, Grep, Glob, Edit, Write, Bash | Tests and `qa-report.md` |
+| `docs-writer` | haiku | Read, Grep, Glob, Edit, Write | Docs and `release-notes.md` |
+
+Agent definitions live in `agents/<role>.md`; their per-role references (principles, workflow, quality checks) live in `agents/references/<role>/`.
+
+### Skills
+
+Skills are declared in an agent's frontmatter `skills:` list and load when that agent runs. Right now only one is declared:
+
+| Agent | Declared skills |
 |---|---|
-| Pre-written workflow loaded | Agent reinvents workflow |
-| Context stays focused | Context diluted with instructions |
-| Consistent methodology | Inconsistent approach |
-| Faster execution | Slower execution |
-| Reduced token usage | Higher token usage |
-| Reusable knowledge | Knowledge not captured |
-| Team alignment | Team misalignment |
+| `designer` | `impeccable` |
+
+Everything else is plain agent workflow, with no extra skill.
 
 ---
 
-## Muffy Agent Team Flow with Skills
+## Workflow (Steps 1–12)
 
-| Step | Agent | Skills |
+Full input/output per step: [skills/muffy/references/steps.md](skills/muffy/references/steps.md).
+
+| # | Agent | Output |
 |---|---|---|
-| 1 | 🔍 Researcher | `research`, `deep-research` |
-| 2 | 📋 Product | `to-prd`, `grilling` |
-| 3 | 🏗️ Architect | `codebase-design`, `anthropic-skills:arch-review` |
-| 4 | 🎨 Designer | `impeccable` |
-| 5 | ⚙️ DevOps | `devops` (modes 1-3) |
-| 6a | 💻 Frontend | `impeccable` |
-| 6b | 🔧 Backend | `tdd` |
-| 7 | 👀 Reviewer | `scrutinize`, `code-review` |
-| 8 | ✅ QA | `tdd` |
-| 9 | 📝 Docs | `anthropic-skills:write-runbook` |
+| 1 | `researcher` | `brief.md` |
+| 2 | `product-manager` | `ac.md`, `docs/plan/<task>.md`, `docs/adr/NNNN-*.md` |
+| 3 | `designer` ∥ `architect` ∥ `devops` (mode 1) | `design.md`, `contract.md`, `deploy.md` |
+| 3c | **Design gate** | blocks step 4 until `design.md` is complete |
+| 3d | `devops` (mode 2) on `ops/<task>` | Pass/Fail smoke build; blocks step 4 |
+| 4 | `frontend-dev` ∥ `backend-dev` | branches `fe/<task>`, `be/<task>` |
+| 5 | Orchestrator | merge into `feature/<task>` (`--no-ff`) |
+| 6 | `code-reviewer` | Approve / Reject |
+| 7 | `qa-tester` ∥ `docs-writer` | `qa-report.md`, docs, `release-notes.md` |
+| 8 | `code-reviewer` | Approve / Reject on docs and fix diff |
+| 9 | `devops` (staging) | staging health and smoke result |
+| 10 | **Human gate** | approve / reject via `AskUserQuestion` |
+| 11 | `devops` (production) | canary → 100%, or rollback |
+| 12 | Orchestrator | closing checks and final message |
 
-> 🔄 **Skill-Powered Workflow Benefits**
->
-> - ✓ Each agent loads the right skill for their role
-> - ✓ Skills are reusable across projects
-> - ✓ Consistent quality across the team
-> - ✓ Knowledge stays in skills, not context
-> - ✓ Faster onboarding of new agents
+Run profiles can skip some steps, but review, QA, staging and the Human gate are never skipped.
 
 ---
 
 ## Key Concepts
 
-### 💡 What is a Skill?
-
-A packaged set of instructions, workflows, and best practices for a specific task. Skills are invoked when an agent needs them, keeping context focused and token usage efficient.
-
-### 🎯 When to Use Skills?
-
-Use skills when a task has a standard methodology (testing, design review, code review, writing docs, debugging, etc.). Skills transform ad-hoc approaches into repeatable patterns.
+- **Hand-off JSON:** every agent ends with a JSON block validated by [skills/muffy/schemas/handoff.schema.json](skills/muffy/schemas/handoff.schema.json).
+- **Loops & fallbacks:** max 3 fix loops per point, early stop on a repeated blocker, then escalation to the user. See [skills/muffy/references/loops.md](skills/muffy/references/loops.md).
+- **Memory:** repo (`docs/`), task folder (`.team/<task>/`), and Obsidian vault (`SECOND_BRAIN_VAULT`). See [skills/muffy/references/memory-model.md](skills/muffy/references/memory-model.md).
+- **Hooks:** the installer does not add them. The env guard and team-flow rules are in `team-flow-settings-template.json` and must be merged by hand.
 
 ---
 
 ## Development & Quality Gates
 
 ```bash
-npm test            # prompt/link lint + offline evals (also runs in CI)
-npm run package     # stage a clean copy in dist/muffy (no .git, no personal config)
+npm test             # lint + offline evals (also runs in CI)
+npm run lint         # prompt/link lint only
+npm run eval         # offline evals only
+npm run eval:sync    # re-copy each agent's rubric from its quality-checks.md
+npm run package      # stage a clean copy in dist/muffy (no .git, no personal config)
 ```
 
-- **Personal config**: copy `settings.local.json.template` → `.claude/settings.local.json` (gitignored)
-- **Structured hand-offs**: every agent ends with a JSON block validated by `skills/muffy/schemas/handoff.schema.json`
-- **Loops & fallbacks**: 3 fix loops per point, repeated-blocker early stop, user escalation — see `skills/muffy/references/loops.md`
-- **Evals & mock scenarios**: see [evals/README.md](evals/README.md)
+- **Personal config:** copy `settings.local.json.template` → `.claude/settings.local.json` (gitignored).
+- **CI:** [.github/workflows/ci.yml](.github/workflows/ci.yml) runs lint, evals and the package check on every push and PR.
+- **Evals:** see [evals/README.md](evals/README.md).
