@@ -72,4 +72,12 @@ Install (persistent config — the user approves it; never add it silently):
 ]
 ```
 
-All six rules are **non-negotiable**. Rule 7 is opt-in.
+## 8. Artifact size — optional, needs user approval
+**Rule:** `ac.md`, `brief.md`, `contract.md` ≤ 60 lines, their part files (`ac/`, `brief/`, `contract/`) ≤ 120 lines, links resolve, every AC id appears in `contract.md`. Enforced after each write to one of those files by [scripts/check-artifacts.mjs](../scripts/check-artifacts.mjs) (exit 2 = block). Opt-in like rule 7.
+```json
+"PostToolUse": [
+  { "matcher": "Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/check-artifacts.mjs --hook" } ] }
+]
+```
+
+All six rules are **non-negotiable**. Rules 7 and 8 are opt-in.

@@ -4,9 +4,9 @@
 Runtime: Node 22.14 (matches deploy.md). Postgres 16. Reason: existing codebase.
 
 ## Endpoints
-### POST /login
-- Request: `{ "email": string, "password": string }`
-- 200: `{ "ok": true }`; 401 `invalid_credentials`; 429 `rate_limited`
+| Endpoint | Detail |
+|---|---|
+| POST /login | [post-login] |
 
 ## Schemas / migrations
 `sessions(id, user_id, expires_at)` - reversible migration 0003.
@@ -24,3 +24,5 @@ Runtime: Node 22.14 (matches deploy.md). Postgres 16. Reason: existing codebase.
 | AC-1 | POST /login 200 |
 | AC-2 | POST /login 429, 5/min limiter |
 | AC-3 | n/a (UI only) |
+
+[post-login]: contract/endpoints/post-login.md
