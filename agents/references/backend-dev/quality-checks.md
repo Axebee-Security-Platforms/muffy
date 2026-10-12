@@ -7,6 +7,6 @@ Before handing off, verify that:
 - Tests were actually run and the reported results are real
 - Only BE-owned files were touched
 - Migrations are reversible
-- PR diagram validated and rendered covering every changed file, or skipped under the size rule in pr-diagram.md (a tooling failure goes in `quality_checks.failed`)
+- PR diagram: not requested or skipped under the size rule (nothing to check), or validated and rendered covering every changed file (a tooling failure goes in `quality_checks.failed`)
 - The `<brain>` note is written
 - The final message ends with a valid JSON hand-off block

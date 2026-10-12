@@ -3,9 +3,11 @@
 Draw the change you made as a PR Lens diagram so the Orchestrator and reviewers see the blast radius before reading code. Uses the `pr-lens` CLI; nothing to install (needs Node 18+ and network for `npx`). Token cost is real (a diagram is ~4k tokens of output), so draw only when it pays off.
 
 ### When
-Run `git diff --shortstat main...HEAD` after lint/tests pass and everything is committed.
-- **Draw** if the diff touches 6 or more files, or adds/removes/changes an endpoint, route, migration, or a call across the FE/BE boundary.
-- **Skip** otherwise and write `diagram skipped: small change` in the brain note. A size skip is not a failed quality check.
+**Off by default. Do not draw a diagram** unless the Orchestrator's prompt explicitly says to draw the PR diagram. When it is not asked for, skip every step below, write `diagram: not requested` in the brain note, and do not count it as a failed quality check.
+
+When it is asked for:
+- Run `git diff --shortstat main...HEAD` after lint/tests pass and everything is committed.
+- **Draw** if the diff touches 6 or more files, or adds/removes/changes an endpoint, route, migration, or a call across the FE/BE boundary. Otherwise skip with `diagram skipped: small change`.
 - Fix rounds: redraw only if the set of changed files or flows changed; otherwise reuse the earlier diagram and say so.
 
 ### Steps
