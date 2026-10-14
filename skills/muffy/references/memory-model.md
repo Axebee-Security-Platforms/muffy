@@ -28,7 +28,7 @@ Updated: step <n> · round <n>
 
 ## Goal                      pinned — copy verbatim from the request / brief.md, never summarize
 ## Run profile               skipped steps + reasons
-## Status                    step reached; gates 3c/3d passed|skipped
+## Status                    step reached; gates 3c/3d passed|skipped; canvas: <Claude Design Artifact URL> (set at 3b, updated on every republish)
 ## Decisions in force        ADR ids, stack, runtime pin (from deploy.md)
 ## Loop counters             <step>:<owner> n/3, one line per point used
 ## Open blockers             id · file:line · owner · rounds open (latest round only, in full)
