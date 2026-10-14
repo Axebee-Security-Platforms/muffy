@@ -11,8 +11,8 @@ Not for a new, empty repo (nothing to record) or when `docs/architecture/baselin
 | 0a | Orchestrator | Setup as in [setup.md](setup.md) (skip setup step 3 baseline check, the scope pause and worktrees). Run `node .claude/skills/muffy/scripts/scan-repo.mjs . --out .team/onboard/scan.json` unless `install.mjs --scan` already did | `scan.json`: facts only |
 | 0b | `researcher` (onboard mode) | Reads `scan.json`, then the code to confirm and fill it (entrypoints, patterns in use, auth, data access, error handling, naming, test style, build/test/lint commands) | `docs/architecture/baseline.md` |
 | 0c | `architect` (onboard mode) | Reads `baseline.md`; records the stack in force; adds `docs/design-system/` only when `scan.json` → `ui.likely` | `docs/adr/NNNN-existing-stack.md`, `docs/design-system/README.md` (UI only) |
-| 0d | **Human gate** `pause:onboard-review` | `AskUserQuestion` with the baseline summary, the ADR, and the `[verify]` list. Approve / Edit / Reject | approved baseline |
-| 0e | Orchestrator | Seed `<brain>/project.md` (Lessons, Open issues) from the baseline's open issues; commit the docs | `project.md` |
+| 0d | **Human gate** `pause:onboard-review` | `AskUserQuestion` with the baseline summary, the ADR, the `[verify]` list, and the proposed agent-context change (see below). Approve / Edit / Reject | approved baseline |
+| 0e | Orchestrator | Seed `<brain>/project.md` (Lessons, Open issues) from the baseline's open issues; apply the approved agent-context change; commit the docs | `project.md`, `CLAUDE.md` / `AGENTS.md` |
 
 0b then 0c run in sequence (0c reads 0b's output). A Reject at 0d goes back to the owner of the point the user names, under the normal fix-loop limits in [loops.md](loops.md).
 
@@ -29,11 +29,31 @@ Frontmatter: `commit` (HEAD sha it describes), `date`, `scan` (path). Sections, 
 - **Open issues**: things that look broken or risky, with evidence. These seed `project.md`
 - **`[verify]`**: every claim the agent could not confirm from code. The user checks these at 0d
 
+## Agent context file (CLAUDE.md / AGENTS.md)
+
+`install.mjs` never touches these files; onboard owns them. `scan.json` → `docs.claudeMd` / `docs.agentsMd` says which exist. Show the exact change at 0d and write it only after approval.
+
+- **Neither exists**: create `CLAUDE.md` with only the muffy block below
+- **One or both exist**: add the muffy block to each existing file; leave every other line as is
+- **Block already present** (between the markers): replace only the text inside the markers
+
+The block is short and points at files instead of copying them:
+
+```
+<!-- muffy:begin -->
+## muffy
+Stack, layout, conventions and commands: `docs/architecture/baseline.md`. Decisions: `docs/adr/`.
+Features run through `/muffy <request>`; task state lives in `.team/<task>/`.
+<!-- muffy:end -->
+```
+
+Do not restate baseline content in the block: it goes stale, the baseline carries a `commit`.
+
 ## Rules
 
 - Facts from files only. Unknown = `[verify]`, never a guess. No recommendations and no refactors: this is a record of what is, not a plan
 - `.env*` files are never opened. Env variable names come from code references or an example file the repo ships
-- Writes allowed, beyond the usual: researcher → `docs/architecture/baseline.md`; architect → `docs/adr/` and `docs/design-system/`. Nothing else in the repo changes
+- Writes allowed, beyond the usual: researcher → `docs/architecture/baseline.md`; architect → `docs/adr/` and `docs/design-system/`; orchestrator → the muffy block in `CLAUDE.md` / `AGENTS.md`, after 0d approval. Nothing else in the repo changes
 - Existing `docs/adr/` records win: do not renumber, rewrite or contradict them. The new ADR is numbered after the latest and says "accepted: records the stack as found on `<date>`". If the repo already has ADRs covering the stack, link them instead of writing a duplicate
 - A design-system README lists tokens and components that exist in code; it invents none
 - Hand-off blocks use `"step": "0"` (see [handoff.schema.json](../schemas/handoff.schema.json))
@@ -43,6 +63,7 @@ Frontmatter: `commit` (HEAD sha it describes), `date`, `scan` (path). Sections, 
 - `baseline.md` has every section above and a `commit` that matches HEAD
 - Each Commands entry exists in a manifest or CI file
 - The ADR lists the stack, matches `baseline.md`, and has no recommendations
+- Every existing `CLAUDE.md` / `AGENTS.md` has the muffy block (or `CLAUDE.md` was created), with nothing outside the markers changed
 - The user approved at 0d, and the approval is in `checkpoint.md` → `## Status`
 
 ## Later runs
