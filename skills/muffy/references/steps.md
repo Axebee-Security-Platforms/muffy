@@ -3,8 +3,8 @@
 | # | Agent | Input | Output |
 |---|---|---|---|
 | 0 | `researcher` → `architect`, once per repo | `scan.json` | `docs/architecture/baseline.md`, `docs/adr/NNNN-existing-stack.md`; Human gate `pause:onboard-review`. Existing codebases only: [onboard.md](onboard.md) |
-| 1 | `researcher` | request (+ min level) | `brief.md` + level reached; `[verify]` left on a hard-to-reverse decision → send back for the next level; spikes → devops in 3d |
-| 2 | `product-manager` | `brief.md` | `ac.md`, `docs/plan/<task>.md` (phases + P0/P1/P2), `docs/adr/NNNN-*.md` |
+| 1 | `researcher` | request (+ min level) | `needs-input` → interview the user first ([requirements.md](requirements.md)); then `brief.md` + level reached; `[verify]` left on a hard-to-reverse decision → send back for the next level; spikes → devops in 3d |
+| 2 | `product-manager` | `brief.md`, `requirements.md` | `needs-input` → interview the user first ([requirements.md](requirements.md)); then `ac.md`, `docs/plan/<task>.md` (phases + P0/P1/P2), `docs/adr/NNNN-*.md` |
 | 3 | `designer` ∥ `architect` ∥ `devops` mode 1 — one message | `ac.md`, `brief.md`, plan | `design.md`, `contract.md`, `deploy.md`; then architect aligns the contract with `deploy.md` (pinned runtime, devops-owned files) |
 | 3b | Orchestrator | `.team/<task>/canvas/` | Publish the canvas on Claude Design (Artifact type "Design", `quickstart` intent `design`), put the URL in `design.md`; after `contract.md`, designer aligns fields and you republish |
 | 3c | **Design gate** | `design.md` + URL | Designer's Definition of done all checked (published, every AC has an artboard, no placeholders, values from `docs/design-system/` tokens, new components documented) — else send back. **Blocks step 4** |
