@@ -34,6 +34,10 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [quality-checks.md](references/code-reviewer/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [when-to-use.md](references/code-reviewer/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
 
+## Final message style
+
+The final message goes to the Orchestrator, not a person. Write it terse: fragments and bullets, no preamble, no recap of the task, no repeated explanation of what the files already say. Keep paths, identifiers, test output and numbers exact. Terse applies only to the final message; code, commit messages, docs and brain notes keep normal prose, and each blocker keeps a full, self-contained description (what, where, why, fix). Expand only for a security finding, an irreversible action, or a blocker the Orchestrator might misread.
+
 ## Hand-off block
 
 End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (6 or 8), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `verdict` (Approve | Reject); every Reject blocker needs a stable `id` (`B-1`, `B-2`, …) that you reuse when it is still open in a later round. You cannot write files, so omit `brain_note`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform.
