@@ -28,6 +28,7 @@
     "Every hard-to-reverse decision has evidence from L1 or above (none still marked `[verify]`)",
     "Every key risk has evidence or has been turned into a clear spike/open question",
     "Every claim from outside the repo has a source URL",
+    "No material unknown was guessed silently: each is answered in `requirements.md`, asked via `needs-input`, or marked `[assumed]`",
     "The `<brain>` note is written",
     "The final message ends with a valid JSON hand-off block"
   ],

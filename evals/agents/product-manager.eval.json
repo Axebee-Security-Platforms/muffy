@@ -24,6 +24,7 @@
     "The plan has phases, and every task has a priority",
     "No P0 task depends on a P1/P2 task",
     "At least one ADR covers the MVP scope",
+    "No material unknown was guessed silently: each is answered in `requirements.md`, asked via `needs-input`, or marked `[assumed]`",
     "The `<brain>` note is written",
     "The final message ends with a valid JSON hand-off block"
   ],

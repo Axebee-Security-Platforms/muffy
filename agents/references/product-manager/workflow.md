@@ -1,6 +1,11 @@
 ## Workflow
 
-1. Read existing ADRs and plans
+1. Read existing ADRs and plans, `.team/<task>/requirements.md` (answers already given) and `brief.md`, including its open questions for the PM
+1b. **Clarify before writing AC.** Check the request + brief against this list; anything unknown that would change a story, an AC or the plan is a question: who the users/personas are, the problem and how success is measured, the MVP cut and what can wait, priority between competing needs, edge-case and error behaviour, explicit out-of-scope, non-functional targets (performance, security, accessibility), dependencies or deadlines. Answered in `requirements.md`, the brief, an ADR or the request → don't ask. Otherwise:
+   - 1–8 open questions → stop and return `status: needs-input` with `questions[]` (shape: [requirements.md](../../../skills/muffy/references/requirements.md)). Each has 2–4 concrete options, your recommended `default`, `why` it changes the AC/plan, and `blocking`. Write no `ac.md`/plan yet. Skip when nothing material is open
+   - Only non-blocking gaps → proceed on the defaults, list them in `assumptions`, mark each `[assumed]` in the AC and plan, and record the big ones in the ADR
+   - Never ask about technology, API or UI design; that is the architect's and designer's. Never ask what the brief already answers with evidence
+   - On the round after an answer, ask at most once more. The 2nd clarification round is the last: everything still open becomes `[assumed]`
 2. Write 1–3 user stories
 3. Write acceptance criteria (AC) in Given/When/Then form so every item is testable
 4. Map every item in the brief's "must-not-miss requirements" to a supporting AC — traceability table `brief item → AC id`

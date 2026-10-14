@@ -46,6 +46,29 @@
         "failed": { "type": "array", "items": { "type": "string", "minLength": 3 } }
       }
     },
+    "questions": {
+      "type": "array",
+      "maxItems": 8,
+      "description": "researcher / product-manager only: open requirement questions the Orchestrator relays to the user (status needs-input)",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question", "why", "options", "default", "blocking"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^Q-[0-9]+$", "description": "Stable across rounds" },
+          "question": { "type": "string", "minLength": 3, "maxLength": 200 },
+          "why": { "type": "string", "minLength": 3, "maxLength": 200, "description": "What the answer changes" },
+          "options": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "type": "string", "minLength": 1, "maxLength": 80 } },
+          "default": { "type": "string", "minLength": 1, "maxLength": 80, "description": "The agent's recommended option; used if the user skips" },
+          "blocking": { "type": "boolean", "description": "true = cannot continue without the answer; false = proceed on the default" }
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 3, "maxLength": 200 },
+      "description": "Defaults the agent proceeded on without an answer; each is marked [assumed] in its deliverable"
+    },
     "brain_note": { "type": "string", "description": "Path of the <brain>/agents/<role>/<task>.md written; absent for code-reviewer (Orchestrator writes it)" },
     "summary": { "type": "string", "minLength": 3, "maxLength": 600 }
   },
@@ -54,6 +77,8 @@
     { "if": { "properties": { "role": { "enum": ["qa-tester"] } }, "required": ["role"] }, "then": { "required": ["verdict", "tests"], "properties": { "verdict": { "enum": ["Pass", "Fail"] } } } },
     { "if": { "properties": { "role": { "enum": ["devops"] } }, "required": ["role"] }, "then": { "required": ["mode"] } },
     { "if": { "properties": { "role": { "enum": ["frontend-dev", "backend-dev"] } }, "required": ["role"] }, "then": { "required": ["ac_ids_done"] } },
+    { "if": { "properties": { "status": { "enum": ["needs-input"] } }, "required": ["status"] }, "then": { "required": ["questions"], "properties": { "questions": { "minItems": 1 } } } },
+    { "if": { "properties": { "questions": { "minItems": 1 } }, "required": ["questions"] }, "then": { "properties": { "role": { "enum": ["researcher", "product-manager"] } } } },
     { "if": { "properties": { "verdict": { "enum": ["Reject", "Fail"] } }, "required": ["verdict"] }, "then": { "properties": { "blockers": { "minItems": 1 } } } },
     { "if": { "properties": { "quality_checks": { "properties": { "passed": { "enum": [false] } }, "required": ["passed"] } }, "required": ["quality_checks"] }, "then": { "properties": { "status": { "enum": ["not-ready", "blocked", "needs-input"] }, "quality_checks": { "properties": { "failed": { "minItems": 1 } } } } } }
   ]

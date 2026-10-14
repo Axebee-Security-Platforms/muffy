@@ -26,6 +26,7 @@ Load lazily: open each reference only at the step that needs it, never all up fr
 1. **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
 2. **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md)
 3. **Steps 1–12** — agent, input and output per step: [references/steps.md](references/steps.md)
+3b. **Requirements interview** — researcher/PM return `needs-input`; relay their questions to the user: [references/requirements.md](references/requirements.md)
 4. **Loops** — read only when a reject/fail happens: fix loops (max 3), fallback ladder, escalation: [references/loops.md](references/loops.md)
 5. **Token discipline** — read once at setup: prompt template, hand-off block, fix rounds, diffs: [references/token-discipline.md](references/token-discipline.md)
 6. **Memory model** — read once at setup: repo vs `.team/` vs vault layout, `checkpoint.md`: [references/memory-model.md](references/memory-model.md)
