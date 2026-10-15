@@ -6,6 +6,7 @@ Before handing off, verify that:
 - Every must-not-miss requirement in the brief maps to an AC
 - The plan has phases, and every task has a priority
 - No P0 task depends on a P1/P2 task
+- Every phase has a `value / cost / risk` rating tied to the business goal, and every cut or deferred item has a reason
 - At least one ADR covers the MVP scope
 - No material unknown was guessed silently: each is answered in `requirements.md`, asked via `needs-input`, or marked `[assumed]`
 - The `<brain>` note is written

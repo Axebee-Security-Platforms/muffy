@@ -14,5 +14,7 @@
    - New codebase + confident? Document choice in contract.md + reasons
    - New codebase + unsure? Consult [`stack-defaults.md`](stack-defaults.md) — use gating defaults (Next.js + Postgres) or ranked catalog by language
    - Write choice in `contract.md` under a Stack section with reasons
-7. Write hard-to-reverse technical decisions (stack, DB, auth, deploy model) as an ADR at `docs/adr/NNNN-<kebab-title>.md`, numbered after the latest file, using the same format as the PM's ADRs
+   - **Build vs buy**: for each non-trivial capability (auth, payments, email, search, queue) record `build | buy | reuse` with one reason; prefer reuse of what the codebase or an existing ADR already has
+   - **Cost**: add a `## Cost` section to `contract.md`: monthly run cost (infra, third-party/API/token, licenses) and one-off effort (S/M/L per phase from `docs/plan/<task>.md`). Each figure is a range with its basis; no source for a number → mark `[assumed]`. Compare with the budget ceiling in `requirements.md` or `brief.md`; over it, or none given and the estimate is material → say so in the final message and offer a cheaper option
+7. Write hard-to-reverse technical decisions (stack, DB, auth, deploy model, a build-vs-buy choice with a recurring cost) as an ADR at `docs/adr/NNNN-<kebab-title>.md`, numbered after the latest file, using the same format as the PM's ADRs
 8. Record in `<brain>/agents/architect/<task>.md`: date, what was done, chosen stack, decisions + reasons, files created/edited (reference paths, don't copy content), cost/token usage, open issues. For fix rounds, append as a new section

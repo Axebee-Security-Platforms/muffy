@@ -1,7 +1,7 @@
 ## Workflow
 
 1. Read existing ADRs and plans, `.team/<task>/requirements.md` (answers already given) and `brief.md`, including its open questions for the PM
-1b. **Clarify before writing AC.** Check the request + brief against this list; anything unknown that would change a story, an AC or the plan is a question: who the users/personas are, the problem and how success is measured, the MVP cut and what can wait, priority between competing needs, edge-case and error behaviour, explicit out-of-scope, non-functional targets (performance, security, accessibility), dependencies or deadlines. Answered in `requirements.md`, the brief, an ADR or the request → don't ask. Otherwise:
+1b. **Clarify before writing AC.** Check the request + brief against this list; anything unknown that would change a story, an AC or the plan is a question: who the users/personas are, the problem and how success is measured, the MVP cut and what can wait, priority between competing needs, edge-case and error behaviour, explicit out-of-scope, non-functional targets (performance, security, accessibility), dependencies or deadlines, budget ceiling (infra, third-party/API, effort) and the business goal the feature serves. Answered in `requirements.md`, the brief, an ADR or the request → don't ask. Otherwise:
    - 1–8 open questions → stop and return `status: needs-input` with `questions[]` (shape: [requirements.md](../../../skills/muffy/references/requirements.md)). Each has 2–4 concrete options, your recommended `default`, `why` it changes the AC/plan, and `blocking`. Write no `ac.md`/plan yet. Skip when nothing material is open
    - Only non-blocking gaps → proceed on the defaults, list them in `assumptions`, mark each `[assumed]` in the AC and plan, and record the big ones in the ADR
    - Never ask about technology, API or UI design; that is the architect's and designer's. Never ask what the brief already answers with evidence
@@ -15,5 +15,6 @@
    - Each phase: a one-line goal, task list with priorities (`P0` must have / `P1` should have / `P2` if time allows), AC ids covered, dependencies, exit criteria for the phase
    - Within each phase, order tasks by priority then by dependency; P0 tasks must not depend on P1/P2 tasks
    - State which phases are in this team flow run; the rest is backlog
-7. **ADR** — every decision that is hard to reverse or where the next person needs to know "why" (MVP scope, what was cut, trade-offs from the brief) goes in `docs/adr/NNNN-<kebab-title>.md`, numbered after the latest file
+   - **Strategy score**: give each phase a one-line `value / cost / risk` rating (H/M/L) against the business goal and success metric; order phases and cut P1/P2 tasks by it, not by habit. A task with low value and high cost moves to backlog or is dropped with a reason
+7. **ADR** — every decision that is hard to reverse or where the next person needs to know "why" (MVP scope, what was cut and its strategy score, trade-offs from the brief) goes in `docs/adr/NNNN-<kebab-title>.md`, numbered after the latest file
 8. Record in `<brain>/agents/product-manager/<task>.md`: date, what was done, decisions + reasons, files created/edited (reference paths, don't copy content), cost/token usage, open issues. For fix rounds, append as a new section

@@ -43,3 +43,9 @@ These principles guide every design decision:
 - Existing codebase? Reuse patterns — consistency > novelty
 - Document why you deviated; use that learning to update the team catalog later
 - Defaults are a starting point, not law — but require written justification to override
+
+## 8. Cost Is a Design Constraint
+- Every recurring cost (hosting, API calls, tokens, licenses) is visible in `contract.md` before code starts
+- Estimates are ranges with a stated basis; an unsourced number is `[assumed]`
+- Build vs buy is decided per capability, favoring the option cheaper to maintain
+- If the design exceeds the budget, offer a cheaper alternative instead of silently shipping it

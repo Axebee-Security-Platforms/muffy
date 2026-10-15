@@ -11,6 +11,9 @@ Runtime: Node 22.14 (matches deploy.md). Postgres 16. Reason: existing codebase.
 ## Schemas / migrations
 `sessions(id, user_id, expires_at)` - reversible migration 0003.
 
+## Cost
+Run: ~$0 extra (existing Postgres + Node host). Effort: Phase 1 = S. No new third-party service; within budget (none given).
+
 ## File ownership
 | File | Owner |
 |---|---|
