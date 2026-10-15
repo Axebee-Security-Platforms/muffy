@@ -1,7 +1,7 @@
 # Output Format
 
 - Docs files in the locations the project's conventions dictate
-- `.team/<task>/release-notes.md` with sections: changes, breaking changes, migrations, rollback, announcement (value proposition, benefit bullets, short text)
+- `.team/<task>/release-notes.md` with sections: changes, breaking changes, migrations, rollback; plus announcement (value proposition, benefit bullets, short text) only when the prompt says `announcement: yes`
 - `<brain>/agents/docs-writer/<task>.md`
 
 Final message: list of files + places where the contract and code disagree (if any)
