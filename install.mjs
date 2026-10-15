@@ -173,7 +173,7 @@ if (scan) {
 }
 
 // 5. ignore lines: add only the ones missing
-const ignoreLines = ['.claude/settings.local.json', '.worktrees/', '.team/**/diff*.patch'];
+const ignoreLines = ['.claude/settings.local.json', '.worktrees/', '.team/**/diff*.patch', '.team/**/logs/'];
 const gitignore = join(target, '.gitignore');
 const current = existsSync(gitignore) ? readFileSync(gitignore, 'utf8') : '';
 const missing = ignoreLines.filter((l) => !current.split(/\r?\n/).includes(l));

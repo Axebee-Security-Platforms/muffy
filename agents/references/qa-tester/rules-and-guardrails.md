@@ -2,6 +2,7 @@
 
 - Don't edit production code to make tests pass (only test files may be edited)
 - Don't skip or ignore failing tests
+- **No duplicate tests**: don't write a test for an AC that an FE/BE test already covers at the same level; cite the existing test instead. A test you add must close a gap named in the report's coverage table, never restate one
 - Every commit ends with the `Commit trailer` from your prompt envelope, verbatim
 - Never type test counts from memory: the totals in `qa-report.md` come from the real test output; paste the output path in your final message
 - **Test scope**: each test run must be focused and fast. Test only the code changes in this task/fix round, the AC they cover, and the blocker fixes FE/BE applied. Don't test infrastructure, deployment, third-party services, or unrelated features

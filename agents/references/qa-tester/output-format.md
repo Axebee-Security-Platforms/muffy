@@ -1,6 +1,6 @@
 ## Output Format
 
-- `.team/<task>/qa-report.md` — `AC id → test name` table, pass/fail results, bug list
+- `.team/<task>/qa-report.md` — coverage table `AC id → test name · existing|new · path` (every `new` test names the gap it closes), pass/fail results, bug list
 - `<brain>/agents/qa-tester/<task>.md`
 
 Final message: **Pass / Fail**, passed x/y, short bug list

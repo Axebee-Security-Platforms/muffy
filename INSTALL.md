@@ -21,7 +21,7 @@ What it does:
 | `.claude/agents/` | `agents/` (subagent definitions and references) |
 | `.claude/skills/muffy/` | `skills/muffy/` (SKILL.md, references, schemas, scripts) |
 | `.claude/settings.local.json` | created only if missing; sets `SECOND_BRAIN_VAULT` |
-| `.gitignore` | adds `.claude/settings.local.json`, `.worktrees/`, `.team/**/diff*.patch` if missing |
+| `.gitignore` | adds `.claude/settings.local.json`, `.worktrees/`, `.team/**/diff*.patch`, `.team/**/logs/` if missing |
 
 Existing agents or skill folders are skipped unless you pass `--force`. An existing `settings.local.json` is never touched.
 

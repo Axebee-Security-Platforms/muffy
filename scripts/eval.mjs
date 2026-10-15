@@ -4,7 +4,9 @@
 // rules behave as documented on mock multi-agent scenarios.
 //   node scripts/eval.mjs                 run everything
 //   node scripts/eval.mjs --update-rubric re-sync evals/agents/*.eval.json `rubric` from quality-checks.md
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../skills/muffy/scripts/schema.mjs';
@@ -159,6 +161,55 @@ for (const [key, kw] of Object.entries({ runtime_or_dependency_changed: 'lockfil
 check('smoke-doc: every SMOKE_TRIGGERS key has a documented keyword', Object.keys(SMOKE_TRIGGERS).length === 4);
 check('smoke-doc: setup.md asks the staging question at pause:scope', /Staging: is there one/.test(readFileSync(rel('skills/muffy/references/setup.md'), 'utf8')));
 check('smoke-scenarios: every trigger has a positive scenario', Object.keys(SMOKE_TRIGGERS).every((k) => readJson(rel('evals/smoke-scenarios.json')).some((s) => s.signals[k] === true && s.expect === true)));
+
+/* 6. split-diff: topic split keeps every file once, bytes intact, tests with their source */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'splitdiff-'));
+  const blk = (path, n) => `diff --git a/${path} b/${path}
+--- a/${path}
++++ b/${path}
+@@ -0,0 +1,${n} @@
+` + Array.from({ length: n }, (_, i) => `+l${i}
+`).join('');
+  const paths = [['storage/migrations/001_x.sql', 20], ['api/src/routes/pins.rs', 400], ['api/tests/pins.rs', 50], ['web/src/shared/a.ts', 400], ['web/src/shared/a.test.ts', 50], ['web/src/ui/b.tsx', 400], ['docs/x.md', 10]];
+  for (let i = 0; i < 12; i++) paths.push([`web/src/ui/c${i}.tsx`, 30]);
+  const patch = paths.map(([p, n]) => blk(p, n)).join('');
+  writeFileSync(join(tmp, 'diff-1.patch'), patch);
+  const script = rel('skills/muffy/scripts/split-diff.mjs');
+  const small = spawnSync(process.execPath, [script, join(tmp, 'diff-1.patch'), '--max-lines', '100000', '--max-files', '100'], { encoding: 'utf8' });
+  check('split-diff: small diff is left alone', small.status === 0 && /no split needed/.test(small.stdout) && !existsSync(join(tmp, 'diff-1-index.md')));
+  const r = spawnSync(process.execPath, [script, join(tmp, 'diff-1.patch'), '--max-lines', '500', '--max-files', '5'], { encoding: 'utf8' });
+  check('split-diff: large diff splits (exit 0)', r.status === 0, r.stderr);
+  const out = readdirSync(tmp).filter((f) => /^diff-1-.+\.patch$/.test(f));
+  const all = out.map((f) => readFileSync(join(tmp, f), 'utf8'));
+  const seenPaths = all.flatMap((t) => [...t.matchAll(/^diff --git a\/(\S+) /gm)].map((m) => m[1]));
+  check('split-diff: every file in exactly one topic', seenPaths.length === paths.length && new Set(seenPaths).size === paths.length);
+  check('split-diff: bytes preserved', all.join('').length === patch.length);
+  check('split-diff: more than one topic', out.length > 1);
+  const holding = (p) => all.findIndex((t) => t.includes(`diff --git a/${p} `));
+  check('split-diff: test sits with its source', holding('web/src/shared/a.ts') === holding('web/src/shared/a.test.ts') && holding('api/src/routes/pins.rs') === holding('api/tests/pins.rs'));
+  check('split-diff: migration and docs get their own topics', out.some((f) => f.includes('db-migration')) && out.some((f) => f.includes('infra-docs-smoke')));
+  check('split-diff: index lists every file', paths.every(([p]) => readFileSync(join(tmp, 'diff-1-index.md'), 'utf8').includes(p)));
+  rmSync(tmp, { recursive: true, force: true });
+}
+
+/* 7. devops-preflight: runtime and env checks pass/fail, values never printed */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'preflight-'));
+  const script = rel('skills/muffy/scripts/devops-preflight.mjs');
+  writeFileSync(join(tmp, 'nvmrc'), `${process.version}\n`);
+  writeFileSync(join(tmp, 'bad-nvmrc'), 'v1.0.0\n');
+  writeFileSync(join(tmp, 'env'), 'KEY=sk-ant-SECRETVALUE\nEMPTY=\n');
+  const run = (...a) => spawnSync(process.execPath, [script, ...a], { encoding: 'utf8' });
+  const ok = run('--nvmrc', join(tmp, 'nvmrc'), '--env-file', join(tmp, 'env'), '--var', 'KEY=sk-ant-');
+  check('preflight: matching runtime and env prefix pass (exit 0)', ok.status === 0, ok.stdout);
+  check('preflight: never prints the secret value', !ok.stdout.includes('SECRETVALUE') && !ok.stderr.includes('SECRETVALUE'));
+  check('preflight: runtime mismatch fails (exit 1)', run('--nvmrc', join(tmp, 'bad-nvmrc')).status === 1);
+  const bad = run('--nvmrc', join(tmp, 'nvmrc'), '--env-file', join(tmp, 'env'), '--var', 'KEY=wrong-', '--var', 'EMPTY', '--var', 'GONE');
+  check('preflight: wrong prefix, empty and missing vars all fail', bad.status === 1 && /"failed":\["env KEY","env EMPTY","env GONE"\]/.test(bad.stdout), bad.stdout);
+  check('preflight: unknown flag is a usage error (exit 2)', run('--nope').status === 2);
+  rmSync(tmp, { recursive: true, force: true });
+}
 
 console.log(`eval: ${pass} passed, ${failures.length} failed`);
 if (failures.length) { console.error(failures.map((x) => `  FAIL ${x}`).join('\n')); process.exit(1); }

@@ -1,5 +1,6 @@
 ## Workflow
 
+0. Topic patches: if `diff-<n>-index.md` exists, read it first, then review **one topic at a time** (read its patch fully, run steps 1–4 for that topic, write down its findings, move on); never open all topic patches at once or the merged `diff-<n>.patch`. Check the index covers every changed file (a file in no topic = blocker, ask the Orchestrator). Cross-topic issues (contract mismatch between BE route and FE query) go in a final pass over only the touched lines. One verdict at the end, blockers tagged with their topic
 1. Go through each AC: is there code supporting it (`AC id → file:line`) — missing = blocker
 2. Security: auth, input validation, rate limits, secrets, injection, logging of sensitive data
 3. Correctness against the contract: schema, error codes, status codes

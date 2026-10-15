@@ -1,6 +1,6 @@
 ## Quality Checks
 
-**Enough = done** when all of these hold:
+**Enough = done** (normal mode) when all of these hold. Onboard mode is done when `baseline.md` is written with unconfirmed items marked `[verify]`; stack-note mode is done when the note is written within its fetch/line caps; only the `<brain>` note and hand-off items apply to both:
 
 - The user's request can be answered and the PM can write AC without guessing
 - Every hard-to-reverse decision has evidence from L1 or above (none still marked `[verify]`)

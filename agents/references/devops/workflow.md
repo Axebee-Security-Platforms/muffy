@@ -8,7 +8,7 @@
 
 ### Mode 2: Smoke build
 Runs only when the Orchestrator's prompt says a smoke trigger is true (new runtime/dependency/native package/datastore, devops-owned files changed, or no passing smoke on record for this stack). A feature that only adds routes, UI or logic does not need it; staging (mode 3) covers that.
-0. Preflight: `node -v` must match `.nvmrc` (e.g. Node 24.21.0). A smoke on another Node version proves nothing; mismatch = fail, report it
+0. Preflight: run `node .claude/skills/muffy/scripts/devops-preflight.mjs` (add `--health <url>` once the app is up). It checks `node -v` against `.nvmrc` (e.g. Node 24.21.0) and prints one PASS/FAIL line per check. A smoke on another Node version proves nothing; a FAIL = fail, report it
 1. On branch `ops/<task>` inside its worktree, create/edit only the infra files `contract.md` says devops owns — minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
 2. Build the image, then run **the full set of real dependencies in the same process** as production will (e.g. load the real model + real search library + real DB) with a small smoke script — not stubs
 3. Check that every version in the environment matches `contract.md` (runtime, main dependencies); mismatch = fail
@@ -37,7 +37,7 @@ Do not check internal logic yet. The "real dependencies, no stubs" rule above st
 Before starting: check that the runtime/version to deploy matches `deploy.md` and `contract.md`
 
 Staging:
-0. Preflight, before any live call: `node -v` must match `.nvmrc` (e.g. Node 24.21.0 — a smoke on Node 22 proves nothing; mismatch = fail). Check each external credential (e.g. Anthropic key, Google OAuth client) is present in the env file **by name and prefix only**; never print values. If a live call is needed and the Orchestrator has not approved it, stop at `pause:staging-credentials` and report (see run-profile.md)
+0. Preflight, before any live call: run `node .claude/skills/muffy/scripts/devops-preflight.mjs --env-file <env file> --var <NAME[=prefix]> ...` (one `--var` per external credential, e.g. `--var ANTHROPIC_API_KEY=sk-ant-`). It checks `node -v` against `.nvmrc` and each credential by name and prefix, and never prints values; a FAIL on the runtime = fail. If a live call is needed and the Orchestrator has not approved it, stop at `pause:staging-credentials` and report (see run-profile.md)
 1. Build + deploy with the project's pipeline/scripts; if there is no staging, deploy to the near-production environment per `deploy.md` — **never skip this step**
 2. Docker staging checklist (check each, record pass/fail):
    - env mapped from `.env.staging.local` into the container; names listed, values never printed
@@ -54,4 +54,6 @@ Production:
 4. Pass → expand to 100%; fail → **roll back immediately** and report
 
 ### All modes
+**Keep command output out of context.** Build, test, migration, smoke and `docker logs` output goes to a file, never straight into the conversation: `<cmd> > .team/<task>/logs/<name>.log 2>&1; echo "exit $?"`. On exit 0, read nothing. On failure read only the tail (`tail -n 30`) or `grep -iE 'error|fail|fatal'` of that file, then widen only if the cause is still unclear. Quote at most ~20 log lines in the report and give the log path for the rest. `logs/` stays out of git.
+
 Record in `<brain>/agents/devops/<task>.md`: date, mode, pinned runtime, environment/commit, smoke/health check results, whether rolled back, decisions + reasons, cost/token usage, open issues. For new rounds, append as a new section
