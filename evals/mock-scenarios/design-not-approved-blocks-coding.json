@@ -1,0 +1,46 @@
+{
+  "id": "design-not-approved-blocks-coding",
+  "description": "Smoke build passed but the user has not approved the design (3c): step 4 must not start",
+  "task": "login-flow",
+  "defaults": {
+    "task": "login-flow",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "devops",
+        "mode": 2,
+        "step": "3d",
+        "summary": "smoke pass",
+        "verdict": "Pass"
+      }
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "summary": "built login api"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "blocked",
+    "actions": [
+      "accept",
+      "block:gate-not-passed"
+    ]
+  }
+}

@@ -12,7 +12,7 @@ const escalationSchema = JSON.parse(readFileSync(join(root, 'skills/muffy/schema
 
 export const LOOP_LIMIT = 3; // fix loops allowed per loop point; the 4th rejection escalates
 export const REPEAT_LIMIT = 3; // same blocker id open in this many consecutive rejections = fix is not converging
-export const GATED_STEPS = ['3c', '3d']; // must pass before step 4
+export const GATED_STEPS = ['3c', '3d']; // must pass before step 4; 3c passes only after the user approves the design (pause:design-review)
 export const NEVER_SKIP = ['6', '7', '9', '10'];
 
 const REJECTING = new Set(['Reject', 'Fail']);

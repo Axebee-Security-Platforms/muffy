@@ -4,7 +4,7 @@
 
 ### One skill, ten subagents, one feature from research to production.
 
-**Describe a feature. The team researches, designs, builds, reviews, tests, and ships it, with a human approving every production release.**
+**Describe a feature. The team researches, designs, builds, reviews, tests, and ships it, with a human approving the design before code starts and every production release.**
 
 [Quick start](#quick-start) · [How muffy works](#how-muffy-works) · [What each step produces](#what-each-step-produces) · [Example](#example) · [FAQ](#faq) · [Documentation](#documentation)
 
@@ -72,7 +72,9 @@ flowchart LR
   R --> PM[product-manager]
   PM --> P{{designer / architect / devops<br/>in parallel}}
   P --> G[Design gate + smoke build]
-  G --> B{{frontend-dev / backend-dev<br/>in parallel}}
+  G --> DH{Human gate:<br/>approve design}
+  DH -->|changes| P
+  DH -->|approve| B{{frontend-dev / backend-dev<br/>in parallel}}
   B --> RV[code-reviewer]
   RV --> Q{{qa-tester / docs-writer<br/>in parallel}}
   Q --> RV2[code-reviewer]
@@ -111,7 +113,7 @@ Every agent ends with a JSON block checked against `handoff.schema.json`; an inv
     </tr>
     <tr>
       <td>Review</td>
-      <td>Code review and QA gates; Human gate before production</td>
+      <td>Design approval before code; code review and QA gates; Human gate before production</td>
       <td>Depends on whether someone remembers to ask</td>
     </tr>
     <tr>
@@ -146,7 +148,7 @@ Every agent ends with a JSON block checked against `handoff.schema.json`; an inv
 | 2 | `product-manager` | `ac.md`, `docs/plan/<task>.md` (phases with value/cost/risk, P0/P1/P2), ADRs, `docs/strategy.md` (first feature only) |
 | 3 | `designer` ∥ `architect` ∥ `devops` | `design.md`, `contract.md` (index + parts, with Cost), `deploy.md` |
 | 3b | Orchestrator | Design canvas published on Claude Design; URL saved in `design.md`, `checkpoint.md`, and the vault task note |
-| 3c / 3d | Design gate, `devops` smoke build | Pass or send back. Blocks code until both pass |
+| 3c / 3d | Design gate (checklist, then **you approve the design**), `devops` smoke build | Pass or send back. Blocks code until both pass |
 | 4 | `frontend-dev` ∥ `backend-dev` | `fe/<task>` and `be/<task>` branches in separate worktrees |
 | 5 | Orchestrator | Merge into `feature/<task>` with `--no-ff` |
 | 5b | Orchestrator (**off by default**) | PR diagrams as one Claude Artifact, when you ask for them |
@@ -170,12 +172,12 @@ The Orchestrator skips steps the feature does not need (no UI change skips desig
 |---|---|---|
 | `pause:scope` | Setup | You confirm the scope |
 | `pause:onboard-review` | Onboard step 0d | You approve or edit the baseline, ADR, and agent-context change |
-| Design gate (3c) | After design | The designer's definition of done is fully checked |
+| `pause:design-review` (3c) | After design, once the designer's definition of done is fully checked | You approve the design (or request changes and approve the revision). Nothing goes to `frontend-dev` / `backend-dev` before this |
 | Smoke build (3d) | After devops mode 1 | Real dependencies run in one process |
 | `pause:staging-credentials` | Before a live call to an external API | You approve each call and the keys are confirmed by name and prefix |
 | `pause:human-gate` | Step 10 | You answer Approve or Reject |
 
-Only the Human gate approves production.
+You approve the design before any code is written; only the Human gate approves production.
 
 ### Memory
 
@@ -211,7 +213,7 @@ Request in the main session: `/muffy add password reset, task name password-rese
 
 1. **Setup.** The Orchestrator confirms the scope with you and creates `.team/password-reset/`.
 2. **Research and plan.** `researcher` asks a few clarifying questions through the Orchestrator, then writes `brief.md`. `product-manager` writes `ac.md` and `docs/plan/password-reset.md`.
-3. **Parallel design.** `designer`, `architect`, and `devops` run together and produce `design.md`, `contract.md`, and `deploy.md`. The Orchestrator publishes the canvas and saves its URL. The design gate and smoke build must pass before code starts.
+3. **Parallel design.** `designer`, `architect`, and `devops` run together and produce `design.md`, `contract.md`, and `deploy.md`. The Orchestrator publishes the canvas and saves its URL. The design gate (checklist plus your approval of the canvas) and the smoke build must pass before code starts.
 4. **Build.** `frontend-dev` and `backend-dev` work on `fe/password-reset` and `be/password-reset`. The Orchestrator merges them into `feature/password-reset`.
 5. **Review and QA.** `code-reviewer` approves or rejects. `qa-tester` writes `qa-report.md` while `docs-writer` writes the docs and release notes.
 6. **Release.** `devops` deploys to staging. You approve at the Human gate, then `devops` rolls out to production with a canary and a rollback path.
@@ -238,6 +240,13 @@ The vault holds task notes and the consolidated `project.md`. Pass `--vault` at 
 <summary><strong>Can it deploy to production without me?</strong></summary>
 
 No. Production rollout starts only after you approve at the Human gate, with "Human approved" in the prompt.
+
+</details>
+
+<details>
+<summary><strong>Can the frontend and backend start before I approve the design?</strong></summary>
+
+No. After the designer's checklist passes, the run stops at `pause:design-review` with the canvas link. `frontend-dev` and `backend-dev` start only after you approve; if you request changes, the designer revises and asks you again.
 
 </details>
 
