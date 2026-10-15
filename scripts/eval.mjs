@@ -9,7 +9,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../skills/muffy/scripts/schema.mjs';
 import { simulate } from './lib/loop-sim.mjs';
-import { chooseEffort } from './lib/effort-sim.mjs';
+import { chooseEffort, defaultEffort, PROTECTED_ROLES, STALLED_AFTER } from './lib/effort-sim.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -122,6 +122,28 @@ for (const sc of readJson(rel('evals/effort-scenarios.json'))) {
   const out = chooseEffort({ role: sc.role, mode: sc.mode, signals: sc.signals });
   check(`effort:${sc.id}`, out.effort === sc.expect, `expected ${sc.expect}, got ${out.effort} (${out.reason})`);
 }
+
+/* 4b. effort docs vs code: the doc's defaults, protected roles and stall threshold must match agents/*.md and effort-sim.mjs */
+const tierDoc = readFileSync(rel('skills/muffy/references/token-discipline.md'), 'utf8');
+const docLines = tierDoc.split(/\r?\n/);
+const lineWith = (re) => docLines.find((l) => re.test(l)) ?? '';
+const effortLine = lineWith(/^- \*\*Effort tiers\*\*/);
+const docDefaults = (line) => Object.fromEntries([...line.matchAll(/((?:`[a-z-]+`(?:, )?)+) = (low|medium|high)/g)]
+  .flatMap((m) => [...m[1].matchAll(/`([a-z-]+)`/g)].map((r) => [r[1], m[2]])));
+const rolesIn = (line) => [...line.matchAll(/`([a-z-]+)`/g)].map((m) => m[1]).sort();
+const roles = readdirSync(rel('agents')).filter((n) => n.endsWith('.md')).map((n) => n.replace(/\.md$/, ''));
+const scenarios = readJson(rel('evals/effort-scenarios.json'));
+const documented = docDefaults(effortLine);
+for (const role of roles) check(`effort-doc:${role} default in doc matches agents/${role}.md`, documented[role] === defaultEffort(role), `doc says ${documented[role]}, frontmatter says ${defaultEffort(role)}`);
+check('effort-doc: doc lists no role without an agent file', Object.keys(documented).every((r) => roles.includes(r)));
+check('effort-doc: negative control, a drifted doc line is detected', docDefaults(effortLine.replace('`architect`, ', '')).architect !== defaultEffort('architect'));
+const protectedSorted = [...PROTECTED_ROLES].sort();
+check('effort-doc: "Never lower" roles match PROTECTED_ROLES', JSON.stringify(rolesIn(lineWith(/\*\*Never lower\*\*/))) === JSON.stringify(protectedSorted));
+check('effort-doc: model and effort protect the same roles', JSON.stringify(rolesIn(lineWith(/\*\*Never downgrade\*\*/))) === JSON.stringify(protectedSorted));
+check('effort-doc: every protected role defaults to high, so never-lower is meaningful', PROTECTED_ROLES.every((r) => defaultEffort(r) === 'high'));
+check('effort-doc: stall threshold in doc matches STALLED_AFTER', tierDoc.includes(`≥ ${STALLED_AFTER} consecutive rejections`));
+for (const sig of ['High impact', 'Assumed requirements', 'Stalled', 'Exact fix']) check(`effort-doc: signal table has "${sig}"`, new RegExp(`^\\s*\\| ${sig}`, 'm').test(tierDoc));
+check('effort-doc: scenarios cover every role', roles.every((r) => scenarios.some((s) => s.role === r)), `uncovered: ${roles.filter((r) => !scenarios.some((s) => s.role === r))}`);
 
 console.log(`eval: ${pass} passed, ${failures.length} failed`);
 if (failures.length) { console.error(failures.map((x) => `  FAIL ${x}`).join('\n')); process.exit(1); }
