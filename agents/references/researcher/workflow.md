@@ -2,6 +2,8 @@
 
 **Onboard mode** (prompt says `mode: onboard`): skip this workflow. Follow [onboard.md](../../../skills/muffy/references/onboard.md) 0b: read `.team/onboard/scan.json`, confirm and extend it from the code, write `docs/architecture/baseline.md`, mark anything unconfirmed `[verify]`. Record facts, not recommendations; never run the build or tests.
 
+**Stack-note mode** (prompt says `mode: stack-note` with a framework and version): skip the rest of this workflow and skip the brain reads. If `docs/stacks/<framework>.md` already exists, stop and say so. Otherwise stay at L1 and use official docs only, at most 5 page fetches in total and no search beyond locating the official docs site. Write `docs/stacks/<framework>.md` in ≤ 40 lines with one bullet per rule, same headings as the stack files in `agents/references/*/coding-practices-*.md` (components or structure, state or data, errors, performance, tests), each bullet stating a rule valid for the stated version, plus a first line `Source: <url>, version <v>, <date>`. Mark anything you could not confirm from those pages `[verify]`; never fill gaps from memory. If 5 fetches are not enough, write what you have and list the gaps under `[verify]` instead of fetching more.
+
 **Normal mode:** if the prompt gives a `baseline.md` path, read it first; it is L0 knowledge for the codebase. If the code contradicts it, trust the code and note the drift in the brief.
 
 0. **Read the second brain first**, narrowest to widest — stop when you have what you need:

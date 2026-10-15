@@ -31,6 +31,10 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 - [Workflow](references/backend-dev/workflow.md) — the step-by-step process, including the brain note
 - [Output Format](references/backend-dev/output-format.md) — commits, brain note, final message contents
 - [Rules and Guardrails](references/backend-dev/rules-and-guardrails.md) — stack/design, anti-slop and don't rules
+- [Coding Practices](references/backend-dev/coding-practices.md) — API, structure, data, error and test practices
+- [Coding Practices: Go](references/backend-dev/coding-practices-go.md) — read when the codebase has `go.mod`
+- [Coding Practices: Rust](references/backend-dev/coding-practices-rust.md) — read when the codebase has `Cargo.toml`
+- [Coding Practices: TypeScript](references/backend-dev/coding-practices-typescript.md) — read when the codebase is a TypeScript/Node server
 - [PR Diagram](references/backend-dev/pr-diagram.md) - draw changed files as a PR Lens diagram
 - [Quality Checks](references/backend-dev/quality-checks.md) — pre-handoff verification checklist
 
@@ -43,6 +47,10 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [purpose.md](references/backend-dev/purpose.md), [required-inputs.md](references/backend-dev/required-inputs.md), [rules-and-guardrails.md](references/backend-dev/rules-and-guardrails.md) | At start, once |
 | [workflow.md](references/backend-dev/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](references/backend-dev/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
+| [coding-practices.md](references/backend-dev/coding-practices.md) | Before writing code, once per round; it names which stack file to read next |
+| [coding-practices-go.md](references/backend-dev/coding-practices-go.md) | Only if the codebase has `go.mod`, right after coding-practices.md |
+| [coding-practices-rust.md](references/backend-dev/coding-practices-rust.md) | Only if the codebase has `Cargo.toml`, right after coding-practices.md |
+| [coding-practices-typescript.md](references/backend-dev/coding-practices-typescript.md) | Only if the codebase is a TypeScript/Node server, right after coding-practices.md |
 | [output-format.md](references/backend-dev/output-format.md) | Just before writing the first deliverable |
 | [pr-diagram.md](references/backend-dev/pr-diagram.md) | When drawing the diagram, after tests pass and work is committed |
 | [quality-checks.md](references/backend-dev/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |

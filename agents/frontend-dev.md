@@ -31,6 +31,13 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 - [Workflow](references/frontend-dev/workflow.md) - step-by-step process from architecture to brain note
 - [Output Format](references/frontend-dev/output-format.md) - commits, brain note, and final message contents
 - [Rules and Guardrails](references/frontend-dev/rules-and-guardrails.md) - stack, anti-slop, and don't rules
+- [Coding Practices](references/frontend-dev/coding-practices.md) - framework-neutral components, state, forms, performance and test practices
+- [Coding Practices: React/Next.js](references/frontend-dev/coding-practices-react.md) - read when the codebase uses `react` or `next`
+- [Coding Practices: Vue/Nuxt](references/frontend-dev/coding-practices-vue.md) - read when the codebase uses `vue` or `nuxt`
+- [Coding Practices: Svelte/SvelteKit](references/frontend-dev/coding-practices-svelte.md) - read when the codebase uses `svelte` or `@sveltejs/kit`
+- [Coding Practices: Angular](references/frontend-dev/coding-practices-angular.md) - read when the codebase uses `@angular/core`
+- [Coding Practices: Solid/SolidStart](references/frontend-dev/coding-practices-solid.md) - read when the codebase uses `solid-js`
+- [Coding Practices: Astro](references/frontend-dev/coding-practices-astro.md) - read when the codebase uses `astro`
 - [PR Diagram](references/frontend-dev/pr-diagram.md) - draw changed files as a PR Lens diagram
 - [Quality Checks](references/frontend-dev/quality-checks.md) - pre-handoff verification checklist
 
@@ -43,6 +50,13 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [purpose.md](references/frontend-dev/purpose.md), [required-inputs.md](references/frontend-dev/required-inputs.md), [rules-and-guardrails.md](references/frontend-dev/rules-and-guardrails.md) | At start, once |
 | [workflow.md](references/frontend-dev/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](references/frontend-dev/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
+| [coding-practices.md](references/frontend-dev/coding-practices.md) | Before writing code, once per round; it names which stack file to read next |
+| [coding-practices-react.md](references/frontend-dev/coding-practices-react.md) | Only if the codebase uses `react` or `next`, right after coding-practices.md |
+| [coding-practices-vue.md](references/frontend-dev/coding-practices-vue.md) | Only if the codebase uses `vue` or `nuxt`, right after coding-practices.md |
+| [coding-practices-svelte.md](references/frontend-dev/coding-practices-svelte.md) | Only if the codebase uses `svelte` or `@sveltejs/kit`, right after coding-practices.md |
+| [coding-practices-angular.md](references/frontend-dev/coding-practices-angular.md) | Only if the codebase uses `@angular/core`, right after coding-practices.md |
+| [coding-practices-solid.md](references/frontend-dev/coding-practices-solid.md) | Only if the codebase uses `solid-js`, right after coding-practices.md |
+| [coding-practices-astro.md](references/frontend-dev/coding-practices-astro.md) | Only if the codebase uses `astro`, right after coding-practices.md |
 | [output-format.md](references/frontend-dev/output-format.md) | Just before writing the first deliverable |
 | [pr-diagram.md](references/frontend-dev/pr-diagram.md) | When drawing the diagram, after tests pass and work is committed |
 | [quality-checks.md](references/frontend-dev/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
