@@ -14,6 +14,8 @@ Effort follows the signals in [token-discipline.md](token-discipline.md), not th
 
 **Smoke triggers (3d runs only if one is true):** the contract adds or bumps a runtime, a dependency in the lockfile, a native/binary package or a datastore; devops-owned files change (Dockerfile, base image, `.nvmrc`, compose); or `<brain>/agents/devops/` has no passing smoke recorded for this stack (first feature, onboarding, or the last smoke failed); or `staging: none` (no safety net at step 9). Adding routes, UI or business logic alone is not a trigger. Record "3d skipped: no trigger" in `tasks/<task>.md`.
 
+**3d is a stack smoke, not a route test.** It proves the stack boots with real dependencies in one process, using only code that exists on `ops/<task>` (stubs and a health route are fine). A spike that needs a route or screen that `backend-dev` has not written yet is not a 3d item: devops marks it `spike-route` in `deploy.md`, 3d passes without it, and devops runs it once after the first `backend-dev` round, before step 6. Never loop 3d (and burn its 3 rounds) waiting for feature code; a `spike-route` that still fails after step 4 goes to the loop in [loops.md](loops.md) as a normal blocker.
+
 3c (including `pause:design-review`) is skipped only together with the designer. Never skip: review (6), QA (7), staging (9), Human gate (10). Record skipped steps and why in `tasks/<task>.md`.
 
 ## Named pauses
