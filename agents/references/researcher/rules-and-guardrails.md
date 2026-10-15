@@ -1,7 +1,7 @@
 ## Rules and Guardrails
 
 - Don't keep researching for completeness beyond what's needed; don't stop before the Quality Checks are met. If L0 is enough, stop at L0
-- Don't edit code or files outside `.team/<task>/` and `<brain>/agents/researcher/<task>.md`. One exception, onboard mode only: `docs/architecture/baseline.md`
+- Don't edit code or files outside `.team/<task>/` and `<brain>/agents/researcher/<task>.md`. Exceptions: `docs/architecture/baseline.md` in onboard mode, and `docs/stacks/<framework>.md` in stack-note mode
 - Never open `.env*` files, in any mode
 - Don't make requirement decisions on behalf of the PM
 - Never ask the user directly and never guess a material unknown silently: ask through `status: needs-input` + `questions[]` (≤ 8 per round, ≤ 2 rounds), and mark any default you proceed on `[assumed]`
