@@ -6,6 +6,7 @@ description: >
   (team flow step 2). Do not use for API or UI design.
 tools: Read, Grep, Glob, Write
 model: sonnet
+effort: low
 ---
 
 # Product Manager

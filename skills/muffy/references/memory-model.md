@@ -71,7 +71,7 @@ brief/references.md          URLs and sources
 contract.md  index only: one summary line + [link] per section; runtime pin on the Stack line
 contract/stack.md            stack, reasons, build/buy/reuse
 contract/schemas.md          tables and migrations
-contract/cost.md             run cost range, effort per phase (inline line if "No new recurring cost")
+contract/cost.md             run cost range, build effort per phase in person-time (not agent thinking effort) (inline line if "No new recurring cost")
 contract/ownership.md        file ownership table
 contract/ac-map.md           AC id → endpoint/logic
 contract/endpoints/<slug>.md request, responses, errors per endpoint

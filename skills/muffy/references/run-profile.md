@@ -8,6 +8,8 @@
 | Existing stack, no new runtime/dependency | devops mode 1 is a short check against the existing `deploy.md`; 3d is skipped if the last smoke build on this stack passed |
 | Answer and pattern already in the repo/vault | researcher stops at L0 |
 
+Effort follows the signals in [token-discipline.md](token-discipline.md), not the profile table: a skipped step needs no agent, and production mode never lowers `code-reviewer`, `architect` or `devops`.
+
 3c (including `pause:design-review`) is skipped only together with the designer. Never skip: review (6), QA (7), staging (9), Human gate (10). Record skipped steps and why in `tasks/<task>.md`.
 
 ## Named pauses

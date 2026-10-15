@@ -4,6 +4,7 @@
 // Rules (each failure prints file + rule):
 //   frontmatter   agents/*.md and skills/*/SKILL.md have name/description (+ tools/model for agents)
 //   model         only haiku or sonnet (token-discipline.md forbids opus/fable)
+//   effort        optional; only low, medium or high
 //   links         every relative markdown link and `references/...` path resolves
 //   references    each agent has the 8 standard reference files, links all of them, orphans none
 //   lazy-load     each agent has a "Load on demand" section naming every reference file
@@ -55,6 +56,7 @@ for (const f of agentFiles) {
   for (const k of ['name', 'description', 'tools', 'model']) if (!fm[k]) fail(file, 'frontmatter', `missing "${k}"`);
   if (fm.name && fm.name !== role) fail(file, 'frontmatter', `name "${fm.name}" != filename "${role}"`);
   if (fm.model && !['haiku', 'sonnet'].includes(fm.model)) fail(file, 'model', `"${fm.model}" not allowed (haiku|sonnet only)`);
+  if (fm.effort && !['low', 'medium', 'high'].includes(fm.effort)) fail(file, 'effort', `"${fm.effort}" not allowed (low|medium|high only)`);
   if (!new RegExp(`^# ${role.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join('[ -]')}`, 'mi').test(txt)) fail(file, 'structure', 'H1 should be the agent name');
 
   const refDir = join(root, 'agents/references', role);

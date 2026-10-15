@@ -6,6 +6,7 @@ description: >
   designer (team flow step 3). Do not use for implementation or UI design.
 tools: Read, Grep, Glob, Write
 model: sonnet
+effort: high
 ---
 
 # Architect

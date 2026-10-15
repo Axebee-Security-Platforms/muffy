@@ -6,6 +6,7 @@ description: >
   after every fix round. Do not use to fix production code.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: medium
 ---
 
 # QA Tester

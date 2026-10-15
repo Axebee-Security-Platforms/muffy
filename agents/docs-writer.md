@@ -6,6 +6,7 @@ description: >
   use before the diff is approved, or to edit code.
 tools: Read, Grep, Glob, Edit, Write
 model: haiku
+effort: low
 ---
 
 # Docs Writer

@@ -6,6 +6,7 @@ description: >
   for BE work, contract changes, merging or deploying.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: medium
 ---
 
 # Frontend Dev
