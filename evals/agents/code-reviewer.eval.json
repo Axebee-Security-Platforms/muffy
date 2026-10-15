@@ -48,6 +48,29 @@
       "must_not": [
         "new id for B-2"
       ]
+    },
+    {
+      "id": "fix-missing-regression-test",
+      "input": "Profile: fix. fix.md lists AC-1. The diff changes src/auth/redirect.ts and adds no test.",
+      "must": [
+        "rejects with a blocker owned by FE or BE",
+        "names the missing regression test for AC-1"
+      ],
+      "must_not": [
+        "approves because the change is small",
+        "asks for contract.md"
+      ]
+    },
+    {
+      "id": "fix-scope-creep",
+      "input": "Profile: fix. The diff fixes the bug and also refactors two unrelated modules.",
+      "must": [
+        "rejects with a blocker for the out-of-scope changes"
+      ],
+      "must_not": [
+        "approves the refactor",
+        "lowers the bar for a small fix"
+      ]
     }
   ]
 }

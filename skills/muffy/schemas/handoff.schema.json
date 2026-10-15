@@ -69,6 +69,20 @@
       "items": { "type": "string", "minLength": 3, "maxLength": 200 },
       "description": "Defaults the agent proceeded on without an answer; each is marked [assumed] in its deliverable"
     },
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "confidence"],
+      "description": "frontend-dev / backend-dev step 4a only (fix lane): result of the diagnose round",
+      "properties": {
+        "status": { "enum": ["known", "unknown", "needs-full-flow"] },
+        "confidence": { "enum": ["low", "medium", "high"] },
+        "cause": { "type": "string", "minLength": 3, "maxLength": 300 },
+        "files": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "repro": { "type": "string", "minLength": 3, "maxLength": 200, "description": "Failing test, command, URL + viewport or log line that shows the problem" },
+        "reason": { "type": "string", "minLength": 3, "maxLength": 300, "description": "Why the cause is unknown, or why the fix needs the full flow" }
+      }
+    },
     "brain_note": { "type": "string", "description": "Path of the <brain>/agents/<role>/<task>.md written; absent for code-reviewer (Orchestrator writes it)" },
     "summary": { "type": "string", "minLength": 3, "maxLength": 600 }
   },
@@ -77,6 +91,10 @@
     { "if": { "properties": { "role": { "enum": ["qa-tester"] } }, "required": ["role"] }, "then": { "required": ["verdict", "tests"], "properties": { "verdict": { "enum": ["Pass", "Fail"] } } } },
     { "if": { "properties": { "role": { "enum": ["devops"] } }, "required": ["role"] }, "then": { "required": ["mode"] } },
     { "if": { "properties": { "role": { "enum": ["frontend-dev", "backend-dev"] } }, "required": ["role"] }, "then": { "required": ["ac_ids_done"] } },
+    { "if": { "properties": { "step": { "enum": ["4a"] } }, "required": ["step"] }, "then": { "required": ["diagnosis"], "properties": { "role": { "enum": ["frontend-dev", "backend-dev"] } } } },
+    { "if": { "properties": { "diagnosis": { "properties": { "status": { "enum": ["known"] } }, "required": ["status"] } }, "required": ["diagnosis"] }, "then": { "properties": { "diagnosis": { "required": ["cause", "files", "repro"], "properties": { "confidence": { "enum": ["medium", "high"] }, "files": { "minItems": 1 } } } } } },
+    { "if": { "properties": { "diagnosis": { "properties": { "status": { "enum": ["unknown", "needs-full-flow"] } }, "required": ["status"] } }, "required": ["diagnosis"] }, "then": { "properties": { "diagnosis": { "required": ["reason"] } } } },
+    { "if": { "properties": { "diagnosis": { "type": "object" } }, "required": ["diagnosis"] }, "then": { "properties": { "step": { "enum": ["4a"] } } } },
     { "if": { "properties": { "status": { "enum": ["needs-input"] } }, "required": ["status"] }, "then": { "required": ["questions"], "properties": { "questions": { "minItems": 1 } } } },
     { "if": { "properties": { "questions": { "minItems": 1 } }, "required": ["questions"] }, "then": { "properties": { "role": { "enum": ["researcher", "product-manager"] } } } },
     { "if": { "properties": { "verdict": { "enum": ["Reject", "Fail"] } }, "required": ["verdict"] }, "then": { "properties": { "blockers": { "minItems": 1 } } } },

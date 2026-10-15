@@ -30,6 +30,7 @@ Test files are code, so all work happens in a dedicated git worktree on the revi
 - [Workflow](references/qa-tester/workflow.md) - steps for writing, running and reporting tests
 - [Output Format](references/qa-tester/output-format.md) - qa-report, brain note, final message
 - [Rules and Guardrails](references/qa-tester/rules-and-guardrails.md) - what not to edit, brain write rules
+- [Fix Profile](references/qa-tester/fix-profile.md) — test scope and manual AC rules for the fix lane
 - [Quality Checks](references/qa-tester/quality-checks.md) - pre-handoff verification list
 
 ## Load on demand
@@ -43,6 +44,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [principles.md](references/qa-tester/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](references/qa-tester/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/qa-tester/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
+| [fix-profile.md](references/qa-tester/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
 | [when-to-use.md](references/qa-tester/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
 
 ## Final message style

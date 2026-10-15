@@ -1,0 +1,104 @@
+{
+  "id": "fix-diagnose-unknown-once",
+  "description": "Unknown cause: ask the user, second round finds it",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "8"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4a",
+        "ac_ids_done": [],
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "unknown",
+          "confidence": "low",
+          "reason": "cannot reproduce without the prod log"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4a",
+        "ac_ids_done": [],
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "redirect reads stale returnTo from session",
+          "files": [
+            "src/auth/redirect.ts"
+          ],
+          "repro": "test/auth/redirect.test.ts fails"
+        },
+        "round": 2
+      }
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "paths_written": [
+          "src/auth/redirect.ts"
+        ],
+        "summary": "fixed"
+      }
+    },
+    {
+      "handoff": {
+        "role": "code-reviewer",
+        "step": "6",
+        "verdict": "Approve",
+        "summary": "all good"
+      }
+    },
+    {
+      "handoff": {
+        "role": "qa-tester",
+        "step": "7",
+        "verdict": "Pass",
+        "tests": {
+          "passed": 12,
+          "total": 12
+        },
+        "summary": "all good"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "ask:more-evidence",
+      "accept",
+      "accept",
+      "accept",
+      "accept"
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "id": "fix-promotes-on-contract-change",
+  "description": "Diagnosis says the cause is in the contract: promote to the full flow",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "8"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4a",
+        "ac_ids_done": [],
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "needs-full-flow",
+          "confidence": "high",
+          "reason": "response schema is wrong in contract, needs a migration"
+        }
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "promoted",
+    "actions": [
+      "promote:full-flow"
+    ],
+    "trigger": "needs-full-flow"
+  }
+}

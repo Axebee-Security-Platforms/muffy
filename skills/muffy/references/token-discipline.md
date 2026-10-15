@@ -3,7 +3,7 @@
 - **Prompt template** — every subagent prompt is only this, no pasted file contents (parsed shape: [prompt-envelope.schema.json](../schemas/prompt-envelope.schema.json)):
   ```
   Goal: <one line>
-  Task: <task>  Brain: <brain>  [Vault: <vault> — researcher only]  [Mode: — devops only]
+  Task: <task>  Brain: <brain>  [Vault: <vault> — researcher only]  [Mode: — devops only]  [Profile: fix — fix lane only; Read: fix.md replaces ac/contract/brief/design]
   Read: <paths>
   Write: <paths>
   Don't touch: <paths/scope>
@@ -25,6 +25,7 @@
   - `qa-tester` re-running existing tests only (no new tests to write)
   - `frontend-dev` / `backend-dev` fix rounds where every bug names a file + line and the expected fix
   - `researcher` when the run profile asks for codebase-only / minimal research
+  - `frontend-dev` / `backend-dev` step 4a (fix lane) when the symptom already names the file and line; see [fix-profile.md](fix-profile.md)
 - **Unknown stack**: `frontend-dev` / `backend-dev` have no web access. When one returns `blocked` with a `Researcher` blocker `stack-unknown: <framework> <version>`, first check that `docs/stacks/<framework>.md` doesn't already exist (then just `SendMessage` the agent to read it). Otherwise spawn `researcher` once, with `model: "haiku"`, effort `low`, prompt `mode: stack-note`, framework and version. It is capped at L1, official docs only, 5 fetches and a ≤ 40-line note, and it is run once per framework per repo, never per task. Then `SendMessage` the blocked agent to resume. Never escalate this to L2/L3 or a normal research run
 - **Never downgrade** `code-reviewer`, `architect`, or `devops` in production mode — a miss there costs more than the tokens saved
 - **Effort tiers**: effort is a separate axis from model — how hard the agent thinks, not which model thinks. Allowed: `low`, `medium`, `high` — never `xhigh` or `max`. Agent frontmatter sets the default (`architect`, `code-reviewer`, `devops` = high; `backend-dev`, `frontend-dev`, `designer`, `qa-tester` = medium; `researcher`, `docs-writer`, `product-manager` = low). When spawning fresh, decide the effort from these signals — read them from files, don't judge by feel:

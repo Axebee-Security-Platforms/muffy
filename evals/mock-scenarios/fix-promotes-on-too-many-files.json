@@ -1,0 +1,74 @@
+{
+  "id": "fix-promotes-on-too-many-files",
+  "description": "Step 4 touches 6 source files: promote",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "8"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4a",
+        "ac_ids_done": [],
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "redirect reads stale returnTo from session",
+          "files": [
+            "src/auth/redirect.ts"
+          ],
+          "repro": "test/auth/redirect.test.ts fails"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "paths_written": [
+          "a.ts",
+          "b.ts",
+          "c.ts",
+          "d.ts",
+          "e.ts",
+          "f.ts",
+          "test/a.test.ts"
+        ],
+        "summary": "fixed"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "promoted",
+    "actions": [
+      "accept",
+      "promote:full-flow"
+    ],
+    "trigger": "too-many-files"
+  }
+}

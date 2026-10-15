@@ -11,6 +11,8 @@ After every step:
 - `checkpoint.md` was rewritten at the boundaries listed in [memory-model.md](memory-model.md#checkpoint)
 - `node .claude/skills/muffy/scripts/check-checkpoint.mjs .team/<task>` passes: checkpoint ≤ 40 lines, every `rounds/*.md` ≤ 100 lines, every `[label]` defined and every target file present
 - After step 5, the PR diagram Artifact URL is recorded and `.team/<task>/diagrams/{fe,be}.graph.json` exist, or the hand-off says why the diagram was skipped ([steps.md](steps.md) step 5b)
-- `node .claude/skills/muffy/scripts/check-artifacts.mjs .team/<task>` passes: `ac.md` / `brief.md` / `contract.md` ≤ 60 lines, part files ≤ 120, links resolve, every AC id is in `contract.md` or `contract/` ([memory-model.md](memory-model.md#splitting-large-artifacts))
+- `node .claude/skills/muffy/scripts/check-artifacts.mjs .team/<task>` passes: `ac.md` / `brief.md` / `contract.md` / `fix.md` ≤ 60 lines, part files ≤ 120, links resolve, every AC id is in `contract.md` or `contract/` ([memory-model.md](memory-model.md#splitting-large-artifacts))
+
+Fix lane only: the 4a hand-off carries `diagnosis` with `status: known` before step 4 starts; `fix.md` has `## Cause` and `## Repro`; the regression test fails before the fix and passes after, or the AC is marked `manual` in `qa-report.md` ([fix-profile.md](fix-profile.md)).
 
 Before finishing: every check in `closing.md` is done, and skipped or failed steps are reported as such.

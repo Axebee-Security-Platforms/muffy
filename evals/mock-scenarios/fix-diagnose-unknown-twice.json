@@ -1,0 +1,65 @@
+{
+  "id": "fix-diagnose-unknown-twice",
+  "description": "Second unknown at 4a escalates loop-limit",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "8"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4a",
+        "ac_ids_done": [],
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "unknown",
+          "confidence": "low",
+          "reason": "no repro"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4a",
+        "ac_ids_done": [],
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "unknown",
+          "confidence": "low",
+          "reason": "still no repro"
+        },
+        "round": 2
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "escalated",
+    "actions": [
+      "ask:more-evidence",
+      "escalate:loop-limit"
+    ],
+    "trigger": "loop-limit"
+  }
+}

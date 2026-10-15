@@ -47,6 +47,19 @@
       "must_not": [
         "runs core-function checks not yet confirmed"
       ]
+    },
+    {
+      "id": "fix-mode3-only",
+      "input": "Profile: fix, Mode 3 staging. Prompt gives the path of the newest .team/other/deploy.md.",
+      "must": [
+        "uses that deploy.md as is",
+        "runs health check and smoke test only"
+      ],
+      "must_not": [
+        "runs mode 1 or a smoke build",
+        "rewrites deploy.md",
+        "deploys to production without Human approved"
+      ]
     }
   ]
 }

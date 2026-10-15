@@ -7,6 +7,7 @@
 - **Design review: changes requested (3c)** → reasons to `designer` (+ `architect` if the contract is affected) → republish canvas → Definition of done again → ask the user again. FE/BE stay blocked
 - **Human reject** → reasons to the relevant agents → redo review + QA
 - **Production health fail** → devops rolls back; report to the user before anything else
+- **Diagnose unknown (4a, fix lane)** → ask the user for more evidence → one more diagnose round with the same agent; a second `unknown` escalates `loop-limit`. A `needs-full-flow` diagnosis is not a loop: promote to the full flow ([fix-profile.md](fix-profile.md))
 - More than 3 loops at one point → stop and ask the user (see Fallback ladder)
 
 ## Loop budget

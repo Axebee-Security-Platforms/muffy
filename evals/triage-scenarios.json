@@ -1,0 +1,167 @@
+[
+  {
+    "id": "empty-message-500",
+    "request": "Submit on /contact returns 500 when message is empty. `TypeError at src/api/contact.ts:41`",
+    "doc_lane": "fix (BE)",
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "expected_source_files": 1
+    },
+    "expect": "fix"
+  },
+  {
+    "id": "redirect-unknown-cause",
+    "request": "Login redirects to the old page after password reset, not sure why",
+    "doc_lane": "fix (BE or both)",
+    "signals": {
+      "has_symptom": true,
+      "has_repro": true,
+      "expected_source_files": 2
+    },
+    "expect": "fix"
+  },
+  {
+    "id": "dark-mode-button-colour",
+    "request": "Submit button on checkout is the wrong colour in dark mode",
+    "doc_lane": "fix (FE, cosmetic)",
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "expected_source_files": 1
+    },
+    "expect": "fix"
+  },
+  {
+    "id": "card-padding-tokens",
+    "request": "Align the card padding on the pricing page with the design system spacing",
+    "doc_lane": "fix (FE, cosmetic)",
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "expected_source_files": 2
+    },
+    "expect": "fix"
+  },
+  {
+    "id": "date-off-by-one",
+    "request": "Date shows a day earlier for users in UTC-5",
+    "doc_lane": "fix",
+    "signals": {
+      "has_symptom": true,
+      "has_repro": true,
+      "expected_source_files": 2
+    },
+    "expect": "fix"
+  },
+  {
+    "id": "add-phone-field",
+    "request": "Add a `phone` field to the signup form",
+    "doc_lane": "full",
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "changes_contract": true,
+      "expected_source_files": 3
+    },
+    "expect": "full"
+  },
+  {
+    "id": "redesign-login",
+    "request": "Redesign the login page / make the dashboard look better",
+    "doc_lane": "full",
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "adds_new_ui": true,
+      "expected_source_files": 6
+    },
+    "expect": "full"
+  },
+  {
+    "id": "search-is-slow",
+    "request": "Search is slow",
+    "doc_lane": "full, or ask first",
+    "signals": {
+      "has_symptom": true
+    },
+    "expect": "ask"
+  },
+  {
+    "id": "invoice-total-wrong",
+    "request": "Invoice totals are wrong",
+    "doc_lane": "fix → promoted",
+    "signals": {
+      "has_symptom": true,
+      "has_repro": true,
+      "expected_source_files": 2
+    },
+    "expect": "fix"
+  },
+  {
+    "id": "upgrade-react",
+    "request": "Upgrade React to 19 and fix what breaks",
+    "doc_lane": "full",
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "changes_contract": true,
+      "expected_source_files": 12
+    },
+    "expect": "full"
+  },
+  {
+    "id": "footer-typo",
+    "request": "Fix the typo in the footer",
+    "doc_lane": "none (main session)",
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "trivial_one_line": true
+    },
+    "expect": "none"
+  },
+  {
+    "id": "five-files-is-still-fix",
+    "request": "(boundary) bug spread over exactly 5 source files",
+    "doc_lane": null,
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "expected_source_files": 5
+    },
+    "expect": "fix"
+  },
+  {
+    "id": "six-files-is-full",
+    "request": "(boundary) bug spread over 6 source files",
+    "doc_lane": null,
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "expected_source_files": 6
+    },
+    "expect": "full"
+  },
+  {
+    "id": "symptom-without-location-or-repro",
+    "request": "(boundary) symptom only",
+    "doc_lane": null,
+    "signals": {
+      "has_symptom": true
+    },
+    "expect": "ask"
+  },
+  {
+    "id": "new-component-in-cosmetic",
+    "request": "(boundary) cosmetic change that needs a new component",
+    "doc_lane": null,
+    "signals": {
+      "has_symptom": true,
+      "has_location": true,
+      "adds_new_ui": true,
+      "expected_source_files": 2
+    },
+    "expect": "full"
+  }
+]

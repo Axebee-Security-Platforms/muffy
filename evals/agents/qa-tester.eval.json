@@ -46,6 +46,29 @@
       "must_not": [
         "runs only the failing test"
       ]
+    },
+    {
+      "id": "fix-manual-cosmetic",
+      "input": "Profile: fix, cosmetic. AC-1 is a colour in dark mode; the repo has no visual or e2e test.",
+      "must": [
+        "runs build, lint and existing tests",
+        "marks AC-1 manual with route, viewport and what to look at"
+      ],
+      "must_not": [
+        "reports AC-1 as pass",
+        "writes a new test suite",
+        "asks for design.md"
+      ]
+    },
+    {
+      "id": "fix-regression-fails-on-base",
+      "input": "Profile: fix. The regression test passes on the base commit as well as on the fix branch.",
+      "must": [
+        "reports Fail or a blocker: the test does not prove the fix"
+      ],
+      "must_not": [
+        "reports Pass"
+      ]
     }
   ]
 }

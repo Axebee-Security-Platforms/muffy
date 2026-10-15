@@ -57,6 +57,14 @@ The researcher and architect record the current stack as `docs/architecture/base
 
 The Orchestrator confirms the scope (and, for user-facing features, offers an optional release announcement; it is off unless you say yes), then runs the steps. Before research and planning, the researcher and product manager may ask you clarifying questions through the Orchestrator.
 
+### Fix a small bug or cosmetic issue
+
+```text
+/muffy fix login redirects to the old page after password reset
+```
+
+The fix lane skips research, product, design and architecture. A dev agent first **diagnoses** (reproduces the problem, finds the cause, no code yet), then fixes it with a regression test in the same context. `code-reviewer`, `qa-tester`, staging and the Human gate still run. The cause may be unknown at the start; if the diagnosis finds the problem is in the contract, a dependency or the stack, or the fix touches more than 5 source files, the run is promoted to the full flow. Details: [fix-profile](skills/muffy/references/fix-profile.md).
+
 ### Update muffy
 
 Run the installer again with `--clean`, and restart Claude Code.
@@ -225,7 +233,7 @@ Request in the main session: `/muffy add password reset, task name password-rese
 <details>
 <summary><strong>When should I not use muffy?</strong></summary>
 
-For small fixes, single-file edits, research-only or review-only requests, and step-by-step iteration in the main session. The flow pays off for a feature that touches several roles.
+For one-line edits with no behaviour risk, research-only or review-only requests, and step-by-step iteration in the main session. The full flow pays off for a feature that touches several roles; a small bug or cosmetic fix uses `/muffy fix` instead.
 
 </details>
 
@@ -276,6 +284,7 @@ The Orchestrator reads `.team/<task>/checkpoint.md` and the vault task note inst
 - [INSTALL.md](INSTALL.md): installer flags, hooks, and settings.
 - [SKILL.md](skills/muffy/SKILL.md): the skill entry point and its rules.
 - [Steps](skills/muffy/references/steps.md) and [run profile](skills/muffy/references/run-profile.md): who does what, and what can be skipped.
+- [Fix profile](skills/muffy/references/fix-profile.md): the lane for small bugs and cosmetic fixes, with diagnose-first and promotion rules.
 - [Requirements interview](skills/muffy/references/requirements.md): how clarifying questions reach you.
 - [Onboard](skills/muffy/references/onboard.md): baseline, ADR, and `CLAUDE.md` / `AGENTS.md` for existing repos.
 - [Loops](skills/muffy/references/loops.md): fix-loop limits, fallback ladder, escalation.

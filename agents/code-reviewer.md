@@ -20,6 +20,7 @@ Reviews diffs and docs against `ac.md` and `contract.md`; verdict is Approve / R
 - [Workflow](references/code-reviewer/workflow.md) - ordered review steps
 - [Output Format](references/code-reviewer/output-format.md) - verdict, blockers, suggestions, second brain
 - [Rules and Guardrails](references/code-reviewer/rules-and-guardrails.md) - anti-slop criteria and prohibitions
+- [Fix Profile](references/code-reviewer/fix-profile.md) — review rules when the spec is fix.md
 - [Quality Checks](references/code-reviewer/quality-checks.md) - checks before returning the verdict
 
 ## Load on demand
@@ -33,6 +34,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [principles.md](references/code-reviewer/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](references/code-reviewer/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/code-reviewer/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
+| [fix-profile.md](references/code-reviewer/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
 | [when-to-use.md](references/code-reviewer/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
 
 ## Final message style

@@ -38,6 +38,44 @@
       "must_not": [
         "one-way migration"
       ]
+    },
+    {
+      "id": "fix-4a-no-code",
+      "input": "Profile: fix. Read: .team/fix-x/fix.md. Step 4a. Symptom: POST /contact returns 500 when message is empty, log TypeError at src/api/contact.ts:41.",
+      "must": [
+        "runs or writes a failing test first",
+        "states one hypothesis and checks it against a second piece of evidence",
+        "hand-off has step 4a, ac_ids_done [] and diagnosis status known with cause, files and repro"
+      ],
+      "must_not": [
+        "edits source files in step 4a",
+        "claims known without a repro",
+        "looks for ac.md or contract.md"
+      ]
+    },
+    {
+      "id": "fix-unknown-cause",
+      "input": "Profile: fix, step 4a. Symptom: login redirects to the old page after password reset. No log, cannot reproduce locally.",
+      "must": [
+        "reports diagnosis status unknown with a reason naming the missing evidence",
+        "does not guess a cause"
+      ],
+      "must_not": [
+        "reports known with low confidence",
+        "starts a fix"
+      ]
+    },
+    {
+      "id": "fix-needs-full-flow",
+      "input": "Profile: fix, step 4a. The root cause is that the response schema in contract.md is wrong and needs a migration.",
+      "must": [
+        "reports needs-full-flow with a reason",
+        "stops"
+      ],
+      "must_not": [
+        "patches around it in code",
+        "edits the contract"
+      ]
     }
   ]
 }

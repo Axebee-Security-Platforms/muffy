@@ -1,0 +1,49 @@
+{
+  "id": "fix-step4-without-diagnosis",
+  "description": "Fix lane: step 4 cannot start before a passed 4a",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "8"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "paths_written": [
+          "src/a.ts"
+        ],
+        "summary": "fixed"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "blocked",
+    "actions": [
+      "block:no-diagnosis"
+    ]
+  }
+}

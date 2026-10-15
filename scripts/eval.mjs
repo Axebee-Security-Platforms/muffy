@@ -11,6 +11,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../skills/muffy/scripts/schema.mjs';
 import { simulate } from './lib/loop-sim.mjs';
+import { runFixLaneEvals } from './lib/fix-lane-evals.mjs';
 import { chooseEffort, defaultEffort, PROTECTED_ROLES, STALLED_AFTER } from './lib/effort-sim.mjs';
 import { smokeRequired, SMOKE_TRIGGERS } from './lib/smoke-sim.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
@@ -210,6 +211,9 @@ check('smoke-scenarios: every trigger has a positive scenario', Object.keys(SMOK
   check('preflight: unknown flag is a usage error (exit 2)', run('--nope').status === 2);
   rmSync(tmp, { recursive: true, force: true });
 }
+
+/* 8. fix lane (references/fix-profile.md): triage examples, fix.md fixture, diagnosis hand-offs */
+runFixLaneEvals({ check, root });
 
 console.log(`eval: ${pass} passed, ${failures.length} failed`);
 if (failures.length) { console.error(failures.map((x) => `  FAIL ${x}`).join('\n')); process.exit(1); }

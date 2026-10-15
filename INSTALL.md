@@ -69,8 +69,8 @@ Caveats:
 2. Check `SECOND_BRAIN_VAULT` in `.claude/settings.local.json`.
 3. Existing codebase: run `/muffy onboard` once (add `--scan` to the installer to pre-generate its input). It writes `docs/architecture/baseline.md` and an ADR for the stack you already have, and waits for your review. See [onboard.md](skills/muffy/references/onboard.md).
 4. Add the repo's own docs the flow uses: `docs/plan/`, `docs/adr/`, `docs/design-system/`, and `.nvmrc` if devops should check the runtime.
-5. Start a feature from the main Claude Code session: `/muffy <feature request>` with a kebab-case task name.
+5. Start a feature from the main Claude Code session: `/muffy <feature request>` with a kebab-case task name. For a small bug or cosmetic fix use `/muffy fix <description>` (see [fix-profile.md](skills/muffy/references/fix-profile.md)).
 
 ## Not for
 
-Small fixes, single-file edits, research-only or review-only requests.
+One-line edits with no behaviour risk, research-only or review-only requests. Small bugs and cosmetic fixes use the fix lane, not the full flow.

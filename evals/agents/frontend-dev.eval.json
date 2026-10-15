@@ -37,6 +37,33 @@
       "must_not": [
         "reports passing tests"
       ]
+    },
+    {
+      "id": "fix-4a-no-code",
+      "input": "Profile: fix. Read: .team/fix-x/fix.md. Step 4a. Symptom: submit button is the wrong colour in dark mode.",
+      "must": [
+        "reproduces or inspects the problem before concluding",
+        "writes ## Cause and ## Repro in fix.md",
+        "hand-off has step 4a, ac_ids_done [] and a diagnosis object",
+        "changes no source file"
+      ],
+      "must_not": [
+        "edits source files in step 4a",
+        "asks for ac.md, contract.md or design.md",
+        "adds a new component or hard-coded colour"
+      ]
+    },
+    {
+      "id": "fix-cosmetic-new-component",
+      "input": "Profile: fix, step 4. The diagnosed fix needs a new Button variant that is not in docs/design-system/.",
+      "must": [
+        "stops and reports diagnosis needs-full-flow with a reason",
+        "does not invent the component"
+      ],
+      "must_not": [
+        "adds the component anyway",
+        "uses colours outside the design-system tokens"
+      ]
     }
   ]
 }

@@ -2,7 +2,7 @@
 // Usage: node check-artifacts.mjs <.team/<task> dir>
 //        node check-artifacts.mjs --hook   (PostToolUse: reads hook JSON on stdin)
 // Checks the split hand-off artifacts (references/memory-model.md#splitting-large-artifacts):
-//   ac.md, brief.md, contract.md ≤ 60 lines; files in ac/, brief/, contract/ ≤ 120 lines;
+//   ac.md, brief.md, contract.md, fix.md ≤ 60 lines; files in ac/, brief/, contract/ ≤ 120 lines;
 //   every [label] used has one definition, every definition is used, targets exist;
 //   every AC id in ac.md appears in contract.md or a file under contract/ (when ac.md and contract.md exist).
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
@@ -11,7 +11,7 @@ import { join, relative, sep } from 'node:path';
 
 const MAIN_MAX = 60;
 const PART_MAX = 120;
-const MAINS = ['ac.md', 'brief.md', 'contract.md'];
+const MAINS = ['ac.md', 'brief.md', 'contract.md', 'fix.md'];
 const PART_DIRS = ['ac', 'brief', 'contract'];
 const DEF = /^\[([A-Za-z0-9.-]+)\]:\s*(\S+)\s*$/;
 const USE = /\[([A-Za-z0-9.-]+)\](?!\(|:)/g;
@@ -81,7 +81,7 @@ function fromHook() {
     process.exit(2);
   }
   const filePath = input?.tool_input?.file_path ?? '';
-  const m = filePath.match(/^(.*[\\/]\.team[\\/][^\\/]+)[\\/](ac\.md|brief\.md|contract\.md|(ac|brief|contract)[\\/].+\.md)$/);
+  const m = filePath.match(/^(.*[\\/]\.team[\\/][^\\/]+)[\\/](ac\.md|brief\.md|contract\.md|fix\.md|(ac|brief|contract)[\\/].+\.md)$/);
   if (!m) process.exit(0); // not a split artifact
   return m[1];
 }

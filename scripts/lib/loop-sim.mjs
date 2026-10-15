@@ -15,6 +15,9 @@ export const LOOP_LIMIT = 3; // fix loops allowed per loop point; the 4th reject
 export const REPEAT_LIMIT = 3; // same blocker id open in this many consecutive rejections = fix is not converging
 export const GATED_STEPS = ['3c', '3d']; // must pass before step 4; 3c passes only after the user approves the design (pause:design-review)
 export const NEVER_SKIP = ['6', '7', '9', '10'];
+export const FIX_NEVER_SKIP = ['4a']; // fix lane (references/fix-profile.md): diagnose before any code
+export const FIX_MAX_FILES = 5; // source files (tests and .team/ excluded) before a fix is promoted to the full flow
+const isSource = (p) => !/(^|[\\/])\.team[\\/]/.test(p) && !/(^|[\\/])(tests?|__tests__)[\\/]|\.(test|spec)\.[a-z]+$/i.test(p);
 
 const REJECTING = new Set(['Reject', 'Fail']);
 
@@ -28,8 +31,10 @@ export function simulate(scenario) {
   let outcome = 'in-progress';
   let trigger = null;
   let escalation = null;
+  const fix = scenario.profile === 'fix';
 
   const violations = NEVER_SKIP.filter((s) => skipped.has(s)).map((s) => `never-skip step ${s} was skipped`);
+  if (fix) violations.push(...FIX_NEVER_SKIP.filter((s) => skipped.has(s)).map((s) => `fix lane: step ${s} was skipped`));
   if (skipped.has('3d')) {
     const { required, reasons } = smokeRequired(scenario.smoke_signals);
     if (required) violations.push(`3d skipped although a smoke trigger is true: ${reasons.join(', ')}`);
@@ -64,6 +69,12 @@ export function simulate(scenario) {
       break;
     }
 
+    if (fix && String(h?.step ?? ev.step) === '4' && !passed.has('4a')) {
+      actions.push('block:no-diagnosis');
+      outcome = 'blocked';
+      break;
+    }
+
     // 1. structure: invalid hand-off -> one retry with the error list, then escalate
     const errs = h ? validate(handoffSchema, h) : ['no handoff block in final message'];
     if (errs.length) {
@@ -81,6 +92,29 @@ export function simulate(scenario) {
       continue;
     }
     retries[point] = 0;
+
+    // 2b. fix lane: route on the diagnosis (fix-profile.md)
+    if (h.diagnosis?.status === 'needs-full-flow') {
+      actions.push('promote:full-flow');
+      outcome = 'promoted';
+      trigger = 'needs-full-flow';
+      break;
+    }
+    if (h.diagnosis?.status === 'unknown') {
+      loops[point] = (loops[point] ?? 0) + 1;
+      if (loops[point] >= 2) escalate(point, 'loop-limit', h.blockers, h.role);
+      else actions.push('ask:more-evidence');
+      continue;
+    }
+    if (fix && String(h.step) === '4') {
+      const files = h.paths_written.filter(isSource).length;
+      if (files > FIX_MAX_FILES || h.blockers.some((b) => b.owner === 'Architect')) {
+        actions.push('promote:full-flow');
+        outcome = 'promoted';
+        trigger = files > FIX_MAX_FILES ? 'too-many-files' : 'architect-blocker';
+        break;
+      }
+    }
 
     // 3. verdict handling
     if (REJECTING.has(h.verdict)) {

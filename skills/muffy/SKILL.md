@@ -2,8 +2,9 @@
 name: muffy
 description: >
   Run a hub-and-spoke software development subagent team (main session = Orchestrator)
-  from research to deploy. Use when building a feature end to end with parallel agents.
-  Do not use for small fixes, single-file changes, or sequential iteration.
+  from research to deploy. Use when building a feature end to end with parallel agents,
+  or `/muffy fix` for a small bug or cosmetic fix (diagnose, fix, review, QA, staging).
+  Do not use for one-line edits, research-only or review-only requests, or sequential iteration.
 ---
 
 # Muffy — Feature Development Team
@@ -24,7 +25,7 @@ Load lazily: open each reference only at the step that needs it, never all up fr
 
 0. **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
 1. **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
-2. **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md)
+2. **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of steps 1–2 and the full step list: [references/fix-profile.md](references/fix-profile.md)
 3. **Steps 1–12** — agent, input and output per step: [references/steps.md](references/steps.md)
 3b. **Requirements interview** — researcher/PM return `needs-input`; relay their questions to the user: [references/requirements.md](references/requirements.md)
 4. **Loops** — read only when a reject/fail happens: fix loops (max 3), fallback ladder, escalation: [references/loops.md](references/loops.md)
@@ -46,7 +47,7 @@ Critical rules — enforce with hooks: [references/hooks-enforcement.md](referen
 - Every agent ends with a JSON hand-off block; validate it ([schemas/](schemas/handoff.schema.json), `scripts/validate-handoff.mjs`) before acting on it; invalid twice → escalate, never guess
 - A loop point that is rejected 4 times, or keeps the same blocker id open for 3 consecutive rejects, stops and asks the user: [references/loops.md](references/loops.md)
 - Only the Orchestrator merges branches and saves reviews as `review-<n>.md`
-- Run only the phases the plan marks for this run
+- Run only the phases the plan marks for this run. In the fix lane, step 4a (diagnose) is never skipped, and a fix that outgrows the lane is promoted to the full flow, never patched on
 - FE/BE report a temporary stack → stop, send to architect (+ ADR) before coding continues
 - An agent writes outside its vault folder → revert it and resend its rule; an agent can't find `<brain>` → `AskUserQuestion`
 - Never deploy to production without passing the Human gate
@@ -61,4 +62,4 @@ Verify after every step: [references/quality-checks.md](references/quality-check
 
 ---
 
-**Not for:** small fixes, single-file edits, research-only or review-only requests, step-by-step iteration in main session
+**Not for:** one-line edits with no behaviour risk, research-only or review-only requests, step-by-step iteration in main session

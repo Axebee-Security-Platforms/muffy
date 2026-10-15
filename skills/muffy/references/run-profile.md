@@ -1,5 +1,7 @@
 # Run profile — skip what the feature doesn't need
 
+A small bug or cosmetic fix does not use the table below: it runs the fix lane ([fix-profile.md](fix-profile.md)), which skips 1, 2, 3, 3b, 3c, 3d and 8, adds step 4a (diagnose), and still never skips 6, 7, 9 and 10. If the fix grows past the lane's limits it is promoted to the full flow.
+
 | Condition | Skip |
 |---|---|
 | No UI change | `designer`, 3b, 3c, `frontend-dev` |
@@ -20,7 +22,7 @@ A pause stops the flow on purpose. It has an id, a resume condition, and one lin
 
 | Pause | Where | Stop until |
 |---|---|---|
-| `pause:scope` | setup, after scope confirmation | the user confirms scope (or edits it) and answers the staging question |
+| `pause:scope` | setup, after scope confirmation (fix lane: one short question with the classification and AC list) | the user confirms scope (or edits it) and answers the staging question |
 | `pause:staging-credentials` | before step 9 makes any live call to an external API or OAuth provider | the user approves each live call in chat, and the keys are confirmed present by name and prefix |
 | `pause:onboard-review` | onboard step 0d ([onboard.md](onboard.md)) | the user approves or edits `baseline.md` and the ADR |
 | `pause:design-review` | step 3c, after the designer's Definition of done is checked | the user approves the design (Approve), or asks for changes and then approves the revision |

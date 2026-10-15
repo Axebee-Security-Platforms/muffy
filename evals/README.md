@@ -20,12 +20,16 @@ npm run eval:sync # re-copy each agent's rubric from its quality-checks.md
 | Loop rules | `mock-scenarios/*.json` → `scripts/lib/loop-sim.mjs` | Reject→fix→approve, 4th-rejection cut-off, repeated blocker, invalid hand-off retry, QC failed twice, gates 3c/3d block step 4, run-profile skips, never-skip steps |
 
 | Smoke triggers | `smoke-scenarios.json` → `scripts/lib/smoke-sim.mjs`, `mock-scenarios/smoke-skipped-*.json` | 3d runs only when a trigger in `run-profile.md` is true (incl. `staging: none`); a profile that skips 3d despite a trigger is rejected; the doc lists every trigger |
+| Fix triage | `triage-scenarios.json` → `scripts/lib/triage-sim.mjs`, `scripts/lib/fix-lane-evals.mjs` | The Examples table in `fix-profile.md` and the scenarios list the same requests and lanes; boundary cases (5 vs 6 files, symptom without location); a golden `fixtures/fix-login-redirect/` (`fix.md`, 4a and 4 hand-offs) keeps the lane invariants; the `diagnosis` block rejects low confidence, missing repro, missing reason, wrong step and wrong role |
+| Fix lane | `mock-scenarios/fix-*.json` (`"profile": "fix"`) → `scripts/lib/loop-sim.mjs` | Step 4a cannot be skipped, step 4 is blocked without a passed 4a, `unknown` diagnosis asks once then escalates, `needs-full-flow` or more than 5 source files promotes to the full flow |
 
 When you change a rule in `skills/muffy/references/loops.md`, change `scripts/lib/loop-sim.mjs` and the matching scenario in the same commit.
 
 ## What is NOT covered offline
 
 Whether a real model follows the prompts. `live_scenarios` in each `*.eval.json` are the cases to run by hand (or a future LLM-graded runner): spawn the agent with `input` against the golden fixture, then grade the final message and files against `must` / `must_not`, plus the rubric. Record results in the PR; treat any `must_not` hit as a regression.
+
+`triage-scenarios.json` also has the raw `request` text of each example: paste it after `/muffy` (without `fix`) to check by hand that the Orchestrator picks the same lane.
 
 ## Adding a scenario
 
