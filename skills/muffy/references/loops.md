@@ -4,6 +4,7 @@
 - **QA fail** → owner fixes → reviewer checks the fix diff → QA runs the full regression suite
 - **Smoke fail (3d)** → architect changes stack + ADR → smoke again; FE/BE wait
 - **Staging fail** → logs to the relevant dev → back to step 6
+- **Design review: changes requested (3c)** → reasons to `designer` (+ `architect` if the contract is affected) → republish canvas → Definition of done again → ask the user again. FE/BE stay blocked
 - **Human reject** → reasons to the relevant agents → redo review + QA
 - **Production health fail** → devops rolls back; report to the user before anything else
 - More than 3 loops at one point → stop and ask the user (see Fallback ladder)
@@ -23,7 +24,7 @@ Apply in order. Each rung applies to one loop point; the validator is `node .cla
 3. **Same blocker id open in 3 consecutive rejects** (the owner has already failed two fix attempts at it) → escalate `repeated-blocker` right away instead of spending the 4th-rejection budget. One failed fix is normal and not an escalation. Default recommendation: `change-approach` (often the contract or AC is wrong → architect/PM decides)
 4. **Fourth rejection at a point** → escalate `loop-limit`
 5. **Agent unreachable** (`SendMessage` fails, agent gone) → spawn once fresh with `Checkpoint:` + the path of its last hand-off. Fails again → escalate `agent-unavailable`
-6. **Human gate rejected** twice for the same reason → escalate `human-reject-limit`
+6. **Human gate rejected** (step 10 or `pause:design-review`) twice for the same reason → escalate `human-reject-limit`
 
 A reject that is not repeated and is under the limit is handled by the loop bullets above, not by this ladder.
 
