@@ -19,6 +19,8 @@ npm run eval:sync # re-copy each agent's rubric from its quality-checks.md
 | Checkpoint format | `checkpoint.md` fixture | Required sections, ≤ 40 lines, loop counters within limit |
 | Loop rules | `mock-scenarios/*.json` → `scripts/lib/loop-sim.mjs` | Reject→fix→approve, 4th-rejection cut-off, repeated blocker, invalid hand-off retry, QC failed twice, gates 3c/3d block step 4, run-profile skips, never-skip steps |
 
+| Smoke triggers | `smoke-scenarios.json` → `scripts/lib/smoke-sim.mjs`, `mock-scenarios/smoke-skipped-*.json` | 3d runs only when a trigger in `run-profile.md` is true (incl. `staging: none`); a profile that skips 3d despite a trigger is rejected; the doc lists every trigger |
+
 When you change a rule in `skills/muffy/references/loops.md`, change `scripts/lib/loop-sim.mjs` and the matching scenario in the same commit.
 
 ## What is NOT covered offline

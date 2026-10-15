@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { validate } from '../../skills/muffy/scripts/schema.mjs';
+import { smokeRequired } from './smoke-sim.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const handoffSchema = JSON.parse(readFileSync(join(root, 'skills/muffy/schemas/handoff.schema.json'), 'utf8'));
@@ -29,6 +30,10 @@ export function simulate(scenario) {
   let escalation = null;
 
   const violations = NEVER_SKIP.filter((s) => skipped.has(s)).map((s) => `never-skip step ${s} was skipped`);
+  if (skipped.has('3d')) {
+    const { required, reasons } = smokeRequired(scenario.smoke_signals);
+    if (required) violations.push(`3d skipped although a smoke trigger is true: ${reasons.join(', ')}`);
+  }
   if (violations.length) return { actions, loops, outcome: 'invalid-profile', trigger: null, violations, escalation };
 
   const escalate = (point, why, blockers, owner) => {
