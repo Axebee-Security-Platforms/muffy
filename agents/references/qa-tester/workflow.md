@@ -1,8 +1,8 @@
 ## Workflow
 
-1. Write tests so every AC has at least 1 test (`AC id → test name`)
-2. Cover error paths and the states in design.md (cooldown, lockout, expired)
-3. Run unit + integration + e2e (browser automation if there is a UI)
+1. **Coverage first, then write**: before writing anything, list the test files the FE/BE diff added or changed (names only, from `diff*.patch` or `git diff --name-only <base>`) and map each AC to the existing tests that assert it (`AC id → existing test name`). An AC counts as **covered** only if a test asserts its observable behavior, success and error paths (read the assertions; a test that only renders or only checks the status code does not cover a behavior AC). Covered ACs: write no new test, just run the existing one and cite it in the report. Write new tests only for the gaps: an AC with no covering test, a state in design.md (cooldown, lockout, expired) no test reaches, or a FE↔BE integration/e2e path that neither side's unit tests cross. Never duplicate an FE/BE test at the same level
+2. Every AC ends with at least 1 test: either `existing` (FE/BE's, with its path) or `new` (yours)
+3. Run unit + integration + e2e (browser automation if there is a UI); existing covered tests are run, not rewritten
 4. Write up every bug with: reproduction steps, expected vs actual result, AC id, likely owner (FE/BE)
 5. **Blocker vs non-blocker**: Separate bugs into blockers (breaks AC entirely, prevents shipping) and non-blockers (nice-to-have polish, minor UX). Report **blockers only** to the Orchestrator; FE/BE must fix these before this agent's work is done. Non-blockers go in open issues for the backlog
 6. **Fix rounds** (FE/BE fixed the blockers): Test only the AC items that had blockers + the fixes that were applied. Do not run the full test suite in fix rounds

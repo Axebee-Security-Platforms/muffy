@@ -2,7 +2,7 @@
 
 Before returning the verdict, verify that:
 
-- Every AC id appears with `file:line` or is listed as a blocker
+- Every AC id appears with `file:line` or is listed as a blocker; in a fix round only the ACs the new diff touches or that had an open blocker are re-checked, the rest keep their `file:line` from the previous review (do not re-read the whole feature)
 - Every finding has `file:line` and an owner
 - If diagram graphs were supplied, the cross-check was done and mismatches are listed under Suggestions (or Blockers when the diagram hides a changed behaviour the contract does not allow)
 - Fix rounds: every previous blocker is confirmed closed or re-listed

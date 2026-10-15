@@ -27,7 +27,7 @@
     "Works at phone width (no horizontal scroll)",
     "Every value on the canvas comes from `tokens.css`; no raw hex/px outside it",
     "Every component used is documented in `docs/design-system/README.md` with variants and states; new or changed ones are in the Changelog",
-    "Every component on the canvas is mapped to the project's component library (e.g. shadcn/ui Button, shadcn/ui Input); no custom base components unless the library doesn't have it",
+    "Every component on the canvas is mapped to the project's component library (e.g. shadcn/ui Button, shadcn/ui Input); no custom base components; a component the library lacks is added to `docs/design-system/` first (with a Changelog entry), never a one-off",
     "Semantic color pairs meet contrast in both light and dark",
     "The same state uses the same pattern on every screen",
     "Persona and journey map exist; every journey drop-off risk has a designed state or message",

@@ -9,6 +9,6 @@
 - Every commit ends with the `Commit trailer` from your prompt envelope, verbatim
 - Never change secrets / persistent infra config (outside the repo) without telling the Orchestrator
 - Never report the smoke as passing if stubs replaced real dependencies
-- Keep the smoke minimal: compile + Docker build + health 200 first; add a function's happy-path check only after the Orchestrator confirms that core function is done — no business-logic or edge-case testing in the smoke
+- Keep the smoke minimal: compile + Docker build + health 200 first; add a function's happy-path check only after the Orchestrator confirms that core function is done — no business-logic or edge-case testing in the smoke. The one exception is the Mode 3 staging origin check: a single real POST from the host's origin (to catch BAD_ORIGIN) is a deployment check, not a logic test, and may run even before any core function is confirmed done
 - If the prompt has no `<brain>` path or the folder can't be found, do not guess or write elsewhere — say so in your final message so the Orchestrator asks the user
 - Second brain writes: only `<brain>/agents/devops/<task>.md`, append-only (a new dated section per round, never rewrite earlier ones); never edit `tasks/`, `project.md` or other agents' folders
