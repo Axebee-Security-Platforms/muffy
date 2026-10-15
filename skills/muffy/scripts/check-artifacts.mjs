@@ -4,7 +4,7 @@
 // Checks the split hand-off artifacts (references/memory-model.md#splitting-large-artifacts):
 //   ac.md, brief.md, contract.md ≤ 60 lines; files in ac/, brief/, contract/ ≤ 120 lines;
 //   every [label] used has one definition, every definition is used, targets exist;
-//   every AC id in ac.md appears in contract.md (when both exist).
+//   every AC id in ac.md appears in contract.md or a file under contract/ (when ac.md and contract.md exist).
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
@@ -63,9 +63,10 @@ export function checkTask(taskDir) {
   const contractPath = join(taskDir, 'contract.md');
   if (existsSync(acPath) && existsSync(contractPath)) {
     const ids = new Set(readFileSync(acPath, 'utf8').match(/AC-\d+/g) ?? []);
-    const contract = readFileSync(contractPath, 'utf8');
+    const contractDir = join(taskDir, 'contract');
+    const contract = [contractPath, ...(existsSync(contractDir) ? walk(contractDir) : [])].map((p) => readFileSync(p, 'utf8')).join('\n');
     for (const id of ids) {
-      if (!new RegExp(`\\b${id}\\b`).test(contract)) errors.push(`contract.md: ${id} from ac.md is not mapped`);
+      if (!new RegExp(`\\b${id}\\b`).test(contract)) errors.push(`contract: ${id} from ac.md is not mapped in contract.md or contract/`);
     }
   }
   return errors;

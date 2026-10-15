@@ -9,6 +9,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../skills/muffy/scripts/schema.mjs';
 import { simulate } from './lib/loop-sim.mjs';
+import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rel = (...p) => join(root, ...p);
@@ -63,10 +64,15 @@ for (const f of readdirSync(rel('evals/agents')).filter((n) => n.endsWith('.eval
 
 /* 2. cross-artifact traceability (the rule in skills/muffy/references/quality-checks.md) */
 const acIds = [...new Set(read('ac.md').match(/AC-\d+/g))];
-const traced = { 'design.md': read('design.md'), 'contract.md': read('contract.md'), 'qa-report.md': read('qa-report.md') };
+const contractTree = () => {
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
+  return [join(fixtureDir, 'contract.md'), ...walk(join(fixtureDir, 'contract'))].map((p) => readFileSync(p, 'utf8')).join('\n');
+};
+const traced = { 'design.md': read('design.md'), 'contract.md + contract/': contractTree(), 'qa-report.md': read('qa-report.md') };
+check('contract.md is an index: check-artifacts passes on the fixture (<= 60 lines, links resolve, every AC mapped)', checkTask(fixtureDir).length === 0, checkTask(fixtureDir).join('; '));
 const missing = (docs) => Object.entries(docs).flatMap(([name, txt]) => acIds.filter((id) => !txt.includes(id)).map((id) => `${id} missing in ${name}`));
 check('traceability: every AC is in design, contract and qa-report', missing(traced).length === 0, missing(traced).join(', '));
-check('traceability: dropping AC-2 from contract is detected', missing({ ...traced, 'contract.md': traced['contract.md'].replaceAll('AC-2', 'AC-X') }).length > 0);
+check('traceability: dropping AC-2 from contract is detected', missing({ ...traced, 'contract.md + contract/': traced['contract.md + contract/'].replaceAll('AC-2', 'AC-X') }).length > 0);
 const runtime = (t) => t.match(/^Runtime:\s*(.+?)(?:\s*\(|$)/m)?.[1];
 check('runtime pin: deploy.md == contract.md == qa-report.md', runtime(read('deploy.md')) === runtime(read('contract.md')) && runtime(read('contract.md')) === runtime(read('qa-report.md')));
 check('runtime pin: mismatch is detected', runtime(read('deploy.md')) !== runtime(read('contract.md').replace('Node 22.14', 'Node 20.1')));

@@ -2,6 +2,7 @@
 
 Before handing off, verify that:
 
+- `contract.md` is an index (≤ 60 lines): every section is a one-line summary with a link to its part file, and every link resolves
 - Every AC has a home in the contract
 - Every endpoint has method, request/response schema, error codes and status codes
 - Runtime + version in Stack match `deploy.md`

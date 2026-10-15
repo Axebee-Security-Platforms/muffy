@@ -59,7 +59,7 @@ Link definitions go at the very end of the file, after the sections above.
 
 ## Splitting large artifacts
 
-`ac.md`, `brief.md` and `contract.md` are read by many agents on every round, so they stay small. The main file is an **index plus the facts that cut across parts**; detail moves to a part file the reader opens only when needed. Split a section out only when it passes ~15 lines or the main file passes 60 lines, so small tasks keep one file each.
+`ac.md`, `brief.md` and `contract.md` are read by many agents on every round, so they stay small. The main file is an **index plus the facts that cut across parts**; detail moves to a part file the reader opens only when needed. `ac.md` and `brief.md` split a section out only when it passes ~15 lines or the main file passes 60 lines, so small tasks keep one file each. `contract.md` is **always an index**: every section lives in a part file from the start, so no reader opens more than it needs.
 
 ```
 ac.md        stories · AC table (id | one-line | [link]) · traceability · out of scope
@@ -68,14 +68,18 @@ brief.md     Context (≤10 lines) · second brain · options (title + recommend
 brief/options-<topic>.md     full options, trade-offs, evidence per decision
 brief/context.md             long codebase findings with `path:line`
 brief/references.md          URLs and sources
-contract.md  Stack · endpoint table (method path | [link]) · file ownership · AC id → endpoint/logic
-contract/endpoints/<slug>.md request, responses, errors per endpoint
+contract.md  index only: one summary line + [link] per section; runtime pin on the Stack line
+contract/stack.md            stack, reasons, build/buy/reuse
 contract/schemas.md          tables and migrations
+contract/cost.md             run cost range, effort per phase (inline line if "No new recurring cost")
+contract/ownership.md        file ownership table
+contract/ac-map.md           AC id → endpoint/logic
+contract/endpoints/<slug>.md request, responses, errors per endpoint
 ```
 
-- **Stays in the main file**, because agents or scripts read it everywhere: the AC table and traceability, Must-not-miss, `Level reached`, the Stack and runtime pin, file ownership, and the `AC id → endpoint/logic` table
+- **Stays in the main file**, because agents or scripts read it everywhere: the AC table and traceability, Must-not-miss, `Level reached`, and the runtime pin (on the Stack line of `contract.md`)
 - **Link references, not inline detail**, same as the checkpoint: one-line rows end with `[label]`, and every label is defined once at the bottom of the file (`[AC-2]: ac/AC-2.md`). Use the item's own id as the label (`AC-2`, `post-login`, `options-session`)
 - **Ids are stable.** Never renumber or reuse an AC id or endpoint slug; a dropped AC is marked `dropped` in the table, not deleted
 - **Part files are edited in place** (unlike `rounds/`). Whoever changes a part file updates its one-line summary in the main file in the same step; the main file wins if they disagree
 - **Readers open the main file first**, then only the parts their work touches: an AC the diff covers, an endpoint a screen calls, the option behind a decision
-- **Size limits** (checked by [scripts/check-artifacts.mjs](../scripts/check-artifacts.mjs)): main file ≤ 60 lines; every part file ≤ 120 lines (split again by topic); every `[label]` has a matching definition and the target exists; every AC id in `ac.md` appears in `contract.md`
+- **Size limits** (checked by [scripts/check-artifacts.mjs](../scripts/check-artifacts.mjs)): main file ≤ 60 lines; every part file ≤ 120 lines (split again by topic); every `[label]` has a matching definition and the target exists; every AC id in `ac.md` appears in `contract.md` or a file under `contract/`

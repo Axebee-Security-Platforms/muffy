@@ -34,7 +34,7 @@ Load lazily: open each reference only at the step that needs it, never all up fr
 
 ## Output Format
 
-- `.team/<task>/`: `brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/`, `contract/` (only when a main file passes 60 lines), `handoff/<step>-<role>-r<round>.json`, `escalation-<n>.json` (only if a loop was cut off)
+- `.team/<task>/`: `brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/` (only when a main file passes 60 lines), `contract/` (always: `contract.md` is an index), `handoff/<step>-<role>-r<round>.json`, `escalation-<n>.json` (only if a loop was cut off)
 - Repo: `docs/plan/<task>.md`, `docs/adr/NNNN-*.md`, `docs/design-system/` (if changed), merged `feature/<task>`
 - Vault: `tasks/<task>.md`, consolidated `project.md`
 - Final message to the user: see `references/closing.md` step 5
