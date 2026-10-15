@@ -1,0 +1,9 @@
+{
+  "id": "smoke-skipped-dependency-change",
+  "description": "A new native dependency is a smoke trigger, so skipping 3d is rejected even with staging available",
+  "task": "login-flow",
+  "skip": ["3d"],
+  "smoke_signals": { "runtime_or_dependency_changed": true, "staging_none": false },
+  "events": [],
+  "expect": { "outcome": "invalid-profile", "actions": [] }
+}

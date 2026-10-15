@@ -148,7 +148,7 @@ Every agent ends with a JSON block checked against `handoff.schema.json`; an inv
 | 2 | `product-manager` | `ac.md`, `docs/plan/<task>.md` (phases with value/cost/risk, P0/P1/P2), ADRs, `docs/strategy.md` (first feature only) |
 | 3 | `designer` ∥ `architect` ∥ `devops` | `design.md`, `contract.md` (index + parts, with Cost), `deploy.md` |
 | 3b | Orchestrator | Design canvas published on Claude Design; URL saved in `design.md`, `checkpoint.md`, and the vault task note |
-| 3c / 3d | Design gate (checklist, then **you approve the design**), `devops` smoke build | Pass or send back. Blocks code until both pass |
+| 3c / 3d | Design gate (checklist, then **you approve the design**), `devops` smoke build (only on stack change) | Pass or send back. Blocks code until both pass |
 | 4 | `frontend-dev` ∥ `backend-dev` | `fe/<task>` and `be/<task>` branches in separate worktrees |
 | 5 | Orchestrator | Merge into `feature/<task>` with `--no-ff` |
 | 5b | Orchestrator (**off by default**) | PR diagrams as one Claude Artifact, when you ask for them |
@@ -173,7 +173,7 @@ The Orchestrator skips steps the feature does not need (no UI change skips desig
 | `pause:scope` | Setup | You confirm the scope |
 | `pause:onboard-review` | Onboard step 0d | You approve or edit the baseline, ADR, and agent-context change |
 | `pause:design-review` (3c) | After design, once the designer's definition of done is fully checked | You approve the design (or request changes and approve the revision). Nothing goes to `frontend-dev` / `backend-dev` before this |
-| Smoke build (3d) | After devops mode 1 | Real dependencies run in one process |
+| Smoke build (3d) | After devops mode 1, only when the stack changes (new runtime, dependency or devops-owned file) or no smoke has passed yet | Real dependencies run in one process. Feature-only changes skip it; staging still smoke-tests |
 | `pause:staging-credentials` | Before a live call to an external API | You approve each call and the keys are confirmed by name and prefix |
 | `pause:human-gate` | Step 10 | You answer Approve or Reject |
 

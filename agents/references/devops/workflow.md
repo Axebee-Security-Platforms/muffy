@@ -7,6 +7,7 @@
 4. If the proposed stack can't be deployed or must be torn out after MVP → tell the Orchestrator with alternatives (architect writes the ADR)
 
 ### Mode 2: Smoke build
+Runs only when the Orchestrator's prompt says a smoke trigger is true (new runtime/dependency/native package/datastore, devops-owned files changed, or no passing smoke on record for this stack). A feature that only adds routes, UI or logic does not need it; staging (mode 3) covers that.
 0. Preflight: `node -v` must match `.nvmrc` (e.g. Node 24.21.0). A smoke on another Node version proves nothing; mismatch = fail, report it
 1. On branch `ops/<task>` inside its worktree, create/edit only the infra files `contract.md` says devops owns — minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
 2. Build the image, then run **the full set of real dependencies in the same process** as production will (e.g. load the real model + real search library + real DB) with a small smoke script — not stubs

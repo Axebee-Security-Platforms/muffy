@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { validate } from '../skills/muffy/scripts/schema.mjs';
 import { simulate } from './lib/loop-sim.mjs';
 import { chooseEffort, defaultEffort, PROTECTED_ROLES, STALLED_AFTER } from './lib/effort-sim.mjs';
+import { smokeRequired, SMOKE_TRIGGERS } from './lib/smoke-sim.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -144,6 +145,20 @@ check('effort-doc: every protected role defaults to high, so never-lower is mean
 check('effort-doc: stall threshold in doc matches STALLED_AFTER', tierDoc.includes(`≥ ${STALLED_AFTER} consecutive rejections`));
 for (const sig of ['High impact', 'Assumed requirements', 'Stalled', 'Exact fix']) check(`effort-doc: signal table has "${sig}"`, new RegExp(`^\\s*\\| ${sig}`, 'm').test(tierDoc));
 check('effort-doc: scenarios cover every role', roles.every((r) => scenarios.some((s) => s.role === r)), `uncovered: ${roles.filter((r) => !scenarios.some((s) => s.role === r))}`);
+
+/* 5. smoke triggers (references/run-profile.md "Smoke triggers") */
+for (const sc of readJson(rel('evals/smoke-scenarios.json'))) {
+  const out = smokeRequired(sc.signals);
+  check(`smoke:${sc.id}`, out.required === sc.expect, `expected ${sc.expect}, got ${out.required} (${out.reasons})`);
+}
+const profileDoc = readFileSync(rel('skills/muffy/references/run-profile.md'), 'utf8');
+const triggerLine = profileDoc.split(/\r?\n/).find((l) => l.startsWith('**Smoke triggers')) ?? '';
+for (const [key, kw] of Object.entries({ runtime_or_dependency_changed: 'lockfile', devops_files_changed: 'Dockerfile', no_passing_smoke_on_record: 'no passing smoke', staging_none: 'staging: none' })) {
+  check(`smoke-doc: run-profile.md documents trigger ${key}`, triggerLine.includes(kw), `missing "${kw}"`);
+}
+check('smoke-doc: every SMOKE_TRIGGERS key has a documented keyword', Object.keys(SMOKE_TRIGGERS).length === 4);
+check('smoke-doc: setup.md asks the staging question at pause:scope', /Staging: is there one/.test(readFileSync(rel('skills/muffy/references/setup.md'), 'utf8')));
+check('smoke-scenarios: every trigger has a positive scenario', Object.keys(SMOKE_TRIGGERS).every((k) => readJson(rel('evals/smoke-scenarios.json')).some((s) => s.signals[k] === true && s.expect === true)));
 
 console.log(`eval: ${pass} passed, ${failures.length} failed`);
 if (failures.length) { console.error(failures.map((x) => `  FAIL ${x}`).join('\n')); process.exit(1); }

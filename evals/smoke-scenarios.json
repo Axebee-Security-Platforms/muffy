@@ -1,0 +1,9 @@
+[
+  { "id": "routes-only", "signals": {}, "expect": false },
+  { "id": "ui-and-logic-only", "signals": { "runtime_or_dependency_changed": false, "devops_files_changed": false, "no_passing_smoke_on_record": false, "staging_none": false }, "expect": false },
+  { "id": "new-lockfile-dependency", "signals": { "runtime_or_dependency_changed": true }, "expect": true },
+  { "id": "dockerfile-changed", "signals": { "devops_files_changed": true }, "expect": true },
+  { "id": "first-feature-no-smoke-on-record", "signals": { "no_passing_smoke_on_record": true }, "expect": true },
+  { "id": "staging-none-forces-smoke", "signals": { "staging_none": true }, "expect": true },
+  { "id": "staging-substitute-does-not-force-smoke", "signals": { "staging_none": false }, "expect": false }
+]
