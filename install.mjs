@@ -6,7 +6,7 @@
 // --clean removes the previous install first, including agent files that a newer version dropped.
 // Creates .claude/settings.local.json only when missing, and adds ignore lines to .gitignore.
 // --scan runs the repo scanner after install and writes .team/onboard/scan.json (input for /muffy onboard).
-// Hooks are not added by default. --with-guard merges only the env guard into hooks.PreToolUse.
+// Hooks are not added by default. --with-guard merges the env guard and the Bash allowlist guard into hooks.PreToolUse.
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync, statSync } from 'node:fs';
 import { join, dirname, resolve, relative } from 'node:path';
@@ -50,7 +50,7 @@ if (flag('--help') || positional.length === 0) {
 usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean] [--with-guard] [--scan]
 
   --vault       path to the Obsidian vault (written to .claude/settings.local.json)
-  --with-guard  merge the env guard (guard-env.mjs) into hooks.PreToolUse of .claude/settings.local.json
+  --with-guard  merge the guards (guard-env.mjs, guard-bash-allowlist.mjs) into hooks.PreToolUse of .claude/settings.local.json
                 never overwrites other keys; skipped with a message if PreToolUse already exists
   --scan        scan the target repo and write .team/onboard/scan.json, the input for /muffy onboard
   --dry-run     print what would change (incl. the hook JSON to merge), write nothing
@@ -129,8 +129,11 @@ if (skillCopied) {
 }
 
 // 4. personal settings: created when missing, never overwritten; --with-guard merges one hook key
-const guardCommand = 'node .claude/skills/muffy/scripts/guard-env.mjs';
-const guardEntry = { matcher: 'Read|Grep|Bash|PowerShell', hooks: [{ type: 'command', command: guardCommand }] };
+const guards = [
+  { script: 'guard-env.mjs', matcher: 'Read|Grep|Bash|PowerShell' },
+  { script: 'guard-bash-allowlist.mjs', matcher: 'Bash|PowerShell' },
+].map((g) => ({ ...g, entry: { matcher: g.matcher, hooks: [{ type: 'command', command: `node .claude/skills/muffy/scripts/${g.script}` }] } }));
+const guardEntries = guards.map((g) => g.entry);
 let settingsChanged = false;
 if (!settingsExisted) {
   settings = { env: { SECOND_BRAIN_VAULT: vault ?? '<absolute path to your Obsidian vault>' } };
@@ -140,14 +143,21 @@ if (!settingsExisted) {
 if (withGuard) {
   const pre = settings.hooks?.PreToolUse;
   if (pre === undefined) {
-    settings.hooks = { ...(settings.hooks ?? {}), PreToolUse: [guardEntry] };
+    settings.hooks = { ...(settings.hooks ?? {}), PreToolUse: guardEntries };
     settingsChanged = true;
-    log(`merge: hooks.PreToolUse <- guard-env (${guardCommand})`);
-    if (dryRun) console.log(JSON.stringify({ hooks: { PreToolUse: [guardEntry] } }, null, 2));
+    log(`merge: hooks.PreToolUse <- ${guards.map((g) => g.script).join(', ')}`);
+    if (dryRun) console.log(JSON.stringify({ hooks: { PreToolUse: guardEntries } }, null, 2));
   } else if (JSON.stringify(pre).includes('guard-env.mjs')) {
-    log('guard-env already in hooks.PreToolUse (nothing to merge)');
+    // muffy's own hooks are already there (maybe from an older install): add only the guards still missing
+    const missing = guards.filter((g) => !JSON.stringify(pre).includes(g.script));
+    if (missing.length === 0) log('guards already in hooks.PreToolUse (nothing to merge)');
+    else {
+      settings.hooks.PreToolUse = [...pre, ...missing.map((g) => g.entry)];
+      settingsChanged = true;
+      log(`merge: hooks.PreToolUse <- ${missing.map((g) => g.script).join(', ')}`);
+    }
   } else {
-    warn(`hooks.PreToolUse already exists in ${rel(settingsPath, target)}; not modified. Add this entry by hand:\n${JSON.stringify(guardEntry, null, 2)}`);
+    warn(`hooks.PreToolUse already exists in ${rel(settingsPath, target)}; not modified. Add these entries by hand:\n${JSON.stringify(guardEntries, null, 2)}`);
   }
 }
 if (settingsExisted && !settingsChanged) log(`keep existing ${rel(settingsPath, target)} (not modified)`);
@@ -192,7 +202,7 @@ const hooks = JSON.parse(readFileSync(join(here, 'team-flow-settings-template.js
 console.log(`
 Done${dryRun ? ' (dry run, nothing written)' : ''}. Remaining manual steps:
 
-1. ${withGuard ? 'Env guard is in hooks.PreToolUse of .claude/settings.local.json (see messages above if it was skipped).' : 'Hooks are not installed. Re-run with --with-guard for the env guard, or add it yourself:\n     { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }'}
+1. ${withGuard ? 'Env and Bash-allowlist guards are in hooks.PreToolUse of .claude/settings.local.json (see messages above if it was skipped).' : 'Hooks are not installed. Re-run with --with-guard for the guards, or add them yourself:\n     { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }'}
    - team-flow rules (${Object.keys(hooks).join(', ')}) are in team-flow-settings-template.json — merge the "hooks" key by hand.
 2. Set SECOND_BRAIN_VAULT in .claude/settings.local.json if it still shows the placeholder.
 3. Make sure the repo has docs/plan/, docs/adr/, docs/design-system/ (where the flow needs them) and .nvmrc if devops checks the runtime.
