@@ -4,7 +4,7 @@
 
 ### One skill, ten subagents, one feature from research to production.
 
-**Describe a feature. The team researches, designs, builds, reviews, tests, and ships it, with a human approving every production release.**
+**Describe a feature. The team researches, designs, builds, reviews, tests, and ships it, with a human approving the design before code starts and every production release.**
 
 [Quick start](#quick-start) · [How muffy works](#how-muffy-works) · [What each step produces](#what-each-step-produces) · [Example](#example) · [FAQ](#faq) · [Documentation](#documentation)
 
@@ -113,7 +113,7 @@ Every agent ends with a JSON block checked against `handoff.schema.json`; an inv
     </tr>
     <tr>
       <td>Review</td>
-      <td>Code review and QA gates; Human gate before production</td>
+      <td>Design approval before code; code review and QA gates; Human gate before production</td>
       <td>Depends on whether someone remembers to ask</td>
     </tr>
     <tr>
@@ -240,6 +240,13 @@ The vault holds task notes and the consolidated `project.md`. Pass `--vault` at 
 <summary><strong>Can it deploy to production without me?</strong></summary>
 
 No. Production rollout starts only after you approve at the Human gate, with "Human approved" in the prompt.
+
+</details>
+
+<details>
+<summary><strong>Can the frontend and backend start before I approve the design?</strong></summary>
+
+No. After the designer's checklist passes, the run stops at `pause:design-review` with the canvas link. `frontend-dev` and `backend-dev` start only after you approve; if you request changes, the designer revises and asks you again.
 
 </details>
 
