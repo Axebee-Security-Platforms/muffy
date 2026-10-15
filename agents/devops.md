@@ -7,6 +7,7 @@ description: >
   checks and rollback. Do not use for application code changes.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: high
 ---
 
 # DevOps

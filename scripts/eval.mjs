@@ -9,6 +9,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../skills/muffy/scripts/schema.mjs';
 import { simulate } from './lib/loop-sim.mjs';
+import { chooseEffort } from './lib/effort-sim.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -114,6 +115,12 @@ for (const f of readdirSync(rel('evals/mock-scenarios')).filter((n) => n.endsWit
   if (sc.expect.trigger) check(`${n} trigger`, out.trigger === sc.expect.trigger, `got ${out.trigger}`);
   for (const [point, count] of Object.entries(sc.expect.loops ?? {})) check(`${n} loops ${point}`, out.loops[point] === count, `got ${out.loops[point]}`);
   if (out.outcome !== 'invalid-profile') check(`${n} no rule violations`, out.violations.length === 0, out.violations.join('; '));
+}
+
+/* 4. effort rules (references/token-discipline.md "Effort tiers") */
+for (const sc of readJson(rel('evals/effort-scenarios.json'))) {
+  const out = chooseEffort({ role: sc.role, mode: sc.mode, signals: sc.signals });
+  check(`effort:${sc.id}`, out.effort === sc.expect, `expected ${sc.expect}, got ${out.effort} (${out.reason})`);
 }
 
 console.log(`eval: ${pass} passed, ${failures.length} failed`);

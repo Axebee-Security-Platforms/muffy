@@ -6,6 +6,7 @@ description: >
   fix rounds (team flow steps 6 and 8). Do not use to fix code or write files.
 tools: Read, Grep, Glob
 model: sonnet
+effort: high
 ---
 
 # Code Reviewer

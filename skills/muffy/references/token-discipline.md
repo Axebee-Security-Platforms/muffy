@@ -25,3 +25,16 @@
   - `frontend-dev` / `backend-dev` fix rounds where every bug names a file + line and the expected fix
   - `researcher` when the run profile asks for codebase-only / minimal research
 - **Never downgrade** `code-reviewer`, `architect`, or `devops` in production mode — a miss there costs more than the tokens saved
+- **Effort tiers**: effort is a separate axis from model — how hard the agent thinks, not which model thinks. Allowed: `low`, `medium`, `high` — never `xhigh` or `max`. Agent frontmatter sets the default (`architect`, `code-reviewer`, `devops` = high; `backend-dev`, `frontend-dev`, `designer`, `qa-tester` = medium; `researcher`, `docs-writer`, `product-manager` = low). When spawning fresh, decide the effort from these signals — read them from files, don't judge by feel:
+
+  | Signal | Read from | Effect |
+  |---|---|---|
+  | High impact: touches auth, payments, data migrations or secrets | `contract.md` (schemas, file ownership) | `high`, overrides everything below |
+  | Assumed requirements: `[assumed]` items | `ac.md`, `requirements.md` | +1 level |
+  | Stalled: the same blocker id open in ≥ 2 consecutive rejections | `checkpoint.md` `## Open blockers` | +1 level |
+  | Exact fix: every open bug names file + line + expected fix (also re-running existing tests) | hand-off `blockers[]` | −1 level |
+
+  Combine: start at the role default, add the effects, cap the net move at one level either way, stay within `low`–`high`. The same rules are checked offline by `npm test`
+  - **Never lower** the effort of `code-reviewer`, `architect` or `devops` in production mode, same reason as model
+  - A `SendMessage` fix round keeps the agent's current effort; to change it, spawn fresh and point it at `checkpoint.md`
+  - Record the signals used and the resulting effort in checkpoint `## Run profile` (one line); skip the line when the default applies

@@ -6,6 +6,7 @@ description: >
   with architect (team flow step 3). Do not use for API design or production code.
 tools: Read, Grep, Glob, Edit, Write
 model: sonnet
+effort: medium
 skills:
   - impeccable
 ---

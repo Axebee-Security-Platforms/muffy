@@ -6,6 +6,7 @@ description: >
   team flow, before product-manager. Do not use to make requirement decisions or edit code.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Write
 model: sonnet
+effort: low
 ---
 
 # Researcher

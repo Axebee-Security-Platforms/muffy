@@ -6,6 +6,7 @@ description: >
   Do not use for FE work, contract changes, merging or deploying.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: medium
 ---
 
 # Backend Dev
