@@ -65,7 +65,7 @@ Install (persistent config — the user approves it; never add it silently):
 ```
 
 ## 7. Checkpoint size — optional, needs user approval
-**Rule:** `checkpoint.md` ≤ 40 lines, every `rounds/*.md` ≤ 100 lines, links resolve. Enforced after each write to a checkpoint or round file by [scripts/check-checkpoint.mjs](../scripts/check-checkpoint.mjs) (exit 2 = block). Not installed by default: add it to `.claude/settings.local.json` only after the user approves.
+**Rule:** `checkpoint.md` ≤ 40 lines (excluding `## Goal`), every `rounds/*.md` ≤ 100 lines, links resolve. Enforced after each write to a checkpoint or round file by [scripts/check-checkpoint.mjs](../scripts/check-checkpoint.mjs) (exit 2 = block). Not installed by default: add it to `.claude/settings.local.json` only after the user approves.
 ```json
 "PostToolUse": [
   { "matcher": "Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/check-checkpoint.mjs --hook" } ] }

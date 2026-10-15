@@ -102,7 +102,7 @@ const cp = read('checkpoint.md');
 for (const h of ['Goal', 'Run profile', 'Status', 'Decisions in force', 'Loop counters', 'Open blockers', 'History']) {
   check(`checkpoint has ## ${h}`, new RegExp(`^## ${h}\\s*$`, 'm').test(cp));
 }
-check('checkpoint is <= 40 lines', cp.trimEnd().split(/\r?\n/).length <= 40);
+check('checkpoint is <= 40 lines outside ## Goal', cp.replace(/^## Goal[^\n]*\n[\s\S]*?(?=^## |(?![\s\S]))/m, '').trimEnd().split(/\r?\n/).length <= 40);
 check('checkpoint loop counters are within the limit', !/\b[4-9]\/3\b/.test(cp));
 
 /* 3. mock multi-agent scenarios against the loop rules */

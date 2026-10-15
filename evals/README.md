@@ -16,7 +16,7 @@ npm run eval:sync # re-copy each agent's rubric from its quality-checks.md
 | Artifact spec | `agents/<role>.eval.json` → `artifacts` | Headings/patterns derived from `output-format.md` hold on the golden fixture, and the rules reject an empty file (so they are not vacuous) |
 | Hand-off schema | `fixtures/login-flow/.team/login-flow/handoff/*.json` | One valid golden hand-off per role; dropping a required field is rejected |
 | Traceability | `fixtures/login-flow/.team/login-flow/` | Every AC in `ac.md` appears in design / contract / qa-report; runtime pin equal in deploy / contract / qa-report; both checks fail when mutated |
-| Checkpoint format | `checkpoint.md` fixture | Required sections, ≤ 40 lines, loop counters within limit |
+| Checkpoint format | `checkpoint.md` fixture | Required sections, ≤ 40 lines outside `## Goal`, loop counters within limit |
 | Loop rules | `mock-scenarios/*.json` → `scripts/lib/loop-sim.mjs` | Reject→fix→approve, 4th-rejection cut-off, repeated blocker, invalid hand-off retry, QC failed twice, gates 3c/3d block step 4, run-profile skips, never-skip steps |
 
 | Smoke triggers | `smoke-scenarios.json` → `scripts/lib/smoke-sim.mjs`, `mock-scenarios/smoke-skipped-*.json` | 3d runs only when a trigger in `run-profile.md` is true (incl. `staging: none`); a profile that skips 3d despite a trigger is rejected; the doc lists every trigger |

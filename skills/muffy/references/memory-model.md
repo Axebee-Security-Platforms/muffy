@@ -51,7 +51,7 @@ Link definitions go at the very end of the file, after the sections above.
 
   Labels use `<step>-r<n>` (`3d-r1`, `4-r2`). A label used in the text must have a definition, and a definition with no use is removed
 - **Summarize on a schedule**, not when memory happens to fail: after any loop round ≥ 2, the round's details go to `rounds/` and `## History` keeps only its one-liner; drop details already captured in `review-<n>.md` / `qa-report.md`
-- **Size limits** (checked by [scripts/check-checkpoint.mjs](../scripts/check-checkpoint.mjs)): `checkpoint.md` ≤ 40 lines; every `rounds/*.md` ≤ 100 lines; every `[label]` has a matching definition and the target file exists
+- **Size limits** (checked by [scripts/check-checkpoint.mjs](../scripts/check-checkpoint.mjs)): `checkpoint.md` ≤ 40 lines, not counting `## Goal` (it is copied verbatim, so a long request must not squeeze the other sections); every `rounds/*.md` ≤ 100 lines; every `[label]` (text inside code fences and backticks, such as `[u8]`, is not a label) has a matching definition and the target file exists
 - **`## Goal` is never summarized.** It is what a looping agent forgets first
 - **Resume or `/compact`**: read `checkpoint.md` + `<brain>/tasks/<task>.md` instead of replaying the conversation or re-reading finished artifacts
 - Agents see it only from round 2 (`Checkpoint:` line in the prompt) and read only `## Goal` and `## Open blockers`

@@ -3,7 +3,7 @@
 //        node check-artifacts.mjs --hook   (PostToolUse: reads hook JSON on stdin)
 // Checks the split hand-off artifacts (references/memory-model.md#splitting-large-artifacts):
 //   ac.md, brief.md, contract.md, fix.md ≤ 60 lines; files in ac/, brief/, contract/ ≤ 120 lines;
-//   every [label] used has one definition, every definition is used, targets exist;
+//   every [label] used (outside code fences and backticks) has one definition, every definition is used, targets exist;
 //   every AC id in ac.md appears in contract.md or a file under contract/ (when ac.md and contract.md exist).
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
@@ -15,7 +15,9 @@ const MAINS = ['ac.md', 'brief.md', 'contract.md', 'fix.md'];
 const PART_DIRS = ['ac', 'brief', 'contract'];
 const DEF = /^\[([A-Za-z0-9.-]+)\]:\s*(\S+)\s*$/;
 const USE = /\[([A-Za-z0-9.-]+)\](?!\(|:)/g;
-const NOT_LABELS = new Set(['verify', 'spike', 'x']); // inline markers, not links
+const NOT_LABELS = new Set(['verify', 'spike', 'x', 'assumed']); // inline markers, not links
+// code is not prose: [x] inside fences or backtick spans (`[u8]`, `[ignore]`) is never a link label
+const stripCode = (text) => text.replace(/^(```|~~~)[^\n]*\n[\s\S]*?^\1[^\n]*$/gm, '').replace(/`[^`\n]*`/g, '');
 
 const lineCount = (text) => (text.endsWith('\n') ? text.split('\n').length - 1 : text.split('\n').length);
 
@@ -29,7 +31,7 @@ function checkLinks(taskDir, file, errors) {
   const name = relative(taskDir, file).split(sep).join('/');
   const defs = new Map();
   const body = [];
-  for (const line of readFileSync(file, 'utf8').split('\n')) {
+  for (const line of stripCode(readFileSync(file, 'utf8')).split('\n')) {
     const m = line.match(DEF);
     if (m) defs.set(m[1], m[2]);
     else body.push(line);
