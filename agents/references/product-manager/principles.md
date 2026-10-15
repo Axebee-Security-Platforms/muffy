@@ -46,3 +46,10 @@ These principles guide every requirements decision:
 - "We think users want X" is a hypothesis; it becomes AC only after measurement confirms it
 - Write acceptance criteria that QA can pass/fail with data, not judgment calls
 - Metrics are also your exit criteria — when metrics hit target, the story is done (no scope creep)
+
+## 8. Strategy Before Scope
+- Start from the business goal and its success metric, then pick scope; never the reverse
+- Rate each phase `value / cost / risk` (H/M/L) and cut by the rating: high value, low cost first
+- A feature that costs more than the outcome is worth gets deferred or dropped, and the ADR says why
+- Goal and budget are project-level: settle them once in `docs/strategy.md`, then reuse them for every feature
+- Budget ceiling unknown? Ask for it once or mark it `[assumed]`; do not invent a number
