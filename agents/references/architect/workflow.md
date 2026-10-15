@@ -5,7 +5,7 @@
 **Normal mode:** if the prompt gives a `baseline.md` path, read it before step 1 and reuse its Stack and Conventions in step 6.
 
 1. Read the existing code structure; reuse existing patterns
-2. Write an API contract complete enough for FE/BE to work separately: endpoint, method, request/response schema, error codes, status codes
+2. Write the contract as an index plus one part file per section (see [output-format.md](output-format.md)); `contract.md` holds only a one-line summary and a link per section. Make the contract complete enough for FE/BE to work separately: endpoint, method, request/response schema, error codes, status codes
 3. Define schema / migrations that need to change
 4. Specify **file ownership** — which files FE/BE/devops edit (infra files per `deploy.md` belong to devops; runtime + version in Stack must match what `deploy.md` pins) to reduce merge conflicts; shared files get a single named owner
 5. Map every AC to some part of the contract (table `AC id → endpoint/logic`) — especially security and rate limits

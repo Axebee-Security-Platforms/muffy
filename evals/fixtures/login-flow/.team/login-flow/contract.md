@@ -1,7 +1,9 @@
 # Contract: login-flow
 
+Index only. Open a part file when your work touches it.
+
 ## Stack
-Runtime: Node 22.14 (matches deploy.md). Postgres 16. Reason: existing codebase.
+Runtime: Node 22.14 (matches deploy.md), Postgres 16. Existing codebase. [stack]
 
 ## Endpoints
 | Endpoint | Detail |
@@ -9,23 +11,19 @@ Runtime: Node 22.14 (matches deploy.md). Postgres 16. Reason: existing codebase.
 | POST /login | [post-login] |
 
 ## Schemas / migrations
-`sessions(id, user_id, expires_at)` - reversible migration 0003.
+`sessions` table, reversible migration 0003. [schemas]
 
 ## Cost
-Run: ~$0 extra (existing Postgres + Node host). Effort: Phase 1 = S. No new third-party service; within budget (none given).
+No new recurring cost
 
 ## File ownership
-| File | Owner |
-|---|---|
-| src/auth/** | BE |
-| src/ui/Login.tsx | FE |
-| Dockerfile | devops |
+FE: src/ui/Login.tsx. BE: src/auth/**. Devops: Dockerfile. [ownership]
 
 ## AC id -> endpoint/logic
-| AC id | Endpoint / logic |
-|---|---|
-| AC-1 | POST /login 200 |
-| AC-2 | POST /login 429, 5/min limiter |
-| AC-3 | n/a (UI only) |
+AC-1, AC-2, AC-3 mapped. [ac-map]
 
+[stack]: contract/stack.md
 [post-login]: contract/endpoints/post-login.md
+[schemas]: contract/schemas.md
+[ownership]: contract/ownership.md
+[ac-map]: contract/ac-map.md

@@ -158,7 +158,7 @@ Every agent ends with a JSON block checked against `handoff.schema.json`; an inv
 | 11 | `devops` | Canary, then 100% or rollback |
 | 12 | Orchestrator | Final checks and a short report to you |
 
-Large `ac`, `brief`, and `contract` files split into an index plus part files once they pass 60 lines. Details: [steps](skills/muffy/references/steps.md).
+Large `ac` and `brief` files split into an index plus part files once they pass 60 lines; `contract.md` is always an index with one part file per section. Details: [steps](skills/muffy/references/steps.md).
 
 ### Run profile
 

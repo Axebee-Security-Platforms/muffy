@@ -11,7 +11,28 @@
         "File ownership",
         "^#{1,4}\\s*Cost",
         "AC id",
+        "^\\[[A-Za-z0-9.-]+\\]:\\s*contract/"
+      ],
+      "must_not_match": []
+    },
+    {
+      "path": ".team/{task}/contract/endpoints/post-login.md",
+      "must_match": [
         "\\b(4\\d\\d|5\\d\\d)\\b"
+      ],
+      "must_not_match": []
+    },
+    {
+      "path": ".team/{task}/contract/ownership.md",
+      "must_match": [
+        "\\|\\s*File\\s*\\|\\s*Owner"
+      ],
+      "must_not_match": []
+    },
+    {
+      "path": ".team/{task}/contract/ac-map.md",
+      "must_match": [
+        "AC-\\d+"
       ],
       "must_not_match": []
     }
@@ -21,6 +42,7 @@
     "handoff_block": "required"
   },
   "rubric": [
+    "`contract.md` is an index (≤ 60 lines): every section is a one-line summary with a link to its part file, and every link resolves",
     "Every AC has a home in the contract",
     "Every endpoint has method, request/response schema, error codes and status codes",
     "Runtime + version in Stack match `deploy.md`",
