@@ -16,6 +16,8 @@
 
 You have a feature to build and a Claude Code session. Ask the `muffy` skill to run it. The main session becomes the **Orchestrator** and starts specialist subagents in a fixed 12-step flow: research, product, design, architecture, devops, frontend, backend, review, QA, docs. Each step has an owner, its inputs, and a gate. Work moves as files in `.team/<task>/` plus a validated JSON hand-off, not as chat summaries.
 
+Small bugs and cosmetic fixes use a lighter [fix lane](#fix-lane) instead of the full flow.
+
 The flow replaces ad-hoc multi-agent prompts. Unreviewed code and lost hand-offs stop reaching `main`; a repeated failure stops after three fix loops and goes to you.
 
 ## Quick start
@@ -174,11 +176,25 @@ Large `ac` and `brief` files split into an index plus part files once they pass 
 
 The Orchestrator skips steps the feature does not need (no UI change skips design and frontend; no public API change skips docs). It never skips review, QA, staging, or the Human gate. Skipped steps and the reason are recorded in the vault task note. See [run-profile](skills/muffy/references/run-profile.md).
 
+### Fix lane
+
+`/muffy fix <description>` runs a shorter path for a small bug or a cosmetic change. A request also goes there when the Orchestrator's triage finds all of: a symptom with a location or a repro, at most 5 source files, no change to the API, schema, auth, dependencies or stack, and no new screen or component. Otherwise it runs the full flow. Example requests for both sides are in [fix-profile](skills/muffy/references/fix-profile.md#examples).
+
+| Step | Owner | What happens |
+|---|---|---|
+| Setup-lite | Orchestrator | Writes `fix.md` (symptom, cause, repro, AC); one confirmation at `pause:scope` |
+| 4a | `frontend-dev` / `backend-dev` | Diagnose, no code: reproduce, find the cause, record it in `fix.md` and a `diagnosis` hand-off |
+| 4 | same agent | Fix plus a regression test that fails before and passes after |
+| 6, 7 | `code-reviewer`, `qa-tester` | Review and QA against `fix.md`; a cosmetic AC with no automated check is marked `manual` |
+| 9, 10, 11 | `devops`, Human gate | Staging, your approval, production, as in the full flow |
+
+Research, product, design, architecture, docs and step 8 are skipped. The cause may be unknown at the start: an `unknown` diagnosis asks you for more evidence once, then escalates. A diagnosis that finds the cause in the contract, a dependency or the stack (`needs-full-flow`), or a fix that touches more than 5 source files, is promoted to the full flow.
+
 ### Gates and pauses
 
 | Gate or pause | When | Resumes when |
 |---|---|---|
-| `pause:scope` | Setup | You confirm the scope |
+| `pause:scope` | Setup (fix lane: one short question with the classification and AC list) | You confirm the scope |
 | `pause:onboard-review` | Onboard step 0d | You approve or edit the baseline, ADR, and agent-context change |
 | `pause:design-review` (3c) | After design, once the designer's definition of done is fully checked | You approve the design (or request changes and approve the revision). Nothing goes to `frontend-dev` / `backend-dev` before this |
 | Smoke build (3d) | After devops mode 1, only when the stack changes (new runtime, dependency or devops-owned file) or no smoke has passed yet | Real dependencies run in one process. Feature-only changes skip it; staging still smoke-tests |
@@ -295,7 +311,7 @@ The Orchestrator reads `.team/<task>/checkpoint.md` and the vault task note inst
 ```bash
 npm test             # lint + offline evals (also runs in CI)
 npm run lint         # prompt/link lint only
-npm run eval         # offline evals only
+npm run eval         # offline evals only (loop rules, fix-lane triage, schemas)
 npm run eval:sync    # re-copy each agent's rubric from its quality-checks.md
 npm run package      # stage a clean copy in dist/muffy (no .git, no personal config)
 ```
