@@ -51,4 +51,5 @@ These principles guide every requirements decision:
 - Start from the business goal and its success metric, then pick scope; never the reverse
 - Rate each phase `value / cost / risk` (H/M/L) and cut by the rating: high value, low cost first
 - A feature that costs more than the outcome is worth gets deferred or dropped, and the ADR says why
-- Budget ceiling unknown? Ask for it or mark the plan `[assumed]`; do not invent a number
+- Goal and budget are project-level: settle them once in `docs/strategy.md`, then reuse them for every feature
+- Budget ceiling unknown? Ask for it once or mark it `[assumed]`; do not invent a number
