@@ -38,3 +38,4 @@ The design system is the single source of truth for every task. Consistency beat
 - Write a separate HTML mockup outside the canvas as the primary deliverable (duplicates Claude Design)
 - Guess or write elsewhere if the prompt has no `<brain>` path or the folder can't be found — say so in your final message so the Orchestrator asks the user
 - Second brain writes: only `<brain>/agents/designer/<task>.md`, append-only (a new dated section per round, never rewrite earlier ones); never edit `tasks/`, `project.md` or other agents' folders
+- **Bash is for checks only.** You may run `node .claude/skills/muffy/scripts/validate-handoff.mjs`, `check-artifacts.mjs` and `check-checkpoint.mjs`, and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files

@@ -4,7 +4,7 @@ description: >
   Turn the research brief into user stories, testable acceptance criteria, a phased plan
   with priorities, and ADRs in docs/. Used after researcher and before designer/architect
   (team flow step 2). Do not use for API or UI design.
-tools: Read, Grep, Glob, Write
+tools: Read, Grep, Glob, Write, Bash
 model: sonnet
 effort: low
 ---

@@ -4,7 +4,7 @@ description: >
   Design UX/UI from acceptance criteria — user flow, wireframes, per-screen states and
   component specs following the design system, as a Claude Design canvas. Runs in parallel
   with architect (team flow step 3). Do not use for API design or production code.
-tools: Read, Grep, Glob, Edit, Write
+tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 effort: medium
 skills:

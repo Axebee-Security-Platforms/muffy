@@ -21,6 +21,7 @@
   },
   "rubric": [
     "Artifact on Claude Design is published, the URL is at the top of `design.md`, and **the canvas is clickable and viewable** (test: open the link in browser and verify all artboards are accessible and interactive)",
+    "The canvas source is `canvas.json` (v3) plus `.dc.html` artboards listed in it; there is no plain `.html` mockup, and nothing needs converting before publish",
     "Artboards exist for every screen × every state the AC requires (table `AC id → artboard`); no AC without a visual",
     "Fields/names are aligned with `contract.md` — no placeholders waiting on the contract",
     "On-screen text is final copy (FE can copy it verbatim)",
