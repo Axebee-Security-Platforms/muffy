@@ -54,7 +54,7 @@ Link definitions go at the very end of the file, after the sections above.
 - **Summarize on a schedule**, not when memory happens to fail: after any loop round ≥ 2, the round's details go to `rounds/` and `## History` keeps only its one-liner; drop details already captured in `review-<n>.md` / `qa-report.md`
 - **Size limits** (checked by [scripts/check-checkpoint.mjs](../scripts/check-checkpoint.mjs)): `checkpoint.md` ≤ 40 lines, not counting `## Goal` (it is copied verbatim, so a long request must not squeeze the other sections); every `rounds/*.md` ≤ 100 lines; every `[label]` (text inside code fences and backticks, such as `[u8]`, is not a label) has a matching definition and the target file exists
 - **`## Goal` is never summarized.** It is what a looping agent forgets first
-- **Resume or `/compact`**: read `checkpoint.md` + `<brain>/tasks/<task>.md` instead of replaying the conversation or re-reading finished artifacts
+- **Resume or `/compact`**: read `checkpoint.md` + `<brain>/tasks/<task>.md` instead of replaying the conversation or re-reading finished artifacts. New session: [resume.md](resume.md). `## Status` always ends with `next: <step> · <owner> · <action>`
 - Agents see it only from round 2 (`Checkpoint:` line in the prompt) and read only `## Goal` and `## Open blockers`
 - The checkpoint is a cache of facts that live elsewhere: if it disagrees with an ADR, `contract.md` or a hand-off file, the other file wins and the checkpoint is corrected
 

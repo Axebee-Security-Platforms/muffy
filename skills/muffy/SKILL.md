@@ -6,7 +6,8 @@ description: >
   or `/muffy fix` for a small bug or cosmetic fix (diagnose, fix, review, QA, staging). Also use when
   the user reports a bug or asks for a fix with a symptom, error or broken behaviour in a codebase
   ("found a bug", "it errors", "this is broken", "fix this", เจอบั๊ก, แก้ไขให้หน่อย, พัง, error): the
-  Orchestrator triages it into the fix lane or asks one question first.
+  Orchestrator triages it into the fix lane or asks one question first. Also use to continue earlier
+  work in a new session (`/muffy resume`, "continue", "resume", ทำต่อ, ต่อจากเดิม): read the checkpoint, never start over.
   Do not use for one-line edits, research-only or review-only requests, or sequential iteration.
 ---
 
@@ -25,6 +26,8 @@ Orchestrate the subagents in `.claude/agents/` from research to deploy for one f
 ## Workflow
 
 Load lazily: open each reference only at the step that needs it, never all up front. Subagents do the same via the "Load on demand" table in their own definitions.
+
+Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips steps 0–2: follow [references/resume.md](references/resume.md), which finds the task's `checkpoint.md` and picks up at its `next:`.
 
 0. **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
 1. **Setup** — create working folders and task note: [references/setup.md](references/setup.md)

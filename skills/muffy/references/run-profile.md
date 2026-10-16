@@ -31,4 +31,4 @@ A pause stops the flow on purpose. It has an id, a resume condition, and one lin
 | `pause:full-regression` | before any whole-system regression run (every test or e2e flow in the repo, not just this task's). The Orchestrator asks; `qa-tester` never does | the user approves in chat after seeing the exact command, what it covers, the expected duration and any shared environment it touches. No answer or "no" = scoped tests only. On yes, write `.team/<task>/full-regression.approved` (approved command + date) so the guard lets `qa-tester` run it ([hooks-enforcement.md](hooks-enforcement.md) §10); delete it when the round ends |
 | `pause:human-gate` | step 10 | Approve / Reject answer |
 
-A pause is not a finish line: the final message says which pause the run is at and what unblocks it. Never make a live external call inside a pause without its approval.
+A pause is not a finish line: the final message says which pause the run is at and what unblocks it, and ends with the `/muffy resume <task>` line after the trail is left ([resume.md](resume.md#leaving-a-trail-every-stop)). Never make a live external call inside a pause without its approval.
