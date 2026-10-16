@@ -68,7 +68,7 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 | 7 | `qa-tester` | `fix.md` AC replace `ac.md` and `design.md`. Level L0, L1 or L2 from [test-levels.md](test-levels.md); qa-tester runs exactly what that row allows (L0 build + lint, L1 the regression test + unit tests of the touched files, L2 also one boundary integration test), by path; never the whole suite ([hooks-enforcement.md](hooks-enforcement.md) §10). Cosmetic AC with no automated check are marked `manual` in `qa-report.md` and shown at the Human gate. No docs-writer, no step 8 |
 | 9 | `devops` mode 3 | Staging health + smoke against the newest `.team/*/deploy.md` (path in the prompt). No `deploy.md` and no staging → near-production env per `project.md` |
 | 10, 11 | Human gate, devops production | Unchanged. One question: qa-report, staging result, the diff summary |
-| 12 | Orchestrator | [closing.md](closing.md) steps 2–6 (step 4 marks the checkpoint `closed`, so a resume skips it); skip step 1 unless a decision or stack learning came out of the fix |
+| 12 | Orchestrator | [closing.md](closing.md) steps 2–6 in full, not abbreviated: `## Usage` from `spawns.tsv`, Lessons tally (step 4 marks the checkpoint `closed`, so a resume skips it); skip step 1 unless a decision or stack learning came out of the fix |
 
 Never skipped: 4a, 6, 7, 9, 10. A fix with no diagnosis hand-off cannot start step 4.
 

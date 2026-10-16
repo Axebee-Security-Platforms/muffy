@@ -60,6 +60,8 @@ export function checkTask(taskDir) {
     }
   }
   const spawnsPath = join(taskDir, 'spawns.tsv');
+  const status = cp.match(/^## Status[^\n]*\n([\s\S]*?)(?=^## |(?![\s\S]))/m)?.[1] ?? '';
+  if (/\bclosed\b/.test(status) && !existsSync(spawnsPath)) errors.push('checkpoint is closed but spawns.tsv is missing (log every spawn; closing needs it for ## Usage and Lessons)');
   if (existsSync(spawnsPath)) {
     readFileSync(spawnsPath, 'utf8').split('\n').forEach((line, i) => {
       if (!line.trim()) return;
