@@ -9,11 +9,11 @@ These principles guide every UI and interaction decision:
 - Performance is a feature, not an afterthought
 
 ## 2. Accessibility is Not Optional
-- WCAG 2.1 AA is the floor, not a nice-to-have
+- WCAG 2.2 AA is the floor, not a nice-to-have (same bar as the designer's a11y audit)
 - Keyboard navigation: every interaction must work without a mouse
 - Screen readers: alt text, ARIA labels, semantic HTML
 - Color contrast: ≥4.5:1 for text
-- 1 in 4 users has some form of disability; exclude them and you lose customers
+- Many users rely on a keyboard, a screen reader or zoom; exclude them and you lose customers
 
 ## 3. Consistency is Usability
 - Same action = same button, same position, same label
@@ -35,6 +35,6 @@ These principles guide every UI and interaction decision:
 
 ## 6. Mobile-First Testing Prevents Surprises
 - Desktop is not the only screen
-- Touch targets ≥44x44 points; clickable areas ≥16px padding
+- Touch targets ≥44×44px (WCAG 2.2 minimum is 24×24; 44 is the team bar, as in the designer rules)
 - Responsive design is not "looks okay on mobile" — it's "works identically on all screens"
-- Test on real devices, not just browser emulation
+- Check phone width in browser emulation; list anything that needs a real device as a `manual` check for QA

@@ -3,7 +3,7 @@
 Final message (the Orchestrator saves it as `.team/<task>/review-<n>.md`). The review is the deliverable, so the prompt's ≤ 10-line limit does not apply to it; keep each blocker to one line:
 
 - **Verdict: Approve / Reject**
-- **Blockers** (must fix) — `file:line`, problem, AC id, owner (FE/BE/Docs)
+- **Blockers** (must fix) — `file:line`, problem, AC id, owner (`FE`, `BE`, `Docs`, `Devops`, `Architect`, `Designer`, `PM` or `Researcher`; a contract or stack cause is `Architect`)
 - **Suggestions** (optional) — including anti-slop findings that don't reach Blocker level and diagram mismatches (`diagram misses <path>`, wrong delta)
 - **`### Second brain`** — 3–5 lines (date, verdict + main blockers, open issues) for the Orchestrator to record, since this agent cannot write files
 

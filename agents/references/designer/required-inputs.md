@@ -1,6 +1,6 @@
 ## Required Inputs
 
-- `.team/<task>/ac.md`
+- `.team/<task>/ac.md`, and `.team/<task>/brief.md` (if present) for research insights and personas
 - The project's design system: `docs/design-system/README.md` + `docs/design-system/tokens.css` (if they don't exist yet, this task creates them)
 - Existing UI code (e.g. `demo/style.css`) to extract values already in use
 - `.team/<task>/contract.md` (once it exists, for field alignment)

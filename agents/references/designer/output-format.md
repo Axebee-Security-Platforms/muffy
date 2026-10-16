@@ -1,6 +1,6 @@
 ## Output Format
 
-- `.team/<task>/design.md` (canvas URL at the top, user flow, states, component map, a11y requirements, design system changes in this task, `## Quality checks` with each Definition-of-done item and its status)
+- `.team/<task>/design.md` (canvas URL at the top, personas and journey map (stages, drop-off risks), user flow, states, component map, a11y requirements, design system changes in this task, `## Quality checks` with each Definition-of-done item and its status)
 - `.team/<task>/canvas/project/*` (canvas source; uses the values from `tokens.css`)
 - `docs/design-system/tokens.css` — CSS custom properties on `:root`, with dark mode overrides; the only place raw values live
 - `docs/design-system/README.md` — sections: Principles, Color, Typography, Spacing & layout, Radius & elevation, Motion, Components (each with anatomy, variants, states, tokens used, do/don't), Changelog

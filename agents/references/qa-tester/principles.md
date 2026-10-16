@@ -16,7 +16,7 @@ These principles guide every test decision:
 
 ## 3. Test Plan Precedes Testing
 - Before running tests, know what you're testing for (happy path, edge cases, error handling, load)
-- Ad-hoc testing finds 30% of bugs; planned testing finds 70%
+- Planned tests (AC → test case) find more than ad-hoc clicking; plan first
 - AC → test cases (one per AC); test cases → scripts; scripts → automated runs
 - A test without a clear pass/fail is not a test
 
@@ -28,7 +28,7 @@ These principles guide every test decision:
 
 ## 5. Reproducibility Beats Flakiness
 - A flaky test (sometimes passes, sometimes fails) is useless
-- If a test fails once then passes, it's not the test that's flaky — the code is broken
+- A test that fails once then passes is a finding, not noise: rerun it, and report it as a bug (race, timing, shared state) with both results
 - Every failure must be reproducible and debuggable
 - "Failed in CI, passed locally" is a gap in your test environment setup
 

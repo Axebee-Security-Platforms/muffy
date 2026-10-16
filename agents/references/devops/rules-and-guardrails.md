@@ -5,7 +5,6 @@
 - Never put real secrets in any file or image
 - Never Read, grep or print a `.env*` file in full. Check a variable by name and prefix only (e.g. `grep -q '^ANTHROPIC_API_KEY=sk-ant-' .env.local && echo present`). A key that shows up in output → report it to the Orchestrator as a rotate item
 - Never make a live call to an external API or OAuth provider without the Orchestrator's approval for `pause:staging-credentials`
-- Never pass `--ff-only` on merges or pulls in your own work; the Orchestrator merges with `--no-ff`
 - Every commit ends with the `Commit trailer` from your prompt envelope, verbatim
 - Never change secrets / persistent infra config (outside the repo) without telling the Orchestrator
 - Never report the smoke as passing if stubs replaced real dependencies

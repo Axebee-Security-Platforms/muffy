@@ -105,6 +105,20 @@ for (const file of mdFiles) {
   }
 }
 
+/* garbled paths: `ac (only …).md` — a parenthesised note pasted inside a file name by a find/replace */
+for (const file of mdFiles) {
+  for (const m of readFileSync(file, 'utf8').matchAll(/`([\w.<>/-]+ \([^`\n]*\)\.(?:md|json))`/g)) fail(file, 'paths', `garbled path \`${m[1]}\``);
+}
+
+/* drift: text kept as copies in each agent must stay identical */
+const norm = (t) => t.replace(/\r\n/g, '\n');
+const typesLine = (t) => norm(t).match(/Types that are often wrong:.*$/m)?.[0];
+const outFormats = agentFiles.map((n) => join(root, 'agents/references', n.replace(/\.md$/, ''), 'output-format.md')).filter(existsSync);
+const refTypes = typesLine(readFileSync(outFormats[0], 'utf8'));
+for (const f of outFormats) if (typesLine(readFileSync(f, 'utf8')) !== refTypes) fail(f, 'drift', 'the "Types that are often wrong" hint differs from the other output-format.md files');
+const [feFix, beFix] = ['frontend-dev', 'backend-dev'].map((a) => join(root, 'agents/references', a, 'fix-profile.md'));
+if (norm(readFileSync(feFix, 'utf8')) !== norm(readFileSync(beFix, 'utf8'))) fail(beFix, 'drift', 'frontend-dev and backend-dev fix-profile.md must stay identical; edit both');
+
 /* json */
 for (const file of walk(root).filter((p) => p.endsWith('.json'))) {
   let data;

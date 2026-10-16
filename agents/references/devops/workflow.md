@@ -37,7 +37,7 @@ Do not check internal logic yet. The "real dependencies, no stubs" rule above st
 Before starting: check that the runtime/version to deploy matches `deploy.md` and `contract.md`
 
 Staging:
-0. Preflight, before any live call: run `node .claude/skills/muffy/scripts/devops-preflight.mjs --env-file <env file> --var <NAME[=prefix]> ...` (one `--var` per external credential, e.g. `--var ANTHROPIC_API_KEY=sk-ant-`). It checks `node -v` against `.nvmrc` and each credential by name and prefix, and never prints values; a FAIL on the runtime = fail. If a live call is needed and the Orchestrator has not approved it, stop at `pause:staging-credentials` and report (see run-profile.md)
+0. Preflight, before any live call: run `node .claude/skills/muffy/scripts/devops-preflight.mjs --env-file <env file> --var <NAME[=prefix]> ...` (one `--var` per external credential, e.g. `--var ANTHROPIC_API_KEY=sk-ant-`). It checks `node -v` against `.nvmrc` and each credential by name and prefix, and never prints values; a FAIL on the runtime = fail. If a live call is needed and the Orchestrator has not approved it, stop at `pause:staging-credentials` and report (see `.claude/skills/muffy/references/run-profile.md#named-pauses`)
 1. Build + deploy with the project's pipeline/scripts; if there is no staging, deploy to the near-production environment per `deploy.md` — **never skip this step**
 2. Docker staging checklist (check each, record pass/fail):
    - env mapped from `.env.staging.local` into the container; names listed, values never printed

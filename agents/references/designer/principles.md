@@ -28,13 +28,13 @@ These principles guide every design decision:
 - Design is not art; it's solving problems with constraints
 
 ## 5. User Research Informs Design
-- Assumptions are wrong 70% of the time
-- Test designs with users before dev starts
+- Untested assumptions are often wrong; tie each design decision to evidence from the brief
+- You can't run user tests: mark design choices that need one as `[verify]` in `design.md` for the user to check at `pause:design-review`
 - Usability testing reveals problems; fix them in design, not in code
 - "Users want X" without research is a guess
 
 ## 6. Design Precision Reduces Rework
-- Specify: spacing, typography, colors (hex, not "blue-ish"), corner radius, shadows
+- Specify: spacing, typography, colors (token name, not "blue-ish"; its hex lives only in `tokens.css`), corner radius, shadows
 - Designs without precision lead to "let me adjust this" rounds in dev
 - Dev should not guess what you meant; values must be exact
 - Use design tokens from the system; don't invent new colors
@@ -50,7 +50,7 @@ These principles guide every design decision:
 - Plain, short, one idea per sentence; no filler ("seamless", "powerful"); same term for the same thing everywhere (terminology is part of the design system)
 
 ## 9. Visual Foundations Come From the System
-- Color and typography are chosen from the system's tokens; specify exact values (hex, size, weight, line height, letter-spacing)
+- Color and typography are chosen from the system's tokens; specify them by token name (color, size, weight, line height, letter-spacing); exact values live only in `tokens.css`
 - Brand consistency is checked, not assumed: compare each screen against the brand guide and existing screens before handoff
 
 ## 10. Structure Before Style
@@ -62,5 +62,5 @@ These principles guide every design decision:
 - Critique the work, not the person: state what works, what fails, which principle it breaks, and a concrete fix
 
 ## 12. Accessibility and Assets Are Audited
-- Run an a11y audit against WCAG 2.2 AA: keyboard path and focus order, visible focus, labels, contrast, target size ≥24px (aim 44px), motion, and accessible names for every icon
+- Run an a11y audit against WCAG 2.2 AA: keyboard path and focus order, visible focus, labels, contrast, target size ≥44px (the WCAG 2.2 minimum is 24px; 44px is the team bar), motion, and accessible names for every icon
 - Optimize assets before handoff: SVG with `viewBox`, editor metadata stripped, icons reused as symbols, alt text or `aria-hidden` set for every image and icon

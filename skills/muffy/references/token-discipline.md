@@ -8,6 +8,9 @@
   Read: <paths>
   Write: <paths>
   Don't touch: <paths/scope>
+  [Announcement: yes — docs-writer only, when the user opted in at pause:scope]
+  [PR diagram: yes — frontend-dev/backend-dev only, when the user asked for step 5b ("draw the PR diagram")]
+  [Human approved: <date> — devops step 11 only, after the step-10 Human gate]
   [Test level: L0–L4 — qa-tester only; copy the row from test-levels.md]
   [Full regression: approved — qa-tester only, after pause:full-regression; absent means qa-tester must run scoped tests only]
   [Checkpoint: .team/<task>/checkpoint.md — from round 2 on; read only ## Goal and ## Open blockers]

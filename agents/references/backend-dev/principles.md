@@ -17,22 +17,15 @@ These principles guide every architecture and code decision:
 ## 3. Performance Matters — Measure It
 - Slow endpoints degrade user experience; optimize the hot path
 - DB queries: N+1 is a bug; measure query time
-- Cache aggressively where correctness allows; invalidate carefully
+- Add a cache only when the AC or contract needs it; the least code that passes the AC comes first
 - "Fast enough" is a metric, not a feeling — benchmark before and after
 
 ## 4. Reliability > Feature Velocity
-- Deploy slowly; roll back fast
-- Observability first: logs, metrics, traces — know what's happening in production
-- Alerts on real problems, not noise; on-call is miserable with false alarms
+- Log errors with enough context to debug them (request id, input shape, never secrets); deploys, alerts and rollback belong to devops
 - A feature that breaks prod is not a feature
+- Write code the reviewer (step 6) can follow: small functions, clear names, tests next to the change
 
-## 5. Code Reviews Catch Design Flaws
-- Review code for security, performance, maintainability — not just syntax
-- Big design flaws caught in review cost less than in production
-- If you wrote it, someone else should review it
-- Reviewer is not adversary; they're the next person to maintain your code
-
-## 6. Tests Are Documentation
+## 5. Tests Are Documentation
 - Unit tests show how to call your code
 - Integration tests show how systems talk together
 - If you need a wiki to explain the code, the code is too complex
