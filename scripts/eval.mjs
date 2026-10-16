@@ -4,7 +4,7 @@
 // rules behave as documented on mock multi-agent scenarios.
 //   node scripts/eval.mjs                 run everything
 //   node scripts/eval.mjs --update-rubric re-sync evals/agents/*.eval.json `rubric` from quality-checks.md
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdtempSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdtempSync, mkdirSync, rmSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
@@ -105,6 +105,44 @@ for (const h of ['Goal', 'Run profile', 'Status', 'Decisions in force', 'Loop co
 }
 check('checkpoint is <= 40 lines outside ## Goal', cp.replace(/^## Goal[^\n]*\n[\s\S]*?(?=^## |(?![\s\S]))/m, '').trimEnd().split(/\r?\n/).length <= 40);
 check('checkpoint loop counters are within the limit', !/\b[4-9]\/3\b/.test(cp));
+
+/* 2c. no-vault brain (references/memory-model.md): `.team/brain/` holds project.md, task notes and one append-only note per agent */
+{
+  const brainDir = join(fixtureDir, '..', 'brain');
+  const handoffs = readdirSync(join(fixtureDir, 'handoff')).map((f) => readJson(join(fixtureDir, 'handoff', f)));
+  const files = (d, base = d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? files(join(d, e.name), base) : [join(d, e.name).slice(base.length + 1).replace(/\\/g, '/')]);
+  const checkBrain = (dir, task) => {
+    const bad = [];
+    const at = (p) => existsSync(join(dir, p));
+    const text = (p) => (at(p) ? readFileSync(join(dir, p), 'utf8') : '');
+    const project = text('project.md');
+    for (const h of ['Tasks', 'Lessons', 'Open issues', 'Retired lessons']) if (!new RegExp(`^## ${h}\\s*$`, 'm').test(project)) bad.push(`project.md lacks ## ${h}`);
+    const lessons = (project.match(/^## Lessons\s*\n([\s\S]*?)(?=^## |(?![\s\S]))/m)?.[1] ?? '').split(/\r?\n/).filter((l) => /^- /.test(l));
+    if (lessons.length > 30) bad.push('more than 30 Lessons');
+    for (const l of lessons) if (!/\d{4}-\d{2}-\d{2}/.test(l) || !/\[\[[^\]]+\]\]/.test(l)) bad.push(`lesson without date + wikilink: ${l}`);
+    if (!project.includes(`[[tasks/${task}]]`)) bad.push('project.md ## Tasks does not link the task note');
+    const note = text(`tasks/${task}.md`);
+    for (const k of ['project', 'task', 'date', 'status']) if (!new RegExp(`^${k}:`, 'm').test(note)) bad.push(`task note lacks frontmatter ${k}`);
+    for (const m of note.matchAll(/\[\[(agents\/[^\]]+)\]\]/g)) if (!at(`${m[1]}.md`)) bad.push(`task note links a missing note: ${m[1]}`);
+    for (const h of handoffs) {
+      if (!h.brain_note) continue;
+      const p = `agents/${h.role}/${task}.md`;
+      if (!at(p)) bad.push(`no brain note for ${h.role}`);
+      else if (!/^## \d{4}-\d{2}-\d{2}/m.test(text(p))) bad.push(`${h.role} brain note has no dated section`);
+    }
+    if (!at(`agents/code-reviewer/${task}.md`)) bad.push('Orchestrator did not record the code-reviewer note');
+    for (const f of files(dir)) if (!(f === 'project.md' || /^tasks\/[^/]+\.md$/.test(f) || /^agents\/[^/]+\/[^/]+\.md$/.test(f))) bad.push(`file outside the brain layout: ${f}`);
+    return bad;
+  };
+  const problems = checkBrain(brainDir, TASK);
+  check('brain fixture follows the layout, links resolve and every hand-off with a brain_note has its note', problems.length === 0, problems.join('; '));
+  check('code-reviewer review ends with a ### Second brain section for the Orchestrator to record', /^### Second brain\s*$/m.test(read('review-1.md')));
+  const tmp = mkdtempSync(join(tmpdir(), 'muffy-brain-'));
+  cpSync(brainDir, tmp, { recursive: true });
+  check('brain negative control: a missing agent note is caught', (rmSync(join(tmp, 'agents', 'backend-dev', `${TASK}.md`)), checkBrain(tmp, TASK).some((p) => /no brain note for backend-dev/.test(p))));
+  check('brain negative control: a stray file is caught', (writeFileSync(join(tmp, 'agents', 'notes.txt'), 'x'), checkBrain(tmp, TASK).some((p) => /outside the brain layout/.test(p))));
+  rmSync(tmp, { recursive: true, force: true });
+}
 
 /* 3. mock multi-agent scenarios against the loop rules */
 for (const f of readdirSync(rel('evals/mock-scenarios')).filter((n) => n.endsWith('.json'))) {

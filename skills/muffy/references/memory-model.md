@@ -6,7 +6,7 @@ The repo wins over the vault: an ADR overrides a vault note.
 |---|---|---|
 | Source of truth | `docs/adr/`, `docs/plan/`, `docs/design-system/`, code | Decisions in force |
 | Working files | `.team/<task>/` (committed audit trail) | Hand-offs between agents, `handoff/*.json`, `checkpoint.md`, `requirements.md` (user's answers to agent questions, Orchestrator-written) |
-| Second brain | `<brain>` = `<vault>/Projects/<repo-name>/` | Notes, lessons, open issues |
+| Second brain | `<brain>` = `<vault>/Projects/<repo-name>/`, or `.team/brain/` when `SECOND_BRAIN_VAULT` is unset | Notes, lessons, open issues |
 
 ```
 <brain>/project.md               Orchestrator only: Tasks, Lessons, Open issues, Retired lessons
@@ -14,6 +14,7 @@ The repo wins over the vault: an ADR overrides a vault note.
 <brain>/agents/<role>/<task>.md  one folder per agent; written only by that agent, append-only
 ```
 
+- **No vault**: `<brain>` lives in `.team/brain/`, same layout and same rules, and is committed, so every teammate who pulls sees the same `project.md` Lessons and Open issues. `project.md` is the one file several people's Orchestrators edit: pull before a run and commit it with the task, one runner per task at a time. The daily-note line in [closing.md](closing.md) is skipped
 - The Orchestrator also writes `agents/code-reviewer/<task>.md` from code-reviewer's `### Second brain` section
 - No one edits another agent's folder or another task's note; corrections go in the current note, citing the old one
 - Readers: Orchestrator → `project.md` + current task note; researcher → `project.md` first, older notes only when `project.md` points to them; other agents → never the vault, only `brief.md`

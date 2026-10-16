@@ -22,7 +22,7 @@ Orchestrate the subagents in `.claude/agents/` from research to deploy for one f
 
 - Feature request (+ minimum research level, if specified)
 - `<task>` name (kebab-case)
-- `<vault>`: env `SECOND_BRAIN_VAULT` (set in `.claude/settings.local.json`; ask with `AskUserQuestion` if missing)
+- `<vault>`: env `SECOND_BRAIN_VAULT` (set in `.claude/settings.local.json`). Unset or still a `<...>` placeholder → no vault: `<brain>` is `.team/brain/` in the repo, committed and shared through git ([memory-model.md](references/memory-model.md))
 
 ## Workflow
 

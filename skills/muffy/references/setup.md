@@ -2,7 +2,7 @@
 
 Small bug or cosmetic fix (`/muffy fix`, or it passes the triage in [fix-profile.md](fix-profile.md)): follow the setup-lite in `fix-profile.md` instead of the steps below.
 
-1. Create `.team/<task>/`, `.team/<task>/handoff/` and `.team/<task>/rounds/`. `<brain>` = `<vault>/Projects/<repo-name>/`; create `project.md`, `tasks/`, `agents/<role>/` (one per agent) if missing
+1. Create `.team/<task>/`, `.team/<task>/handoff/` and `.team/<task>/rounds/`. `<brain>` = `<vault>/Projects/<repo-name>/`, or `.team/brain/` when there is no vault; create `project.md`, `tasks/`, `agents/<role>/` (one per agent) if missing
 2. Create `<brain>/tasks/<task>.md` (frontmatter `project`, `task`, `date`, `status` + `[[agents/<role>/<task>]]` links); add the task to `project.md` → `## Tasks` as `in progress`
 3. **Baseline check** (existing codebase only; `scan-repo.mjs` → `hasCode`): read `docs/architecture/baseline.md` first and pass its path to researcher and architect. Missing → `AskUserQuestion`: run `/muffy onboard` first (recommended) or continue without it, recorded in checkpoint. Frontmatter `commit` more than 100 commits behind HEAD → suggest a refresh. See [onboard.md](onboard.md)
 4. Read `project.md` (Lessons, Open issues, backlog). Resuming: follow [resume.md](resume.md) instead

@@ -270,7 +270,7 @@ For one-line edits with no behaviour risk, research-only or review-only requests
 <details>
 <summary><strong>Do I need an Obsidian vault?</strong></summary>
 
-The vault holds task notes and the consolidated `project.md`. Pass `--vault` at install, or set `SECOND_BRAIN_VAULT` in `.claude/settings.local.json`. If it is missing, the Orchestrator asks you.
+No. The vault holds task notes and the consolidated `project.md` (Lessons, Open issues). Pass `--vault` at install, or set `SECOND_BRAIN_VAULT` in `.claude/settings.local.json`. Without it the same files live in `.team/brain/`, committed to the repo, so a team shares them through git instead of a shared vault.
 
 </details>
 
