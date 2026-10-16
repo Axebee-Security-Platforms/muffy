@@ -100,4 +100,18 @@ Installed with the other guards by `install.mjs --with-guard`.
 ]
 ```
 
+## 11. Test level ceiling
+**Rule:** `qa-tester` stays within the level the Orchestrator set in [test-levels.md](test-levels.md). Enforced by [scripts/guard-test-level.mjs](../scripts/guard-test-level.mjs) (exit 2 = block); only calls with `agent_type: qa-tester` are checked. The runner patterns are shared with rule 10 in [scripts/test-runners.mjs](../scripts/test-runners.mjs).
+- **The level is a file.** The Orchestrator writes `.team/<task>/test-level` (one token, `L0` to `L4`) when it builds the qa-tester prompt, and updates it if the level changes. A qa worktree named `qa-<task>` reads its own task's file; otherwise the lowest level among all tasks applies. No file = no ceiling
+- **L0:** no test run at all (build and lint pass), and no creating or editing test files
+- **L1:** unit runs only (an integration or e2e run is blocked), and no new files under `e2e/`, `integration/`, `playwright/`, `cypress/` or their runner config
+- **L2 and L3:** nothing extra here; scoping and whole-suite approval stay with rule 10. **L4** is the approval marker of rule 10
+- **Known limits:** a runner behind a wrapper script, `node -e`, and a test file written through the shell are not seen; a file's level is guessed from its path and runner (`e2e`, `integration`, `playwright`, `cypress`)
+Installed with the other guards by `install.mjs --with-guard`.
+```json
+"PreToolUse": [
+  { "matcher": "Bash|PowerShell|Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-test-level.mjs" } ] }
+]
+```
+
 All six rules are **non-negotiable**. Rules 7 and 8 are opt-in.

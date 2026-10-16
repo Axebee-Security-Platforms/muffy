@@ -227,6 +227,13 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('guard-regression: whole-system runs are blocked for qa-tester', ['npm test', 'npx vitest run', 'pytest', 'go test ./...', 'cd app && npm run test:e2e'].every((c) => guard(F, 'qa-tester', c) === 2));
   check('guard-regression: scoped runs are allowed', ['npm test -- src/a.test.ts', 'npx vitest run src/a.test.ts', 'pytest tests/a.py -k login', 'npx playwright test e2e/a.spec.ts', 'go test ./pkg/auth'].every((c) => guard(F, 'qa-tester', c) === 0));
   check('guard-regression: other roles are not checked', guard(F, 'backend-dev', 'npm test') === 0);
+  const L = 'guard-test-level.mjs';
+  const lvlIn = (lvl, tool, arg) => { writeFileSync(join(tmp, '.team', 'x', 'test-level'), lvl); return spawnSync('node', [rel('skills/muffy/scripts', L)], { input: JSON.stringify({ tool_name: tool, agent_type: 'qa-tester', cwd: tmp, tool_input: tool === 'Bash' ? { command: arg } : { file_path: arg } }), encoding: 'utf8' }).status; };
+  check('guard-level: L0 blocks any test run and test files but allows build', lvlIn('L0', 'Bash', 'npm test -- src/a.test.ts') === 2 && lvlIn('L0', 'Write', 'src/a.test.ts') === 2 && lvlIn('L0', 'Bash', 'npm run build') === 0);
+  check('guard-level: L1 allows a scoped unit run, blocks integration and e2e', lvlIn('L1', 'Bash', 'npm test -- src/a.test.ts') === 0 && lvlIn('L1', 'Bash', 'npx playwright test e2e/a.spec.ts') === 2 && lvlIn('L1', 'Bash', 'npx vitest run tests/integration/a.test.ts') === 2 && lvlIn('L1', 'Write', 'e2e/new.spec.ts') === 2);
+  check('guard-level: L2 and L3 allow scoped integration and e2e', ['L2', 'L3'].every((l) => lvlIn(l, 'Bash', 'npx playwright test e2e/a.spec.ts') === 0 && lvlIn(l, 'Write', 'e2e/new.spec.ts') === 0));
+  rmSync(join(tmp, '.team', 'x', 'test-level'));
+  check('guard-level: no level file means no ceiling', spawnSync('node', [rel('skills/muffy/scripts', L)], { input: JSON.stringify({ tool_name: 'Bash', agent_type: 'qa-tester', cwd: tmp, tool_input: { command: 'npx playwright test e2e/a.spec.ts' } }), encoding: 'utf8' }).status === 0);
   writeFileSync(join(tmp, '.team', 'x', 'full-regression.approved'), 'npm test 2026-01-01');
   check('guard-regression: approval marker lets qa-tester run it', guard(F, 'qa-tester', 'npm test') === 0);
   rmSync(tmp, { recursive: true, force: true });
