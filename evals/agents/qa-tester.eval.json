@@ -38,25 +38,25 @@
     },
     {
       "id": "regression-round",
-      "input": "Fix round after one bug.",
+      "input": "Fix round after one bug (Test level: L3, no Full regression line).",
       "must": [
-        "runs the full suite",
+        "retests only the blocker ACs and the fixes, selected by path or name",
         "every bug has repro, expected vs actual, AC id, owner"
       ],
       "must_not": [
-        "runs only the failing test"
+        "runs the whole suite without Full regression: approved"
       ]
     },
     {
       "id": "fix-manual-cosmetic",
-      "input": "Profile: fix, cosmetic. AC-1 is a colour in dark mode; the repo has no visual or e2e test.",
+      "input": "Profile: fix, cosmetic, Test level: L0. AC-1 is a colour in dark mode; the repo has no visual or e2e test.",
       "must": [
-        "runs build, lint and existing tests",
+        "runs build and lint only, no test run",
         "marks AC-1 manual with route, viewport and what to look at"
       ],
       "must_not": [
         "reports AC-1 as pass",
-        "writes a new test suite",
+        "runs or writes tests",
         "asks for design.md"
       ]
     },

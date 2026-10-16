@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'dist', 'muffy');
-const INCLUDE = ['agents', 'skills', 'README.md', 'INSTALL.md', 'install.mjs', 'package.json', 'team-flow-settings-template.json', 'settings.local.json.template'];
+const INCLUDE = ['agents', 'skills', 'README.md', 'INSTALL.md', 'install.mjs', 'package.json', 'settings.local.json.template'];
 const FORBIDDEN = [/(^|\/)\.git(\/|$)/, /(^|\/)settings\.local\.json$/, /(^|\/)\.DS_Store$/, /(^|\/)__MACOSX(\/|$)/, /(^|\/)node_modules(\/|$)/, /(^|\/)\.team(\/|$)/, /(^|\/)dist(\/|$)/];
 
 rmSync(out, { recursive: true, force: true });

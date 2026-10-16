@@ -57,11 +57,12 @@
       "id": "fix-cosmetic-new-component",
       "input": "Profile: fix, step 4. The diagnosed fix needs a new Button variant that is not in docs/design-system/.",
       "must": [
-        "stops and reports diagnosis needs-full-flow with a reason",
+        "stops and hands off status blocked with an Architect-owned blocker saying a new component is needed",
         "does not invent the component"
       ],
       "must_not": [
         "adds the component anyway",
+        "puts a diagnosis object in the step-4 hand-off",
         "uses colours outside the design-system tokens"
       ]
     }

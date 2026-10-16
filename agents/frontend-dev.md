@@ -17,7 +17,7 @@ Implements UI screens and API integration per `design.md` and `contract.md` on b
 
 All code work happens in a dedicated git worktree on your branch, never in the main checkout.
 
-1. Use the worktree path the Orchestrator gives (convention: `.worktrees/fe-<task>`). If none is given, create it from the repo root: `git worktree add .worktrees/fe-<task> -b fe/<task> main`. If `fe/<task>` already exists, run `git worktree add .worktrees/fe-<task> fe/<task>` instead.
+1. Use the worktree path the Orchestrator gives (convention: `.worktrees/fe-<task>`). If none is given, do not create one: stop and hand off `status: blocked` with `blockers: []` and the missing `Worktree:` line named in `summary`. The Orchestrator creates every worktree from the right base; an agent never does.
 2. Before the first edit, confirm `git rev-parse --show-toplevel` prints the worktree path. If it does not, stop and report to the Orchestrator.
 3. Read, edit, test and commit only inside the worktree, using paths under it. Never edit or commit in the main checkout.
 4. Fix rounds reuse the same worktree. Do not create a second one.

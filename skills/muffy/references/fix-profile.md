@@ -39,7 +39,7 @@ When the request is borderline (for example a bug plus "while you are there, als
 1. Name the task `fix-<slug>`. Create `.team/<task>/`, `handoff/`, `rounds/` and the vault task note `<brain>/tasks/<task>.md`; add it to `project.md` → `## Tasks`. Read `project.md` Lessons and Open issues
 2. Write `.team/<task>/fix.md` (≤ 60 lines, below). The Orchestrator writes it from the request and a quick read of the named files; no agent is spawned for it
 3. `pause:scope`, shortened: one `AskUserQuestion` with the classification (bug or cosmetic), the owner (FE, BE or both), the AC list from `fix.md`, and out of scope. Staging: take `staging:` from `project.md` / the last checkpoint; ask only if never recorded
-4. Create one worktree per owner from `main`: `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> main`. qa gets one at step 7 as usual
+4. Create one worktree per owner from `<base>` (the branch the fix merges into, recorded as `base:` in checkpoint `## Status`; ask in the `pause:scope` question when `main` and the current branch differ, never assume `main`): commit `fix.md` to `<base>` first, then `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> <base>`. qa gets one at step 7 as usual
 5. Write `checkpoint.md` with `## Run profile` = `fix: skipped 1, 2, 3, 3b, 3c, 3d, 8`
 
 ## `fix.md`
@@ -65,10 +65,10 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 | 4 | same agent, via `SendMessage` | Fix + regression test that fails before and passes after. Cosmetic: the AC's visual check. Same context, so the code read in 4a is not read again |
 | 5 | Orchestrator | Merge into `feature/<task>` with `--no-ff`, as usual |
 | 6 | `code-reviewer` | Diff + `fix.md` (including Cause and Repro). Never skipped, never downgraded |
-| 7 | `qa-tester` | `fix.md` AC replace `ac.md` and `design.md`. Level L0, L1 or L2 from [test-levels.md](test-levels.md). Scoped run only: the regression test (the one test that fails before the fix and passes after) + the existing unit tests of the touched files, by path; never the whole suite ([hooks-enforcement.md](hooks-enforcement.md) §10). Cosmetic AC with no automated check are marked `manual` in `qa-report.md` and shown at the Human gate. No docs-writer, no step 8 |
+| 7 | `qa-tester` | `fix.md` AC replace `ac.md` and `design.md`. Level L0, L1 or L2 from [test-levels.md](test-levels.md); qa-tester runs exactly what that row allows (L0 build + lint, L1 the regression test + unit tests of the touched files, L2 also one boundary integration test), by path; never the whole suite ([hooks-enforcement.md](hooks-enforcement.md) §10). Cosmetic AC with no automated check are marked `manual` in `qa-report.md` and shown at the Human gate. No docs-writer, no step 8 |
 | 9 | `devops` mode 3 | Staging health + smoke against the newest `.team/*/deploy.md` (path in the prompt). No `deploy.md` and no staging → near-production env per `project.md` |
 | 10, 11 | Human gate, devops production | Unchanged. One question: qa-report, staging result, the diff summary |
-| 12 | Orchestrator | [closing.md](closing.md) steps 2, 3 and 5 only; skip step 1 unless a decision or stack learning came out of the fix |
+| 12 | Orchestrator | [closing.md](closing.md) steps 2–6 (step 4 marks the checkpoint `closed`, so a resume skips it); skip step 1 unless a decision or stack learning came out of the fix |
 
 Never skipped: 4a, 6, 7, 9, 10. A fix with no diagnosis hand-off cannot start step 4.
 

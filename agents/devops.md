@@ -18,7 +18,7 @@ Verifies buildability and deployability at design time (mode 1), smoke-builds wi
 
 Mode 2 edits infra files, so it runs in a dedicated git worktree on `ops/<task>`, never in the main checkout. Modes 1 and 3 do not edit code and need no worktree.
 
-1. Use the worktree path the Orchestrator gives (convention: `.worktrees/ops-<task>`). If none is given, create it from the repo root: `git worktree add .worktrees/ops-<task> -b ops/<task> main`. If `ops/<task>` already exists, run `git worktree add .worktrees/ops-<task> ops/<task>` instead.
+1. Use the worktree path the Orchestrator gives (convention: `.worktrees/ops-<task>`). If none is given, do not create one: stop and hand off `status: blocked` with `blockers: []` and the missing `Worktree:` line named in `summary`. The Orchestrator creates every worktree from the right base; an agent never does.
 2. Before the first edit, confirm `git rev-parse --show-toplevel` prints the worktree path. If it does not, stop and report to the Orchestrator.
 3. Edit, build and smoke-test only inside the worktree. Never edit or commit in the main checkout.
 4. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator merges and removes the worktree.

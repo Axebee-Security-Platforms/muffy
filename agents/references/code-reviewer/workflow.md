@@ -9,5 +9,5 @@
 6. Diagram cross-check (only if `.team/<task>/diagrams/*.graph.json` exist; never open the Artifact URL): list `nodes[].files[].path` and `edges`/`flows` from each graph, then compare with `diff.patch`. A changed file in no node → suggestion `diagram misses <path>`. A node marked `unchanged` whose file is in the diff, a `delta` that contradicts the diff (e.g. `added` for an existing file), or an endpoint/error code in a flow that is not in `contract.md` → read the code and decide; the diagram is a map written by the dev agent, never evidence. Use it to find the blast radius and the cross-boundary calls to review first
 7. Anti-slop: check against the criteria in Rules and Guardrails every round
 8. Fix rounds: check only the new diff + confirm all previous comments are closed
-9. Record in `<brain>/agents/code-reviewer/<task>.md`: date, review findings, standards/spec results, decisions + reasons, cost/token usage, open issues. For fix rounds, append as a new section
+9. Put 3–5 lines under `### Second brain` in your final message (you cannot write files; the Orchestrator records them in `<brain>/agents/code-reviewer/<task>.md`): date, review findings, standards/spec results, decisions + reasons, cost/token usage, open issues. For fix rounds, append as a new section
 

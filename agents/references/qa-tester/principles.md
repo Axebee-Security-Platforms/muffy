@@ -22,7 +22,7 @@ These principles guide every test decision:
 
 ## 4. Regression is Your Responsibility
 - Every feature you sign off stays working — no regressions on old features
-- Regression suite runs before every production deploy
+- A whole-system regression run needs the user's approval (`pause:full-regression`); otherwise cover regressions with scoped tests of the touched files
 - If something broke that wasn't supposed to, it's a gap in your regression coverage
 - New features + regression suite = "we can ship with confidence"
 

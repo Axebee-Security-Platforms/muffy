@@ -39,9 +39,9 @@ The installer copies the agents to `.claude/agents/` and the skill to `.claude/s
 | `--dry-run` | Preview every change without writing |
 | `--clean` | Update: remove the previous install first, including agent files a newer version dropped |
 | `--scan` | Scan an existing repo and write `.team/onboard/scan.json` for `/muffy onboard` |
-| `--with-guard` | Merge only the `.env` guard into `hooks.PreToolUse` |
+| `--with-guard` | Merge the env, Bash-allowlist, full-regression and test-level guards into `hooks.PreToolUse` |
 
-Other hooks are not installed automatically. Merge `team-flow-settings-template.json` into `.claude/settings.local.json` by hand. Full steps: [INSTALL.md](INSTALL.md).
+The checkpoint and artifact size hooks are opt-in and added by hand; team-flow rules 1–4 are Orchestrator rules, not hooks. Full steps: [INSTALL.md](INSTALL.md).
 
 ### Find unfinished work first (once)
 

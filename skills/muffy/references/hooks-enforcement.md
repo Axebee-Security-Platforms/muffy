@@ -1,50 +1,20 @@
 # Hooks Enforcement for Team Flow
 
-Critical rules enforced automatically in `.claude/settings.local.json`:
+Rules 1–4 are **Orchestrator rules**, not hooks: Claude Code has no merge, commit or push hook event, so the Orchestrator checks them itself before each merge, commit and push. Rules 6–11 are real `PreToolUse` / `PostToolUse` hooks in `.claude/settings.local.json`. There is no rule 5.
 
-## 1. Before Merge — Only Orchestrator
-**Rule:** Only Orchestrator merges, saves reviews as `review-<n>.md`
-```json
-"before_merge": {
-  "command": "echo '[team-flow] Is this the Orchestrator session? Non-Orchestrator cannot merge.' && exit 1"
-}
-```
+## 1. Merge — only the Orchestrator
+Only the Orchestrator merges branches and saves reviews as `review-<n>.md`. A subagent hand-off that reports a merge is reverted, and the agent gets its rule again.
 
-## 2. Before Commit — Review/QA Artifact Required
-**Rule:** Code changes must be committed with `review-N.md` or `qa-report.md`
-```json
-"before_commit": {
-  "command": "git diff --cached --name-only | grep -E '\\.(ts|tsx|js|jsx|py)$' && (git diff --cached --name-only | grep -qE '(review-|qa-report)' || (echo '[team-flow] Code changes require review-N.md or qa-report.md' && exit 1)) || exit 0"
-}
-```
+## 2. Commit — code needs a review record
+Merging FE/BE branches into `feature/<task>` at step 5 is fine (step 6 reviews that merge). Nothing goes from `feature/<task>` into `<base>`, and nothing is pushed or opened as a PR for the Human gate, until `review-<n>.md` approves the latest diff and `qa-report.md` passes.
 
-## 3. Before Push — Feature Branch Only
-**Rule:** Cannot push directly to `main`, `production`, or `prod`
-```json
-"before_push": {
-  "command": "BRANCH=$(git rev-parse --abbrev-ref HEAD); case \"$BRANCH\" in main|master|production|prod) echo '[team-flow] Push only to feature/<task> — Orchestrator merges.' && exit 1;; esac"
-}
-```
+## 3. Push — feature branches only
+Never push to `main`, `master`, `production` or `prod`, and never force-push them. Changes reach those branches through the Human gate (step 10) and the user's own merge or PR.
 
-## 4. Before Merge — No Temporary Stack
-**Rule:** Contract cannot contain "temporary", "prototype", "in-memory" without architect review
-```json
-"before_merge": {
-  "command": "grep -q 'temporary\\|prototype\\|in-memory' .team/*/contract.md 2>/dev/null && (echo '[team-flow] Temporary stack in contract. Architect must update deploy.md first.' && exit 1) || exit 0"
-}
-```
+## 4. Merge — no temporary stack
+Before merging, check `contract.md` and `contract/stack.md` for a stack marked temporary or prototype (for example an in-memory store standing in for the real datastore). Found → stop and send it to `architect` (+ ADR) first. A word match is a prompt to look, not a verdict: an in-memory cache the architect chose on purpose is fine.
 
-## Setup
-
-1. Copy template to settings: `cp team-flow-settings-template.json .claude/settings.local.json`
-2. Edit `.claude/settings.local.json` and add the "hooks" block above
-3. Hooks run automatically on every commit, merge, push
-
-**Bypass only with Orchestrator approval:**
-```bash
-git commit --no-verify  # Skip commit check
-git push --force        # Force to main (after Human gate approval)
-```
+**No bypass.** Hooks are never skipped (`--no-verify`) and protected branches are never force-pushed; a rule that blocks real work goes to the user as a question.
 
 ## 6. Secrets — never read `.env*` in full
 **Rule:** no agent Reads, greps or prints a `.env*` file's contents. Checks use names and prefixes only, e.g. `grep -q '^ANTHROPIC_API_KEY=sk-ant-' .env.local && echo present` (prints nothing secret). A value that appears in a transcript is treated as leaked: rotate it, and record the rotation in checkpoint `## Open blockers`.
@@ -114,4 +84,4 @@ Installed with the other guards by `install.mjs --with-guard`.
 ]
 ```
 
-All six rules are **non-negotiable**. Rules 7 and 8 are opt-in.
+Every rule here is **non-negotiable**. Hooks 7 and 8 are opt-in; without a hook, its rule still applies as text.

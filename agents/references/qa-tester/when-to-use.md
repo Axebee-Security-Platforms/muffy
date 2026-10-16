@@ -3,7 +3,7 @@
 Use this agent when:
 
 - code-reviewer approved the diff (team flow step 7)
-- A fix round was approved and the full regression suite must run again
+- A fix round was approved and the blocker ACs must be retested (scoped; a whole-system run only after `pause:full-regression`)
 
 Do not use this agent when:
 

@@ -17,7 +17,7 @@ Tests every AC on the reviewed branch; produces `qa-report.md` with test results
 
 Test files are code, so all work happens in a dedicated git worktree on the reviewed branch, never in the main checkout.
 
-1. Use the worktree path the Orchestrator gives (convention: `.worktrees/qa-<task>`). If none is given, create it from the repo root: `git worktree add .worktrees/qa-<task> <reviewed-branch>`. Use that worktree for every round.
+1. Use the worktree path the Orchestrator gives (convention: `.worktrees/qa-<task>`). If none is given, do not create one: stop and hand off `status: blocked` with `blockers: []` and the missing `Worktree:` line named in `summary`. The Orchestrator creates every worktree from the right base; an agent never does. Use that worktree for every round.
 2. Before the first edit, confirm `git rev-parse --show-toplevel` prints the worktree path. If it does not, stop and report to the Orchestrator.
 3. Write, run and commit tests only inside the worktree. Never edit or commit in the main checkout.
 4. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator removes the worktree.

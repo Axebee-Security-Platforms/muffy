@@ -4,6 +4,7 @@
   ```
   Goal: <one line>
   Task: <task>  Brain: <brain>  [Vault: <vault> — researcher only]  [Mode: — devops only]  [Profile: fix — fix lane only; Read: fix.md replaces ac/contract/brief/design]
+  [Worktree: <path> · Branch: <branch> — frontend-dev, backend-dev, qa-tester, devops mode 2; created by the Orchestrator (setup.md step 7)]
   Read: <paths>
   Write: <paths>
   Don't touch: <paths/scope>

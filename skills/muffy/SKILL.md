@@ -51,7 +51,7 @@ Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips ste
 
 ## Rules and Guardrails
 
-Critical rules — enforce with hooks: [references/hooks-enforcement.md](references/hooks-enforcement.md)
+Critical rules — Orchestrator rules 1–4 plus the opt-in hooks: [references/hooks-enforcement.md](references/hooks-enforcement.md)
 
 - Every agent ends with a JSON hand-off block; validate it ([schemas/](schemas/handoff.schema.json), `scripts/validate-handoff.mjs`) before acting on it; invalid twice → escalate, never guess
 - A loop point that is rejected 4 times, or keeps the same blocker id open for 3 consecutive rejects, stops and asks the user: [references/loops.md](references/loops.md)
