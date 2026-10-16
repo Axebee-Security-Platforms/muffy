@@ -7,8 +7,8 @@
 **Normal mode:** if the prompt gives a `baseline.md` path, read it first; it is L0 knowledge for the codebase. If the code contradicts it, trust the code and note the drift in the brief.
 
 0. **Read the second brain first**, narrowest to widest — stop when you have what you need:
-   1. `<vault>/Projects/<repo-name>/project.md` (Lessons, Open issues, Tasks)
-   2. Other projects' `<vault>/Projects/*/project.md` only when their domain/stack overlaps with this work
+   1. `<brain>/project.md` (Lessons, Open issues, Tasks): `<vault>/Projects/<repo-name>/project.md`, or `.team/brain/project.md` when the prompt has no `Vault:` line
+   2. Other projects' `<vault>/Projects/*/project.md` only when their domain/stack overlaps with this work (needs a `Vault:` line; skip with no vault)
    3. A task note `<brain>/tasks/<task>.md` or an agent note `<brain>/agents/<role>/<task>.md` only when a `project.md` entry points to it as relevant
 
    Don't read the whole vault. If there is nothing yet, state "no existing knowledge"
