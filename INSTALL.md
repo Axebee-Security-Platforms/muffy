@@ -57,12 +57,13 @@ Caveats:
    node install.mjs /path/to/your-repo --with-guard
    ```
 
-   This merges two entries (the env guard and the doc agents' Bash allowlist) into `hooks.PreToolUse` of `.claude/settings.local.json` and keeps every other key. It is idempotent. If `PreToolUse` already exists, the installer leaves it alone and prints the entry for you to add by hand:
+   This merges three entries (the env guard, the doc agents' Bash allowlist and the full-regression guard) into `hooks.PreToolUse` of `.claude/settings.local.json` and keeps every other key. It is idempotent. If `PreToolUse` already exists, the installer leaves it alone and prints the entry for you to add by hand:
 
    ```json
    "PreToolUse": [
      { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] },
-     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }
+     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] },
+     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-full-regression.mjs" } ] }
    ]
    ```
 

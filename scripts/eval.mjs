@@ -4,7 +4,7 @@
 // rules behave as documented on mock multi-agent scenarios.
 //   node scripts/eval.mjs                 run everything
 //   node scripts/eval.mjs --update-rubric re-sync evals/agents/*.eval.json `rubric` from quality-checks.md
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdtempSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
@@ -209,6 +209,25 @@ check('smoke-scenarios: every trigger has a positive scenario', Object.keys(SMOK
   const bad = run('--nvmrc', join(tmp, 'nvmrc'), '--env-file', join(tmp, 'env'), '--var', 'KEY=wrong-', '--var', 'EMPTY', '--var', 'GONE');
   check('preflight: wrong prefix, empty and missing vars all fail', bad.status === 1 && /"failed":\["env KEY","env EMPTY","env GONE"\]/.test(bad.stdout), bad.stdout);
   check('preflight: unknown flag is a usage error (exit 2)', run('--nope').status === 2);
+  rmSync(tmp, { recursive: true, force: true });
+}
+
+/* 7b. guards: Bash allowlist for doc agents, full-regression approval for qa-tester */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'muffy-guards-'));
+  mkdirSync(join(tmp, '.team', 'x'), { recursive: true });
+  const guard = (script, agent_type, command, cwd = tmp) => spawnSync('node', [rel('skills/muffy/scripts', script)], { input: JSON.stringify({ tool_name: 'Bash', agent_type, cwd, tool_input: { command } }), encoding: 'utf8' }).status;
+  const A = 'guard-bash-allowlist.mjs';
+  check('guard-bash: doc agent may run a validator', guard(A, 'architect', 'node .claude/skills/muffy/scripts/validate-handoff.mjs .team/x/h.json') === 0);
+  check('guard-bash: doc agent may read git', guard(A, 'muffy:docs-writer', 'git diff --stat') === 0);
+  check('guard-bash: chaining, commits and npm are blocked', ['node .claude/skills/muffy/scripts/check-artifacts.mjs a; rm -rf .', 'git commit -m x', 'npm test', 'git log > a'].every((c) => guard(A, 'designer', c) === 2));
+  check('guard-bash: Orchestrator and other roles are untouched', guard(A, undefined, 'npm test') === 0 && guard(A, 'backend-dev', 'npm test') === 0);
+  const F = 'guard-full-regression.mjs';
+  check('guard-regression: whole-system runs are blocked for qa-tester', ['npm test', 'npx vitest run', 'pytest', 'go test ./...', 'cd app && npm run test:e2e'].every((c) => guard(F, 'qa-tester', c) === 2));
+  check('guard-regression: scoped runs are allowed', ['npm test -- src/a.test.ts', 'npx vitest run src/a.test.ts', 'pytest tests/a.py -k login', 'npx playwright test e2e/a.spec.ts', 'go test ./pkg/auth'].every((c) => guard(F, 'qa-tester', c) === 0));
+  check('guard-regression: other roles are not checked', guard(F, 'backend-dev', 'npm test') === 0);
+  writeFileSync(join(tmp, '.team', 'x', 'full-regression.approved'), 'npm test 2026-01-01');
+  check('guard-regression: approval marker lets qa-tester run it', guard(F, 'qa-tester', 'npm test') === 0);
   rmSync(tmp, { recursive: true, force: true });
 }
 
