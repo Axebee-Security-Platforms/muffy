@@ -203,8 +203,7 @@ const hooks = JSON.parse(readFileSync(join(here, 'team-flow-settings-template.js
 console.log(`
 Done${dryRun ? ' (dry run, nothing written)' : ''}. Remaining manual steps:
 
-1. ${withGuard ? 'Env, Bash-allowlist and full-regression guards are in hooks.PreToolUse of .claude/settings.local.json (see messages above if it was skipped).' : 'Hooks are not installed. Re-run with --with-guard for the guards, or add them yourself:\n     { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }
-     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-full-regression.mjs" } ] }'}
+1. ${withGuard ? 'Env, Bash-allowlist and full-regression guards are in hooks.PreToolUse of .claude/settings.local.json (see messages above if it was skipped).' : 'Hooks are not installed. Re-run with --with-guard for the guards, or add them yourself:\n     { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-full-regression.mjs" } ] }'}
    - team-flow rules (${Object.keys(hooks).join(', ')}) are in team-flow-settings-template.json — merge the "hooks" key by hand.
 2. Set SECOND_BRAIN_VAULT in .claude/settings.local.json if it still shows the placeholder.
 3. Make sure the repo has docs/plan/, docs/adr/, docs/design-system/ (where the flow needs them) and .nvmrc if devops checks the runtime.

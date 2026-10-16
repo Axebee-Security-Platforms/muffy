@@ -213,6 +213,7 @@ check('smoke-scenarios: every trigger has a positive scenario', Object.keys(SMOK
 }
 
 /* 7b. guards: Bash allowlist for doc agents, full-regression approval for qa-tester */
+check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).status === 0);
 {
   const tmp = mkdtempSync(join(tmpdir(), 'muffy-guards-'));
   mkdirSync(join(tmp, '.team', 'x'), { recursive: true });
