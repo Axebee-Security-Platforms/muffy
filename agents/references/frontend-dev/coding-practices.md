@@ -35,4 +35,5 @@ Order of precedence: the surrounding code's conventions, then `design.md` / the 
 
 ### Tests
 - Test what the user sees and does (roles, labels, text), not internal state or class names; cover each design.md state and each AC error case
-- Mock the network at the boundary (the contract's endpoints), not the components under test
+- A test names the behaviour (`shows the cooldown timer after 3 failed logins`); it must survive a refactor that keeps behaviour and fail when the behaviour breaks
+- Mock the network at the boundary (the contract's endpoints), not the components under test or your own hooks and stores

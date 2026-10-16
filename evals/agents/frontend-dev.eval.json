@@ -65,6 +65,17 @@
         "puts a diagnosis object in the step-4 hand-off",
         "uses colours outside the design-system tokens"
       ]
+    },
+    {
+      "id": "test-first-state",
+      "input": "Step 4. design.md has a cooldown state after 3 failed logins.",
+      "must": [
+        "writes a test of what the user sees for the cooldown state before building it",
+        "mocks the network only at the contract endpoint, in tests"
+      ],
+      "must_not": [
+        "asserts on component state or class names"
+      ]
     }
   ]
 }

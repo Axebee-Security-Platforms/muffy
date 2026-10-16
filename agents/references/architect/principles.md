@@ -44,7 +44,13 @@ These principles guide every design decision:
 - Document why you deviated; use that learning to update the team catalog later
 - Defaults are a starting point, not law — but require written justification to override
 
-## 8. Cost Is a Design Constraint
+## 8. Deep Modules at Clean Seams
+- A module earns its place by hiding a lot behind a small interface: few entry points, simple inputs, the hard parts (rules, retries, data shape) inside. A thin wrapper that only renames calls is a layer to delete, not a module
+- Put a seam where the behaviour can be tested from outside: a business rule callable without HTTP, a data layer callable without the UI. Dependencies the module does not own (DB, clock, third parties) are passed in at that seam
+- Name modules and their operations in the domain's words from `ac.md` and the brief, and use the same word everywhere in the contract; one concept, one name
+- In `contract/ownership.md`, one module = one owner; a module both FE and BE must edit is a seam in the wrong place
+
+## 9. Cost Is a Design Constraint
 - Every recurring cost (hosting, API calls, tokens, licenses) is visible in `contract.md` before code starts
 - Cost is judged per feature as a delta against the project's baseline in `docs/strategy.md`; no new recurring cost = one line
 - Estimates are ranges with a stated basis; an unsourced number is `[assumed]`

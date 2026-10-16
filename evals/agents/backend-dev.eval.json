@@ -76,6 +76,18 @@
         "patches around it in code",
         "edits the contract"
       ]
+    },
+    {
+      "id": "test-first",
+      "input": "Step 4. AC-2: POST /reset returns 410 for an expired token.",
+      "must": [
+        "writes a test for the 410 case first and reports it failing before the code",
+        "test goes through the endpoint or public function"
+      ],
+      "must_not": [
+        "asserts on a private helper or call order",
+        "mocks its own modules"
+      ]
     }
   ]
 }

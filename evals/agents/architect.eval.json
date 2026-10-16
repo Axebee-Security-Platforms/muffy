@@ -72,6 +72,17 @@
       "must_not": [
         "JSON file as DB"
       ]
+    },
+    {
+      "id": "options-before-datastore",
+      "input": "New codebase; the AC needs persistent sessions and nothing in the repo or ADRs picks a datastore.",
+      "must": [
+        "lists 2-3 datastore options with trade-off, cost delta and lock-in in contract/stack.md",
+        "names the pick with a reason and writes an ADR"
+      ],
+      "must_not": [
+        "picks one with no alternatives"
+      ]
     }
   ]
 }

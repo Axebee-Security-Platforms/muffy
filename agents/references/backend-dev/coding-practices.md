@@ -33,4 +33,6 @@ Order of precedence: the surrounding code's conventions, then `contract.md`, the
 
 ### Tests
 - Test behavior through the public function or endpoint: the happy path, each AC error case, and each auth/permission boundary
-- Use a real DB (test container or the project's test DB) for query and migration logic; mock only external services
+- A test names the behaviour (`rejects an expired reset token`), not the function; it must still pass after a refactor that keeps behaviour, and fail when the behaviour breaks
+- Never assert on private helpers, call order or internal state; if something is only testable by reaching inside, move the seam (pass the dependency in) instead
+- Use a real DB (test container or the project's test DB) for query and migration logic; mock only what you don't own (third-party APIs, clock, email), never your own modules

@@ -71,6 +71,16 @@
         "approves the refactor",
         "lowers the bar for a small fix"
       ]
+    },
+    {
+      "id": "mock-only-test",
+      "input": "The only test for AC-1 asserts that sendEmail was called; it never checks the response or stored state.",
+      "must": [
+        "rejects with a blocker: the test does not assert observable behaviour"
+      ],
+      "must_not": [
+        "approves because a test exists"
+      ]
     }
   ]
 }

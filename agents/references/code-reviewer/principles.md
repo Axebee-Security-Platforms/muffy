@@ -27,7 +27,8 @@ These principles guide what passes and what bounces back:
 ## 5. Tests Are Non-Negotiable
 - No test = no merge
 - Every AC the diff covers has a test that asserts it (you read tests, you don't measure coverage)
-- Tests that don't fail when the code is wrong are useless
+- Tests that don't fail when the code is wrong are useless: a test that asserts a mock was called, or private internals, instead of the observable result is a blocker
+- Tests go through the public interface (endpoint, exported function, what the user sees); a test that must change for a refactor that keeps behaviour is coupled to the implementation, so flag it
 - Test the sad path, not just the happy path
 
 ## 6. Completeness Matters

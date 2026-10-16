@@ -1,550 +1,75 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skill Lifecycle & Muffy Agent Workflow</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #6366f1;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
-            --dark-bg: #0f172a;
-            --light-bg: #f8fafc;
-            --text-primary: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --text-primary: #f1f5f9;
-                --text-muted: #cbd5e1;
-                --border: #334155;
-            }
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--light-bg);
-            color: var(--text-primary);
-            padding: 2rem;
-            line-height: 1.6;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: var(--dark-bg);
-            }
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 1rem;
-            font-size: 2rem;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            margin-bottom: 3rem;
-        }
-
-        .section {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--border);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .section {
-                background: #1e293b;
-                border-color: #334155;
-            }
-        }
-
-        .section h2 {
-            margin-bottom: 1.5rem;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .section h2::before {
-            content: '';
-            display: inline-block;
-            width: 4px;
-            height: 24px;
-            background: var(--primary);
-            border-radius: 2px;
-        }
-
-
-        /* Comparison Section */
-        .comparison {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .comparison {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .comparison-card {
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
-            background: var(--light-bg);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .comparison-card {
-                background: #0f172a;
-            }
-        }
-
-        .comparison-card.with-skill {
-            border-color: var(--success);
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
-        }
-
-        .comparison-card.without-skill {
-            border-color: var(--danger);
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, transparent 100%);
-        }
-
-        .comparison-title {
-            font-weight: bold;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .comparison-title.with-skill {
-            color: var(--success);
-        }
-
-        .comparison-title.without-skill {
-            color: var(--danger);
-        }
-
-        .comparison-item {
-            margin-bottom: 0.8rem;
-            padding-left: 1.5rem;
-            position: relative;
-            font-size: 0.95rem;
-        }
-
-        .comparison-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0.4rem;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .with-skill .comparison-item::before {
-            background: var(--success);
-        }
-
-        .without-skill .comparison-item::before {
-            background: var(--danger);
-        }
-
-        /* Workflow Diagram */
-        .workflow {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .workflow-row {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .workflow-agent {
-            background: var(--primary);
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            min-width: 120px;
-            text-align: center;
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
-        .workflow-agent:nth-child(1) { animation-delay: 0s; }
-        .workflow-agent:nth-child(2) { animation-delay: 0.2s; }
-        .workflow-agent:nth-child(3) { animation-delay: 0.4s; }
-        .workflow-agent:nth-child(4) { animation-delay: 0.6s; }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .workflow-skills {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .skill-badge {
-            background: var(--info);
-            color: white;
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            animation: slideIn 0.4s ease-out forwards;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .workflow-arrow {
-            text-align: center;
-            color: var(--primary);
-            font-size: 1.5rem;
-            animation: bounce 1s ease-in-out infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
-        }
-
-        /* Info Box */
-        .info-box {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, transparent 100%);
-            border-left: 4px solid var(--info);
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-top: 1.5rem;
-        }
-
-        .info-box h4 {
-            color: var(--info);
-            margin-bottom: 0.5rem;
-        }
-
-        .info-box p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        /* Controls */
-        .controls {
-            text-align: center;
-            margin-top: 2rem;
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            margin: 0 0.5rem;
-        }
-
-        button:hover {
-            background: #4f46e5;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        /* Animation */
-        @keyframes highlightStep {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .highlight {
-            animation: highlightStep 1s ease-in-out infinite;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muffy Agent Know-how</title>
+<style>
+  :root {
+    --bg: #faf9f5; --surface: #ffffff; --text: #141413; --muted: #5e5d59;
+    --border: #e6e4dc; --accent: #4f46e5; --accent-soft: #eef0ff; --ok: #047857;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1a1a18; --surface: #232320; --text: #ecebe6; --muted: #a8a69e;
+            --border: #3a3935; --accent: #a5b4fc; --accent-soft: #2a2c45; --ok: #6ee7b7; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 32px 0 12px; }
+  p.lead { color: var(--muted); margin: 0 0 24px; }
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }
+  code { font: 13px ui-monospace, Consolas, monospace; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  .ok { color: var(--ok); font-weight: 600; }
+  ol, ul { padding-left: 20px; margin: 8px 0; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎯 Skill Lifecycle & Muffy Agent Workflow</h1>
-        <p class="subtitle">How skills power the team flow in muffy</p>
+<main>
+  <h1>Where muffy's know-how lives</h1>
+  <p class="lead">Each agent carries its own methods in its reference files. No agent needs an outside skill installed. One optional skill, <code>impeccable</code>, is used by the Orchestrator at the design gate.</p>
 
-        <!-- Section 1: Muffy Skill Invocation -->
-        <div class="section">
-            <h2>How Muffy Agents Invoke Skills</h2>
-            <div style="display: grid; gap: 1.5rem;">
-                <div style="background: var(--light-bg); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-                    <h3 style="color: var(--primary); font-family: 'Courier New', monospace; font-size: 0.95rem; margin-bottom: 0.5rem;">
-                        Example 1: Orchestrator → impeccable (design gate)
-                    </h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
-                        Step 3c, after the canvas is published as an Artifact
-                    </p>
-                    <p style="margin-bottom: 0.5rem;">
-                        <strong>Who:</strong> the Orchestrator in the main session, which has a browser; the designer has none and cannot open the Artifact
-                    </p>
-                    <p style="margin-bottom: 0.5rem;">
-                        <strong>Workflow:</strong> Designer hands off canvas source → Orchestrator publishes → opens the rendered canvas at desktop and phone width → runs <code>impeccable</code> critique → <code>high</code> findings go back to the designer, the rest go to you at <code>pause:design-review</code>
-                    </p>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">
-                        💡 Optional: without impeccable the review is skipped and the gate says so
-                    </p>
-                </div>
+  <section>
+    <h2 style="margin-top:0">How an agent loads what it needs</h2>
+    <ol>
+      <li>The agent file (<code>.claude/agents/&lt;agent&gt;.md</code>) has a <strong>Load on demand</strong> table.</li>
+      <li>It reads <code>purpose</code>, <code>required-inputs</code> and <code>rules-and-guardrails</code> at start, <code>workflow</code> before acting, and <code>principles</code> only on a judgment call.</li>
+      <li>Nothing is preloaded through <code>skills:</code>. A preloaded skill puts its whole text into every spawn, and an agent that needs a skill nobody installed may break.</li>
+    </ol>
+  </section>
 
-                <div style="background: var(--light-bg); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--info);">
-                    <h3 style="color: var(--info); font-family: 'Courier New', monospace; font-size: 0.95rem; margin-bottom: 0.5rem;">
-                        Example 2: Frontend-dev → no skill
-                    </h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
-                        Orchestrator: <code style="background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 3px;">"Build the login UI per design.md"</code>
-                    </p>
-                    <p style="margin-bottom: 0.5rem;">
-                        <strong>Agent definition includes:</strong> no <code>skills:</code>
-                    </p>
-                    <p style="margin-bottom: 0.5rem;">
-                        <strong>Workflow:</strong> Frontend-dev builds the screens from the reviewed canvas and <code>design.md</code>, using the component library named in the contract → code review (step 6) → QA (step 7)
-                    </p>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">
-                        💡 UI quality is settled at the design gate, before code is written
-                    </p>
-                </div>
+  <h2>Built into each agent</h2>
+  <section class="table-wrap">
+    <table>
+      <thead><tr><th>Agent</th><th>Method</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td><code>backend-dev</code></td><td>Test first, one AC at a time: a failing test through the endpoint or public function, then the least code that passes. Tests survive refactors; mock only what you don't own.</td><td><code>workflow.md</code> step 4, <code>coding-practices.md</code> Tests</td></tr>
+        <tr><td><code>frontend-dev</code></td><td>Test first, one AC/state at a time, testing what the user sees and does; the network is mocked at the contract's endpoints, only in tests.</td><td><code>workflow.md</code> step 5, <code>coding-practices.md</code> Tests</td></tr>
+        <tr><td><code>architect</code></td><td>Deep modules at clean seams: a small interface over a lot of behaviour, a seam where it can be tested, one owner per module. 2–3 options with trade-offs before any hard-to-reverse choice.</td><td><code>principles.md</code> §8, <code>workflow.md</code> 6b</td></tr>
+        <tr><td><code>code-reviewer</code></td><td>Rejects tests that only check mocks or internals; flags tests coupled to the implementation.</td><td><code>principles.md</code> §5</td></tr>
+        <tr><td><code>designer</code></td><td>Its own a11y audit (WCAG 2.2 AA) and Nielsen heuristic evaluation on the canvas source.</td><td><code>workflow.md</code> steps 8 and 11</td></tr>
+        <tr><td><code>qa-tester</code></td><td>Coverage first, then only the gaps; never above the test level the Orchestrator set (L0–L4).</td><td><code>workflow.md</code>, <code>test-levels.md</code></td></tr>
+      </tbody>
+    </table>
+  </section>
 
-                <div style="background: var(--light-bg); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--success);">
-                    <h3 style="color: var(--success); font-family: 'Courier New', monospace; font-size: 0.95rem; margin-bottom: 0.5rem;">
-                        Example 3: QA-tester → blocker triage
-                    </h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
-                        Orchestrator: <code style="background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 3px;">"Test login feature on fe/login branch"</code>
-                    </p>
-                    <p style="margin-bottom: 0.5rem;">
-                        <strong>QA workflow (no explicit skill call):</strong> Write tests → Run tests → Separate blockers (breaks AC) from non-blockers (polish)
-                    </p>
-                    <p style="margin-bottom: 0.5rem;">
-                        <strong>Result:</strong> QA reports blockers to Orchestrator → Orchestrator routes blockers to FE/BE → QA retests when fixed
-                    </p>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">
-                        💡 QA's methodology is built into the agent's workflow; prioritization rules replace an external skill
-                    </p>
-                </div>
-
-                <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%); padding: 1.5rem; border-radius: 8px; border: 2px solid var(--success);">
-                    <h3 style="color: var(--success); margin-bottom: 1rem;">🎯 Key Pattern: Skills in Muffy</h3>
-                    <p style="margin-bottom: 0.8rem;">
-                        <strong>Each agent has a defined set of skills</strong> in its agent definition (e.g., `.claude/agents/designer.md`)
-                    </p>
-                    <p style="margin-bottom: 0.8rem;">
-                        <strong>Skills activate at specific workflow steps</strong> (e.g., the Orchestrator runs `impeccable` on the rendered canvas at the design gate, step 3c)
-                    </p>
-                    <p>
-                        <strong>When FE/BE need a skill</strong>, it's listed in their agent definition or invoked during workflow based on task needs
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Section 2: Side-by-Side Comparison -->
-        <div class="section">
-            <h2>With Skill vs Without Skill</h2>
-            <div class="comparison">
-                <div class="comparison-card with-skill">
-                    <div class="comparison-title with-skill">✓ With Skill</div>
-                    <div class="comparison-item">Pre-written workflow loaded</div>
-                    <div class="comparison-item">Context stays focused</div>
-                    <div class="comparison-item">Consistent methodology</div>
-                    <div class="comparison-item">Faster execution</div>
-                    <div class="comparison-item">Reduced token usage</div>
-                    <div class="comparison-item">Reusable knowledge</div>
-                    <div class="comparison-item">Team alignment</div>
-                </div>
-                <div class="comparison-card without-skill">
-                    <div class="comparison-title without-skill">✗ Without Skill</div>
-                    <div class="comparison-item">Agent reinvents workflow</div>
-                    <div class="comparison-item">Context diluted with instructions</div>
-                    <div class="comparison-item">Inconsistent approach</div>
-                    <div class="comparison-item">Slower execution</div>
-                    <div class="comparison-item">Higher token usage</div>
-                    <div class="comparison-item">Knowledge not captured</div>
-                    <div class="comparison-item">Team misalignment</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Section 3: Muffy Agent Workflow -->
-        <div class="section">
-            <h2>Muffy Agent Team Flow with Skills</h2>
-            <div class="workflow">
-                <div class="workflow-row">
-                    <div class="workflow-agent">🔍 Researcher</div>
-                    <div class="workflow-skills">
-                        <span class="skill-badge">research</span>
-                        <span class="skill-badge">deep-research</span>
-                    </div>
-                    <div class="workflow-arrow">↓</div>
-                </div>
-
-                <div class="workflow-row">
-                    <div class="workflow-agent">📋 Product</div>
-                    <div class="workflow-skills">
-                        <span class="skill-badge">to-prd</span>
-                        <span class="skill-badge">grilling</span>
-                    </div>
-                    <div class="workflow-arrow">↓</div>
-                </div>
-
-                <div class="workflow-row">
-                    <div class="workflow-agent">🏗️ Architect</div>
-                    <div class="workflow-skills">
-                        <span class="skill-badge">codebase-design</span>
-                        <span class="skill-badge">anthropic-skills:arch-review</span>
-                    </div>
-                    <div class="workflow-arrow">↓</div>
-                </div>
-
-                <div class="workflow-row">
-                    <div class="workflow-agent">🎨 Designer → 3c review by Orchestrator</div>
-                    <div class="workflow-skills">
-                        <span class="skill-badge">impeccable (Orchestrator)</span>
-                    </div>
-                    <div class="workflow-arrow">↓</div>
-                </div>
-
-                <div class="workflow-row">
-                    <div class="workflow-agent">⚙️ DevOps</div>
-                    <div class="workflow-skills">
-                        <span class="skill-badge">devops (modes 1-3)</span>
-                    </div>
-                    <div class="workflow-arrow">↓</div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
-                    <div class="workflow-row">
-                        <div class="workflow-agent">💻 Frontend</div>
-                        <div class="workflow-skills">
-                            <span class="skill-badge">—</span>
-                        </div>
-                    </div>
-
-                    <div class="workflow-row">
-                        <div class="workflow-agent">🔧 Backend</div>
-                        <div class="workflow-skills">
-                            <span class="skill-badge">tdd</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="workflow-row" style="margin-top: 1.5rem;">
-                    <div class="workflow-agent">👀 Reviewer</div>
-                    <div class="workflow-skills">
-                        <span class="skill-badge">scrutinize</span>
-                        <span class="skill-badge">code-review</span>
-                    </div>
-                    <div class="workflow-arrow">↓</div>
-                </div>
-
-                <div class="workflow-row">
-                    <div class="workflow-agent">✅ QA</div>
-                    <div class="workflow-skills">
-                        <span class="skill-badge">tdd</span>
-                    </div>
-                    <div class="workflow-arrow">↓</div>
-                </div>
-
-                <div class="workflow-row">
-                    <div class="workflow-agent">📝 Docs</div>
-                    <div class="workflow-skills">
-                        <span class="skill-badge">anthropic-skills:write-runbook</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-box" style="margin-top: 2rem;">
-                <h4>🔄 Skill-Powered Workflow Benefits</h4>
-                <p>✓ Each agent loads the right skill for their role<br>
-                ✓ Skills are reusable across projects<br>
-                ✓ Consistent quality across the team<br>
-                ✓ Knowledge stays in skills, not context<br>
-                ✓ Faster onboarding of new agents</p>
-            </div>
-        </div>
-
-        <!-- Section 4: Key Concepts -->
-        <div class="section">
-            <h2>Key Concepts</h2>
-            <div class="comparison">
-                <div class="comparison-card">
-                    <h3 style="color: var(--primary); margin-bottom: 1rem;">💡 What is a Skill?</h3>
-                    <p>A packaged set of instructions, workflows, and best practices for a specific task. Skills are invoked when an agent needs them, keeping context focused and token usage efficient.</p>
-                </div>
-                <div class="comparison-card">
-                    <h3 style="color: var(--primary); margin-bottom: 1rem;">🎯 When to Use Skills?</h3>
-                    <p>Use skills when a task has a standard methodology (testing, design review, code review, writing docs, debugging, etc.). Skills transform ad-hoc approaches into repeatable patterns.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Smooth scroll for navigation
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
-    </script>
+  <h2>The one optional skill</h2>
+  <section>
+    <p><span class="tag">impeccable</span> &nbsp;Orchestrator only, step 3c (<code>references/design-review.md</code>).</p>
+    <ol>
+      <li>The designer hands off the canvas source. It has no browser, so it cannot see the canvas as it renders.</li>
+      <li>The Orchestrator publishes the canvas, opens it at desktop and phone width, and runs the impeccable critique.</li>
+      <li><code>high</code> findings go back to the designer (counted at loop point <code>3c:designer</code>); the rest go to you at <code>pause:design-review</code>.</li>
+    </ol>
+    <p class="ok">Not installed → the review is skipped and the gate says so. Nothing else changes.</p>
+  </section>
+</main>
 </body>
 </html>
-</body></html>
