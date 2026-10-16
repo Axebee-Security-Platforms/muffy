@@ -79,6 +79,13 @@
     "expect": "full"
   },
   {
+    "id": "bare-bug-report",
+    "request": "เจอบั๊ก แก้ไขให้หน่อย",
+    "doc_lane": "ask first",
+    "signals": {},
+    "expect": "ask"
+  },
+  {
     "id": "search-is-slow",
     "request": "Search is slow",
     "doc_lane": "full, or ask first",

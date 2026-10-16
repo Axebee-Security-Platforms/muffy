@@ -11,6 +11,8 @@ A request is a **fix** only if all hold; otherwise run the full flow:
 3. No change to the API shape, schema or migration, auth, a dependency, the runtime/stack, or devops-owned files
 4. No new screen, flow or component. Cosmetic work must use tokens already in `docs/design-system/`
 
+If the request says it is a bug or asks for a fix but gives no symptom and no location or repro, do not guess a lane and do not start the full flow: ask **one** `AskUserQuestion` for what happens (error text or wrong result), where (page, endpoint or file) and how to trigger it, then triage on the answer. The words "bug", "fix", "บั๊ก" or "แก้" never decide the lane on their own; the four conditions do.
+
 If one fails, say which in one line and run the full flow. Trivial edits with no behaviour risk (a typo, one line): do them in the main session, no muffy.
 
 ### Examples
@@ -27,6 +29,7 @@ If one fails, say which in one line and run the full flow. Trivial edits with no
 | "Search is slow" | full, or ask first | No symptom, location or repro; ask for a measurement before triage |
 | "Invoice totals are wrong" | fix → promoted | Starts as a fix; step 4a finds the cause is a rounding rule in the contract and returns `needs-full-flow` |
 | "Upgrade React to 19 and fix what breaks" | full | A dependency change |
+| "เจอบั๊ก แก้ไขให้หน่อย" | ask first | A bug report with no symptom, location or repro: ask for them before triage |
 | "Fix the typo in the footer" | none (main session) | One line, no behaviour risk |
 
 When the request is borderline (for example a bug plus "while you are there, also…"), cut the extra work out at `pause:scope` and put it in the out-of-scope list or a separate task.

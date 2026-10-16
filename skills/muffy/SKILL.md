@@ -3,7 +3,10 @@ name: muffy
 description: >
   Run a hub-and-spoke software development subagent team (main session = Orchestrator)
   from research to deploy. Use when building a feature end to end with parallel agents,
-  or `/muffy fix` for a small bug or cosmetic fix (diagnose, fix, review, QA, staging).
+  or `/muffy fix` for a small bug or cosmetic fix (diagnose, fix, review, QA, staging). Also use when
+  the user reports a bug or asks for a fix with a symptom, error or broken behaviour in a codebase
+  ("found a bug", "it errors", "this is broken", "fix this", เจอบั๊ก, แก้ไขให้หน่อย, พัง, error): the
+  Orchestrator triages it into the fix lane or asks one question first.
   Do not use for one-line edits, research-only or review-only requests, or sequential iteration.
 ---
 
