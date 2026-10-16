@@ -8,8 +8,11 @@ A new session has no memory of the run. Everything it needs is in `.team/<task>/
 
 ## Cold start (new session)
 
-1. List `.team/*/checkpoint.md` (in the repo and in `.worktrees/*/`). Keep tasks whose `## Status` is not `closed`/`merged`. One task → use it. Several → `AskUserQuestion` with each task's `Updated:` line. None → say there is nothing to resume and ask what to build
-2. Read that `checkpoint.md` and `<brain>/tasks/<task>.md` only. Do not replay old conversations or re-read finished artifacts
+1. Find the task, reading as little as possible:
+   - **Index first**: `<brain>/project.md` → `## Tasks`. Rows marked `in progress` are the unfinished tasks; no checkpoint is opened to learn this
+   - **No vault or no project.md**: `grep -m1 "^Updated:" .team/*/checkpoint.md` (also under `.worktrees/*/`), then read only the `## Status` of those; a task whose `## Status` says `closed` is finished
+   - One unfinished task → use it. Several → `AskUserQuestion` listing each task with its `Updated:` line. None → say there is nothing to resume and ask what to build
+2. Read only that task's `checkpoint.md` and `<brain>/tasks/<task>.md`. Do not replay old conversations or re-read finished artifacts
 3. Check the repo against the checkpoint: `git status --short`, `git branch --list '*/<task>'`, `git worktree list`. The checkpoint is a cache: if it disagrees with an ADR, `contract.md`, a hand-off file or git, the other source wins and the checkpoint is corrected
 4. Missing or stale `.team/` (nothing committed, wrong branch) → look on the task's branches (`ops/`, `fe/`, `be/`, `feature/`) with `git log --all -- .team/<task>`, tell the user which branch holds it, and ask before switching
 5. State one line to the user: task, step reached, pause or blocker, next action. Then continue from `## Status` → `next:`. Paused → wait for its resume condition ([run-profile.md](run-profile.md#named-pauses)); never re-ask a question the checkpoint records as answered
