@@ -15,6 +15,7 @@
     "read": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
     "write": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
     "dont_touch": { "type": "array", "items": { "type": "string" } },
+    "test_level": { "enum": ["L0", "L1", "L2", "L3", "L4"], "description": "qa-tester only: ceiling from references/test-levels.md" },
     "full_regression": { "const": true, "description": "qa-tester only: the user approved a whole-system regression at pause:full-regression; absent = scoped tests only" },
     "checkpoint": { "type": "string", "description": "Path of .team/<task>/checkpoint.md; required from round 2 or after a context summary" },
     "commit_trailer": { "type": "string", "minLength": 3, "description": "Commit trailer line every agent appends to its commits; optional so older envelopes stay valid" }

@@ -7,6 +7,7 @@
   Read: <paths>
   Write: <paths>
   Don't touch: <paths/scope>
+  [Test level: L0–L4 — qa-tester only; copy the row from test-levels.md]
   [Full regression: approved — qa-tester only, after pause:full-regression; absent means qa-tester must run scoped tests only]
   [Checkpoint: .team/<task>/checkpoint.md — from round 2 on; read only ## Goal and ## Open blockers]
   Commit trailer: <verbatim attribution line the harness gave the Orchestrator for this session — never typed from the skill, never a model name taken from a file — passed to every agent; every commit ends with it>

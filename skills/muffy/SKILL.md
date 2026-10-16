@@ -34,6 +34,7 @@ Load lazily: open each reference only at the step that needs it, never all up fr
 4. **Loops** — read only when a reject/fail happens: fix loops (max 3), fallback ladder, escalation: [references/loops.md](references/loops.md)
 5. **Token discipline** — read once at setup: prompt template, hand-off block, fix rounds, diffs: [references/token-discipline.md](references/token-discipline.md)
 6. **Memory model** — read once at setup: repo vs `.team/` vs vault layout, `checkpoint.md`: [references/memory-model.md](references/memory-model.md)
+6b. **Test levels** — read before step 7 (and in the fix lane, before step 4): which tests run for which change, L0 cosmetic to L4 whole-system: [references/test-levels.md](references/test-levels.md)
 7. **Closing** — step 12 only: final checks and message to the user: [references/closing.md](references/closing.md)
 
 ## Output Format
