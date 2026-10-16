@@ -35,6 +35,7 @@ Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Ana
 - **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
 - **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of Setup, Run profile and the full step list: [references/fix-profile.md](references/fix-profile.md)
 - **Steps 0–12** — agent, input and output per step: [references/steps.md](references/steps.md)
+- **Design review** — step 3c, after 3b publishes the canvas: the Orchestrator's UX/UI review of the rendered canvas with the `impeccable` skill: [references/design-review.md](references/design-review.md)
 - **Requirements interview** (steps 1–2) — researcher/PM return `needs-input`; relay their questions to the user: [references/requirements.md](references/requirements.md)
 - **Loops** — read only when a reject/fail happens: fix loops (max 3), fallback ladder, escalation: [references/loops.md](references/loops.md)
 - **Token discipline** — read once at setup: prompt template, hand-off block, fix rounds, diffs: [references/token-discipline.md](references/token-discipline.md)
@@ -44,7 +45,7 @@ Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Ana
 
 ## Output Format
 
-- `.team/<task>/`: `brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/` (only when a main file passes 60 lines), `contract/` (always: `contract.md` is an index), `handoff/<step>-<role>-r<round>.json`, `escalation-<n>.json` (only if a loop was cut off)
+- `.team/<task>/`: `brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `design-review-<n>.md` (UX/UI review at 3c), `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/` (only when a main file passes 60 lines), `contract/` (always: `contract.md` is an index), `handoff/<step>-<role>-r<round>.json`, `escalation-<n>.json` (only if a loop was cut off)
 - Repo: `docs/plan/<task>.md`, `docs/adr/NNNN-*.md`, `docs/design-system/` (if changed), merged `feature/<task>`
 - Vault: `tasks/<task>.md`, consolidated `project.md`
 - Final message to the user: see `references/closing.md` step 5

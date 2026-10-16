@@ -7,7 +7,7 @@ After every step:
 - The agent wrote `<brain>/agents/<role>/<task>.md`
 - The plan has ordered phases and every task has a priority
 - Test/QA runtime matches the `deploy.md` pin
-- Gates 3c (design approved by the user at `pause:design-review`) and 3d passed before step 4 (unless the run profile skipped them, recorded with the reason)
+- Gates 3c (UX/UI review run or recorded as skipped, then design approved by the user at `pause:design-review`) and 3d passed before step 4 (unless the run profile skipped them, recorded with the reason)
 - `checkpoint.md` was rewritten at the boundaries listed in [memory-model.md](memory-model.md#checkpoint)
 - `node .claude/skills/muffy/scripts/check-checkpoint.mjs .team/<task>` passes: checkpoint ≤ 40 lines (excluding `## Goal`), every `rounds/*.md` ≤ 100 lines, every `[label]` defined and every target file present
 - After step 5, only when the user asked for PR diagrams (step 5b): the PR diagram Artifact URL is recorded and `.team/<task>/diagrams/{fe,be}.graph.json` exist, or the hand-off says why the diagram was skipped ([steps.md](steps.md) step 5b)

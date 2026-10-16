@@ -7,8 +7,6 @@ description: >
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 effort: medium
-skills:
-  - impeccable
 ---
 
 # Designer

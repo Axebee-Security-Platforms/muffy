@@ -22,7 +22,7 @@ The flow replaces ad-hoc multi-agent prompts. Unreviewed code and lost hand-offs
 
 ## Quick start
 
-Requires Node 18+. No runtime dependencies.
+Requires Node 18+. No runtime dependencies. Optional: the `impeccable` skill, which the Orchestrator uses for a UX/UI review of the design canvas before you approve it.
 
 ### Install into your repo
 

@@ -325,37 +325,37 @@
             <div style="display: grid; gap: 1.5rem;">
                 <div style="background: var(--light-bg); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
                     <h3 style="color: var(--primary); font-family: 'Courier New', monospace; font-size: 0.95rem; margin-bottom: 0.5rem;">
-                        Example 1: Designer → impeccable
+                        Example 1: Orchestrator → impeccable (design gate)
                     </h3>
                     <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
-                        Orchestrator: <code style="background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 3px;">"Design the login flow"</code>
+                        Step 3c, after the canvas is published as an Artifact
                     </p>
                     <p style="margin-bottom: 0.5rem;">
-                        <strong>Agent definition includes:</strong> <code>skills: [impeccable]</code>
+                        <strong>Who:</strong> the Orchestrator in the main session, which has a browser; the designer has none and cannot open the Artifact
                     </p>
                     <p style="margin-bottom: 0.5rem;">
-                        <strong>Workflow:</strong> Designer creates canvas → uses <code>impeccable</code> skill to review visual hierarchy, accessibility, consistency with design system → polishes & reports
+                        <strong>Workflow:</strong> Designer hands off canvas source → Orchestrator publishes → opens the rendered canvas at desktop and phone width → runs <code>impeccable</code> critique → <code>high</code> findings go back to the designer, the rest go to you at <code>pause:design-review</code>
                     </p>
                     <p style="color: var(--text-muted); font-size: 0.9rem;">
-                        💡 Skill is declared in agent definition; activates during workflow
+                        💡 Optional: without impeccable the review is skipped and the gate says so
                     </p>
                 </div>
 
                 <div style="background: var(--light-bg); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--info);">
                     <h3 style="color: var(--info); font-family: 'Courier New', monospace; font-size: 0.95rem; margin-bottom: 0.5rem;">
-                        Example 2: Frontend-dev → impeccable
+                        Example 2: Frontend-dev → no skill
                     </h3>
                     <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
                         Orchestrator: <code style="background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 3px;">"Build the login UI per design.md"</code>
                     </p>
                     <p style="margin-bottom: 0.5rem;">
-                        <strong>Agent definition includes:</strong> <code>skills: [impeccable]</code>
+                        <strong>Agent definition includes:</strong> no <code>skills:</code>
                     </p>
                     <p style="margin-bottom: 0.5rem;">
-                        <strong>Workflow:</strong> Frontend-dev builds components using shadcn/ui → uses <code>impeccable</code> skill to review responsive design, contrast, accessibility → refines & commits
+                        <strong>Workflow:</strong> Frontend-dev builds the screens from the reviewed canvas and <code>design.md</code>, using the component library named in the contract → code review (step 6) → QA (step 7)
                     </p>
                     <p style="color: var(--text-muted); font-size: 0.9rem;">
-                        💡 FE developer can invoke skill to polish UI before code review
+                        💡 UI quality is settled at the design gate, before code is written
                     </p>
                 </div>
 
@@ -383,7 +383,7 @@
                         <strong>Each agent has a defined set of skills</strong> in its agent definition (e.g., `.claude/agents/designer.md`)
                     </p>
                     <p style="margin-bottom: 0.8rem;">
-                        <strong>Skills activate at specific workflow steps</strong> (e.g., Designer loads `impeccable` before handing off to Frontend)
+                        <strong>Skills activate at specific workflow steps</strong> (e.g., the Orchestrator runs `impeccable` on the rendered canvas at the design gate, step 3c)
                     </p>
                     <p>
                         <strong>When FE/BE need a skill</strong>, it's listed in their agent definition or invoked during workflow based on task needs
@@ -451,9 +451,9 @@
                 </div>
 
                 <div class="workflow-row">
-                    <div class="workflow-agent">🎨 Designer</div>
+                    <div class="workflow-agent">🎨 Designer → 3c review by Orchestrator</div>
                     <div class="workflow-skills">
-                        <span class="skill-badge">impeccable</span>
+                        <span class="skill-badge">impeccable (Orchestrator)</span>
                     </div>
                     <div class="workflow-arrow">↓</div>
                 </div>
@@ -470,7 +470,7 @@
                     <div class="workflow-row">
                         <div class="workflow-agent">💻 Frontend</div>
                         <div class="workflow-skills">
-                            <span class="skill-badge">impeccable</span>
+                            <span class="skill-badge">—</span>
                         </div>
                     </div>
 

@@ -7,7 +7,7 @@ muffy is a hub-and-spoke agent team plus a skill. One command installs both into
 - Node 18+
 - A git repo (run from its root)
 - An Obsidian vault for the second brain (optional but expected by the flow)
-- The `impeccable` skill, for the designer's polish pass (`agents/designer.md` preloads it through `skills:`). Without it the designer does that pass by hand and says so
+- Optional: the `impeccable` skill in the main session, for the Orchestrator's UX/UI review of the rendered canvas at the design gate (step 3c). Without it that review is skipped and the gate says so; the designer's own heuristic and a11y checks still run
 
 ## Install
 
