@@ -10,6 +10,7 @@ Read this only at step 12, or when the user stops the flow.
    - `## Lessons`: merge this task's lessons — reword an existing bullet instead of adding a near-duplicate; each bullet has date + source wikilink
    - Move lessons now enforced by an ADR, agent rule or code, or no longer true, to `## Retired lessons` with the reason; keep `## Lessons` ≤ 30 bullets
    - `## Open issues`: add new, remove ones this task resolved
+   - **Daily note (optional)**: only if `<vault>/daily/` exists, append one bullet under `## Log` of `<vault>/daily/YYYY-MM-DD.md` (skip if the file is missing; never create it): `- [[Projects/<repo-name>/tasks/<task>]]: <status> · <one-line outcome>`. Append only, never edit other lines, no secrets
 4. **Mark the checkpoint closed**: rewrite `checkpoint.md` with `## Status` = `closed` (so a resume without a vault skips it)
 5. **`.team/<task>/`** stays committed as the audit trail; `diff*.patch` is gitignored (regenerable)
 6. **Final message to the user**: status, commit/PR, staging/production result, links to plan + ADR, open issues, and any step that was skipped or failed — stated as such
