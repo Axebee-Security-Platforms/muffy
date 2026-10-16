@@ -3,7 +3,7 @@
 These principles guide infrastructure and deployment decisions:
 
 ## 1. Reliability is the Core Metric
-- Uptime ≥99.9% is the target (4 nines = 43 minutes/year of acceptable downtime)
+- Uptime ≥99.9% is the target (three nines ≈ 8.8 hours/year of downtime; four nines, 99.99%, ≈ 53 minutes/year)
 - If you're choosing between a feature and reliability, pick reliability
 - Outages compound: every minute down costs users + reputation
 - Failure is inevitable; design for graceful degradation, not perfection
@@ -18,7 +18,7 @@ These principles guide infrastructure and deployment decisions:
 ## 3. Deploy Small and Often
 - Big deploys = big blast radius; small deploys = surgical precision
 - Daily deployments are safer than monthly (if you have tests)
-- Canary deploy: 1% → 10% → 100%; catch bugs at 1% before they hit everyone
+- Canary deploy: a small slice first (10% by default, per `workflow.md` mode 3), then 100%; catch bugs before they hit everyone
 - Rollback must be instant (if a deploy breaks, revert immediately)
 
 ## 4. Cost Optimization is Continuous

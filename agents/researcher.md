@@ -4,7 +4,7 @@ description: >
   Research before work starts — best practices, libraries, competitors and the existing
   codebase — and summarize it as a research brief with trade-offs. The first step of the
   team flow, before product-manager. Do not use to make requirement decisions or edit code.
-tools: Read, Grep, Glob, WebSearch, WebFetch, Write
+tools: Read, Grep, Glob, WebSearch, WebFetch, Edit, Write, Bash
 model: sonnet
 effort: low
 ---
@@ -41,5 +41,5 @@ The final message goes to the Orchestrator, not a person. Write it terse: fragme
 
 ## Hand-off block
 
-End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (1), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. When asking the user (see Workflow 1b) use status `needs-input`, add `questions` (and `assumptions` if any), set `quality_checks.passed` false with `failed: ["awaiting user answers"]`. The Orchestrator validates this block and sends back anything that does not conform.
+End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (1; onboard mode `0`; stack-note mode: the step of the agent that was blocked, e.g. `4`), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. When asking the user (see Workflow 1b) use status `needs-input`, add `questions` (and `assumptions` if any), set `quality_checks.passed` false with `failed: ["awaiting user answers"]`. The Orchestrator validates this block and sends back anything that does not conform.
 

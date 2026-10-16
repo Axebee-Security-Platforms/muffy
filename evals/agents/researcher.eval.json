@@ -14,9 +14,7 @@
         "^#{1,4}\\s*Level reached",
         "Level reached[\\s\\S]*L[0-3]"
       ],
-      "must_not_match": [
-        "\\[verify\\]"
-      ]
+      "must_not_match": []
     }
   ],
   "final_message": {

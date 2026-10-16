@@ -26,21 +26,21 @@ Orchestrate the subagents in `.claude/agents/` from research to deploy for one f
 
 ## Workflow
 
-Load lazily: open each reference only at the step that needs it, never all up front. Subagents do the same via the "Load on demand" table in their own definitions.
+Load lazily: open each reference only at the step that needs it, never all up front. Subagents do the same via the "Load on demand" table in their own definitions. The list below is the order of the references, not step numbers: "step N" always means a row of [steps.md](references/steps.md).
 
-Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips steps 0–2: follow [references/resume.md](references/resume.md), which finds the task's `checkpoint.md` and picks up at its `next:`.
+Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Analyze, Onboard, Setup and Run profile: follow [references/resume.md](references/resume.md), which finds the task's `checkpoint.md` and picks up at its `next:`.
 
-0a. **Analyze** — repo with history, before onboard or the first feature (`/muffy analyze`): find unfinished work in git and in trackers (GitHub, GitLab, Jira, ClickUp, exports), read-only and privacy-minimised, user confirms what becomes a task: [references/analyze.md](references/analyze.md)
-0. **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
-1. **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
-2. **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of steps 1–2 and the full step list: [references/fix-profile.md](references/fix-profile.md)
-3. **Steps 1–12** — agent, input and output per step: [references/steps.md](references/steps.md)
-3b. **Requirements interview** — researcher/PM return `needs-input`; relay their questions to the user: [references/requirements.md](references/requirements.md)
-4. **Loops** — read only when a reject/fail happens: fix loops (max 3), fallback ladder, escalation: [references/loops.md](references/loops.md)
-5. **Token discipline** — read once at setup: prompt template, hand-off block, fix rounds, diffs: [references/token-discipline.md](references/token-discipline.md)
-6. **Memory model** — read once at setup: repo vs `.team/` vs vault layout, `checkpoint.md`: [references/memory-model.md](references/memory-model.md)
-6b. **Test levels** — read before step 7 (and in the fix lane, before step 4): which tests run for which change, L0 cosmetic to L4 whole-system: [references/test-levels.md](references/test-levels.md)
-7. **Closing** — step 12 only: final checks and message to the user: [references/closing.md](references/closing.md)
+- **Analyze** — repo with history, before onboard or the first feature (`/muffy analyze`): find unfinished work in git and in trackers (GitHub, GitLab, Jira, ClickUp, exports), read-only and privacy-minimised, user confirms what becomes a task: [references/analyze.md](references/analyze.md)
+- **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
+- **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
+- **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of Setup, Run profile and the full step list: [references/fix-profile.md](references/fix-profile.md)
+- **Steps 0–12** — agent, input and output per step: [references/steps.md](references/steps.md)
+- **Requirements interview** (steps 1–2) — researcher/PM return `needs-input`; relay their questions to the user: [references/requirements.md](references/requirements.md)
+- **Loops** — read only when a reject/fail happens: fix loops (max 3), fallback ladder, escalation: [references/loops.md](references/loops.md)
+- **Token discipline** — read once at setup: prompt template, hand-off block, fix rounds, diffs: [references/token-discipline.md](references/token-discipline.md)
+- **Memory model** — read once at setup: repo vs `.team/` vs vault layout, `checkpoint.md`: [references/memory-model.md](references/memory-model.md)
+- **Test levels** — read before step 7 (and in the fix lane, before step 4): which tests run for which change, L0 cosmetic to L4 whole-system: [references/test-levels.md](references/test-levels.md)
+- **Closing** — step 12 only: final checks and message to the user: [references/closing.md](references/closing.md)
 
 ## Output Format
 

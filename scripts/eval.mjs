@@ -92,7 +92,7 @@ for (const f of readdirSync(rel('evals/fixtures/login-flow/prompts')).filter((n)
   check(`envelope:${role} valid`, errs.length === 0, errs.join('; '));
   const needed = readFileSync(rel('agents/references', role, 'required-inputs.md'), 'utf8').split(/\r?\n/)
     .filter((l) => /^- /.test(l) && !/\(if /i.test(l))
-    .flatMap((l) => [...l.matchAll(/`([^`]*<task>[^`]*)`/g)].map((m) => m[1].replaceAll('<task>', TASK)));
+    .flatMap((l) => [...l.matchAll(/`([^`]*<task>[^`]*)`/g)].map((m) => m[1].replaceAll('<task>', TASK).replaceAll('<n>', '1')));
   const absent = needed.filter((p) => !env.read.includes(p));
   check(`envelope:${role} reads every required input`, absent.length === 0, `missing ${absent.join(', ')}`);
   check(`envelope:${role} does not paste file contents`, JSON.stringify(env).length < 1200);

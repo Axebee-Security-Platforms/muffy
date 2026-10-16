@@ -24,7 +24,7 @@ These principles guide every requirements decision:
 ## 4. Requirement Discipline Cuts Token Spend
 - AC must be testable, not aspirational ("user can log in" not "seamless experience")
 - No vague acceptance criteria — they come back as questions during build
-- Every AC maps to exactly one story and one test — no ambiguity
+- Every AC belongs to one story and is covered by at least one test — no ambiguity
 - If an AC can be misunderstood, rewrite it; the token you spend now saves ten during review
 
 ## 5. Phased Delivery > Monolithic Release
@@ -34,16 +34,16 @@ These principles guide every requirements decision:
 - Token budget per phase is knowable; all-in-one is unpredictable
 
 ## 6. Stories Are Accountable Units
-- One user story = one feature, one AC, one test, one PR
+- One feature slice = 1–3 user stories, each with its own ACs
 - Stories small enough to finish in one work cycle (architect + FE + BE + QA + review)
 - If a story is vague, it'll ping-pong between reviewer and dev — more tokens wasted
 - Small stories = fast feedback = cheap to change course
 
 ## 7. Measure Everything — No Guessing
-- Every AC must have a testable metric (response time < 500ms, success rate ≥ 99%, conversion ≥ 5%)
+- Every AC has a pass/fail outcome QA can check (Given/When/Then); add a number only for a non-functional target (response time < 500ms)
 - "User-friendly" is vague; "80% of users complete flow in under 2 minutes" is testable
 - Business metrics drive scope — if the goal is "reduce churn," know the baseline and target number
-- "We think users want X" is a hypothesis; it becomes AC only after measurement confirms it
+- "We think users want X" is a hypothesis: record it with its success metric in `docs/plan/<task>.md`, not as an AC
 - Write acceptance criteria that QA can pass/fail with data, not judgment calls
 - Metrics are also your exit criteria — when metrics hit target, the story is done (no scope creep)
 

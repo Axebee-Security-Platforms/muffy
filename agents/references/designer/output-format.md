@@ -1,11 +1,11 @@
 ## Output Format
 
-- `.team/<task>/design.md` (canvas URL at the top, user flow, states, component map, a11y requirements, design system changes in this task)
+- `.team/<task>/design.md` (canvas URL at the top, user flow, states, component map, a11y requirements, design system changes in this task, `## Quality checks` with each Definition-of-done item and its status)
 - `.team/<task>/canvas/project/*` (canvas source; uses the values from `tokens.css`)
 - `docs/design-system/tokens.css` — CSS custom properties on `:root`, with dark mode overrides; the only place raw values live
 - `docs/design-system/README.md` — sections: Principles, Color, Typography, Spacing & layout, Radius & elevation, Motion, Components (each with anatomy, variants, states, tokens used, do/don't), Changelog
 - `<brain>/agents/designer/<task>.md`
 
-Final message: paths + list of artboards/screens + data the UI needs from the API + what is still a placeholder + design system changes (tokens/components added or changed) + the Quality Checks checklist with the status of each item
+Final message: paths + list of artboards/screens + data the UI needs from the API + what is still a placeholder + design system changes (tokens/components added or changed) + only the Quality Checks items that failed (none → "all checks pass"). The full checklist with each item's status goes in `design.md` under `## Quality checks`
 
-End the final message with the one-line JSON hand-off block (`.claude/skills/muffy/schemas/handoff.schema.json`). It does not count toward the line limit above. Types that are often wrong: `step` is a string (`"4"`, not `4`); `status` is `done`, `blocked`, `needs-input` or `not-ready` (never `ready`); `blockers` is an array of `{id, problem, owner}` objects (`[]` when none, never a string); `owner` is `FE`, `BE`, `Docs`, `Devops`, `Architect`, `Designer`, `PM` or `Researcher` (never `Orchestrator`).
+End the final message with the one-line JSON hand-off block (`.claude/skills/muffy/schemas/handoff.schema.json`). It does not count toward the prompt's final-message line limit. Types that are often wrong: `step` is a string (`"4"`, not `4`); `status` is `done`, `blocked`, `needs-input` or `not-ready` (never `ready`); `blockers` is an array of `{id, problem, owner}` objects (`[]` when none, never a string); `owner` is `FE`, `BE`, `Docs`, `Devops`, `Architect`, `Designer`, `PM` or `Researcher` (never `Orchestrator`).

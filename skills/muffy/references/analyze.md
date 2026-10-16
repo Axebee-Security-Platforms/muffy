@@ -2,7 +2,7 @@
 
 `/muffy analyze` finds the work a repo has already started and not finished, so muffy does not begin as if the repo were new: unmerged branches, stashes, uncommitted changes, TODO markers, skipped tests, and open items in a tracker (GitHub, GitLab, Jira, ClickUp, Linear, anything that exports). It reports and asks. It does not fix, merge, delete or update anything.
 
-Run it before the first `/muffy onboard` or feature on a repo that has history. It needs only `scan-pending.mjs`, so it can run from a checkout of muffy against a repo muffy is not installed in yet: `node skills/muffy/scripts/scan-pending.mjs <repo>`. Task name is fixed: `analyze`.
+Run it before the first `/muffy onboard` or feature on a repo that has history. It needs only `scan-pending.mjs`, so it can run from a checkout of muffy against a repo muffy is not installed in yet: `node skills/muffy/scripts/scan-pending.mjs <repo>`. Task name is fixed: `analyze`; its own state is `.team/analyze/checkpoint.md`. `pending.json` lives at `.team/onboard/pending.json`, the path the installer gitignores.
 
 ## Flow
 
@@ -13,7 +13,7 @@ Run it before the first `/muffy onboard` or feature on a repo that has history. 
 | a3 | Orchestrator | `node .claude/skills/muffy/scripts/scan-pending.mjs . --out .team/onboard/pending.json --import jira=<raw> --import github=<raw>` | `pending.json`, schema-checked |
 | a4 | Orchestrator | Deletes the raw files. Groups the items (below) and shows them to the user | grouped list |
 | a5 | **Human gate** `pause:analyze-review` | `AskUserQuestion`: confirm or drop each group. Nothing becomes a task without a yes | confirmed items |
-| a6 | Orchestrator | Adds each confirmed item to `<brain>/project.md` → `## Tasks` as `in progress`, with its tracker id and url, and a starter `checkpoint.md` (`next: <step>`) so `/muffy resume <task>` can pick it up | tasks |
+| a6 | Orchestrator | Adds each confirmed item to `<brain>/project.md` → `## Tasks` as `in progress`, with its tracker id and url, and a starter `.team/<task>/checkpoint.md` (`next: <step>`) so `/muffy resume <task>` can pick it up | tasks |
 
 a3 is the only step that reads outside text, and it reads it through the script. The Orchestrator never pastes tracker text into a prompt, a file or a message except what is in `pending.json`.
 
@@ -65,5 +65,5 @@ By evidence, not by guess. Put each item in one group and say why:
 
 - `pending.json` validates against [pending.schema.json](../schemas/pending.schema.json) and holds no raw tracker text beyond the whitelisted fields
 - The raw files are gone
-- The user answered at `pause:analyze-review`, and the answer is in `checkpoint.md` → `## Status`
+- The user answered at `pause:analyze-review`, and the answer is in `.team/analyze/checkpoint.md` → `## Status`
 - Every confirmed item is a row in `project.md` → `## Tasks` with its source id and url; nothing else in the repo or in any tracker changed

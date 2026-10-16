@@ -6,13 +6,13 @@ Draw the change you made as a PR Lens diagram so the Orchestrator and reviewers 
 **Off by default. Do not draw a diagram** unless the Orchestrator's prompt explicitly says to draw the PR diagram. When it is not asked for, skip every step below, write `diagram: not requested` in the brain note, and do not count it as a failed quality check.
 
 When it is asked for:
-- Run `git diff --shortstat main...HEAD` after lint/tests pass and everything is committed.
+- `<base>` is the branch the feature merges into (prompt or checkpoint `base:`; never assume `main`). Run `git diff --shortstat <base>...HEAD` after lint/tests pass and everything is committed.
 - **Draw** if the diff touches 6 or more files, or adds/removes/changes an endpoint, route, migration, or a call across the FE/BE boundary. Otherwise skip with `diagram skipped: small change`.
 - Fix rounds: redraw only if the set of changed files or flows changed; otherwise reuse the earlier diagram and say so.
 
 ### Steps
 1. Read [pr-lens-format.md](../shared/pr-lens-format.md) (the short form of the graph document). Do not load the CLI manual unless validate fails twice for a reason that page does not explain.
-2. Read your diff (`git diff main...HEAD`) and write the graph document yourself; no model key is needed.
+2. Read your diff (`git diff <base>...HEAD`) and write the graph document yourself; no model key is needed.
 3. Save it to `<worktree>/.pr-lens/graph.json`. Title it `be: <task>` so it renders to its own folder. Do not commit `.pr-lens/` (the CLI adds it to `.gitignore`).
 4. Run `npx @coldtea/pr-lens-cli@latest validate .pr-lens/graph.json` and fix the named field until it passes.
 5. Run `npx @coldtea/pr-lens-cli@latest render .pr-lens/graph.json --theme light`, then again with `--theme dark`. SVGs land in a folder under `.pr-lens/` named after the title; report that folder path.

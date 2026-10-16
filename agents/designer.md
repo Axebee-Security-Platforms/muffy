@@ -43,5 +43,5 @@ The final message goes to the Orchestrator, not a person. Write it terse: fragme
 
 ## Hand-off block
 
-End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (3 (3b/3c re-runs: use that step id)), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform.
+End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (`3`; a re-run for 3b or 3c uses that id, `3b` or `3c`), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform.
 

@@ -1,6 +1,6 @@
 ## Fix Profile
 
-Read this only when the prompt has `Profile: fix`. Inputs are `diff.patch` (or topic patches) and `.team/<task>/fix.md`; there is no `ac.md` or `contract.md`.
+Read this only when the prompt has `Profile: fix`. Inputs are `diff-<n>.patch` (or topic patches) and `.team/<task>/fix.md`; there is no `ac.md` or `contract.md`.
 
 - Treat the `fix.md` AC as the spec. Check each AC has a regression test (or a named visual check) and that the test would fail without the fix
 - Check the diff against `## Cause`: the change must remove that cause, not hide the symptom. A fix at a different place than the diagnosed files needs a reason in the diff

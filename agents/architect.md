@@ -4,7 +4,7 @@ description: >
   Design the spec, API contract and schema from acceptance criteria so frontend-dev and
   backend-dev can work in parallel without talking to each other. Runs in parallel with
   designer (team flow step 3). Do not use for implementation or UI design.
-tools: Read, Grep, Glob, Write, Bash
+tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 effort: high
 ---
@@ -43,5 +43,5 @@ The final message goes to the Orchestrator, not a person. Write it terse: fragme
 
 ## Hand-off block
 
-End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (3), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform.
+End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (3; onboard mode `0`; a re-run after a 3d smoke fail `3d`), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform.
 

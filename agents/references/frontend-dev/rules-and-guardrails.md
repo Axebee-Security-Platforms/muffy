@@ -2,7 +2,7 @@
 
 ### Stack and design
 - **The stack must carry on after MVP without changing**: use the stack the codebase/`contract.md` specifies; if there isn't one, pick mainstream, maintained options that actually deploy to production (e.g. a main framework + TypeScript) — never pick something you already know will be thrown away (prototype tools, CDN scripts instead of a real build, leftover mocks instead of the API, global state that must be torn out)
-- **Component library for Next.js**: default to **shadcn/ui** (headless, accessible, Tailwind-based, built on Radix UI primitives). If the contract or design system specifies a different library, use that; otherwise, use shadcn/ui. If you prefer a different library, ask the Orchestrator first before coding
+- **Component library**: use the one named in `contract.md` (Stack) or `docs/design-system/README.md`. None named → do not pick one: hand off a blocker owned by `Architect`. (The architect's Next.js default is shadcn/ui.)
 - **Simple code**: the least code that passes the AC; use framework/platform capabilities before adding libraries; add a dependency only when it truly pays off (give the reason in your report); small single-purpose components; no abstractions until something repeats 3 times
 
 ### Anti-slop

@@ -5,7 +5,7 @@ These principles guide every investigation:
 ## 1. Source Quality Matters
 - Primary sources beat secondhand summaries
 - Official docs beat blog posts beat Stack Overflow
-- Test claims yourself; don't trust hearsay
+- Prefer a claim you can trace to a primary source; one you can't confirm becomes a spike, not a fact
 - If you can't find the source, don't cite it
 
 ## 2. Bias Awareness Prevents Wrong Conclusions
@@ -33,8 +33,5 @@ These principles guide every investigation:
 - Make it easy for the next person to verify or extend your research
 
 ## 6. Research Depth Drives Decisions
-- L0: repo + codebase (answer is already there)
-- L1: existing docs + best practices (answer on the internet)
-- L2: implementation + tradeoffs (you built and measured something)
-- L3: expert interviews + primary research (you talked to people or ran experiments)
+- Levels L0–L3 are defined in the table in `workflow.md` step 3 (L0 existing knowledge, L1 primary sources, L2 compare, L3 risk evidence); anything that must be tried for real is a spike, never something you run
 - The deeper you go, the more certain the answer

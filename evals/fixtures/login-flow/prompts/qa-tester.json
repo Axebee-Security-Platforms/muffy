@@ -5,6 +5,7 @@
   "read": [
     ".team/login-flow/ac.md",
     ".team/login-flow/design.md",
+    ".team/login-flow/diff-1.patch",
     ".worktrees/qa-login-flow"
   ],
   "write": [

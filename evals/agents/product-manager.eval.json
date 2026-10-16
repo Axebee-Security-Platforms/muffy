@@ -7,7 +7,7 @@
       "path": ".team/{task}/ac.md",
       "must_match": [
         "AC-1",
-        "Given[\\s\\S]*When[\\s\\S]*Then",
+        "Given[\\s\\S]*When[\\s\\S]*Then|\\[AC-1\\]:\\s*ac/AC-1\\.md",
         "^#{1,4}\\s*Out of scope",
         "^#{1,4}\\s*Traceability"
       ],

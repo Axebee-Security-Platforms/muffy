@@ -46,7 +46,7 @@
       "input": "AC requires an error state and an empty state.",
       "must": [
         "artboard per AC x state",
-        "checklist with status per item"
+        "final message lists only failed checks; full checklist with status in design.md"
       ],
       "must_not": [
         "raw hex outside tokens.css",

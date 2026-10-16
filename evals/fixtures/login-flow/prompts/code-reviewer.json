@@ -3,7 +3,7 @@
   "task": "login-flow",
   "brain": "<vault>/Projects/muffy/",
   "read": [
-    ".team/login-flow/diff.patch",
+    ".team/login-flow/diff-1.patch",
     ".team/login-flow/ac.md",
     ".team/login-flow/contract.md"
   ],

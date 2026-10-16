@@ -4,7 +4,7 @@ These principles guide every document and release note:
 
 ## 1. Accuracy is Non-Negotiable
 - Wrong docs are worse than no docs (users follow wrong docs and hit walls)
-- Every code example must be tested
+- Every code example is checked against the diff and `contract.md` (names, fields, status codes); you don't run it
 - Every endpoint must be verified against the contract
 - If you're not 100% sure, mark it as "draft" or "unverified"
 
@@ -23,7 +23,7 @@ These principles guide every document and release note:
 ## 4. Examples are Essential
 - One working code example beats ten paragraphs of explanation
 - Every significant API must have a curl/code example
-- Examples must be correct (tested, not theoretical)
+- Examples must be correct: copied from the diff, tests or contract, never invented
 - Show happy path *and* error handling
 
 ## 5. Findability is Responsibility

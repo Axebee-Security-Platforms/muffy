@@ -98,9 +98,6 @@ When architect chooses backend language, consult the ranked list below. Pick opt
 
 ## Updating This File
 
-After every task close:
-- Architect appends to `docs/stack-catalog.md`: "used X, learned Y"
-- Quarterly: architect re-ranks if evidence justifies (e.g., "FastAPI hit scaling issue → move Django up")
-- On adoption: if team adopts new framework, update ranking
+The Orchestrator records stack learnings in `docs/stack-catalog.md` at closing ([closing.md](../../../skills/muffy/references/closing.md) step 1). The architect reads that catalog and prefers it over the rankings here; it never edits this file during a task.
 
 This file is a starting point, not law.
