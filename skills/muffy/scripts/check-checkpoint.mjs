@@ -2,14 +2,17 @@
 // Usage: node check-checkpoint.mjs <.team/<task> dir>
 //        node check-checkpoint.mjs --hook   (PostToolUse: reads hook JSON on stdin)
 // Checks: checkpoint.md ≤ 40 lines (not counting ## Goal), rounds/*.md ≤ 100 lines,
-//         every [label] used has one definition, every definition is used, targets exist.
+//         every [label] used has one definition, every definition is used, targets exist,
+//         spawns.tsv lines have 8 tab-separated columns and a pass|fail|blocked verdict.
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const CHECKPOINT_MAX = 40;
 const ROUND_MAX = 100;
-const DEF = /^\[([A-Za-z0-9.-]+)\]:\s*(\S+)\s*$/;
+const SPAWN_COLS = 8; // step agent model effort round verdict reruns note
+const SPAWN_VERDICTS = new Set(['pass', 'fail', 'blocked']);
+const DEF =/^\[([A-Za-z0-9.-]+)\]:\s*(\S+)\s*$/;
 const USE = /\[([A-Za-z0-9.-]+)\](?!\(|:)/g;
 
 const NOT_LABELS = new Set(['verify', 'spike', 'x', 'assumed']); // inline markers, not links
@@ -56,6 +59,15 @@ export function checkTask(taskDir) {
       if (n > ROUND_MAX) errors.push(`rounds/${f} has ${n} lines (max ${ROUND_MAX})`);
     }
   }
+  const spawnsPath = join(taskDir, 'spawns.tsv');
+  if (existsSync(spawnsPath)) {
+    readFileSync(spawnsPath, 'utf8').split('\n').forEach((line, i) => {
+      if (!line.trim()) return;
+      const cols = line.split('\t');
+      if (cols.length !== SPAWN_COLS) errors.push(`spawns.tsv line ${i + 1} has ${cols.length} columns (need ${SPAWN_COLS})`);
+      else if (!SPAWN_VERDICTS.has(cols[5])) errors.push(`spawns.tsv line ${i + 1} verdict "${cols[5]}" is not pass|fail|blocked`);
+    });
+  }
   return errors;
 }
 
@@ -68,8 +80,8 @@ function fromHook() {
     process.exit(2);
   }
   const filePath = input?.tool_input?.file_path ?? '';
-  const m = filePath.match(/^(.*[\\/]\.team[\\/][^\\/]+)[\\/](checkpoint\.md|rounds[\\/][^\\/]+\.md)$/);
-  if (!m) process.exit(0); // not a checkpoint or round file
+  const m = filePath.match(/^(.*[\\/]\.team[\\/][^\\/]+)[\\/](checkpoint\.md|spawns\.tsv|rounds[\\/][^\\/]+\.md)$/);
+  if (!m) process.exit(0); // not a checkpoint, spawn log or round file
   return m[1];
 }
 
