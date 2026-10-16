@@ -43,6 +43,20 @@ The installer copies the agents to `.claude/agents/` and the skill to `.claude/s
 
 Other hooks are not installed automatically. Merge `team-flow-settings-template.json` into `.claude/settings.local.json` by hand. Full steps: [INSTALL.md](INSTALL.md).
 
+### Find unfinished work first (once)
+
+```text
+/muffy analyze
+```
+
+Before muffy takes over a repo that already has history, analyze lists what is half done: unmerged branches, stashes, uncommitted changes, TODO markers, skipped tests, and open items from GitHub, GitLab, Jira, ClickUp or any tracker that exports CSV or JSON. You confirm each group; only confirmed items become tasks that `/muffy resume` can continue. It can run from a checkout of muffy against a repo that does not have muffy yet:
+
+```bash
+node skills/muffy/scripts/scan-pending.mjs /path/to/your-repo --import jira=issues.csv --out pending.json
+```
+
+Privacy: read-only and offline. Only id, title, status, url and date are read; descriptions, comments and people are never read or stored; emails, tokens and url queries are redacted; nothing is written back to a tracker. Details: [analyze](skills/muffy/references/analyze.md).
+
 ### Onboard an existing codebase (once)
 
 ```text

@@ -77,3 +77,7 @@ Caveats:
 ## Not for
 
 One-line edits with no behaviour risk, research-only or review-only requests. Small bugs and cosmetic fixes use the fix lane, not the full flow.
+
+## Before installing: find unfinished work
+
+`/muffy analyze` (or `scan-pending.mjs` directly) reports the repo's unfinished work without installing anything. See [analyze.md](skills/muffy/references/analyze.md). The installer adds `.team/onboard/pending.json` to `.gitignore` because it can list tracker titles.

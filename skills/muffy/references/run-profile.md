@@ -27,6 +27,7 @@ A pause stops the flow on purpose. It has an id, a resume condition, and one lin
 | `pause:scope` | setup, after scope confirmation (fix lane: one short question with the classification and AC list) | the user confirms scope (or edits it) and answers the staging question |
 | `pause:staging-credentials` | before step 9 makes any live call to an external API or OAuth provider | the user approves each live call in chat, and the keys are confirmed present by name and prefix |
 | `pause:onboard-review` | onboard step 0d ([onboard.md](onboard.md)) | the user approves or edits `baseline.md` and the ADR |
+| `pause:analyze-review` | analyze step a5 ([analyze.md](analyze.md)) | the user confirms or drops each group of unfinished work. Nothing becomes a task without a yes |
 | `pause:design-review` | step 3c, after the designer's Definition of done is checked | the user approves the design (Approve), or asks for changes and then approves the revision |
 | `pause:full-regression` | before any whole-system regression run (every test or e2e flow in the repo, not just this task's). The Orchestrator asks; `qa-tester` never does | the user approves in chat after seeing the exact command, what it covers, the expected duration and any shared environment it touches. No answer or "no" = scoped tests only. On yes, write `.team/<task>/full-regression.approved` (approved command + date) so the guard lets `qa-tester` run it ([hooks-enforcement.md](hooks-enforcement.md) §10); delete it when the round ends |
 | `pause:human-gate` | step 10 | Approve / Reject answer |

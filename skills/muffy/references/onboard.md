@@ -2,6 +2,8 @@
 
 Run once per repo that already has a codebase, before the first feature: `/muffy onboard`. Task name is fixed: `onboard`. It records what the repo already is, so later steps reuse it instead of rediscovering it or guessing a stack.
 
+If the repo has unfinished work (unmerged branches, open tracker items), run [analyze.md](analyze.md) first so it becomes tasks instead of surprises.
+
 Not for a new, empty repo (nothing to record) or when `docs/architecture/baseline.md` exists and is fresh. Refresh = run it again; it rewrites the baseline and appends a new ADR only if the stack changed.
 
 ## Flow

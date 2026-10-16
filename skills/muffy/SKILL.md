@@ -8,6 +8,7 @@ description: >
   ("found a bug", "it errors", "this is broken", "fix this", เจอบั๊ก, แก้ไขให้หน่อย, พัง, error): the
   Orchestrator triages it into the fix lane or asks one question first. Also use to continue earlier
   work in a new session (`/muffy resume`, "continue", "resume", ทำต่อ, ต่อจากเดิม): read the checkpoint, never start over.
+  Also use `/muffy analyze` to find a repo's unfinished work (branches, tracker items) before muffy takes over.
   Do not use for one-line edits, research-only or review-only requests, or sequential iteration.
 ---
 
@@ -29,6 +30,7 @@ Load lazily: open each reference only at the step that needs it, never all up fr
 
 Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips steps 0–2: follow [references/resume.md](references/resume.md), which finds the task's `checkpoint.md` and picks up at its `next:`.
 
+0a. **Analyze** — repo with history, before onboard or the first feature (`/muffy analyze`): find unfinished work in git and in trackers (GitHub, GitLab, Jira, ClickUp, exports), read-only and privacy-minimised, user confirms what becomes a task: [references/analyze.md](references/analyze.md)
 0. **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
 1. **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
 2. **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of steps 1–2 and the full step list: [references/fix-profile.md](references/fix-profile.md)
