@@ -1,7 +1,7 @@
 # Loops
 
 - **Review reject** → owners fix → re-merge → reviewer checks only the new diff → until Approve
-- **QA fail** → owner fixes → reviewer checks the fix diff → QA runs the full regression suite
+- **QA fail** → owner fixes → reviewer checks the fix diff → QA re-tests the blocker ACs and the fixes (scoped). A whole-system regression runs only after `pause:full-regression` ([run-profile.md](run-profile.md#named-pauses))
 - **Smoke fail (3d)** → architect changes stack + ADR → smoke again; FE/BE wait
 - **Staging fail** → logs to the relevant dev → back to step 6
 - **Design review: changes requested (3c)** → reasons to `designer` (+ `architect` if the contract is affected) → republish canvas → Definition of done again → ask the user again. FE/BE stay blocked
