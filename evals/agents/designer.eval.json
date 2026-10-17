@@ -23,6 +23,7 @@
     "`[3b/3c]` The Artifact URL the Orchestrator published is at the top of `design.md` (you cannot open it; the Orchestrator checks it is viewable)",
     "The canvas source is `canvas.json` (v3) plus `.dc.html` artboards listed in it; there is no plain `.html` mockup, and nothing needs converting before publish",
     "Artboards exist for every screen × every state the AC requires (table `AC id → artboard`); no AC without a visual",
+    "`[3b/3c]` No `Design system: after contract` line is left in `design.md`: the design system exists for the contract's library and platform and every artboard uses its tokens",
     "`[3b/3c]` Fields/names are aligned with `contract.md` — no placeholders waiting on the contract (at step 3: every not-yet-known field is marked as a placeholder)",
     "On-screen text is final copy (FE can copy it verbatim)",
     "Works at the sizes the platform needs, per `.claude/skills/muffy/references/platforms.md#routing`: web, phone width (no horizontal scroll); mobile, the phone frame; desktop, the window's min and default sizes",

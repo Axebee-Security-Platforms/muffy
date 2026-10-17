@@ -2,11 +2,12 @@
 
 Definition of done. Check the items below before **every** hand-off; if one is false, report "not ready to hand off" with what's missing. Two items depend on the Orchestrator and are checked only where marked:
 
-At step 3 (first round, parallel with architect) the canvas source is ready to publish with no URL yet, and fields not yet in `contract.md` are marked as placeholders; neither counts as a failure. In the align round (after `contract.md`, step 3b/3c) the two `[3b/3c]` items must also be true; the Orchestrator verifies the published canvas at the 3c gate.
+At step 3 (first round, parallel with architect) the canvas source is ready to publish with no URL yet, and fields not yet in `contract.md` are marked as placeholders; neither counts as a failure. When the design system waits for the contract (design-system-intake.md), the step-3 artboards are wireframes, `design.md` starts with `Design system: after contract (<condition>)` and no `docs/design-system/` file is written; that is not a failure either. In the align round (after `contract.md`, step 3b/3c) the two `[3b/3c]` items must also be true; the Orchestrator verifies the published canvas at the 3c gate.
 
 - [ ] `[3b/3c]` The Artifact URL the Orchestrator published is at the top of `design.md` (you cannot open it; the Orchestrator checks it is viewable)
 - [ ] The canvas source is `canvas.json` (v3) plus `.dc.html` artboards listed in it; there is no plain `.html` mockup, and nothing needs converting before publish
 - [ ] Artboards exist for every screen × every state the AC requires (table `AC id → artboard`); no AC without a visual
+- [ ] `[3b/3c]` No `Design system: after contract` line is left in `design.md`: the design system exists for the contract's library and platform and every artboard uses its tokens
 - [ ] `[3b/3c]` Fields/names are aligned with `contract.md` — no placeholders waiting on the contract (at step 3: every not-yet-known field is marked as a placeholder)
 - [ ] On-screen text is final copy (FE can copy it verbatim)
 - [ ] Works at the sizes the platform needs, per `.claude/skills/muffy/references/platforms.md#routing`: web, phone width (no horizontal scroll); mobile, the phone frame; desktop, the window's min and default sizes

@@ -433,12 +433,19 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     const R = (f) => readFileSync(rel(f), 'utf8');
     const intake = R('agents/references/designer/design-system-intake.md');
     check('designer: the intake returns status done with one blocking: false question, never needs-input for it', intake.includes('return `status: done` with exactly one entry in `questions[]`, `blocking: false`') && !intake.includes('Return `status: needs-input` with exactly one'));
-    check('designer: the intake does not wait for the contract (written in the same parallel message)', !intake.includes("the contract's Stack") && intake.includes('do not wait for its Stack'));
+    const step0 = intake.split('### Step 0')[1]?.split('###')[0] ?? '';
+    check('designer: by default Step 0 reads the stack from baseline or manifests, not the contract written in the same parallel message', !step0.includes("the contract's Stack") && step0.includes('do not wait for its Stack'));
     check('requirements: a done hand-off\'s non-blocking questions go to the next human gate without resuming the agent', R('skills/muffy/references/requirements.md').includes('Do not resume the agent for them: add them to the next human question (`pause:design-review`'));
     const review = R('skills/muffy/references/design-review.md');
     check('design-review: the 3c question links the screen map and carries the intake question', review.includes('docs/design/screen-map.html') && review.includes('non-blocking intake question'));
     const row3e = R('skills/muffy/references/steps.md').split('\n').find((l) => l.startsWith('| 3e |')) ?? '';
     check('steps: 3e collects the designer\'s screen map as well as the architect\'s diagrams', row3e.includes("designer's screen map"));
+    const waits = intake.split(/\r?\n/).filter((l) => /^- \*\*(New project|Platform not named|The UI stack changes|A provider with its own UI|Monorepo with several apps)/.test(l));
+    check('designer: the design system waits for the contract in exactly five named cases', /### When the design system waits for the contract/.test(intake) && waits.length === 5, waits.join(' | '));
+    check('designer: while it waits, step 3 is wireframes with a marker line and no design-system file, and the intake question still rides on done', intake.includes('`Design system: after contract (<which condition>)` as the first line of `design.md`') && intake.includes('write no `docs/design-system/` file') && intake.includes('still return `done` with the intake question'));
+    check('designer: the align round must clear the marker (quality check), and the starter otherwise still runs in parallel', R('agents/references/designer/quality-checks.md').includes('No `Design system: after contract` line is left in `design.md`') && intake.includes('do not wait for its Stack (a mismatch is fixed'));
+    const row3b = R('skills/muffy/references/steps.md').split('\n').find((l) => l.startsWith('| 3b |')) ?? '';
+    check('steps: 3b skips the first publish of wireframes and publishes once after the align round', row3b.includes('skip the first publish') && row3b.indexOf('skip the first publish') > row3b.indexOf('designer aligns fields'));
     check('designer: the Bash guardrail names check-diagram, and the guard allows it for the designer', R('agents/references/designer/rules-and-guardrails.md').includes('`check-diagram.mjs` (the screen map)') && spawnSync(process.execPath, [rel('skills/muffy/scripts/guard-bash-allowlist.mjs')], { input: JSON.stringify({ tool_name: 'Bash', agent_type: 'designer', tool_input: { command: 'node .claude/skills/muffy/scripts/check-diagram.mjs docs/design/screen-map.html' } }), encoding: 'utf8' }).status === 0);
   }
   const { check: diagramErrors } = await import('../skills/muffy/scripts/check-diagram.mjs');

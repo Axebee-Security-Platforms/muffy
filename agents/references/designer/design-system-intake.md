@@ -12,10 +12,20 @@ Create the design system **only when the project has none**: a brand-new project
 | No UI (API-only, a CLI without screens) | No design system |
 
 ### Step 0: read before you ask
-Never ask what a file already answers. Read `requirements.md` (earlier answers, including any recorded style answer), `brief.md`, `baseline.md` (Stack: component library and platform), the manifests (`package.json`, `pubspec.yaml` and the like) when there is no baseline, theme and style files in the repo (CSS, Tailwind or theme config, asset folders for logos and fonts), and any brand material the repo holds. If any of them settles the style, use it (`[user]` or `[from code]`) and stop here. The contract is written in the same parallel message, so do not wait for its Stack; a mismatch is fixed when you align with `contract.md` after it exists.
+Never ask what a file already answers. Read `requirements.md` (earlier answers, including any recorded style answer), `brief.md`, `baseline.md` (Stack: component library and platform), the manifests (`package.json`, `pubspec.yaml` and the like) when there is no baseline, theme and style files in the repo (CSS, Tailwind or theme config, asset folders for logos and fonts), and any brand material the repo holds. If any of them settles the style, use it (`[user]` or `[from code]`) and stop here. The contract is written in the same parallel message: when these files settle the component library and the platform, do not wait for its Stack (a mismatch is fixed when you align with `contract.md`); when they do not, see the next section.
+
+### When the design system waits for the contract
+Build the starter at step 3 only when the files in Step 0 settle the component library and the platform. Wait for `contract.md` instead when any of these holds, because the architect decides it in the same parallel message and a guess would redo every token:
+- **New project:** no `baseline.md` and no manifest naming a UI library, so the architect picks the library and the platform now
+- **Platform not named:** the brief, `requirements.md` and `baseline.md` do not say web, mobile, desktop or cli (units, touch targets, frame sizes and navigation differ by platform)
+- **The UI stack changes in this task:** the brief or AC moves to another UI framework or adds or replaces the component library, so the manifest still shows the old one
+- **A provider with its own UI:** the brief needs a capability usually bought with a hosted UI (checkout, sign-in widget, maps, chat), whose theming limits are known only once the architect picks the provider
+- **Monorepo with several apps:** the brief does not say which app or package the screens belong to
+
+Waiting costs no extra round: the designer is sent back after `contract.md` anyway (step 3b). At step 3, do everything that does not need tokens: research, personas, user flow, product structure and wireframe artboards for every AC × state (structure first, workflow step 4), using placeholder styles only. Put `Design system: after contract (<which condition>)` as the first line of `design.md`, write no `docs/design-system/` file, and still return `done` with the intake question below. In the align round, read the contract's Stack, create the design system from the starter for that library and platform, apply the tokens to every artboard, and remove that line.
 
 ### Step 1: one question, without stopping
-You cannot talk to the user, and you do not wait for them. Create the design system from the starter below, finish the design, and return `status: done` with exactly one entry in `questions[]`, `blocking: false` ([requirements.md](../../../skills/muffy/references/requirements.md)). The Orchestrator puts it in the `pause:design-review` question, where the user is looking at the screens anyway:
+You cannot talk to the user, and you do not wait for them. Create the design system from the starter below (or, when it waits for the contract, the wireframes), finish the design, and return `status: done` with exactly one entry in `questions[]`, `blocking: false` ([requirements.md](../../../skills/muffy/references/requirements.md)). The Orchestrator puts it in the `pause:design-review` question, where the user is looking at the screens anyway:
 
 > Do you have a brand or a reference for how it should look?
 
