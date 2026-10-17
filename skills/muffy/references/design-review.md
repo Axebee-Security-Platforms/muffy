@@ -13,6 +13,7 @@ Run it after 3b publishes the canvas and after the designer's Definition of done
 5. **Route on severity**:
    - Any `high` → `SendMessage` the designer with the path of `design-review-<n>.md` (+ `architect` if a fix touches the contract). Designer fixes, the Orchestrator republishes, then runs 3c check 1 and this review again on the changed artboards only. Each send-back counts at loop point `3c:designer` ([loops.md](loops.md))
    - No `high` → go to the user question; list the `medium` and `low` findings there as suggestions the user may accept or ignore
+6. **The user question** also carries the links of the diagrams 3e published this round (the screen map, `docs/design/screen-map.html`, when the designer drew one) and the designer's non-blocking intake question, if its hand-off had one (the default option first). An intake answer other than the default → record it in `requirements.md`, resume the designer with that path to apply the brand, republish, re-run 3c check 1 and this review on the changed artboards, then ask again. It is a clarification round ([requirements.md](requirements.md)), not a loop
 
 ## Rules
 

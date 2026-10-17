@@ -423,9 +423,24 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
 
 /* 7g. designer: design-system intake questions, screen map, write scope for design files */
 {
-  const handoff = { role: 'designer', task: 't', step: '3', round: 1, status: 'needs-input', paths_written: [], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'asks the style', questions: [{ id: 'Q-1', question: 'What personality should the product have?', why: 'Sets color, type and tone', options: ['calm and professional', 'bold and technical'], default: 'calm and professional', blocking: true }] };
+  // the intake never stops the run: the designer finishes on the starter and returns done with one non-blocking question
+  const intakeQ = { id: 'Q-1', question: 'Do you have a brand or a reference for how it should look?', why: 'Sets the colors, type and tone of every screen; can be changed later', options: ['not yet, choose a sensible starter style for me', 'yes, I will share it', 'I want to pick a personality', 'make it resemble a product I will describe'], default: 'not yet, choose a sensible starter style for me', blocking: false };
+  const handoff = { role: 'designer', task: 't', step: '3', round: 1, status: 'done', paths_written: ['docs/design-system/tokens.css', 'docs/design-system/README.md'], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'design on the starter style; asks for a brand', questions: [intakeQ] };
   const handoffSchema = JSON.parse(readFileSync(rel('skills/muffy/schemas/handoff.schema.json'), 'utf8'));
-  check('schema: the designer may ask design-system intake questions; a frontend-dev may not', validate(handoffSchema, handoff).length === 0 && validate(handoffSchema, { ...handoff, role: 'frontend-dev' }).length > 0);
+  check('schema: the designer may carry the intake question on a done hand-off; a frontend-dev may not', validate(handoffSchema, handoff).length === 0 && validate(handoffSchema, { ...handoff, role: 'frontend-dev' }).length > 0, validate(handoffSchema, handoff).join('; '));
+  check('schema: a question on a done, blocked or not-ready hand-off must be blocking: false; needs-input may block', ['done', 'blocked', 'not-ready'].every((status) => validate(handoffSchema, { ...handoff, status, blockers: status === 'done' ? [] : handoff.blockers, questions: [{ ...intakeQ, blocking: true }] }).length > 0) && validate(handoffSchema, { ...handoff, status: 'needs-input', questions: [{ ...intakeQ, blocking: true }] }).length === 0);
+  {
+    const R = (f) => readFileSync(rel(f), 'utf8');
+    const intake = R('agents/references/designer/design-system-intake.md');
+    check('designer: the intake returns status done with one blocking: false question, never needs-input for it', intake.includes('return `status: done` with exactly one entry in `questions[]`, `blocking: false`') && !intake.includes('Return `status: needs-input` with exactly one'));
+    check('designer: the intake does not wait for the contract (written in the same parallel message)', !intake.includes("the contract's Stack") && intake.includes('do not wait for its Stack'));
+    check('requirements: a done hand-off\'s non-blocking questions go to the next human gate without resuming the agent', R('skills/muffy/references/requirements.md').includes('Do not resume the agent for them: add them to the next human question (`pause:design-review`'));
+    const review = R('skills/muffy/references/design-review.md');
+    check('design-review: the 3c question links the screen map and carries the intake question', review.includes('docs/design/screen-map.html') && review.includes('non-blocking intake question'));
+    const row3e = R('skills/muffy/references/steps.md').split('\n').find((l) => l.startsWith('| 3e |')) ?? '';
+    check('steps: 3e collects the designer\'s screen map as well as the architect\'s diagrams', row3e.includes("designer's screen map"));
+    check('designer: the Bash guardrail names check-diagram, and the guard allows it for the designer', R('agents/references/designer/rules-and-guardrails.md').includes('`check-diagram.mjs` (the screen map)') && spawnSync(process.execPath, [rel('skills/muffy/scripts/guard-bash-allowlist.mjs')], { input: JSON.stringify({ tool_name: 'Bash', agent_type: 'designer', tool_input: { command: 'node .claude/skills/muffy/scripts/check-diagram.mjs docs/design/screen-map.html' } }), encoding: 'utf8' }).status === 0);
+  }
   const { check: diagramErrors } = await import('../skills/muffy/scripts/check-diagram.mjs');
   const tpl = readFileSync(rel('skills/muffy/templates/diagram.html'), 'utf8');
   const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, `$1${JSON.stringify(j)}$2`);
