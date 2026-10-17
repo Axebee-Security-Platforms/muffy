@@ -15,7 +15,7 @@ Reasoning:
 **When to pick differently:**
 - Team is Vue/Svelte focused → Nuxt / SvelteKit
 - Static site only → Astro
-- Mobile-first → React Native / Flutter
+- Mobile or desktop app → see "Apps and CLIs" below
 - Lightweight preferred → Astro / Qwik
 
 ---
@@ -35,6 +35,23 @@ Reasoning:
 - Real-time sync needed → Firebase Realtime / Firestore
 - Time-series → TimescaleDB / ClickHouse
 - Graph data → Neo4j
+
+---
+
+## Apps and CLIs (when `Platform:` is not web)
+
+Record `Platform:` on the contract's Stack line ([platforms.md](../../../skills/muffy/references/platforms.md)). Pick from the user's target; if the team already knows a toolkit, use it.
+
+| Target | Default | Pick differently when |
+|---|---|---|
+| iOS + Android, one codebase | Flutter | Team is React/TypeScript → React Native (Expo) |
+| iOS only / Mac app | Swift + SwiftUI | Heavy legacy UI → UIKit/AppKit |
+| Android only | Kotlin + Jetpack Compose | Existing View-based app → keep Views |
+| Windows app | .NET (WinUI 3) | Existing WPF app → WPF; also targeting Mac/mobile → .NET MAUI |
+| Cross-platform desktop, web team | Electron | Small footprint matters → Tauri; one OS only → that OS's native toolkit |
+| CLI / console app | The language of the surrounding system; else Go (single static binary) | Heavy text/data work → Python; same toolchain as a Rust/Node codebase → keep it |
+
+A native or desktop app is built and tested on a host with that toolchain (macOS for Apple targets); say so in the contract so devops can plan the smoke build.
 
 ---
 

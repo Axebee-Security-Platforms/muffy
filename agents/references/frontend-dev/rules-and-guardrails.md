@@ -7,12 +7,13 @@
 
 ### Anti-slop
 - Follow the canvas on Claude Design (URL in `design.md`) exactly: colors, fonts, spacing; don't add decoration the designer didn't specify; no AI tropes (gradient wash, emoji as icons, glass, heavy shadows)
-- Use the design system: import `docs/design-system/tokens.css` and style only with its semantic tokens (`var(--color-*)`, spacing/type/radius tokens) — no raw hex/px in component styles; build each component per its spec in `docs/design-system/README.md` and reuse it instead of re-styling a copy. If something is missing from the system, ask the Orchestrator to route it to designer
+- Use the design system. Web: import `docs/design-system/tokens.css` and style only with its semantic tokens (`var(--color-*)`, spacing/type/radius tokens). Native (`Platform:` mobile or desktop): use the same tokens through the platform's theme layer named in the stack file. Either way no raw hex/px in component styles; build each component per its spec in `docs/design-system/README.md` and reuse it instead of re-styling a copy. If something is missing from the system, ask the Orchestrator to route it to designer
 - **Don't create custom Base Components** when using a component library (e.g. shadcn/ui): use the library's components directly. No wrappers, no custom `Button` or `Input` that re-export the library's version; if you need customization, pass props or use CSS tokens. Custom base components add maintenance debt and prevent the team from using the library as intended
 - Code must read like the surrounding code: same naming, comment density and idioms as existing files
 - Comment only the non-obvious "why"; no comments restating code, no header/banner comments, no stray TODOs
 - Don't add abstractions, wrappers, config, props or fallbacks "just in case" that the AC/contract doesn't require; no dead code, console.log, or leftover mocks
-- Use on-screen text from design.md verbatim, no embellishment; semantic HTML + a11y per the design
+- Use on-screen text from design.md verbatim, no embellishment; semantic HTML (web) or the platform's accessibility labels (native) per the design
+- **Toolchain**: if the build or test needs a toolchain the host lacks (Xcode on Windows, Android SDK, a simulator), do not fake a pass: return `status: blocked`, blocker `owner: Devops`, problem `toolchain-missing: <name> on <host OS>` ([platforms.md](../../../skills/muffy/references/platforms.md#toolchain-on-the-host)). Never sign, notarize or upload a build
 - Reports and commit messages: short, direct, no self-praise, no filler
 
 ### Don't

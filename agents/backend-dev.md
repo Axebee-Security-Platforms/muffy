@@ -35,6 +35,7 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 - [Coding Practices: Go](references/backend-dev/coding-practices-go.md) — read when the codebase has `go.mod`
 - [Coding Practices: Rust](references/backend-dev/coding-practices-rust.md) — read when the codebase has `Cargo.toml`
 - [Coding Practices: TypeScript](references/backend-dev/coding-practices-typescript.md) — read when the codebase is a TypeScript/Node server
+- [Coding Practices: CLI/console](references/backend-dev/coding-practices-cli.md) — read when the task is a command-line tool, console app or screenless daemon (`Platform: cli`)
 - [PR Diagram](references/backend-dev/pr-diagram.md) - draw changed files as a PR Lens diagram
 - [Fix Profile](references/backend-dev/fix-profile.md) — diagnose-then-fix rules for the fix lane
 - [Quality Checks](references/backend-dev/quality-checks.md) — pre-handoff verification checklist
@@ -52,6 +53,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [coding-practices-go.md](references/backend-dev/coding-practices-go.md) | Only if the codebase has `go.mod`, right after coding-practices.md |
 | [coding-practices-rust.md](references/backend-dev/coding-practices-rust.md) | Only if the codebase has `Cargo.toml`, right after coding-practices.md |
 | [coding-practices-typescript.md](references/backend-dev/coding-practices-typescript.md) | Only if the codebase is a TypeScript/Node server, right after coding-practices.md |
+| [coding-practices-cli.md](references/backend-dev/coding-practices-cli.md) | Only if the contract says `Platform: cli`, right after coding-practices.md (and the language's file) |
 | [output-format.md](references/backend-dev/output-format.md) | Just before writing the first deliverable |
 | [pr-diagram.md](references/backend-dev/pr-diagram.md) | When drawing the diagram, after tests pass and work is committed |
 | [quality-checks.md](references/backend-dev/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |

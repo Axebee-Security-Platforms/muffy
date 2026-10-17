@@ -49,11 +49,13 @@ When the request is borderline (for example a bug plus "while you are there, als
 Kind: bug | cosmetic    Owner: FE | BE | both
 ## Goal       verbatim request
 ## Symptom    what happens, where, what is expected
-## Cause      filled by step 4a: one line + confidence (blank before)
+## Cause      filled by step 4a: one line + confidence (blank before); links `flow.html` if a flow diagram was needed
 ## Repro      test name, command, URL + viewport, or log line; blank if unknown
 ## AC         one row per fix: AC-<n> | observable result | regression test or visual check
 ## Out of scope
 ```
+
+Optional `.team/<task>/flow.html` (published and recorded at step 3e right after 4a, [diagram-publish.md](diagram-publish.md)): one flow diagram ([diagram-style.md](diagram-style.md)) the diagnosing dev draws only when the cause cannot be found without understanding a multi-participant flow. It is read by the reviewer and stays in the task folder.
 
 AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA report work unchanged.
 

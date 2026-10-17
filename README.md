@@ -232,12 +232,12 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 | Agent | Role |
 |---|---|
 | `researcher` | Brief, evidence, onboard baseline; asks clarifying questions |
-| `product-manager` | Acceptance criteria, plan, strategy score, project goal and budget |
+| `product-manager` | Acceptance criteria, plan, strategy score, project goal and budget; the only writer of cost records (`docs/strategy.md`) |
 | `designer` | Canvas, `design.md`, and the project design system |
-| `architect` | API contract, ADRs, stack decisions, build vs buy, cost delta |
+| `architect` | API contract, ADRs, stack decisions, build vs buy (recommends third-party providers; web access only to check a provider's facts), cost delta |
 | `devops` | Deploy plan, smoke build, staging, production rollout |
-| `frontend-dev` | UI implementation on `fe/<task>` |
-| `backend-dev` | API and data implementation on `be/<task>` |
+| `frontend-dev` | UI implementation on `fe/<task>` (web, mobile and desktop apps) |
+| `backend-dev` | API and data implementation on `be/<task>`; also CLI and console apps |
 | `code-reviewer` | Read-only review of code and docs |
 | `qa-tester` | Tests against acceptance criteria |
 | `docs-writer` | Docs and release notes (optional announcement) |
@@ -314,6 +314,9 @@ The Orchestrator reads `.team/<task>/checkpoint.md` and the vault task note inst
 - [INSTALL.md](INSTALL.md): installer flags, hooks, and settings.
 - [SKILL.md](skills/muffy/SKILL.md): the skill entry point and its rules.
 - [Steps](skills/muffy/references/steps.md) and [run profile](skills/muffy/references/run-profile.md): who does what, and what can be skipped.
+- [Hooks and guards](skills/muffy/references/hooks-enforcement.md): the rules a hook can enforce, including who may write `docs/strategy.md` and the architecture files.
+- [Diagram style](skills/muffy/references/diagram-style.md): the HTML template, JSON schema and validator for architecture, database and flow diagrams.
+- [Platforms](skills/muffy/references/platforms.md): web, mobile (Flutter, React Native, Swift, Kotlin), desktop (Electron, Mac, Windows) and CLI or console apps. What changes per target, the toolchain the host needs, and what only you may do (sign, upload, publish).
 - [Fix profile](skills/muffy/references/fix-profile.md): the lane for small bugs and cosmetic fixes, with diagnose-first and promotion rules.
 - [Requirements interview](skills/muffy/references/requirements.md): how clarifying questions reach you.
 - [Onboard](skills/muffy/references/onboard.md): baseline, ADR, and `CLAUDE.md` / `AGENTS.md` for existing repos.

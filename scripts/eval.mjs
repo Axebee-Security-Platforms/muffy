@@ -261,10 +261,22 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('guard-bash: doc agent may run a validator', guard(A, 'architect', 'node .claude/skills/muffy/scripts/validate-handoff.mjs .team/x/h.json') === 0);
   check('guard-bash: doc agent may read git', guard(A, 'muffy:docs-writer', 'git diff --stat') === 0);
   check('guard-bash: chaining, commits and npm are blocked', ['node .claude/skills/muffy/scripts/check-artifacts.mjs a; rm -rf .', 'git commit -m x', 'npm test', 'git log > a'].every((c) => guard(A, 'designer', c) === 2));
+  check('guard-bash: architect may run the diagram check', guard(A, 'architect', 'node .claude/skills/muffy/scripts/check-diagram.mjs docs/architecture/overview.html') === 0);
+  {
+    const { check: diagramErrors } = await import('../skills/muffy/scripts/check-diagram.mjs');
+    const tpl = readFileSync(rel('skills/muffy/templates/diagram.html'), 'utf8');
+    const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, `$1${JSON.stringify(j)}$2`);
+    const arch = { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
+    check('diagram: the shipped template passes', diagramErrors(tpl).length === 0);
+    check('diagram: a valid architecture passes', diagramErrors(withJson(arch)).length === 0);
+    check('diagram: an edge through another card fails', diagramErrors(withJson({ ...arch, edges: [{ from: 'a', to: 'c', label: 'x' }] })).some((e) => e.includes('passes through')));
+    check('diagram: an unknown node, a missing edge label and a shared cell fail', [{ ...arch, edges: [{ from: 'a', to: 'z', label: 'x' }] }, { ...arch, edges: [{ from: 'a', to: 'b' }] }, { ...arch, nodes: [...arch.nodes.slice(0, 2), { ...arch.nodes[2], col: 2 }] }].every((j) => diagramErrors(withJson(j)).length > 0));
+    check('diagram: a changed template shell fails', diagramErrors(withJson(arch).replace('--paper: #f7f8fa', '--paper: #000')).some((e) => e.includes('differs from templates')));
+  }
   check('guard-bash: Orchestrator and other roles are untouched', guard(A, undefined, 'npm test') === 0 && guard(A, 'backend-dev', 'npm test') === 0);
   const F = 'guard-full-regression.mjs';
-  check('guard-regression: whole-system runs are blocked for qa-tester', ['npm test', 'npx vitest run', 'pytest', 'go test ./...', 'cd app && npm run test:e2e'].every((c) => guard(F, 'qa-tester', c) === 2));
-  check('guard-regression: scoped runs are allowed', ['npm test -- src/a.test.ts', 'npx vitest run src/a.test.ts', 'pytest tests/a.py -k login', 'npx playwright test e2e/a.spec.ts', 'go test ./pkg/auth'].every((c) => guard(F, 'qa-tester', c) === 0));
+  check('guard-regression: whole-system runs are blocked for qa-tester', ['npm test', 'npx vitest run', 'pytest', 'go test ./...', 'cd app && npm run test:e2e', 'flutter test', 'xcodebuild test -scheme App', './gradlew :app:testDebugUnitTest', 'dotnet test', 'maestro test'].every((c) => guard(F, 'qa-tester', c) === 2));
+  check('guard-regression: scoped runs are allowed', ['npm test -- src/a.test.ts', 'npx vitest run src/a.test.ts', 'pytest tests/a.py -k login', 'npx playwright test e2e/a.spec.ts', 'go test ./pkg/auth', 'flutter test test/a_test.dart', './gradlew :app:testDebugUnitTest --tests Foo', 'xcodebuild -scheme App test -only-testing:AppTests/Foo', 'dotnet test --filter Login'].every((c) => guard(F, 'qa-tester', c) === 0));
   check('guard-regression: other roles are not checked', guard(F, 'backend-dev', 'npm test') === 0);
   const L = 'guard-test-level.mjs';
   const lvlIn = (lvl, tool, arg) => { writeFileSync(join(tmp, '.team', 'x', 'test-level'), lvl); return spawnSync('node', [rel('skills/muffy/scripts', L)], { input: JSON.stringify({ tool_name: tool, agent_type: 'qa-tester', cwd: tmp, tool_input: tool === 'Bash' ? { command: arg } : { file_path: arg } }), encoding: 'utf8' }).status; };
@@ -276,6 +288,137 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   writeFileSync(join(tmp, '.team', 'x', 'full-regression.approved'), 'npm test 2026-01-01');
   check('guard-regression: approval marker lets qa-tester run it', guard(F, 'qa-tester', 'npm test') === 0);
   rmSync(tmp, { recursive: true, force: true });
+}
+
+/* 7c. write-scope guard, contract/deploy/checkpoint checks, preflight toolchain */
+{
+  const W = rel('skills/muffy/scripts/guard-write-scope.mjs');
+  const write = (agent_type, file_path, tool_name = 'Write') => spawnSync(process.execPath, [W], { input: JSON.stringify({ tool_name, agent_type, tool_input: { file_path } }), encoding: 'utf8' }).status;
+  check('write-scope: only the product-manager writes docs/strategy.md', write('product-manager', 'docs/strategy.md') === 0 && ['architect', 'devops', 'backend-dev', 'muffy:researcher'].every((r) => write(r, 'E:\\repo\\docs\\strategy.md', 'Edit') === 2));
+  check('write-scope: the Orchestrator (no agent_type) is never blocked', write(undefined, 'docs/strategy.md') === 0);
+  check('write-scope: architect writes its diagrams and ADRs, not baseline.md or other architecture files', write('architect', 'docs/architecture/overview.html') === 0 && write('architect', 'docs/architecture/flows/login.html') === 0 && write('architect', 'docs/adr/0002-x.md') === 0 && write('architect', 'docs/architecture/baseline.md') === 2 && write('architect', 'docs/architecture/notes.md') === 2);
+  check('write-scope: only the architect writes diagrams, only the researcher the baseline', write('frontend-dev', 'docs/architecture/data-model.html') === 2 && write('researcher', 'docs/architecture/baseline.md') === 0 && write('researcher', 'docs/architecture/overview.html') === 2);
+  check('write-scope: other files and non-write tools pass', write('backend-dev', 'src/a.ts') === 0 && write('architect', 'docs/strategy.md', 'Read') === 0);
+}
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'muffy-checks-'));
+  const copy = () => { const d = mkdtempSync(join(tmp, 't-')); cpSync(fixtureDir, d, { recursive: true }); return d; };
+  const patch = (d, file, fn) => writeFileSync(join(d, file), fn(readFileSync(join(d, file), 'utf8')));
+  check('check-artifacts: the fixture passes the Budget, Platform and deploy.md checks', checkTask(fixtureDir).length === 0, checkTask(fixtureDir).join('; '));
+  let d = copy(); patch(d, 'contract.md', (t) => t.replace('Budget: none. ', ''));
+  check('check-artifacts: a Cost line without a Budget verdict fails', checkTask(d).some((e) => e.includes('Budget:')));
+  d = copy(); patch(d, 'contract.md', (t) => t.replace('Budget: none.', 'Budget: over, 300/mo vs ceiling 200.'));
+  check('check-artifacts: Budget over without a cheaper option fails, with one passes', checkTask(d).some((e) => e.includes('cheaper')) && checkTask((patch(d, 'contract.md', (t) => t.replace('vs ceiling 200.', 'vs ceiling 200; cheaper option: 150/mo.')), d)).length === 0);
+  d = copy(); patch(d, 'contract.md', (t) => t.replace('Existing codebase.', 'Existing codebase. Platform: cli.'));
+  check('check-artifacts: Platform cli needs contract/cli.md; an unknown Platform fails', checkTask(d).some((e) => e.includes('cli.md')) && (patch(d, 'contract.md', (t) => t.replace('Platform: cli.', 'Platform: toaster.')), checkTask(d).some((e) => e.includes('toaster'))));
+  d = copy(); patch(d, 'deploy.md', (t) => t.replace('## Infra cost', '## Costs'));
+  check('check-artifacts: deploy.md missing ## Infra cost fails', checkTask(d).some((e) => e.includes('Infra cost')));
+  d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later', 'infra: propose'));
+  check('check-artifacts: infra: propose needs ## Infra options; options without propose fail', checkTask(d).some((e) => e.includes('Infra options')) && (patch(d, 'checkpoint.md', (t) => t.replace('infra: propose', 'infra: later')), patch(d, 'deploy.md', (t) => `${t}\n## Infra options\nA or B\n`), checkTask(d).some((e) => e.includes('only for infra: propose'))));
+  d = copy(); patch(d, 'deploy.md', (t) => t.replace('Gap: no restore drill for Postgres yet.', 'Nothing else.'));
+  check('check-artifacts: a practice gap missing from ## Risks fails', checkTask(d).some((e) => e.includes('not listed under ## Risks')));
+  const { checkTask: checkpoint } = await import('../skills/muffy/scripts/check-checkpoint.mjs');
+  check('check-checkpoint: the fixture passes', checkpoint(fixtureDir).length === 0, checkpoint(fixtureDir).join('; '));
+  d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later · budget: ok', 'infra: maybe · budget: fine · diagrams: 2 published'));
+  const bad = checkpoint(d);
+  check('check-checkpoint: unknown infra and budget values fail, a valid diagrams item passes', bad.some((e) => e.includes('infra: maybe')) && bad.some((e) => e.includes('budget: fine')) && !bad.some((e) => e.includes('diagrams')), bad.join('; '));
+  const pre = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/devops-preflight.mjs'), ...a], { cwd: tmp, encoding: 'utf8' });
+  check('preflight: --toolchain node passes with no .nvmrc (a non-Node repo), a wrong version fails, an unknown name is a usage error', pre('--toolchain', 'node').status === 0 && pre('--toolchain', 'node=0.0.1').status === 1 && pre('--toolchain', 'toaster').status === 2 && pre().status === 1);
+  rmSync(tmp, { recursive: true, force: true });
+}
+
+/* 7d. baseline freshness (references/baseline-freshness.md) */
+{
+  const repo = mkdtempSync(join(tmpdir(), 'muffy-baseline-'));
+  const git = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
+  const put = (file, text) => { mkdirSync(dirname(join(repo, file)), { recursive: true }); writeFileSync(join(repo, file), text); };
+  const run = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/check-baseline.mjs'), repo, ...a], { encoding: 'utf8' });
+  git('init', '-q'); git('config', 'user.email', 't@t.t'); git('config', 'user.name', 't'); git('config', 'core.autocrlf', 'false');
+  put('package.json', JSON.stringify({ dependencies: { next: '^14.1.0' } })); put('.nvmrc', 'v22.14.0\n'); put('src/a.ts', 'export const a = 1\n');
+  git('add', '-A'); git('commit', '-qm', 'init');
+  const sha = git('rev-parse', '--short', 'HEAD').stdout.trim();
+  check('baseline: no baseline file is exit 3', run().status === 3);
+  put('docs/architecture/baseline.md', `---\ncommit: ${sha}\n---\n## Stack\nNode 22, next 14. Entry \`src/a.ts:1\`, layout \`src/\`.\n`);
+  git('add', '-A'); git('commit', '-qm', 'baseline');
+  const green = run();
+  check('baseline: a fresh baseline is green (exit 0)', green.status === 0 && green.stdout.startsWith('baseline: green'), green.stdout);
+  put('package.json', JSON.stringify({ dependencies: { next: '^15.0.0' } }));
+  const red = run();
+  check('baseline: a dependency major that differs from the manifest is red (exit 2)', red.status === 2 && red.stdout.includes('next'), red.stdout);
+  put('package.json', JSON.stringify({ dependencies: { next: '^14.1.0' } }));
+  rmSync(join(repo, 'src/a.ts'));
+  const yellow = run('--json');
+  check('baseline: a cited path that is gone is yellow (exit 1)', yellow.status === 1 && yellow.stdout.includes('src/a.ts'), yellow.stdout);
+  put('src/a.ts', 'export const a = 1\n');
+  for (const n of [1, 2, 3]) put(`src/b${n}.ts`, `export const b = ${n}\n`);
+  git('add', '-A'); git('commit', '-qm', 'more');
+  check('baseline: covered changes under the threshold stay green; over --yellow they turn yellow, over --red red', run().status === 0 && run('--yellow', '3').status === 1 && run('--yellow', '1', '--red', '3').status === 2);
+  put('.team/baseline-thresholds.json', JSON.stringify({ yellow: 2, red: 50 }));
+  check('baseline: .team/baseline-thresholds.json sets the thresholds', run().status === 1);
+  put('docs/architecture/baseline.md', 'no commit line here\n');
+  check('baseline: a baseline with no commit line is yellow, never an error', run().status === 1);
+  check('baseline: an unknown flag is a usage error (exit 3)', run('--nope').status === 3);
+  const { checkTask: cp } = await import('../skills/muffy/scripts/check-checkpoint.mjs');
+  const d = mkdtempSync(join(repo, 'cp-')); cpSync(fixtureDir, d, { recursive: true });
+  const status = (v) => { const f = join(d, 'checkpoint.md'); writeFileSync(f, readFileSync(f, 'utf8').replace(/infra: later(?: · baseline: \w+)?/, `infra: later · baseline: ${v}`)); return cp(d); };
+  check('check-checkpoint: baseline: green|yellow|red pass, another value fails', status('yellow').length === 0 && status('purple').some((e) => e.includes('baseline: purple')));
+  rmSync(repo, { recursive: true, force: true });
+}
+
+/* 7e. one source for manifests and skipped folders (scripts/repo-facts.mjs) */
+{
+  const read = (f) => readFileSync(rel('skills/muffy/scripts', f), 'utf8');
+  check('repo-facts: scan-repo and check-baseline import the shared lists instead of keeping their own', ['scan-repo.mjs', 'check-baseline.mjs'].every((f) => read(f).includes("./repo-facts.mjs") && !/const (SKIP|MANIFEST) = /.test(read(f))));
+  const repo = mkdtempSync(join(tmpdir(), 'muffy-facts-'));
+  const git = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
+  const put = (file, text) => { mkdirSync(dirname(join(repo, file)), { recursive: true }); writeFileSync(join(repo, file), text); };
+  git('init', '-q'); git('config', 'user.email', 't@t.t'); git('config', 'user.name', 't'); git('config', 'core.autocrlf', 'false');
+  put('.gitignore', 'generated/\n');
+  put('src/a.ts', 'a\n'); put('src/b.ts', 'b\n');
+  put('Pods/Dep/x.swift', 'x\n'); put('.dart_tool/y.dart', 'y\n'); put('generated/g1.ts', 'g\n'); put('generated/g2.ts', 'g\n');
+  const scan = JSON.parse(spawnSync(process.execPath, [rel('skills/muffy/scripts/scan-repo.mjs'), repo], { encoding: 'utf8' }).stdout);
+  check('scan-repo: skips dependency folders by name and folders .gitignore keeps out of git, counts the rest', scan.sourceFiles.byExtension['.ts'] === 2 && !scan.sourceFiles.byExtension['.swift'] && !scan.sourceFiles.byExtension['.dart'], JSON.stringify(scan.sourceFiles));
+  put('App.csproj', '<Project/>\n'); put('pubspec.yaml', 'name: x\n');
+  const scan2 = JSON.parse(spawnSync(process.execPath, [rel('skills/muffy/scripts/scan-repo.mjs'), repo], { encoding: 'utf8' }).stdout);
+  check('scan-repo: lists Flutter, .NET and Xcode manifests from the shared list', scan2.manifests.includes('pubspec.yaml') && scan2.manifests.includes('App.csproj'), JSON.stringify(scan2.manifests));
+  git('add', '-A', '-f'); git('commit', '-qm', 'init');
+  const sha = git('rev-parse', '--short', 'HEAD').stdout.trim();
+  put('docs/architecture/baseline.md', `---\ncommit: ${sha}\n---\n## Stack\nLayout \`src/\`.\n`);
+  git('add', '-A'); git('commit', '-qm', 'baseline');
+  put('node_modules/dep/package.json', '{}\n'); put('Pods/Dep/Package.resolved', '{}\n'); put('vendor/lib/go.sum', 'x\n');
+  git('add', '-A', '-f'); git('commit', '-qm', 'someone committed dependency folders');
+  const r = spawnSync(process.execPath, [rel('skills/muffy/scripts/check-baseline.mjs'), repo, '--yellow', '1'], { encoding: 'utf8' });
+  check('check-baseline: manifests committed inside dependency folders do not age the baseline', r.status === 0 && r.stdout.startsWith('baseline: green'), r.stdout);
+  put('package.json', '{}\n'); git('add', '-A'); git('commit', '-qm', 'real manifest');
+  check('check-baseline: a real manifest change still counts', spawnSync(process.execPath, [rel('skills/muffy/scripts/check-baseline.mjs'), repo, '--yellow', '1'], { encoding: 'utf8' }).status === 1);
+  rmSync(repo, { recursive: true, force: true });
+}
+
+/* 7f. learning a stack (references/stack-learning.md): stale notes, guard entries, project extensions */
+{
+  const repo = mkdtempSync(join(tmpdir(), 'muffy-stack-'));
+  const put = (file, text) => { mkdirSync(dirname(join(repo, file)), { recursive: true }); writeFileSync(join(repo, file), text); };
+  const notes = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/check-stack-notes.mjs'), repo, ...a], { encoding: 'utf8' });
+  put('package.json', JSON.stringify({ dependencies: { next: '^15.0.0', 'solid-js': '1.8.1' } }));
+  put('docs/stacks/next.md', '## Next\nSource: https://example.test/next, version 14.2, 2026-01-01\n- Whole-suite: `npx vitest run --coverage`\n');
+  put('docs/stacks/solid-js.md', '## Solid\nSource: https://example.test/solid, version 1.8, 2026-01-01\n');
+  put('docs/stacks/odd.md', '## Odd\nno source line\n');
+  const all = notes();
+  check('stack-notes: a note for another major version is stale (exit 1), a matching one fresh, one without a version unchecked', all.status === 1 && /next: stale \(note is for 14\.2, the repo uses 15\.0\.0\)/.test(all.stdout) && /solid-js: fresh/.test(all.stdout) && /odd: unchecked/.test(all.stdout), all.stdout);
+  check('stack-notes: a named framework with no note is missing (exit 1); a fresh one alone exits 0', notes('svelte').status === 1 && /svelte: missing/.test(notes('svelte').stdout) && notes('solid-js').status === 0);
+  const entries = JSON.parse(notes('--guard-entries').stdout);
+  check('stack-notes: --guard-entries turns a Whole-suite line into an anchored regex the full-regression guard reads', entries.length === 1 && new RegExp(entries[0]).test('npx vitest run --coverage') && !new RegExp(entries[0]).test('npx vitest run --coverage src/a.test.ts'), JSON.stringify(entries));
+  check('stack-notes: an unknown flag is a usage error (exit 3)', notes('--nope').status === 3);
+  put('mix.exs', 'defmodule X do\nend\n'); put('deps/lib/a.ex', 'a\n'); put('lib/a.ex', 'a\n');
+  put('.team/stack-extensions.json', JSON.stringify({ manifests: ['mix.exs', '../evil'], skipDirs: ['deps'], platforms: ['Game'] }));
+  const scan = JSON.parse(spawnSync(process.execPath, [rel('skills/muffy/scripts/scan-repo.mjs'), repo], { encoding: 'utf8' }).stdout);
+  check('extensions: .team/stack-extensions.json adds a manifest and a skipped folder, and ignores names with path tricks', scan.manifests.includes('mix.exs') && !scan.manifests.includes('../evil'), JSON.stringify(scan.manifests));
+  const task = join(repo, '.team', 'game-task'); mkdirSync(task, { recursive: true });
+  put('.team/game-task/contract.md', '# Contract\n\n## Stack\nPlatform: game. Runtime: Elixir 1.17.\n\n## Cost\nBudget: none. No new recurring cost\n');
+  const listed = checkTask(task);
+  rmSync(join(repo, '.team', 'stack-extensions.json'));
+  check('extensions: a Platform listed under platforms passes the contract check; unlisted it fails', !listed.some((e) => e.includes('Platform')) && checkTask(task).some((e) => e.includes('Platform "game"')), listed.join('; '));
+  rmSync(repo, { recursive: true, force: true });
 }
 
 /* 8. fix lane (references/fix-profile.md): triage examples, fix.md fixture, diagnosis hand-offs */

@@ -6,6 +6,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, extname, join, relative, resolve } from 'node:path';
+import { SKIP_DIRS as SKIP, MANIFEST_NAMES, PROJECT_FILE, gitIgnoredDirs, loadExtensions, repoHelpers } from './repo-facts.mjs';
 
 const args = process.argv.slice(2);
 const outIdx = args.indexOf('--out');
@@ -16,20 +17,12 @@ if (!existsSync(root) || !statSync(root).isDirectory()) {
   process.exit(1);
 }
 
-const SKIP = new Set(['node_modules', '.git', 'dist', 'build', 'out', '.next', '.nuxt', '.team', '.worktrees', '.claude', 'venv', '.venv', '__pycache__', 'target', 'vendor', 'coverage']);
+const extensions = loadExtensions(root); // the project's own manifests and skipped folders (.team/stack-extensions.json)
+const ignoredDirs = gitIgnoredDirs(root) ?? new Set(); // folders .gitignore keeps out of git (Pods, bin, generated code ...), on top of SKIP
 const SRC_EXT = new Set(['.js', '.mjs', '.cjs', '.jsx', '.ts', '.tsx', '.vue', '.svelte', '.py', '.go', '.rs', '.java', '.kt', '.rb', '.php', '.cs', '.swift']);
 const MAX_FILES = 20000;
 
-const has = (p) => existsSync(join(root, p));
-const readText = (p) => (has(p) ? readFileSync(join(root, p), 'utf8') : null);
-const readJson = (p) => {
-  try {
-    return JSON.parse(readText(p));
-  } catch {
-    return null;
-  }
-};
-const list = (p) => (has(p) && statSync(join(root, p)).isDirectory() ? readdirSync(join(root, p)) : []);
+const { has, readText, readJson, list } = repoHelpers(root);
 
 // bounded walk: source counts, test files, env file names
 const srcByExt = {};
@@ -44,7 +37,7 @@ const walk = (dir) => {
       return;
     }
     if (e.isDirectory()) {
-      if (!SKIP.has(e.name)) walk(join(dir, e.name));
+      if (!SKIP.has(e.name) && !extensions.skipDirs.includes(e.name) && !ignoredDirs.has(relative(root, join(dir, e.name)).split('\\').join('/'))) walk(join(dir, e.name));
       continue;
     }
     walked++;
@@ -57,13 +50,14 @@ const walk = (dir) => {
 };
 walk(root);
 
-const manifests = ['package.json', 'pyproject.toml', 'requirements.txt', 'go.mod', 'Cargo.toml', 'pom.xml', 'build.gradle', 'build.gradle.kts', 'composer.json', 'Gemfile'].filter(has);
+const manifests = [...MANIFEST_NAMES, ...extensions.manifests].filter(has)
+  .concat(list('.').filter((n) => PROJECT_FILE.test(n))); // Flutter, Swift, .NET, Xcode: the Platform: of an existing app
 
 // node
 const pkg = readJson('package.json');
 const allDeps = { ...(pkg?.dependencies ?? {}), ...(pkg?.devDependencies ?? {}) };
 const KNOWN = {
-  frontend: ['next', 'react', 'vue', 'nuxt', 'svelte', '@sveltejs/kit', 'astro', '@angular/core', 'solid-js', 'vite', 'tailwindcss'],
+  frontend: ['next', 'react', 'vue', 'nuxt', 'svelte', '@sveltejs/kit', 'astro', '@angular/core', 'solid-js', 'vite', 'tailwindcss', 'react-native', 'expo', 'electron'],
   backend: ['express', 'fastify', '@nestjs/core', 'koa', 'hono', 'trpc', '@trpc/server', 'graphql', 'apollo-server'],
   data: ['prisma', '@prisma/client', 'drizzle-orm', 'typeorm', 'mongoose', 'sequelize', 'knex', 'pg', 'mysql2', 'redis', 'ioredis'],
   testing: ['vitest', 'jest', 'mocha', '@playwright/test', 'cypress', '@testing-library/react'],
@@ -108,7 +102,7 @@ const monorepo = ['pnpm-workspace.yaml', 'turbo.json', 'nx.json', 'lerna.json'].
 
 // UI evidence: decides whether onboarding also writes docs/design-system/
 const designTokens = ['tailwind.config.js', 'tailwind.config.ts', 'tailwind.config.cjs', 'tokens.json', 'design-tokens.json', 'theme.ts', 'theme.js'].filter(has);
-const ui = detected.frontend.some((d) => !d.startsWith('vite@')) || designTokens.length > 0 || has('docs/design-system');
+const ui = detected.frontend.some((d) => !d.startsWith('vite@')) || designTokens.length > 0 || has('docs/design-system') || has('pubspec.yaml') || manifests.some((m) => m.endsWith('.xcodeproj'));
 
 // git
 const git = (...a) => {

@@ -3,6 +3,8 @@
 ### Mode 1: Deployability
 1. Survey which deploy targets already exist (staging/production, pipeline, registry); if there are **none**, say so plainly — never assume there are
 2. Assess the stack proposed by the brief/architect: is it actually deployable, runtime + version, resources (CPU/RAM/GPU/disk), where large artifacts live (model weights, index, data), native or conflicting dependencies
+2b. **Propose the infrastructure only when the `infra:` answer in the prompt is `propose`** (existing → reuse it; later → local near-production, no proposal; not-needed → no hosting; missing → ask which applies): read [infrastructure-options.md](infrastructure-options.md), write 2 or 3 options (cloud, on-premises, hybrid or existing, whichever are realistic for the brief and its constraints, never cloud by default) with cost, lock-in, operational load and recovery, and a default. A choice with a recurring or capital cost is the user's: return `needs-input` with `questions[]` and wait for the answer in `requirements.md`
+2c. **Apply the practices:** read [infrastructure-best-practices.md](infrastructure-best-practices.md) and fill `## Practices` for the chosen infrastructure at the level the task needs (baseline now, production before the production deploy, regulated and on-premises only when they apply). Write `## Infra cost` for the architect to use
 3. Write `.team/<task>/deploy.md` (see Output Format)
 4. If the proposed stack can't be deployed or must be torn out after MVP → tell the Orchestrator with alternatives (architect writes the ADR)
 
@@ -12,6 +14,7 @@ Runs only when the Orchestrator's prompt says a smoke trigger is true (new runti
 1. On branch `ops/<task>` inside its worktree, create/edit only the infra files `contract.md` says devops owns — minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
 2. Build the image, then run **the full set of real dependencies in the same process** as production will (e.g. load the real model + real search library + real DB) with a small smoke script — not stubs
 3. Check that every version in the environment matches `contract.md` (runtime, main dependencies); mismatch = fail
+3b. Prove the baseline practices that a smoke can prove (builds from the pinned artifact, config from the environment, health check, rollback or restore step runs once where the stage allows); the rest stay `planned` or `gap` in `deploy.md` `## Practices`
 4. Fail → report with logs and cause (e.g. library conflict, version unavailable on the pinned runtime) — **FE/BE must not start** until it passes or architect changes the stack
 5. Hand off to the Orchestrator to merge `ops/<task>` as the base of `fe/<task>` and `be/<task>`
 
@@ -44,7 +47,7 @@ Staging:
    - the app binds to a real interface and the origin it expects: `HOSTNAME=0.0.0.0` inside the container must not leak into the origin check (the BAD_ORIGIN case)
    - health check returns 200 from the host
    - smoke sends a real POST from the host's origin, not only a GET health probe
-3. Run migrations, health check, smoke test
+3. Run migrations, health check, smoke test. Then compare the deployed environment with `deploy.md` `## Practices` and `## Infra cost`: report each practice you could confirm, the resources actually created, and any usage or cost figure the user made visible (a billing or usage page they showed, or the resources' own metrics). Never open a billing page or enter payment details yourself. A real figure above the declared one is reported to the Orchestrator with both numbers; do not change resources to fit it
 4. Fail → collect logs and report (don't fix code yourself)
 
 Production:
@@ -52,6 +55,9 @@ Production:
 2. Deploy as a canary (e.g. 10%) if the infra supports it
 3. Health check + error rate compared to baseline
 4. Pass → expand to 100%; fail → **roll back immediately** and report
+
+### Non-web platforms (`Platform:` mobile, desktop or cli)
+Modes 1 to 3 keep their purpose; the evidence changes. Read `.claude/skills/muffy/references/platforms.md` and follow its tables: the toolchain check first (missing → `status: blocked`, `toolchain-missing: <name> on <host OS>`, never a faked pass), then what smoke and staging mean for the platform (emulator or simulator launch, unsigned installer, TestFlight or internal track, binary run on a clean directory). Skip the Docker and HTTP health checks above unless the app also ships a server, and skip the `devops-preflight.mjs` Node/`.nvmrc` check unless the project is Node-based (no `.nvmrc` is normal for Flutter, Swift, Kotlin and .NET; run `node .claude/skills/muffy/scripts/devops-preflight.mjs --toolchain <name>[=<version from contract.md>]` for each tool the target needs: names are `flutter`, `dart`, `xcodebuild`, `swift`, `dotnet`, `java`, `gradle`, `android-sdk`, `cargo`, `go`, `python`, `docker`, `node`. A FAIL prints `toolchain-missing: <name> on <os>`: report it as the blocker, never as a pass). Write the chosen evidence per step in `deploy.md`. Signing, notarization, store upload and package publishing are the user's: prepare the artifact and a checklist, do not run them.
 
 ### All modes
 **Keep command output out of context.** Build, test, migration, smoke and `docker logs` output goes to a file, never straight into the conversation: `<cmd> > .team/<task>/logs/<name>.log 2>&1; echo "exit $?"`. On exit 0, read nothing. On failure read only the tail (`tail -n 30`) or `grep -iE 'error|fail|fatal'` of that file, then widen only if the cause is still unclear. Quote at most ~20 log lines in the report and give the log path for the rest. `logs/` stays out of git.

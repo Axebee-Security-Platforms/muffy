@@ -4,10 +4,15 @@
 // Checks the split hand-off artifacts (references/memory-model.md#splitting-large-artifacts):
 //   ac.md, brief.md, contract.md, fix.md ≤ 60 lines; files in ac/, brief/, contract/ ≤ 120 lines;
 //   every [label] used (outside code fences and backticks) has one definition, every definition is used, targets exist;
-//   every AC id in ac.md appears in contract.md or a file under contract/ (when ac.md and contract.md exist).
+//   every AC id in ac.md appears in contract.md or a file under contract/ (when ac.md and contract.md exist);
+//   contract.md: the ## Cost summary starts with `Budget: none|within|over|unknown|unlimited` (over/unknown name a cheaper option);
+//   the Stack's `Platform:` is web|mobile|desktop|cli, and cli has contract/cli.md;
+//   deploy.md: ## Chosen infra, ## Infra cost, ## Practices and ## Risks exist, ## Infra options only when the checkpoint says `infra: propose`,
+//   and every `gap (<risk>)` under Practices appears under Risks.
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { loadExtensions } from './repo-facts.mjs';
 
 const MAIN_MAX = 60;
 const PART_MAX = 120;
@@ -46,6 +51,47 @@ function checkLinks(taskDir, file, errors) {
   }
 }
 
+const BUDGET = /^Budget:\s*(none|within|over|unknown|unlimited)\b/i;
+const PLATFORMS = new Set(['web', 'mobile', 'desktop', 'cli']);
+const section = (text, heading) => text.match(new RegExp(`^## ${heading}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'mi'))?.[1] ?? null;
+
+function checkContract(taskDir, errors) {
+  const contractPath = join(taskDir, 'contract.md');
+  if (!existsSync(contractPath)) return;
+  const contract = readFileSync(contractPath, 'utf8');
+  const cost = section(contract, 'Cost');
+  if (cost === null) errors.push('contract.md has no ## Cost section');
+  else {
+    const first = cost.split('\n').map((l) => l.replace(/^[-*]\s*/, '').trim()).find(Boolean) ?? '';
+    const m = first.match(BUDGET);
+    if (!m) errors.push('contract.md ## Cost must start with "Budget: none|within|over|unknown|unlimited"');
+    else if (/^(over|unknown)$/i.test(m[1]) && !/cheaper/i.test(first)) errors.push(`contract.md ## Cost says Budget: ${m[1].toLowerCase()} but names no cheaper option`);
+  }
+  const contractDir = join(taskDir, 'contract');
+  const all = [contract, ...(existsSync(contractDir) ? walk(contractDir).map((p) => readFileSync(p, 'utf8')) : [])].join('\n');
+  const platform = all.match(/\bPlatform:\s*([A-Za-z-]+)/)?.[1]?.toLowerCase();
+  if (platform) {
+    if (!PLATFORMS.has(platform) && !loadExtensions(join(taskDir, '..', '..')).platforms.includes(platform)) errors.push(`contract: Platform "${platform}" is not web, mobile, desktop or cli (or listed in .team/stack-extensions.json)`);
+    else if (platform === 'cli' && !existsSync(join(contractDir, 'cli.md'))) errors.push('contract: Platform cli needs contract/cli.md (commands, flags, exit codes)');
+  }
+}
+
+function checkDeploy(taskDir, errors) {
+  const deployPath = join(taskDir, 'deploy.md');
+  if (!existsSync(deployPath)) return;
+  const deploy = readFileSync(deployPath, 'utf8');
+  for (const h of ['Chosen infra', 'Infra cost', 'Practices', 'Risks']) if (section(deploy, h) === null) errors.push(`deploy.md has no ## ${h} section`);
+  const cp = existsSync(join(taskDir, 'checkpoint.md')) ? readFileSync(join(taskDir, 'checkpoint.md'), 'utf8') : '';
+  const infra = cp.match(/\binfra:\s*([a-z-]+)/i)?.[1]?.toLowerCase();
+  const hasOptions = section(deploy, 'Infra options') !== null;
+  if (infra === 'propose' && !hasOptions) errors.push('deploy.md needs ## Infra options (checkpoint says infra: propose)');
+  if (infra && infra !== 'propose' && hasOptions) errors.push(`deploy.md has ## Infra options but the checkpoint says infra: ${infra}; options are proposed only for infra: propose`);
+  const risks = section(deploy, 'Risks') ?? '';
+  for (const g of (section(deploy, 'Practices') ?? '').matchAll(/gap \(([^)]+)\)/g)) {
+    if (!risks.toLowerCase().includes(g[1].trim().toLowerCase())) errors.push(`deploy.md: practice gap "${g[1].trim()}" is not listed under ## Risks`);
+  }
+}
+
 export function checkTask(taskDir) {
   const errors = [];
   const files = [];
@@ -71,6 +117,8 @@ export function checkTask(taskDir) {
       if (!new RegExp(`\\b${id}\\b`).test(contract)) errors.push(`contract: ${id} from ac.md is not mapped in contract.md or contract/`);
     }
   }
+  checkContract(taskDir, errors);
+  checkDeploy(taskDir, errors);
   return errors;
 }
 
@@ -83,7 +131,7 @@ function fromHook() {
     process.exit(2);
   }
   const filePath = input?.tool_input?.file_path ?? '';
-  const m = filePath.match(/^(.*[\\/]\.team[\\/][^\\/]+)[\\/](ac\.md|brief\.md|contract\.md|fix\.md|(ac|brief|contract)[\\/].+\.md)$/);
+  const m = filePath.match(/^(.*[\\/]\.team[\\/][^\\/]+)[\\/](ac\.md|brief\.md|contract\.md|fix\.md|deploy\.md|(ac|brief|contract)[\\/].+\.md)$/);
   if (!m) process.exit(0); // not a split artifact
   return m[1];
 }

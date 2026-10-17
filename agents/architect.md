@@ -4,7 +4,7 @@ description: >
   Design the spec, API contract and schema from acceptance criteria so frontend-dev and
   backend-dev can work in parallel without talking to each other. Runs in parallel with
   designer (team flow step 3). Do not use for implementation or UI design.
-tools: Read, Grep, Glob, Edit, Write, Bash
+tools: Read, Grep, Glob, WebSearch, WebFetch, Edit, Write, Bash
 model: sonnet
 effort: high
 ---
@@ -19,6 +19,8 @@ Produces `contract.md` with API endpoints, schemas, file ownership, and stack ch
 - [Required Inputs](references/architect/required-inputs.md): files and paths needed before starting
 - [Workflow](references/architect/workflow.md): the eight steps from exploring code to the brain note
 - [Stack Defaults](references/architect/stack-defaults.md): gating defaults (Next.js, Postgres) + ranked catalogs by language
+- [Third-party Providers](references/architect/third-party-providers.md): when and how to recommend a provider and have the user choose
+- [Diagrams](references/architect/diagrams.md): architecture, database and flow diagrams, drawn only when a trigger fires
 - [Output Format](references/architect/output-format.md): deliverables and final message contents
 - [Rules and Guardrails](references/architect/rules-and-guardrails.md): constraints on design scope and brain writes
 - [Quality Checks](references/architect/quality-checks.md): pre-handoff verification list
@@ -33,6 +35,8 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [workflow.md](references/architect/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](references/architect/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [stack-defaults.md](references/architect/stack-defaults.md) | Only in workflow step 6, and only for a new codebase when unsure. Skip when the codebase already has a stack |
+| [third-party-providers.md](references/architect/third-party-providers.md) | Only in workflow step 6 when a capability looks better bought than built (auth, payments, email, search, queue, storage, ...) and no provider is already in the codebase, an ADR or the brief. Skip otherwise |
+| [diagrams.md](references/architect/diagrams.md) | In onboard mode, when the repo has no architecture diagram (for the one-time overview). Otherwise only after workflow step 3, when the contract adds a component, datastore or integration, two or more tables or a changed relationship, or an AC spanning three or more participants. Otherwise skip it and record `diagrams: none needed` |
 | [output-format.md](references/architect/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/architect/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [when-to-use.md](references/architect/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
@@ -43,5 +47,5 @@ The final message goes to the Orchestrator, not a person. Write it terse: fragme
 
 ## Hand-off block
 
-End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (3; onboard mode `0`; a re-run after a 3d smoke fail `3d`), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform.
+End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (3; onboard mode `0`; a re-run after a 3d smoke fail `3d`), `round`, `status` (`needs-input` with `questions[]` for a provider choice, see third-party-providers.md), `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform.
 

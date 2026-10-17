@@ -58,14 +58,15 @@ Caveats:
    node install.mjs /path/to/your-repo --with-guard
    ```
 
-   This merges four entries (the env guard, the doc agents' Bash allowlist, the full-regression guard and the test-level guard) into `hooks.PreToolUse` of `.claude/settings.local.json` and keeps every other key. It is idempotent. If `PreToolUse` already exists, the installer leaves it alone and prints the entry for you to add by hand:
+   This merges five entries (the env guard, the doc agents' Bash allowlist, the full-regression guard, the test-level guard and the write-scope guard) into `hooks.PreToolUse` of `.claude/settings.local.json` and keeps every other key. It is idempotent. If `PreToolUse` already exists, the installer leaves it alone and prints the entry for you to add by hand:
 
    ```json
    "PreToolUse": [
      { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] },
      { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] },
      { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-full-regression.mjs" } ] },
-     { "matcher": "Bash|PowerShell|Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-test-level.mjs" } ] }
+     { "matcher": "Bash|PowerShell|Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-test-level.mjs" } ] },
+     { "matcher": "Write|Edit|MultiEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-write-scope.mjs" } ] }
    ]
    ```
 

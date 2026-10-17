@@ -9,8 +9,8 @@ The repo wins over the vault: an ADR overrides a vault note.
 | Second brain | `<brain>` = `<vault>/Projects/<repo-name>/`, or `.team/brain/` when `SECOND_BRAIN_VAULT` is unset | Notes, lessons, open issues |
 
 ```
-<brain>/project.md               Orchestrator only: Tasks, Lessons, Open issues, Retired lessons
-<brain>/tasks/<task>.md          Orchestrator only: status, step, links, task Lessons + Open issues
+<brain>/project.md               Orchestrator only: Tasks, Lessons, Open issues, Retired lessons, Diagrams (repo path → Artifact URL)
+<brain>/tasks/<task>.md          Orchestrator only: status, step, links, `## Diagrams` (published diagram URLs), task Lessons + Open issues
 <brain>/agents/<role>/<task>.md  one folder per agent; written only by that agent, append-only
 ```
 
@@ -29,7 +29,7 @@ Updated: step <n> · round <n>
 
 ## Goal                      pinned — copy verbatim from the request / brief.md, never summarize
 ## Run profile               skipped steps + reasons
-## Status                    step reached; gates 3c (user-approved design)/3d passed|skipped; `paused at pause:design-review` while waiting; canvas: <Claude Design Artifact URL> (set at 3b, updated on every republish)
+## Status                    step reached; gates 3c (user-approved design)/3d passed|skipped; `paused at pause:design-review` while waiting; canvas: <Claude Design Artifact URL> (set at 3b, updated on every republish); `diagrams: <n> published` (set at 3e; URLs live in the task note)
 ## Decisions in force        ADR ids, stack, runtime pin (from deploy.md)
 ## Loop counters             <step>:<owner> n/3, one line per point used
 ## Open blockers             id · file:line · owner · rounds open (latest round only, in full)

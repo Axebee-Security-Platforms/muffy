@@ -1,8 +1,8 @@
 ## Rules and Guardrails
 
-- Never contradict an accepted ADR without writing a new ADR that supersedes it
+- Never contradict an accepted `Kind: product` ADR without writing a new ADR that supersedes it. A `Kind: technical` ADR you think is wrong or in your way is not yours to supersede: report it in your hand-off (`owner: Architect`, ADR number, the conflict) and the Orchestrator routes it. A decision that crosses into technical territory goes to the Orchestrator to ask the user ([adr.md](../../../skills/muffy/references/adr.md))
 - Don't design the API or UI yourself
-- You may write `docs/strategy.md` only if it is missing, or to change the goal/budget at the user's request; never rewrite the cost baseline or build/buy log (architect's)
+- **You are the only agent that writes `docs/strategy.md`**, including `## Build vs buy log` and `## Cost baseline`. Write it when it is missing, to change the goal or ceiling at the user's request, and in cost-record and cost-reconcile mode (see the workflow). Record figures exactly as the architect, devops, the staging report or the user gave them; never estimate, round, or invent one (`TBD` or `[assumed]` instead), and never change a figure's mark without evidence
 - Never ask the user directly and never guess a material unknown silently: ask through `status: needs-input` + `questions[]` (≤ 8 per round, ≤ 2 rounds), and mark any default you proceed on `[assumed]`
 - Don't drop requirements from the brief without stating why
 - If the prompt has no `<brain>` path or the folder can't be found, do not guess or write elsewhere — say so in your final message so the Orchestrator asks the user

@@ -49,7 +49,7 @@
     "questions": {
       "type": "array",
       "maxItems": 8,
-      "description": "researcher / product-manager only: open requirement questions the Orchestrator relays to the user (status needs-input)",
+      "description": "researcher / product-manager / architect (provider choices) / devops (infrastructure choice) only: open questions the Orchestrator relays to the user (status needs-input)",
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -96,7 +96,7 @@
     { "if": { "properties": { "diagnosis": { "properties": { "status": { "enum": ["unknown", "needs-full-flow"] } }, "required": ["status"] } }, "required": ["diagnosis"] }, "then": { "properties": { "diagnosis": { "required": ["reason"] } } } },
     { "if": { "properties": { "diagnosis": { "type": "object" } }, "required": ["diagnosis"] }, "then": { "properties": { "step": { "enum": ["4a"] } } } },
     { "if": { "properties": { "status": { "enum": ["needs-input"] } }, "required": ["status"] }, "then": { "required": ["questions"], "properties": { "questions": { "minItems": 1 } } } },
-    { "if": { "properties": { "questions": { "minItems": 1 } }, "required": ["questions"] }, "then": { "properties": { "role": { "enum": ["researcher", "product-manager"] } } } },
+    { "if": { "properties": { "questions": { "minItems": 1 } }, "required": ["questions"] }, "then": { "properties": { "role": { "enum": ["researcher", "product-manager", "architect", "devops"] } } } },
     { "if": { "properties": { "verdict": { "enum": ["Reject", "Fail"] } }, "required": ["verdict"] }, "then": { "properties": { "blockers": { "minItems": 1 } } } },
     { "if": { "properties": { "quality_checks": { "properties": { "passed": { "enum": [false] } }, "required": ["passed"] } }, "required": ["quality_checks"] }, "then": { "properties": { "status": { "enum": ["not-ready", "blocked", "needs-input"] }, "quality_checks": { "properties": { "failed": { "minItems": 1 } } } } } }
   ]

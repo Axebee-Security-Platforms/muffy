@@ -1,5 +1,6 @@
 ## Workflow
 
+0a. **Platform.** Read `Platform:` from the brief or contract (default `web`). For `mobile` or `desktop` draw artboards at the frame sizes in `.claude/skills/muffy/references/platforms.md#routing` and follow the platform's navigation and control conventions; for a `cli` with screens (TUI) write text mock-ups of each screen in `design.md` instead of a canvas. No `Platform:` yet at step 3 → ask via a `needs-input` hand-off rather than assuming web for an app.
 0. **Load the design system first.** If `docs/design-system/` exists, design only with its tokens and components. If it doesn't, create it before any screen: extract the values already in use in existing UI code, consolidate them into the token scales below, and write `tokens.css` + `README.md`
 1. **Ground in research.** Read the research brief if present. Synthesize insights (observation → pain/goal → evidence → design implication). Build a persona per target user and a journey map per persona: stages, touchpoints, emotion, drop-off risks
 2. Map the user flow from entering the screen to success/failure, following the journey map's stages

@@ -4,7 +4,7 @@ A small bug or cosmetic fix does not use the table below: it runs the fix lane (
 
 | Condition | Skip |
 |---|---|
-| No UI change | `designer`, 3b, 3c, `frontend-dev` |
+| No UI change (including a `Platform: cli` without screens, see [platforms.md](platforms.md)) | `designer`, 3b, 3c, `frontend-dev` |
 | No backend/API change | `backend-dev`; `architect` writes only the parts FE needs |
 | No public API or user-facing change | `docs-writer`, step 8 |
 | Existing stack, no smoke trigger (below) | devops mode 1 is a short check against the existing `deploy.md`; **3d is skipped by default**. Regressions are still caught at step 9 (staging health + smoke) |
@@ -12,7 +12,7 @@ A small bug or cosmetic fix does not use the table below: it runs the fix lane (
 
 Effort follows the signals in [token-discipline.md](token-discipline.md), not the profile table: a skipped step needs no agent, and production mode never lowers `code-reviewer`, `architect` or `devops`.
 
-**Smoke triggers (3d runs only if one is true):** the contract adds or bumps a runtime, a dependency in the lockfile, a native/binary package or a datastore; devops-owned files change (Dockerfile, base image, `.nvmrc`, compose); or `<brain>/agents/devops/` has no passing smoke recorded for this stack (first feature, onboarding, or the last smoke failed); or `staging: none` (no safety net at step 9). Adding routes, UI or business logic alone is not a trigger. Record "3d skipped: no trigger" in `tasks/<task>.md`.
+**Smoke triggers (3d runs only if one is true):** the contract adds or bumps a runtime, a dependency in the lockfile, a native/binary package or a datastore; devops-owned files change (Dockerfile, base image, `.nvmrc`, compose); or `<brain>/agents/devops/` has no passing smoke recorded for this stack (first feature, onboarding, or the last smoke failed); or `staging: none` (no safety net at step 9). Adding routes, UI or business logic alone is not a trigger. For a non-web `Platform:`, a new native module, plugin or entitlement, a minimum OS version change, or a signing/build config change is a trigger too, and what 3d and staging mean comes from [platforms.md](platforms.md#what-3d-smoke-and-9-staging-mean). Record "3d skipped: no trigger" in `tasks/<task>.md`.
 
 **3d is a stack smoke, not a route test.** It proves the stack boots with real dependencies in one process, using only code that exists on `ops/<task>` (stubs and a health route are fine). A spike that needs a route or screen that `backend-dev` has not written yet is not a 3d item: devops marks it `spike-route` in `deploy.md`, 3d passes without it, and devops runs it once after the first `backend-dev` round, before step 6. Never loop 3d (and burn its 3 rounds) waiting for feature code; a `spike-route` that still fails after step 4 goes to the loop in [loops.md](loops.md) as a normal blocker.
 
@@ -28,6 +28,7 @@ A pause stops the flow on purpose. It has an id, a resume condition, and one lin
 | `pause:staging-credentials` | before step 9 makes any live call to an external API or OAuth provider | the user approves each live call in chat, and the keys are confirmed present by name and prefix |
 | `pause:onboard-review` | onboard step 0d ([onboard.md](onboard.md)) | the user approves or edits `baseline.md` and the ADR |
 | `pause:analyze-review` | analyze step a5 ([analyze.md](analyze.md)) | the user confirms or drops each group of unfinished work. Nothing becomes a task without a yes |
+| `pause:budget` | after step 3, before 3c (or before step 4 when 3c is skipped), only when the contract's `## Cost` line says `Budget: over` or `Budget: unknown` ([budget.md](budget.md)) | the user picks: take the cheaper option, accept the cost, or cut scope. No answer = nothing past step 3 |
 | `pause:design-review` | step 3c, after the designer's Definition of done is checked and the Orchestrator's UX/UI review ([design-review.md](design-review.md)) has no open `high` finding | the user approves the design (Approve), or asks for changes and then approves the revision |
 | `pause:full-regression` | before any whole-system regression run (every test or e2e flow in the repo, not just this task's). The Orchestrator asks; `qa-tester` never does | the user approves in chat after seeing the exact command, what it covers, the expected duration and any shared environment it touches. No answer or "no" = scoped tests only. On yes, write `.team/<task>/full-regression.approved` (approved command + date) so the guard lets `qa-tester` run it ([hooks-enforcement.md](hooks-enforcement.md) §10); delete it when the round ends |
 | `pause:human-gate` | step 10 | Approve / Reject answer |

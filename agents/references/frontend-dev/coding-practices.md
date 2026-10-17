@@ -1,6 +1,13 @@
 ## Coding Practices
 
-Framework-neutral core. Also read the one stack file that matches the codebase (detect from `package.json`):
+Framework-neutral core. Also read the one stack file that matches the codebase. The `Platform:` on the contract's Stack line says whether this is web, mobile or desktop ([platforms.md](../../../skills/muffy/references/platforms.md)); the HTML, CSS and layout-shift bullets below are web rules, and a native stack file replaces them with its own. Detect from the manifest:
+- `pubspec.yaml` → [coding-practices-flutter.md](coding-practices-flutter.md)
+- `react-native` or `expo` in `package.json` → [coding-practices-react-native.md](coding-practices-react-native.md) (plus the React file)
+- `Package.swift` or `*.xcodeproj` / `*.xcworkspace` → [coding-practices-swift.md](coding-practices-swift.md) (iOS and Mac)
+- `build.gradle` / `build.gradle.kts` with an Android plugin → [coding-practices-kotlin.md](coding-practices-kotlin.md)
+- `electron` in `package.json` → [coding-practices-electron.md](coding-practices-electron.md) (plus the renderer framework's file)
+- a `*.csproj` / `*.sln` using WinUI, WPF, WinForms or MAUI → [coding-practices-windows.md](coding-practices-windows.md)
+- web, from `package.json`:
 - `next` or `react` → [coding-practices-react.md](coding-practices-react.md)
 - `vue` or `nuxt` → [coding-practices-vue.md](coding-practices-vue.md)
 - `svelte` or `@sveltejs/kit` → [coding-practices-svelte.md](coding-practices-svelte.md)
@@ -8,7 +15,7 @@ Framework-neutral core. Also read the one stack file that matches the codebase (
 - `solid-js` or `@solidjs/start` → [coding-practices-solid.md](coding-practices-solid.md)
 - `astro` → [coding-practices-astro.md](coding-practices-astro.md) (plus the stack file of any framework used for its islands)
 - anything else (unknown framework), in this order, stop at the first step that gives enough to code correctly:
-  1. `docs/stacks/<framework>.md` exists → read it and treat it as the stack file
+  1. `docs/stacks/<framework>.md` exists → run `node .claude/skills/muffy/scripts/check-stack-notes.mjs <framework>`: `fresh` or `unchecked` → read it and treat it as the stack file; `stale` → treat it as missing (step 3, problem `stack-unknown: <framework> <version> (note is for <old>)`). The whole ladder is in [stack-learning.md](../../../skills/muffy/references/stack-learning.md)
   2. Learn from local sources only, no web access: the version in the lockfile, the package's README/types in `node_modules`, existing code, `docs/architecture/baseline.md`. If the repo already has working examples of the idioms you need, follow them and say which stack you assumed
   3. Still unsure of idioms that change correctness (reactivity, routing, data loading, SSR) → don't guess: return `status: blocked` with a blocker `owner: Researcher`, problem `stack-unknown: <framework> <version>`, and stop. The Orchestrator gets a capped stack note written, then resumes you
 
@@ -30,8 +37,8 @@ Order of precedence: the surrounding code's conventions, then `design.md` / the 
 
 ### Performance and accessibility
 - No fetch waterfalls: start independent requests together; lazy-load heavy components that are below the fold or behind an interaction
-- Give images dimensions; no layout shift from late-loading content
-- Interactive elements are real `button`/`a`/`input`, not clickable `div`s; focus is visible and returns sensibly after dialogs close
+- Web: give images dimensions (no layout shift from late-loading content); interactive elements are real `button`/`a`/`input`, not clickable `div`s. Native: the stack file's accessibility section replaces this (platform labels, roles, touch targets)
+- Focus is visible and returns sensibly after dialogs close
 
 ### Tests
 - Test what the user sees and does (roles, labels, text), not internal state or class names; cover each design.md state and each AC error case

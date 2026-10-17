@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIAGRAM TITLE</title>
+<!-- muffy diagram template. Copy verbatim and change ONLY <title> and the JSON in #diagram. Spec: references/diagram-style.md -->
+<style>
+:root {
+  --paper: #f7f8fa; --grid: rgba(60, 80, 120, .07); --grid-major: rgba(60, 80, 120, .13);
+  --card: #ffffff; --ink: #14181f; --muted: #5b6676; --line: #d5dae3; --wire: #7a8699;
+  --accent: #2f6df6; --service: #2f6df6; --app: #7c4dff; --store: #0f9d73; --external: #c77700; --queue: #c2410c;
+  --fail: #d92d3a; --shadow: 0 1px 2px rgba(20, 30, 50, .06), 0 8px 24px rgba(20, 30, 50, .09);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1218; --grid: rgba(150, 175, 220, .06); --grid-major: rgba(150, 175, 220, .12);
+    --card: #1a1f29; --ink: #eef1f6; --muted: #9aa5b8; --line: #2e3544; --wire: #7f8aa0;
+    --accent: #6d9bff; --service: #6d9bff; --app: #a58bff; --store: #3ed1a0; --external: #f0a33a; --queue: #ff8a5c;
+    --fail: #ff6b78; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px rgba(0, 0, 0, .45);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1218; --grid: rgba(150, 175, 220, .06); --grid-major: rgba(150, 175, 220, .12);
+  --card: #1a1f29; --ink: #eef1f6; --muted: #9aa5b8; --line: #2e3544; --wire: #7f8aa0;
+  --accent: #6d9bff; --service: #6d9bff; --app: #a58bff; --store: #3ed1a0; --external: #f0a33a; --queue: #ff8a5c;
+  --fail: #ff6b78; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px rgba(0, 0, 0, .45);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", sans-serif;
+  color: var(--ink); background-color: var(--paper);
+  background-image: linear-gradient(var(--grid-major) 1px, transparent 1px), linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  padding: 32px 16px 120px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; }
+header { margin-bottom: 28px; }
+h1 { margin: 0; font-size: clamp(24px, 4vw, 34px); letter-spacing: -.02em; line-height: 1.15; }
+.sub { margin: 6px 0 0; color: var(--muted); max-width: 70ch; }
+.meta { display: inline-block; margin-top: 10px; padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 12px/1.6 ui-monospace, Menlo, Consolas, monospace; background: var(--card); }
+.meta[hidden], .ctl[hidden] { display: none; }
+.stage { position: relative; }
+.cards { position: relative; z-index: 1; display: grid; gap: 64px 96px; align-items: start; }
+svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; overflow: visible; pointer-events: none; }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+  padding: 14px 16px 14px 20px; min-width: 0; position: relative; overflow: hidden;
+  opacity: 0; transform: translateY(14px) scale(.98); animation: rise .6s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: calc(var(--i, 0) * 90ms);
+}
+.card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--tone, var(--accent)); }
+.card.app { --tone: var(--app); } .card.service { --tone: var(--service); } .card.store { --tone: var(--store); } .card.external { --tone: var(--external); } .card.queue { --tone: var(--queue); }
+.card.verify { border-style: dashed; }
+.tag { display: inline-block; font: 600 11px/1.5 ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .06em; color: var(--tone, var(--accent)); }
+.badge { float: right; font: 600 11px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--external); border: 1px dashed currentColor; border-radius: 6px; padding: 0 6px; }
+.card h2 { margin: 2px 0 0; font-size: 17px; letter-spacing: -.01em; }
+.card p { margin: 6px 0 0; color: var(--muted); font-size: 13.5px; }
+.fields { list-style: none; margin: 10px -16px 0 -20px; padding: 0; border-top: 1px solid var(--line); font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; }
+.fields li { display: flex; gap: 8px; padding: 5px 16px 5px 20px; border-bottom: 1px solid var(--line); }
+.fields li:last-child { border-bottom: 0; }
+.fields .n { flex: 1; min-width: 0; overflow-wrap: anywhere; } .fields .t { color: var(--muted); } .fields .k { width: 24px; color: var(--accent); font-weight: 700; }
+.wire { fill: none; stroke: var(--wire); stroke-width: 2; stroke-linecap: round; }
+.wire.draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .9s ease forwards; animation-delay: calc(var(--i, 0) * 120ms + 400ms); }
+.wire.verify { stroke-dasharray: 5 6; }
+.pulse { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 18; opacity: 0; animation: fadein .3s ease forwards 1.5s, flow 1.4s linear infinite 1.5s; }
+.arrow { fill: var(--wire); }
+.pill rect { fill: var(--card); stroke: var(--line); }
+.pill text, .label { font: 600 12px system-ui, sans-serif; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.lane rect.head { fill: var(--card); stroke: var(--line); filter: drop-shadow(0 6px 14px rgba(20, 30, 50, .12)); }
+.lane .life { stroke: var(--line); stroke-width: 2; stroke-dasharray: 4 6; }
+.lane .name { font: 700 14px system-ui, sans-serif; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.lane .kind { font: 600 10px ui-monospace, Menlo, monospace; fill: var(--muted); text-anchor: middle; text-transform: uppercase; letter-spacing: .06em; }
+.step { opacity: 0; animation: fadein .5s ease forwards; animation-delay: calc(var(--i, 0) * 260ms + 300ms); transition: opacity .25s; cursor: pointer; pointer-events: all; }
+.step.future { opacity: .2 !important; }
+.step .msg { stroke: var(--wire); stroke-width: 2; fill: none; stroke-linecap: round; }
+.step .num { fill: var(--accent); } .step .numt { font: 700 11px system-ui; fill: #fff; text-anchor: middle; dominant-baseline: central; }
+.step.fail .msg { stroke: var(--fail); } .step.fail .num { fill: var(--fail); } .step.fail .arrow { fill: var(--fail); }
+.step .failtag { font: 700 11px ui-monospace, Menlo, monospace; fill: var(--fail); }
+.step.verify .msg { stroke-dasharray: 5 6; }
+.step.on .msg { stroke-width: 3; }
+.cap {
+  position: fixed; left: 0; right: 0; margin: 0 auto; bottom: 20px; z-index: 5; width: min(760px, calc(100% - 32px));
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 12px 18px;
+  font-weight: 700; font-size: clamp(15px, 2.4vw, 19px); letter-spacing: -.01em; text-align: center; animation: rise .6s ease both 1s;
+}
+.cap small { display: block; margin-top: 2px; font-weight: 500; font-size: 12.5px; color: var(--muted); }
+.ctl { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+.ctl button { font: 600 13px system-ui; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; }
+.ctl button:hover { border-color: var(--accent); } .ctl button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+@keyframes fadein { to { opacity: 1; } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes flow { to { stroke-dashoffset: -20; } }
+@media (prefers-reduced-motion: reduce) {
+  .card, .step, .cap { animation: none; opacity: 1; transform: none; }
+  .wire.draw { animation: none; stroke-dashoffset: 0; } .pulse { display: none; }
+}
+@media (max-width: 720px) { .cards { gap: 40px 24px; } .wrap { overflow-x: auto; } }
+@media print { .cap { position: static; } body { background: #fff; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1 id="title"></h1><p class="sub" id="subtitle"></p><span class="meta" id="meta" hidden></span></header>
+  <main class="stage" id="stage"></main>
+</div>
+<div class="cap" id="cap" role="status" aria-live="polite"><span id="captext"></span><div class="ctl" id="ctl" hidden>
+  <button type="button" id="prev">Prev</button><button type="button" id="replay">Replay</button><button type="button" id="next">Next</button></div></div>
+
+<script type="application/json" id="diagram">
+{
+  "kind": "architecture",
+  "title": "Example system",
+  "subtitle": "One line that says what this shows.",
+  "caption": "One sentence takeaway.",
+  "commit": "abc1234",
+  "nodes": [
+    { "id": "web", "label": "Web app", "type": "app", "note": "Next.js", "col": 1, "row": 1 },
+    { "id": "api", "label": "API", "type": "service", "note": "Express", "col": 2, "row": 1 },
+    { "id": "db", "label": "Postgres", "type": "store", "col": 3, "row": 1 }
+  ],
+  "edges": [
+    { "from": "web", "to": "api", "label": "HTTPS" },
+    { "from": "api", "to": "db", "label": "SQL" }
+  ]
+}
+</script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById('diagram').textContent);
+  var NS = 'http://www.w3.org/2000/svg', stage = document.getElementById('stage');
+  var $ = function (id) { return document.getElementById(id); };
+  var el = function (tag, cls, text, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; };
+  var sv = function (tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('title').textContent = D.title || ''; $('subtitle').textContent = D.subtitle || '';
+  if (D.commit) { $('meta').hidden = false; $('meta').textContent = 'commit ' + D.commit; }
+  $('captext').textContent = D.caption || '';
+
+  function defs(svg) {
+    var d = sv('defs', {}, svg);
+    ['arrow'].forEach(function (id) {
+      var m = sv('marker', { id: id, viewBox: '0 0 10 10', refX: '8', refY: '5', markerWidth: '8', markerHeight: '8', orient: 'auto-start-reverse' }, d);
+      sv('path', { d: 'M0 0L10 5L0 10z', 'class': 'arrow' }, m);
+    });
+  }
+
+  /* architecture + erd: cards on a grid, wires between them */
+  function grid(items, edges, isErd) {
+    var cards = el('div', 'cards', null, stage), svg = sv('svg', { 'class': 'wires', 'aria-hidden': 'true' }, stage);
+    defs(svg); stage.insertBefore(svg, cards);
+    var maxCol = 1, byId = {};
+    items.forEach(function (n, i) {
+      maxCol = Math.max(maxCol, n.col || 1);
+      var c = el('article', 'card ' + (n.type || (isErd ? 'store' : 'service')) + (n.verify ? ' verify' : ''), null, cards);
+      c.style.gridColumn = String(n.col || 1); c.style.gridRow = String(n.row || 1); c.style.setProperty('--i', i);
+      if (n.verify) el('span', 'badge', 'verify', c);
+      el('span', 'tag', isErd ? 'table' : (n.type || 'service'), c);
+      el('h2', null, n.label || n.name || n.id, c);
+      if (n.note) el('p', null, n.note, c);
+      if (isErd) {
+        var ul = el('ul', 'fields', null, c);
+        (n.fields || []).forEach(function (f) {
+          var li = el('li', null, null, ul);
+          el('span', 'k', f.key ? f.key.toUpperCase() : '', li); el('span', 'n', f.name, li); el('span', 't', f.type || '', li);
+        });
+      }
+      byId[n.id] = c;
+    });
+    cards.style.gridTemplateColumns = 'repeat(' + maxCol + ', minmax(190px, 1fr))';
+    function wires() {
+      while (svg.lastChild && svg.lastChild.tagName !== 'defs') svg.removeChild(svg.lastChild);
+      var box = stage.getBoundingClientRect(), pairCount = {};
+      var rect = function (c) { var r = c.getBoundingClientRect(); return { x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height }; };
+      edges.forEach(function (e, i) {
+        var a = byId[e.from], b = byId[e.to]; if (!a || !b) return;
+        var A = rect(a), B = rect(b), key = [e.from, e.to].sort().join('|'), k = pairCount[key] = (pairCount[key] || 0) + 1, off = (k - 1) * 18;
+        var dx = (B.x + B.w / 2) - (A.x + A.w / 2), dy = (B.y + B.h / 2) - (A.y + A.h / 2), p, q, c1, c2;
+        if (Math.abs(dx) * 0.6 >= Math.abs(dy)) {
+          var s = dx >= 0 ? 1 : -1; p = [A.x + (s > 0 ? A.w : 0), A.y + A.h / 2 + off]; q = [B.x + (s > 0 ? 0 : B.w), B.y + B.h / 2 + off];
+          var h = Math.abs(q[0] - p[0]) / 2; c1 = [p[0] + s * h, p[1]]; c2 = [q[0] - s * h, q[1]];
+        } else {
+          var t = dy >= 0 ? 1 : -1; p = [A.x + A.w / 2 + off, A.y + (t > 0 ? A.h : 0)]; q = [B.x + B.w / 2 + off, B.y + (t > 0 ? 0 : B.h)];
+          var v = Math.abs(q[1] - p[1]) / 2; c1 = [p[0], p[1] + t * v]; c2 = [q[0], q[1] - t * v];
+        }
+        var d = 'M' + p + ' C' + c1 + ' ' + c2 + ' ' + q;
+        var path = sv('path', { d: d, 'class': 'wire' + (reduce ? '' : ' draw') + (e.verify ? ' verify' : ''), pathLength: '1', 'marker-end': 'url(#arrow)' }, svg);
+        path.style.setProperty('--i', i);
+        if (e.dir === 'both') path.setAttribute('marker-start', 'url(#arrow)');
+        sv('path', { d: d, 'class': 'pulse' }, svg);
+        if (e.label) {
+          var mid = path.getPointAtLength(path.getTotalLength() / 2), g = sv('g', { 'class': 'pill' }, svg), tx = sv('text', { x: mid.x, y: mid.y }, g);
+          tx.textContent = e.label; var bb = tx.getBBox(); var r = sv('rect', { x: bb.x - 8, y: bb.y - 3, width: bb.width + 16, height: bb.height + 6, rx: 10 }, g); g.insertBefore(r, tx);
+        }
+      });
+    }
+    wires(); if (window.ResizeObserver) new ResizeObserver(wires).observe(stage); window.addEventListener('resize', wires);
+  }
+
+  /* flow: actors across the top, numbered messages down the page */
+  function flow() {
+    var actors = D.actors || [], steps = D.steps || [], W = Math.max(stage.clientWidth || 900, actors.length * 190), colW = W / Math.max(actors.length, 1);
+    var H = 120 + steps.length * 68 + 30, svg = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', role: 'img', 'aria-label': D.title || 'flow' }, stage);
+    svg.style.overflow = 'visible'; svg.style.display = 'block'; defs(svg);
+    var x = {}; actors.forEach(function (a, i) {
+      x[a.id] = colW * (i + 0.5); var g = sv('g', { 'class': 'lane' }, svg);
+      sv('line', { x1: x[a.id], x2: x[a.id], y1: 70, y2: H, 'class': 'life' }, g);
+      sv('rect', { x: x[a.id] - 78, y: 8, width: 156, height: 58, rx: 14, 'class': 'head' }, g);
+      sv('text', { x: x[a.id], y: 30, 'class': 'kind' }, g).textContent = a.type || 'actor';
+      sv('text', { x: x[a.id], y: 48, 'class': 'name' }, g).textContent = a.label || a.id;
+    });
+    var nodes = steps.map(function (s, i) {
+      var y = 120 + i * 68, g = sv('g', { 'class': 'step' + (s.fail ? ' fail' : '') + (s.verify ? ' verify' : ''), tabindex: '0' }, svg), x1 = x[s.from], x2 = x[s.to];
+      g.style.setProperty('--i', reduce ? 0 : i); if (reduce) g.style.animation = 'none', g.style.opacity = 1;
+      if (x1 === x2) { sv('path', { d: 'M' + x1 + ' ' + (y - 14) + ' h46 v28 h-46', 'class': 'msg', 'marker-end': 'url(#arrow)' }, g); }
+      else { var s1 = x2 > x1 ? 1 : -1; sv('path', { d: 'M' + (x1 + s1 * 4) + ' ' + y + ' L' + (x2 - s1 * 8) + ' ' + y, 'class': 'msg', 'marker-end': 'url(#arrow)' }, g); }
+      var mx = x1 === x2 ? x1 + 130 : (x1 + x2) / 2, pill = sv('g', { 'class': 'pill' }, g), t = sv('text', { x: mx, y: y - 16 }, pill);
+      t.textContent = s.label || ''; var bb = t.getBBox(); pill.insertBefore(sv('rect', { x: bb.x - 8, y: bb.y - 3, width: bb.width + 16, height: bb.height + 6, rx: 10 }, pill), t);
+      sv('circle', { cx: Math.min(x1, x2) - 22, cy: y, r: 11, 'class': 'num' }, g); sv('text', { x: Math.min(x1, x2) - 22, y: y, 'class': 'numt' }, g).textContent = String(i + 1);
+      if (s.fail) sv('text', { x: Math.max(x1, x2) + 14, y: y + 4, 'class': 'failtag' }, g).textContent = 'fails here';
+      g.addEventListener('click', function () { show(i); }); g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(i); } });
+      return g;
+    });
+    var cur = steps.length - 1, timer = null;
+    function show(i) {
+      cur = Math.max(0, Math.min(steps.length - 1, i));
+      nodes.forEach(function (n, j) { n.classList.toggle('future', j > cur); n.classList.toggle('on', j === cur); });
+      var s = steps[cur]; if (s) $('captext').textContent = (cur + 1) + '/' + steps.length + '  ' + (s.note || s.label || '');
+    }
+    function play() { clearInterval(timer); nodes.forEach(function (n) { n.style.animation = 'none'; n.style.opacity = '1'; }); var i = -1; show(0); timer = setInterval(function () { i++; if (i >= steps.length) { clearInterval(timer); return; } show(i); }, 1300); }
+    $('ctl').hidden = false; $('prev').onclick = function () { clearInterval(timer); show(cur - 1); }; $('next').onclick = function () { clearInterval(timer); show(cur + 1); }; $('replay').onclick = play;
+    if (D.caption) $('captext').textContent = D.caption;
+  }
+
+  if (D.kind === 'flow') flow();
+  else if (D.kind === 'erd') grid(D.entities || [], D.relations || [], true);
+  else grid(D.nodes || [], D.edges || [], false);
+})();
+</script>
+</body>
+</html>

@@ -3,7 +3,8 @@
 //        node check-checkpoint.mjs --hook   (PostToolUse: reads hook JSON on stdin)
 // Checks: checkpoint.md ≤ 40 lines (not counting ## Goal), rounds/*.md ≤ 100 lines,
 //         every [label] used has one definition, every definition is used, targets exist,
-//         spawns.tsv lines have 8 tab-separated columns and a pass|fail|blocked verdict.
+//         spawns.tsv lines have 8 tab-separated columns and a pass|fail|blocked verdict,
+//         and the ## Status items baseline:, infra:, budget:, diagrams: and cost-record: have a known value.
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,6 +22,15 @@ const stripCode = (text) => text.replace(/^(```|~~~)[^\n]*\n[\s\S]*?^\1[^\n]*$/g
 // ## Goal is copied verbatim and never summarized, so it does not count toward CHECKPOINT_MAX
 const GOAL = /^## Goal[^\n]*\n[\s\S]*?(?=^## |(?![\s\S]))/m;
 const lineCount = (text) => (text.endsWith('\n') ? text.split('\n').length - 1 : text.split('\n').length);
+
+// ## Status items that other steps read: key -> allowed value after "key:"
+const STATUS_ITEMS = {
+  baseline: /^(green|yellow|red)( .+)?$/i,
+  infra: /^(existing(:\s*\S.*)?|later|propose|not-needed)$/i,
+  budget: /^(ok|unlimited|accepted|cheaper|cut)$/i,
+  diagrams: /^\d+ published$/i,
+  'cost-record': /^(done|skipped( \(.+\))?)$/i,
+};
 
 export function checkTask(taskDir) {
   const errors = [];
@@ -61,6 +71,11 @@ export function checkTask(taskDir) {
   }
   const spawnsPath = join(taskDir, 'spawns.tsv');
   const status = cp.match(/^## Status[^\n]*\n([\s\S]*?)(?=^## |(?![\s\S]))/m)?.[1] ?? '';
+  for (const [key, re] of Object.entries(STATUS_ITEMS)) {
+    for (const m of status.matchAll(new RegExp(`(?:^|[\\s;·])${key}:[ \\t]*([^;·\\n]*)`, 'g'))) {
+      if (!re.test(m[1].trim())) errors.push(`checkpoint ## Status: "${key}: ${m[1].trim()}" is not a recognised value`);
+    }
+  }
   if (/\bclosed\b/.test(status) && !existsSync(spawnsPath)) errors.push('checkpoint is closed but spawns.tsv is missing (log every spawn; closing needs it for ## Usage and Lessons)');
   if (existsSync(spawnsPath)) {
     readFileSync(spawnsPath, 'utf8').split('\n').forEach((line, i) => {

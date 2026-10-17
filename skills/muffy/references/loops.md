@@ -5,6 +5,7 @@
 - **Smoke fail (3d)** → architect changes stack + ADR → smoke again; FE/BE wait
 - **Staging fail** → logs to the relevant dev → back to step 6
 - **UX/UI review finds `high` issues (3c, before the user is asked)** → findings to `designer` → republish → review again. Counts at loop point `3c:designer`, like a user's change request
+- **Budget: cheaper option or cut scope (`pause:budget`)** → reasons to `architect` (+ `product-manager` if scope is cut) → new contract and `Budget:` verdict → ask again if still `over`. Counts at loop point `3:architect`
 - **Design review: changes requested (3c)** → reasons to `designer` (+ `architect` if the contract is affected) → republish canvas → Definition of done again → ask the user again. FE/BE stay blocked
 - **Human reject** → reasons to the relevant agents → redo review + QA
 - **Production health fail** → devops rolls back; report to the user before anything else

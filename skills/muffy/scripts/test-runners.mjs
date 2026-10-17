@@ -7,13 +7,13 @@ const FILTER_FLAG = /^(-t|-g|-k|-m|--grep|--filter|--testNamePattern|--test-name
 const RUNNERS = [
   /^(?:npx\s+|pnpm\s+(?:exec\s+)?|yarn\s+(?:run\s+)?|bunx\s+)?(vitest|jest|mocha|ava|playwright\s+test|cypress\s+run|karma\s+start|tap)(\s.*)?$/,
   /^(?:python3?\s+-m\s+|uv\s+run\s+|poetry\s+run\s+)?(pytest|unittest|nose2|tox)(\s.*)?$/,
-  /^(go\s+test|cargo\s+test|cargo\s+nextest\s+run|dotnet\s+test|mvn\s+(?:\S+\s+)*?test|\.\/gradlew\s+test|gradle\s+test|rspec|phpunit|bundle\s+exec\s+rspec|make\s+test|mix\s+test|swift\s+test|deno\s+test|bun\s+test)(\s.*)?$/,
+  /^(go\s+test|cargo\s+test|cargo\s+nextest\s+run|dotnet\s+test|mvn\s+(?:\S+\s+)*?test|\.\/gradlew\s+test|gradle\s+test|rspec|phpunit|bundle\s+exec\s+rspec|make\s+test|mix\s+test|swift\s+test|deno\s+test|bun\s+test|flutter\s+test|xcodebuild\s+(?:\S+\s+)*?test|(?:\.[\\/])?gradlew(?:\.bat)?\s+(?:[:\w-]*:)?(?:test\w*|connected\w*|check)|maestro\s+test|detox\s+test)(\s.*)?$/,
 ];
 const TEST_SCRIPT = /^(test|e2e|ci|regression|verify)([:.-].*)?$/; // package-manager scripts that run tests
 const WIDE_SCRIPT = /^(test|test:all|test:e2e|test:ci|test:full|test:regression|e2e|ci|regression|verify)$/;
 const PM = /^(npm|pnpm|yarn|bun)\s+(?:run\s+)?([\w:.-]+)(\s.*)?$/;
-const E2E = /(^|[\s/\\])(e2e|cypress|playwright)([\s/\\.:-]|$)|\.e2e\./i;
-const INTEGRATION = /(^|[\s/\\])integration([\s/\\.:-]|$)|\.integration\./i;
+const E2E = /(^|[\s/\\])(e2e|cypress|playwright|detox|maestro|\.maestro|androidTest|\w*UITests)([\s/\\.:-]|$)|\.e2e\.|connected\w*(?:AndroidTest|Check)/i;
+const INTEGRATION = /(^|[\s/\\])(integration|integration_test)([\s/\\.:-]|$)|\.integration\./i;
 
 export const kindOf = (text) => (E2E.test(text) ? 'e2e' : INTEGRATION.test(text) ? 'integration' : 'unit');
 
@@ -35,8 +35,10 @@ export function parseSegment(seg, extra = []) {
     const m = seg.match(re);
     if (!m) continue;
     const args = m[2] ?? '';
-    const whole = m[1] === 'go test' ? /(^|\s)\.\/\.\.\.(\s|$)/.test(args) || !isScoped(args) : !isScoped(args);
-    return { whole, kind: /^(playwright|cypress)/.test(m[1]) ? 'e2e' : kindOf(args) };
+    const whole = m[1] === 'go test' ? /(^|\s)\.\/\.\.\.(\s|$)/.test(args) || !isScoped(args)
+      : m[1].startsWith('xcodebuild') ? !/(^|\s)-only-testing[:=]/.test(`${m[1]} ${args}`) // -scheme/-destination values are not test paths
+      : !isScoped(args);
+    return { whole, kind: /^(playwright|cypress)/.test(m[1]) ? 'e2e' : kindOf(`${m[1]} ${args}`) };
   }
   return null;
 }

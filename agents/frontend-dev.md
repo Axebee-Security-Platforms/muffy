@@ -38,6 +38,12 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 - [Coding Practices: Angular](references/frontend-dev/coding-practices-angular.md) - read when the codebase uses `@angular/core`
 - [Coding Practices: Solid/SolidStart](references/frontend-dev/coding-practices-solid.md) - read when the codebase uses `solid-js`
 - [Coding Practices: Astro](references/frontend-dev/coding-practices-astro.md) - read when the codebase uses `astro`
+- [Coding Practices: Flutter](references/frontend-dev/coding-practices-flutter.md) - read when the codebase has `pubspec.yaml`
+- [Coding Practices: React Native](references/frontend-dev/coding-practices-react-native.md) - read when the codebase uses `react-native` or `expo`
+- [Coding Practices: Swift (iOS/Mac)](references/frontend-dev/coding-practices-swift.md) - read when the codebase has `Package.swift` or an `.xcodeproj`
+- [Coding Practices: Kotlin (Android)](references/frontend-dev/coding-practices-kotlin.md) - read when the codebase has an Android Gradle project
+- [Coding Practices: Electron](references/frontend-dev/coding-practices-electron.md) - read when the codebase uses `electron`
+- [Coding Practices: Windows (.NET)](references/frontend-dev/coding-practices-windows.md) - read when the codebase has a WinUI, WPF, WinForms or MAUI `.csproj`
 - [PR Diagram](references/frontend-dev/pr-diagram.md) - draw changed files as a PR Lens diagram
 - [Fix Profile](references/frontend-dev/fix-profile.md) — diagnose-then-fix rules for the fix lane
 - [Quality Checks](references/frontend-dev/quality-checks.md) - pre-handoff verification checklist
@@ -58,6 +64,12 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [coding-practices-angular.md](references/frontend-dev/coding-practices-angular.md) | Only if the codebase uses `@angular/core`, right after coding-practices.md |
 | [coding-practices-solid.md](references/frontend-dev/coding-practices-solid.md) | Only if the codebase uses `solid-js`, right after coding-practices.md |
 | [coding-practices-astro.md](references/frontend-dev/coding-practices-astro.md) | Only if the codebase uses `astro`, right after coding-practices.md |
+| [coding-practices-flutter.md](references/frontend-dev/coding-practices-flutter.md) | Only if the codebase has `pubspec.yaml`, right after coding-practices.md |
+| [coding-practices-react-native.md](references/frontend-dev/coding-practices-react-native.md) | Only if the codebase uses `react-native` or `expo`, right after coding-practices.md (and the React file) |
+| [coding-practices-swift.md](references/frontend-dev/coding-practices-swift.md) | Only if the codebase has `Package.swift` or an `.xcodeproj`, right after coding-practices.md |
+| [coding-practices-kotlin.md](references/frontend-dev/coding-practices-kotlin.md) | Only if the codebase has an Android Gradle project, right after coding-practices.md |
+| [coding-practices-electron.md](references/frontend-dev/coding-practices-electron.md) | Only if the codebase uses `electron`, right after coding-practices.md (and the renderer framework's file) |
+| [coding-practices-windows.md](references/frontend-dev/coding-practices-windows.md) | Only if the codebase has a WinUI, WPF, WinForms or MAUI `.csproj`, right after coding-practices.md |
 | [output-format.md](references/frontend-dev/output-format.md) | Just before writing the first deliverable |
 | [pr-diagram.md](references/frontend-dev/pr-diagram.md) | When drawing the diagram, after tests pass and work is committed |
 | [quality-checks.md](references/frontend-dev/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |

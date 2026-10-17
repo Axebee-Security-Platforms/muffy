@@ -7,7 +7,7 @@ Run it after 3b publishes the canvas and after the designer's Definition of done
 ## Procedure
 
 1. **Skill present?** The `impeccable` skill must be available in the main session. Not installed → skip this review, write `ux-review: skipped (impeccable not installed)` in checkpoint `## Status`, and say so in the 3c question. Never block the gate on it
-2. **Open the canvas** at its Artifact URL (`canvas:` in checkpoint `## Status`) in the browser pane, at desktop width and at phone width (375px)
+2. **Open the canvas** at its Artifact URL (`canvas:` in checkpoint `## Status`) in the browser pane. `Platform: web` → desktop width and phone width (375px). `mobile` → the phone frame (375 × 812), plus tablet only if the AC names it. `desktop` → the window's min and default sizes from the AC, no phone frame ([platforms.md](platforms.md#routing)). Judge against the platform's own conventions (system navigation, native controls, touch target size) as well as the design system
 3. **Run the impeccable skill's critique and audit** on what renders, scoped to this task's artboards (every AC × state in `design.md`), against `docs/design-system/` tokens and components. Look at: visual hierarchy, layout and spacing, typography, colour and contrast in light and dark, phone-width behaviour, states (empty, loading, error), copy, and consistency between screens. Review only; never edit the canvas or `docs/design-system/` yourself
 4. **Write `.team/<task>/design-review-<n>.md`** (≤ 60 lines): one row per finding, `id · artboard · problem · severity (high | medium | low) · suggested fix`. `high` = blocks an AC, fails WCAG 2.2 AA, breaks at phone width, or contradicts the design system. Ids are `UX-<n>`, stable across rounds like blocker ids
 5. **Route on severity**:
