@@ -2,7 +2,13 @@
 
 **Default: no diagram.** A diagram costs tokens and goes stale. Draw one only when a trigger below fires and one sentence in the contract would not do. Never draw in the fix lane (the diagnosing dev may draw a `flow.html` there, see that lane's profile), or for a change that only adds a column, route, screen or copy.
 
-**One onboard exception:** in onboard mode, if the repo has no architecture diagram at all (no `docs/architecture/overview.html` or `.md`, and no Mermaid or image diagram linked from the README or `docs/`), write `docs/architecture/overview.html` once from `baseline.md`. High-level only: no ERD, no flows. Rules for it are in "Onboard overview" below. A repo that already has a diagram gets none: link the existing one in the ADR instead.
+**One onboard exception:** in onboard mode, if the repo has no architecture diagram (defined below), write `docs/architecture/overview.html` once from `baseline.md`. High-level only: no ERD, no flows. Rules for it are in "Onboard overview" below. A repo that already has one gets none: link the existing one in the ADR instead.
+
+**What counts as an existing architecture diagram.** Only a drawn picture of components and how they connect, found by looking in `docs/`, `docs/architecture/` and the README:
+- counts: `docs/architecture/overview.html`; a Mermaid/PlantUML/D2 block (```mermaid …) or `.mmd`/`.puml`/`.d2`/`.drawio` file showing components; an image (`.svg`/`.png`/`.jpg`) of an architecture or system diagram, linked from the README or `docs/`
+- does not count: a directory-tree listing or other ASCII file layout; a prose architecture document (`ARCHITECTURE.md`, `overview.md`) with no drawn diagram; a PDF or slide deck; ADRs; a diagram that is an ERD or a flow (those are not the overview)
+- Unsure whether something is a diagram: it does not count; write the overview and mention the doubt in the ADR as `[verify]`
+- Record in the brain note which file counted, or `existing diagram: none`
 
 | Diagram | File | `kind` | Draw only when |
 |---|---|---|---|

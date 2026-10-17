@@ -55,7 +55,7 @@ Do not restate baseline content in the block: it goes stale, the baseline carrie
 
 - Facts from files only. Unknown = `[verify]`, never a guess. No recommendations and no refactors: this is a record of what is, not a plan
 - `.env*` files are never opened. Env variable names come from code references or an example file the repo ships
-- Writes allowed, beyond the usual: researcher → `docs/architecture/baseline.md`; architect → `docs/adr/`, `docs/design-system/` and, only when the repo has no architecture diagram, `docs/architecture/overview.html`; orchestrator → the muffy block in `CLAUDE.md` / `AGENTS.md`, after 0d approval. Nothing else in the repo changes
+- Writes allowed, beyond the usual: researcher → `docs/architecture/baseline.md`; architect → `docs/adr/`, `docs/design-system/` and, only when the repo has no architecture diagram (as defined in [diagrams.md](../../../agents/references/architect/diagrams.md)), `docs/architecture/overview.html`; orchestrator → the muffy block in `CLAUDE.md` / `AGENTS.md`, after 0d approval. Nothing else in the repo changes
 - Existing `docs/adr/` records win: do not renumber, rewrite or contradict them. The new ADR is numbered after the latest and says "accepted: records the stack as found on `<date>`". If the repo already has ADRs covering the stack, link them instead of writing a duplicate
 - A design-system README lists tokens and components that exist in code; it invents none
 - Hand-off blocks use `"step": "0"` (see [handoff.schema.json](../schemas/handoff.schema.json))
