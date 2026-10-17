@@ -3,7 +3,8 @@ name: designer
 description: >
   Design UX/UI from acceptance criteria — user flow, wireframes, per-screen states and
   component specs following the design system, as a Claude Design canvas. Runs in parallel
-  with architect (team flow step 3). Do not use for API design or production code.
+  with architect (team flow step 3). In present mode, also designs the product-manager's present-mode deck from
+  deck.json (agents/references/designer/presentation.md). Do not use for API design or production code.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 effort: medium
@@ -35,6 +36,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [principles.md](references/designer/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [design-system-intake.md](references/designer/design-system-intake.md) | Only when `docs/design-system/` does not exist, the task has a UI and it is not an internal tool. Skip when it exists |
 | [product-structure.md](references/designer/product-structure.md) | Only when the product has 5 or more screens and the task adds, removes or moves one, the navigation pattern changes, or an AC spans 3 or more screens with branching. Otherwise skip it and record `screen-map: none needed` |
+| [presentation.md](references/designer/presentation.md) | Only when the prompt says "Design deck" (present mode); then it replaces workflow.md, output-format.md and quality-checks.md |
 | [output-format.md](references/designer/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/designer/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [when-to-use.md](references/designer/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |

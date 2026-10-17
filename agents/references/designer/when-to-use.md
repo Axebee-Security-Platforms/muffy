@@ -10,3 +10,7 @@ Do not use this agent when:
 
 - The task is API/schema design (use architect)
 - The task is writing production code (use frontend-dev)
+
+**Present mode: designing a deck.** After the requester confirms the product-manager's outline and the product-manager writes `deck.json`, the Orchestrator spawns this agent with "Design deck: `<output folder>`" to build `deck.html` ([presentation.md](presentation.md)). The "do not use" list above does not apply.
+
+**Exception: a present-mode doc request.** The Orchestrator may spawn this agent to fill one named section of a document it owns, so the product-manager can build a deck in present mode. Then the "do not use" list above does not apply; follow [doc-request.md](../../../skills/muffy/references/doc-request.md): write only that section, from what the repo holds, and turn anything you cannot source into a question.

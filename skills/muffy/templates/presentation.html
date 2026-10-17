@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DECK TITLE</title>
-<!-- muffy presentation template. Copy verbatim and change ONLY <title>, the #theme style and the JSON in #deck. Spec: agents/references/presenter/slide-types.md -->
+<!-- muffy presentation template. Copy verbatim and change ONLY <title>, the #theme style and the JSON in #deck. Spec: agents/references/product-manager/present/slide-types.md -->
 <style>
 :root {
   --paper: #eef0f4; --slide: #ffffff; --ink: #141821; --muted: #5d6778; --line: #dde1e8; --soft: #f4f6f9;
@@ -42,11 +42,14 @@ body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.45 v
   background-size: 10% 17.78%, 10% 17.78%, 2.5% 4.445%, 2.5% 4.445%;
 }
 .slide.has-cap { padding-bottom: clamp(48px, 11%, 120px); }
-/* background by audience (agents/references/presenter/visual-style.md): blueprint grid (default), plain surface, or a soft accent wash */
+/* background by audience (agents/references/designer/presentation.md): blueprint grid (default), plain surface, or a soft accent wash */
 [data-bg="plain"] .slide { background-image: none; }
 [data-bg="soft"] .slide { background-image: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%), radial-gradient(90% 80% at 0% 100%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 55%); }
 .slide::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--accent); }
 .num { position: absolute; right: 3%; bottom: 3.5%; font-size: 1.3cqw; color: var(--muted); }
+.kicker { font: 600 1.25cqw/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: .8cqw; margin-bottom: 1cqw; }
+.kicker::before { content: ""; width: 2.4cqw; height: 3px; background: var(--accent); }
+h1 em, h2 em { font-style: normal; color: var(--accent); }
 h2 { font-size: 3.4cqw; line-height: 1.15; margin: 0 0 3.5cqw; letter-spacing: -.01em; max-width: 90%; }
 .body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; font-size: 1.9cqw; }
 .takeaway { margin-top: 2.5cqw; padding: 1.2cqw 1.8cqw; background: var(--soft); border-left: 4px solid var(--accent); border-radius: 6px; font-weight: 600; }
@@ -124,6 +127,31 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
 .t-statement h2 { font-size: 5cqw; line-height: 1.12; letter-spacing: -.02em; max-width: 85%; margin: 0; }
 .t-statement .body { flex: 0; margin-top: 3cqw; }
 .support { font-size: 2.2cqw; color: var(--muted); max-width: 70%; }
+/* features: a grid of 3-10 floating cards; columns follow the count */
+.feat { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 1.6cqw; }
+.fc { background: var(--slide); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 1.6cqw 1.8cqw; position: relative; overflow: hidden; }
+.fc::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+.fc i { display: block; font-style: normal; font: 600 1.15cqw/1.4 ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin-bottom: .4cqw; }
+.fc b { display: block; font-size: 1.8cqw; line-height: 1.25; }
+.fc span { display: block; font-size: 1.4cqw; color: var(--muted); margin-top: .5cqw; line-height: 1.35; }
+.feat.dense .fc { padding: 1.1cqw 1.3cqw; } .feat.dense .fc b { font-size: 1.55cqw; } .feat.dense .fc span { font-size: 1.2cqw; }
+/* grouped steps: one row per group, numbering runs on */
+.sgroups { display: grid; gap: 1.6cqw; }
+.sg { display: grid; grid-template-columns: 14% 1fr; gap: 1.6cqw; align-items: start; }
+.sg > h3 { margin: 2.4cqw 0 0; font-size: 1.5cqw; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+.sgroups .steps::before { top: 2cqw; }
+.sgroups .stp { padding: 3cqw 1.2cqw 1.1cqw; margin-top: 2cqw; }
+.sgroups .stp .n { top: -2cqw; width: 4cqw; height: 4cqw; font-size: 1.8cqw; }
+.sgroups .stp b { font-size: 1.5cqw; } .sgroups .stp span { font-size: 1.2cqw; }
+/* narration: the read-alone voice-over, shown as a fixed caption under the controls */
+.ctrl { position: fixed; right: 16px; bottom: 16px; z-index: 10; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.ctrl button { font: 600 13px/1 var(--font); padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--slide); color: var(--ink); box-shadow: var(--shadow); cursor: pointer; }
+.ctrl button[aria-pressed="true"] { background: var(--accent); color: var(--slide); border-color: var(--accent); }
+.ctrl button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctrl .pos { font: 600 13px/1 var(--font); padding: 8px 10px; color: var(--muted); align-self: center; }
+.narr { position: fixed; left: 0; right: 0; bottom: 64px; margin: 0 auto; width: min(760px, calc(100% - 32px)); z-index: 9; background: var(--slide); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 12px 18px; font-weight: 600; font-size: clamp(14px, 2vw, 18px); text-align: center; }
+.narr:empty, .narr[hidden] { display: none; }
+.hide-ui .ctrl button:not(.show), .hide-ui .ctrl .pos { display: none; }
 /* lower-third caption: one bold sentence on a floating card */
 .cap { position: absolute; left: 0; right: 0; bottom: 4%; margin: 0 auto; width: fit-content; max-width: 72%; background: var(--slide); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 1cqw 2.2cqw; font-weight: 700; font-size: 1.9cqw; letter-spacing: -.01em; text-align: center; }
 /* motion: only when the page adds .anim (motion allowed, IntersectionObserver present); otherwise everything is static and visible */
@@ -156,6 +184,7 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
   .slide { box-shadow: none; border-radius: 0; width: 100vw; height: 100vh; aspect-ratio: auto; break-after: page; }
   .anim .slide, .anim .fx, .anim .bar, .anim .cap, .anim .tl::before { opacity: 1 !important; transform: none !important; animation: none !important; }
   .anim .wire { stroke-dashoffset: 0 !important; animation: none !important; } .wire-pulse { display: none; }
+  .ctrl, .narr { display: none !important; }
 }
 </style>
 <style id="theme">
@@ -179,6 +208,8 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
 (() => {
   const root = document.getElementById('root');
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
+  // *word* in a headline is the accent: split, never parsed as HTML
+  const head = (tag, t) => { const h = el(tag); String(t || '').split('*').forEach((part, i) => h.append(i % 2 ? el('em', '', part) : document.createTextNode(part))); return h; };
   const NS = 'http://www.w3.org/2000/svg';
   const sv = (tag, attrs, txt) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (txt !== undefined) e.textContent = txt; return e; };
   const COLORS = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)'];
@@ -282,7 +313,7 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
   const R = {
     title(s, sec) {
       sec.classList.add('t-title');
-      sec.append(el('h1', '', s.headline), el('div', 'sub', s.subtitle || ''));
+      sec.append(head('h1', s.headline), el('div', 'sub', s.subtitle || ''));
       const m = el('div', 'meta'); if (s.client) m.append(el('span', '', s.client)); if (s.date) m.append(el('span', '', s.date)); sec.append(m);
       return null;
     },
@@ -310,8 +341,18 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
     },
     section(s, sec) { if (s.number !== undefined) sec.append(el('div', 'secnum', String(s.number).padStart(2, '0'))); return null; },
     steps(s) {
-      const w = el('div', 'steps');
-      (s.steps || []).forEach((x, i) => { const c = el('div', 'stp'); c.append(el('div', 'n', String(i + 1)), el('b', '', x.label)); if (x.detail) c.append(el('span', '', x.detail)); w.append(c); });
+      let k = 0;
+      const row = (list) => { const w = el('div', 'steps'); list.forEach((x) => { const c = el('div', 'stp'); c.append(el('div', 'n', String(++k)), el('b', '', x.label)); if (x.detail) c.append(el('span', '', x.detail)); w.append(c); }); return w; };
+      if (!s.groups) return row(s.steps || []);
+      const g = el('div', 'sgroups');
+      s.groups.forEach((x) => { const r = el('div', 'sg'); r.append(el('h3', '', x.label), row(x.steps || [])); g.append(r); });
+      return g;
+    },
+    features(s) {
+      const items = s.items || [], n = items.length;
+      const w = el('div', 'feat' + (n > 6 ? ' dense' : ''));
+      w.style.setProperty('--cols', n <= 4 ? n : n <= 6 ? 3 : n <= 8 ? 4 : 5);
+      items.forEach((x) => { const c = el('div', 'fc'); if (x.tag) c.append(el('i', '', x.tag)); c.append(el('b', '', x.title)); if (x.text) c.append(el('span', '', x.text)); w.append(c); });
       return w;
     },
     statement(s) { return s.support ? el('div', 'support', s.support) : null; },
@@ -339,7 +380,8 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
     sec.setAttribute('aria-label', `Slide ${i + 1}`);
     const r = R[s.type];
     if (!r) { sec.append(el('div', 'err', `unknown slide type: ${s.type}`)); root.append(sec); return; }
-    if (s.type !== 'title') sec.append(el('h2', '', s.headline));
+    if (s.kicker) sec.append(el('div', 'kicker', s.kicker));
+    if (s.type !== 'title') sec.append(head('h2', s.headline));
     const body = el('div', 'body'); const out = r(s, sec);
     if (out) { body.append(out); sec.append(body); }
     const ft = footOf(s); if (ft) sec.append(el('div', 'foot', ft));
@@ -347,7 +389,7 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
     sec.append(el('div', 'num', String(i + 1)));
     // floating cards rise in one after another; svg parts set their own order
     let n = 0;
-    sec.querySelectorAll('.secnum, h1, h2, .support, .stp, .sub, .meta, .bul li, ol.agenda li, .takeaway, .ev, .col, .card, .mv, .cmp tr, blockquote, .by, .ask, .contact, .legend').forEach((x) => { x.classList.add('fx'); x.style.setProperty('--i', n++); });
+    sec.querySelectorAll('.secnum, .kicker, h1, h2, .support, .sg > h3, .stp, .fc, .sub, .meta, .bul li, ol.agenda li, .takeaway, .ev, .col, .card, .mv, .cmp tr, blockquote, .by, .ask, .contact, .legend').forEach((x) => { x.classList.add('fx'); x.style.setProperty('--i', n++); });
     root.append(sec);
   });
 
@@ -368,6 +410,37 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
     else if (k === 'f' && document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen().catch(() => {}); return; }
     if (to !== null) { e.preventDefault(); slides[to].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   });
+
+  // narration: a read-alone deck carries its own voice-over; Auto-play advances by each slide's duration
+  const voiced = (deck.slides || []).some((s) => s.narration);
+  if (voiced && slides.length) {
+    const narr = el('div', 'narr'); narr.setAttribute('role', 'status'); narr.setAttribute('aria-live', 'polite');
+    const bar = el('div', 'ctrl'), pos = el('span', 'pos');
+    const btn = (label, pressed) => { const b = el('button', '', label); b.type = 'button'; if (pressed !== undefined) b.setAttribute('aria-pressed', String(pressed)); bar.append(b); return b; };
+    const prev = btn('‹'), next = btn('›'); bar.prepend(pos);
+    const play = btn('Auto-play', false), caps = btn('Captions', true), full = btn('Fullscreen'), hide = btn('Hide UI', false);
+    hide.classList.add('show');
+    document.body.append(narr, bar);
+    let at = -1, timer = null;
+    const show = () => {
+      const i = current();
+      if (i !== at) { at = i; narr.textContent = caps.getAttribute('aria-pressed') === 'true' ? (deck.slides[i]?.narration || '') : ''; pos.textContent = `${i + 1} / ${slides.length}`; }
+    };
+    const go = (i) => slides[Math.max(0, Math.min(slides.length - 1, i))].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const tick = () => {
+      clearTimeout(timer);
+      if (play.getAttribute('aria-pressed') !== 'true') return;
+      const i = current(), d = Number(deck.slides[i]?.duration) || 10;
+      timer = setTimeout(() => { if (i < slides.length - 1) { go(i + 1); setTimeout(tick, 900); } else play.setAttribute('aria-pressed', 'false'); }, d * 1000);
+    };
+    prev.onclick = () => go(current() - 1); next.onclick = () => go(current() + 1);
+    play.onclick = () => { play.setAttribute('aria-pressed', String(play.getAttribute('aria-pressed') !== 'true')); tick(); };
+    caps.onclick = () => { caps.setAttribute('aria-pressed', String(caps.getAttribute('aria-pressed') !== 'true')); at = -1; show(); };
+    full.onclick = () => { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); };
+    hide.onclick = () => { const on = !document.body.classList.contains('hide-ui'); document.body.classList.toggle('hide-ui', on); hide.setAttribute('aria-pressed', String(on)); hide.textContent = on ? 'Show UI' : 'Hide UI'; };
+    addEventListener('scroll', show, { passive: true });
+    show();
+  }
 })();
 </script>
 </body>

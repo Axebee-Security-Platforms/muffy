@@ -29,14 +29,14 @@ Read this only when the deck compares numbers.
 
 ## Highlight and note
 
-When the headline points at one bar, point or category, say so on the chart too: mute everything, then colour only that mark (Storytelling with Data).
+When the headline points at one bar, point or category, mark it as the chart's `highlight` so the designer can make it the one thing the eye lands on (Storytelling with Data).
 
 ```json
 "highlight": { "category": "After", "series": "Tickets" },
 "note": { "at": "After", "text": "Sign-in launched", "source": "release-notes.md#Changes" }
 ```
 
-- One `highlight` at most; every other mark renders muted. `series` is required when the chart has several
+- One `highlight` at most. `series` is required when the chart has several
 - The headline must name the highlighted category (the checker compares the text). If the headline is about the whole pattern ("all regions grew"), don't highlight
 - One `note` at most, ≤ 60 characters, pinned to `at` (defaults to the highlight). A number or date in it needs `note.source`
 - Never highlight to pull the eye away from an unfavourable series; the honesty rules below still apply
@@ -44,7 +44,7 @@ When the headline points at one bar, point or category, say so on the chart too:
 ## Honesty rules
 
 - Compare like with like: same unit, same period length, same definition. If the sources differ, say so in `notes` and in a footnote, or don't compare
-- Bar axes start at zero. Never crop an axis to make a gap look bigger
+- Values are absolute amounts ≥ 0, so a chart can start at zero; never pass a trimmed range that makes a gap look bigger
 - No forecasts, targets or "projected" values unless a source states them — and label them as such
 - Use every relevant data point, not the ones that flatter the story
 - The headline states what the data shows, no more. "Fell 40%" is fine; "Users love it" from a ticket count is not

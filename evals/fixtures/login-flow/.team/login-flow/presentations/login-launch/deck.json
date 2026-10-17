@@ -15,25 +15,55 @@
   "slides": [
     {
       "type": "title",
-      "headline": "Signing in is here",
+      "headline": "Signing in is *here*",
       "subtitle": "Your own account, your own dashboard",
       "client": "Acme app users",
-      "date": "2026-10-17"
+      "date": "2026-10-17",
+      "narration": "Signing in is here. Your account now keeps your own dashboard.",
+      "duration": 8
     },
     {
       "type": "bullets",
-      "headline": "You can now sign in with your email and password",
+      "headline": "You can now sign in with your email and *password*",
       "items": [
         "Sign in once and land straight on your dashboard",
         "Works on your phone without sideways scrolling",
         "Repeated wrong passwords are slowed down to protect you"
       ],
       "takeaway": "Nothing to install: use the Sign in button",
-      "source": "ac.md#Acceptance criteria"
+      "source": "ac.md#Acceptance criteria",
+      "narration": "Use your email and password. It works on your phone too.",
+      "duration": 9,
+      "kicker": "What changes"
+    },
+    {
+      "type": "features",
+      "headline": "Your account gives you *three things*",
+      "items": [
+        {
+          "tag": "Dashboard",
+          "title": "Your own dashboard",
+          "text": "Land on it straight after you sign in"
+        },
+        {
+          "tag": "Phone",
+          "title": "Works on any screen",
+          "text": "No sideways scrolling on a phone"
+        },
+        {
+          "tag": "Safety",
+          "title": "Guarded sign-in",
+          "text": "Repeated wrong passwords are slowed down"
+        }
+      ],
+      "source": "ac.md#Acceptance criteria",
+      "narration": "Three things come with your account: a dashboard, any screen, and a guarded sign-in.",
+      "duration": 9,
+      "kicker": "Your account"
     },
     {
       "type": "diagram",
-      "headline": "How signing in works",
+      "headline": "How signing in *works*",
       "nodes": [
         {
           "id": "you",
@@ -58,22 +88,28 @@
           "to": "dash"
         }
       ],
-      "caption": "One step, then you are in"
+      "caption": "One step, then you are in",
+      "narration": "Enter your details, we check them, and your dashboard opens.",
+      "duration": 9,
+      "kicker": "How it works"
     },
     {
       "type": "metric",
-      "headline": "Your account is guarded after 5 wrong tries",
+      "headline": "Your account is guarded after *5 wrong tries*",
       "values": [
         {
           "value": "5",
           "label": "wrong tries in a minute before we pause sign-in",
           "source": "ac.md#Acceptance criteria"
         }
-      ]
+      ],
+      "narration": "After five wrong tries in a minute, we pause sign-in to protect you.",
+      "duration": 10,
+      "kicker": "Safety"
     },
     {
       "type": "chart",
-      "headline": "Account-access requests fell 40% after launch",
+      "headline": "Account-access requests fell *40%* after launch",
       "kind": "before-after",
       "unit": "tickets / week",
       "categories": [
@@ -97,11 +133,14 @@
       "note": {
         "at": "After",
         "text": "Sign-in launched"
-      }
+      },
+      "narration": "Account-access requests fell after launch, from 120 to 72 a week.",
+      "duration": 10,
+      "kicker": "Since launch"
     },
     {
       "type": "steps",
-      "headline": "Getting in takes three steps",
+      "headline": "Getting in takes *three steps*",
       "steps": [
         {
           "label": "Open the app"
@@ -114,16 +153,21 @@
           "label": "Enter your email and password"
         }
       ],
-      "source": "ac.md#Acceptance criteria"
+      "source": "ac.md#Acceptance criteria",
+      "narration": "Three steps get you in: open the app, press Sign in, enter your details.",
+      "duration": 10,
+      "kicker": "Get started"
     },
     {
       "type": "cta",
       "kind": "act",
-      "headline": "Try it today",
+      "headline": "Try it *today*",
       "ask": "Sign in with the email you registered",
       "next": [
         "Need help? Reply to this message"
-      ]
+      ],
+      "narration": "Sign in today with the email you registered.",
+      "duration": 7
     }
   ]
 }

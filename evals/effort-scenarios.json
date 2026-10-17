@@ -7,7 +7,6 @@
   { "id": "backend-one-round-not-stalled", "role": "backend-dev", "signals": { "stalledRounds": 1 }, "expect": "medium" },
   { "id": "net-move-capped-at-one-level", "role": "researcher", "signals": { "assumedAc": true, "stalledRounds": 3 }, "expect": "medium" },
   { "id": "raise-and-exact-fix-cancel", "role": "backend-dev", "signals": { "assumedAc": true, "exactFix": true }, "expect": "medium" },
-  { "id": "presenter-default", "role": "presenter", "signals": {}, "expect": "low" },
   { "id": "high-impact-forces-high", "role": "docs-writer", "signals": { "highImpact": true, "exactFix": true }, "expect": "high" },
   { "id": "reviewer-never-lowered-in-production", "role": "code-reviewer", "signals": { "exactFix": true }, "expect": "high" },
   { "id": "architect-never-lowered-in-production", "role": "architect", "mode": "production", "signals": { "exactFix": true }, "expect": "high" },

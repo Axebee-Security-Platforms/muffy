@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// PreToolUse guard: limits Bash for the doc agents (architect, designer, product-manager, docs-writer, researcher, presenter)
+// PreToolUse guard: limits Bash for the doc agents (architect, designer, product-manager, docs-writer, researcher)
 // to the muffy validators and checkers and read-only git (references/hooks-enforcement.md §9).
 // Hook JSON arrives on stdin. Exit 2 = block (stderr is shown to the agent), 0 = allow.
 // Only subagent calls are guarded: the hook payload names the subagent in `agent_type`; a call with no
 // `agent_type` is the Orchestrator's own session and is never blocked. Other roles are left to their own rules.
 import { readFileSync } from 'node:fs';
 
-const GUARDED = new Set(['architect', 'designer', 'product-manager', 'docs-writer', 'researcher', 'presenter']);
+const GUARDED = new Set(['architect', 'designer', 'product-manager', 'docs-writer', 'researcher']);
 const NODE_CHECK = /^node\s+(?:\.claude[\\/])?skills[\\/]muffy[\\/]scripts[\\/](?:validate-handoff|check-artifacts|check-checkpoint|check-diagram|check-stack-notes|check-presentation)\.mjs(?:\s+\S+)*$/;
 const GIT_READ = /^git\s+(?:status|diff|log|show)(?:\s+\S+)*$/;
 const GIT_WRITES = /--output|--ext-diff|--textconv|-c\s|--exec-path|--git-dir|--work-tree/; // flags that write files or run programs

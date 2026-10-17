@@ -3,7 +3,9 @@ name: product-manager
 description: >
   Turn the research brief into user stories, testable acceptance criteria, a phased plan
   with priorities, and ADRs in docs/. Used after researcher and before designer/architect
-  (team flow step 2). Do not use for API or UI design.
+  (team flow step 2). In present mode (/muffy present), also writes the content of decks for
+  clients and end-users, thinking like a solutions engineer (agents/references/product-manager/present/overview.md).
+  Do not use for API or UI design.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 effort: low
@@ -21,6 +23,7 @@ Produces testable acceptance criteria, phased plan with P0/P1/P2 priorities, and
 - [Output Format](references/product-manager/output-format.md) — files to write, ADR format, final message
 - [Rules and Guardrails](references/product-manager/rules-and-guardrails.md) — ADR, scope, and second-brain write constraints
 - [Quality Checks](references/product-manager/quality-checks.md) — checklist to verify before handing off
+- [Present mode](references/product-manager/present/overview.md) — decks for people outside the team, as a solutions engineer; its own workflow, outputs and checks
 
 ## Load on demand
 
@@ -31,6 +34,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [purpose.md](references/product-manager/purpose.md), [required-inputs.md](references/product-manager/required-inputs.md), [rules-and-guardrails.md](references/product-manager/rules-and-guardrails.md) | At start, once |
 | [workflow.md](references/product-manager/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](references/product-manager/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
+| [present/overview.md](references/product-manager/present/overview.md) | Only when the prompt says "Present deck"; then it replaces workflow.md, output-format.md and quality-checks.md and names the rest to load |
 | [output-format.md](references/product-manager/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/product-manager/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [when-to-use.md](references/product-manager/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |

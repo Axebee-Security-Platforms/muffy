@@ -4,168 +4,153 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Signing in is here</title>
-<!-- muffy presentation template. Copy verbatim and change ONLY <title>, the #theme style and the JSON in #deck. Spec: agents/references/presenter/slide-types.md -->
+<!-- muffy presentation stage. The designer's starting frame: a 1920x1080 stage scaled to the window, one slide at a time.
+     Keep: the frame (viewport, stage, sheet, ticks, progress, caption, controls), the #deck JSON (a copy of deck.json) and the script.
+     Change freely: the tokens (from docs/design-system/tokens.css), fonts, and everything inside each <section class="slide">.
+     Spec: agents/references/designer/presentation.md -->
+<!-- FONTS: only the families the design system names, e.g.
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=...&display=swap" rel="stylesheet"> -->
 <style>
 :root {
-  --paper: #eef0f4; --slide: #ffffff; --ink: #141821; --muted: #5d6778; --line: #dde1e8; --soft: #f4f6f9;
-  --accent: #2f6df6; --good: #0f9d73; --warn: #c77700;
-  --s1: #2f6df6; --s2: #0f9d73; --s3: #c77700; --s4: #7c4dff;
-  --shadow: 0 1px 2px rgba(20, 30, 50, .06), 0 10px 30px rgba(20, 30, 50, .10);
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", sans-serif; --radius: 14px;
+  --paper: #f5f7f6; --grid: #d5dfef; --grid-major: #b7c7e2;
+  --ink: #0e1d3b; --muted: #566987; --accent: #0b7a5c; --accent-soft: #dcf5ea;
+  --card: #ffffff; --card-line: #c9d6ee; --good: #0f7a55; --good-soft: #dcf5ea; --bad: #c2410c; --bad-soft: #ffe9df;
+  --shadow: 0 18px 40px -14px rgba(20, 40, 90, .28), 0 2px 6px rgba(20, 40, 90, .08);
+  --font-d: "Inter", system-ui, sans-serif; --font-b: "Inter", system-ui, sans-serif; --font-m: ui-monospace, Consolas, monospace;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #0c0f14; --slide: #161b24; --ink: #eef1f6; --muted: #9aa5b8; --line: #2b3240; --soft: #1d2430;
-    --accent: #6d9bff; --good: #3ed1a0; --warn: #f0a33a;
-    --s1: #6d9bff; --s2: #3ed1a0; --s3: #f0a33a; --s4: #a58bff;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .45);
-  }
-}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0b1736; --grid: #16294f; --grid-major: #223c70; --ink: #eaf0ff; --muted: #9fb1d6; --accent: #7b9bff; --accent-soft: #17275a;
+  --card: #12234d; --card-line: #2b4685; --good: #4fd6a0; --good-soft: #12352f; --bad: #ff9a66; --bad-soft: #3a2230;
+  --shadow: 0 18px 40px -14px rgba(0, 0, 0, .6), 0 2px 6px rgba(0, 0, 0, .3); } }
 :root[data-theme="dark"] {
-  --paper: #0c0f14; --slide: #161b24; --ink: #eef1f6; --muted: #9aa5b8; --line: #2b3240; --soft: #1d2430;
-  --accent: #6d9bff; --good: #3ed1a0; --warn: #f0a33a;
-  --s1: #6d9bff; --s2: #3ed1a0; --s3: #f0a33a; --s4: #a58bff;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .45);
-}
+  --paper: #0b1736; --grid: #16294f; --grid-major: #223c70; --ink: #eaf0ff; --muted: #9fb1d6; --accent: #7b9bff; --accent-soft: #17275a;
+  --card: #12234d; --card-line: #2b4685; --good: #4fd6a0; --good-soft: #12352f; --bad: #ff9a66; --bad-soft: #3a2230;
+  --shadow: 0 18px 40px -14px rgba(0, 0, 0, .6), 0 2px 6px rgba(0, 0, 0, .3); }
 * { box-sizing: border-box; }
-html { scroll-snap-type: y proximity; }
-body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.45 var(--font); padding: 24px 16px 64px; }
-.deck { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
-/* blueprint grid paper, the same surface as templates/diagram.html; tinted from --ink so a theme carries it */
-.slide {
-  --grid: color-mix(in srgb, var(--ink) 5%, transparent); --grid-major: color-mix(in srgb, var(--ink) 10%, transparent);
-  scroll-snap-align: center; aspect-ratio: 16 / 9; border-radius: var(--radius); box-shadow: var(--shadow); padding: clamp(18px, 4.5%, 56px);
-  display: flex; flex-direction: column; position: relative; overflow: hidden; container-type: inline-size;
-  background-color: var(--slide);
-  background-image: linear-gradient(var(--grid-major) 1px, transparent 1px), linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
-    linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 10% 17.78%, 10% 17.78%, 2.5% 4.445%, 2.5% 4.445%;
-}
-.slide.has-cap { padding-bottom: clamp(48px, 11%, 120px); }
-/* background by audience (agents/references/presenter/visual-style.md): blueprint grid (default), plain surface, or a soft accent wash */
-[data-bg="plain"] .slide { background-image: none; }
-[data-bg="soft"] .slide { background-image: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%), radial-gradient(90% 80% at 0% 100%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 55%); }
-.slide::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--accent); }
-.num { position: absolute; right: 3%; bottom: 3.5%; font-size: 1.3cqw; color: var(--muted); }
-h2 { font-size: 3.4cqw; line-height: 1.15; margin: 0 0 3.5cqw; letter-spacing: -.01em; max-width: 90%; }
-.body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; font-size: 1.9cqw; }
-.takeaway { margin-top: 2.5cqw; padding: 1.2cqw 1.8cqw; background: var(--soft); border-left: 4px solid var(--accent); border-radius: 6px; font-weight: 600; }
-.foot { margin-top: auto; padding-top: 1.5cqw; font-size: 1.1cqw; color: var(--muted); }
-ul.bul { margin: 0; padding-left: 1.2em; display: grid; gap: 1.4cqw; }
-/* title */
-.t-title { justify-content: center; }
-.t-title h1 { font-size: 5.6cqw; line-height: 1.05; margin: 0 0 2cqw; letter-spacing: -.02em; max-width: 85%; }
-.t-title .sub { font-size: 2.4cqw; color: var(--muted); max-width: 75%; }
-.t-title .meta { margin-top: 5cqw; font-size: 1.6cqw; color: var(--muted); display: flex; gap: 3cqw; }
-/* agenda */
-ol.agenda { margin: 0; padding: 0; list-style: none; counter-reset: a; display: grid; gap: 1.6cqw; }
-ol.agenda li { counter-increment: a; display: flex; align-items: baseline; gap: 2cqw; font-size: 2.3cqw; }
-ol.agenda li::before { content: counter(a, decimal-leading-zero); color: var(--accent); font-weight: 700; font-size: 1.8cqw; min-width: 3cqw; }
-/* timeline */
-.tl { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: relative; padding-top: 3cqw; }
-.tl::before { content: ""; position: absolute; left: 0; right: 0; top: 4.1cqw; height: 3px; background: var(--line); }
-.ev { position: relative; padding: 4cqw 1cqw 0 0; }
-.ev::before { content: ""; position: absolute; top: .4cqw; left: 0; width: 1.8cqw; height: 1.8cqw; border-radius: 50%; background: var(--slide); border: 3px solid var(--muted); }
-.ev.done::before { background: var(--good); border-color: var(--good); }
-.ev.next::before { border-color: var(--accent); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent); }
-.ev .d { font-size: 1.4cqw; color: var(--muted); font-weight: 600; }
-.ev .l { font-size: 1.7cqw; margin-top: .6cqw; }
-/* roadmap */
-.rm { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 1.8cqw; height: 100%; }
-.col { background: var(--soft); border-radius: 10px; padding: 1.6cqw; display: flex; flex-direction: column; gap: 1.2cqw; }
-.col h3 { margin: 0 0 .4cqw; font-size: 1.6cqw; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
-.card { background: var(--slide); border: 1px solid var(--line); border-radius: 8px; padding: 1.1cqw 1.3cqw; box-shadow: var(--shadow); }
-.card b { display: block; font-size: 1.7cqw; }
-.card span { display: block; font-size: 1.4cqw; color: var(--muted); margin-top: .3cqw; }
-/* comparison */
-table.cmp { width: 100%; border-collapse: collapse; font-size: 1.7cqw; }
-.cmp th, .cmp td { padding: 1.1cqw 1.4cqw; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-.cmp thead th { font-size: 1.9cqw; }
-.cmp th.rec, .cmp td.rec { background: color-mix(in srgb, var(--accent) 9%, transparent); }
-.cmp th.rec::after { content: " ★"; color: var(--accent); }
-.cmp tbody th { color: var(--muted); font-weight: 600; width: 26%; }
-/* metric */
-.mt { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2cqw; }
-.mv { background: var(--slide); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 10px; box-shadow: var(--shadow); padding: 1.8cqw 2cqw; }
-.mv .v { font-size: 6cqw; font-weight: 750; letter-spacing: -.03em; line-height: 1; }
-.mv .u { font-size: 2cqw; color: var(--muted); margin-left: .4cqw; font-weight: 600; }
-.mv .lb { font-size: 1.7cqw; margin-top: 1cqw; }
-.mv .dl { font-size: 1.5cqw; color: var(--good); font-weight: 600; margin-top: .5cqw; }
-/* quote */
-blockquote { margin: 0; font-size: 3.4cqw; line-height: 1.3; font-weight: 500; max-width: 85%; }
-blockquote::before { content: "\201C"; color: var(--accent); font-size: 8cqw; line-height: 0; vertical-align: -3cqw; margin-right: .5cqw; }
-.by { margin-top: 2.5cqw; font-size: 1.8cqw; color: var(--muted); }
-/* cta */
-.ask { font-size: 3cqw; font-weight: 650; margin-bottom: 3cqw; max-width: 85%; }
-.contact { margin-top: 2.5cqw; font-size: 1.6cqw; color: var(--muted); }
-svg { width: 100%; height: 100%; display: block; overflow: visible; }
-svg text { fill: var(--ink); font-family: inherit; }
-svg .mut { fill: var(--muted); }
-svg .ax { stroke: var(--line); stroke-width: 1.5; }
-.legend { display: flex; gap: 2cqw; font-size: 1.4cqw; color: var(--muted); margin-bottom: 1cqw; }
-.legend i { display: inline-block; width: 1.2cqw; height: 1.2cqw; border-radius: 3px; margin-right: .5cqw; vertical-align: -.1cqw; }
-.chart { flex: 1; min-height: 0; }
-/* section divider */
-.t-section { justify-content: center; }
-.t-section h2 { font-size: 4.6cqw; max-width: 80%; margin: 0; }
-.secnum { order: -1; font-size: 9cqw; font-weight: 800; line-height: 1; color: var(--accent); letter-spacing: -.04em; margin-bottom: 1.5cqw; }
-.t-section .body { display: none; }
-/* steps: numbered floating cards on a track */
-.steps { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2cqw; position: relative; }
-.steps::before { content: ""; position: absolute; left: 4%; right: 4%; top: 2.6cqw; height: 3px; background: var(--line); }
-.stp { position: relative; background: var(--slide); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 4.4cqw 1.6cqw 1.6cqw; margin-top: 2.6cqw; }
-.stp .n { position: absolute; top: -2.6cqw; left: 1.6cqw; width: 5.2cqw; height: 5.2cqw; border-radius: 50%; background: var(--accent); color: var(--slide); display: grid; place-items: center; font-weight: 800; font-size: 2.4cqw; }
-.stp b { display: block; font-size: 1.9cqw; line-height: 1.25; }
-.stp span { display: block; font-size: 1.5cqw; color: var(--muted); margin-top: .6cqw; }
-.anim .steps::before { transform: scaleX(0); transform-origin: left; }
-.anim .in .steps::before { animation: growx 1s ease forwards .2s; }
-/* statement: one sentence, full slide */
-.t-statement { justify-content: center; }
-.t-statement h2 { font-size: 5cqw; line-height: 1.12; letter-spacing: -.02em; max-width: 85%; margin: 0; }
-.t-statement .body { flex: 0; margin-top: 3cqw; }
-.support { font-size: 2.2cqw; color: var(--muted); max-width: 70%; }
-/* lower-third caption: one bold sentence on a floating card */
-.cap { position: absolute; left: 0; right: 0; bottom: 4%; margin: 0 auto; width: fit-content; max-width: 72%; background: var(--slide); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 1cqw 2.2cqw; font-weight: 700; font-size: 1.9cqw; letter-spacing: -.01em; text-align: center; }
-/* motion: only when the page adds .anim (motion allowed, IntersectionObserver present); otherwise everything is static and visible */
-.wire-pulse { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: .02 .08; opacity: 0; }
-.anim .slide { opacity: .4; transform: scale(.985); transition: opacity .5s ease, transform .5s cubic-bezier(.2, .8, .2, 1); }
-.anim .slide.in { opacity: 1; transform: none; }
-.anim .fx { opacity: 0; transform: translateY(14px) scale(.98); }
-.anim .in .fx { animation: rise .6s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
-.anim svg .fx { transform-box: fill-box; transform-origin: center; }
-.anim .bar { transform-box: fill-box; transform-origin: bottom; transform: scaleY(0); }
-.anim .in .bar { animation: grow .7s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: calc(var(--i, 0) * 110ms + 250ms); }
-.anim .wire { stroke-dasharray: 1; stroke-dashoffset: 1; }
-.anim .in .wire { animation: draw .9s ease forwards; animation-delay: calc(var(--i, 0) * 140ms + 450ms); }
-.anim .in .wire-pulse { animation: fadein .3s ease forwards 1.6s, flow 1.6s linear infinite 1.6s; }
-.anim .tl::before { transform: scaleX(0); transform-origin: left; }
-.anim .in .tl::before { animation: growx .9s ease forwards .2s; }
-.anim .cap { opacity: 0; }
-.anim .in .cap { animation: fadein .6s ease forwards .9s; }
-@keyframes rise { to { opacity: 1; transform: none; } }
-@keyframes grow { to { transform: none; } }
-@keyframes growx { to { transform: none; } }
-@keyframes draw { to { stroke-dashoffset: 0; } }
-@keyframes fadein { to { opacity: 1; } }
-@keyframes flow { to { stroke-dashoffset: -.1; } }
-.err { background: #fde8ea; color: #8a1020; padding: 16px; border-radius: 8px; font: 14px/1.4 ui-monospace, monospace; white-space: pre-wrap; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-b); overflow: hidden; }
+
+/* frame: the stage scales to the window, like a projector */
+.viewport { position: fixed; inset: 0; overflow: hidden; background: var(--paper); }
+.stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: center; overflow: hidden; background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(var(--grid-major) 1.5px, transparent 1.5px), linear-gradient(90deg, var(--grid-major) 1.5px, transparent 1.5px);
+  background-size: 40px 40px, 40px 40px, 200px 200px, 200px 200px; animation: drift 40s linear infinite; }
+@keyframes drift { to { background-position: 200px 200px, 200px 200px, 200px 200px, 200px 200px; } }
+.sheet { position: absolute; right: 56px; top: 40px; font: 500 20px var(--font-m); color: var(--muted); letter-spacing: .08em; display: flex; gap: 18px; z-index: 5; }
+.sheet b { color: var(--accent); font-weight: 600; }
+.tick { position: absolute; width: 28px; height: 28px; border: 2px solid var(--accent); opacity: .55; z-index: 5; }
+.tick.a { left: 36px; top: 36px; border-right: 0; border-bottom: 0; } .tick.b { right: 36px; bottom: 36px; border-left: 0; border-top: 0; }
+
+/* slides: one visible, the next slides in from the right */
+.slide { position: absolute; inset: 0; padding: 96px 120px 0; opacity: 0; visibility: hidden; transform: translateX(5%);
+  transition: opacity .6s ease, transform .8s cubic-bezier(.2, .8, .2, 1), visibility 0s .8s; }
+.slide.past { transform: translateX(-5%); }
+.slide.active { opacity: 1; visibility: visible; transform: none; transition: opacity .6s ease, transform .8s cubic-bezier(.2, .8, .2, 1), visibility 0s; }
+.kicker { font: 600 24px var(--font-m); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 14px; }
+.kicker::before { content: ""; width: 44px; height: 3px; background: var(--accent); }
+h2 { font: 800 76px/1.1 var(--font-d); margin: 14px 0 0; letter-spacing: -.01em; text-wrap: balance; max-width: 1500px; }
+h2 em, h1 em { font-style: normal; color: var(--accent); }
+.abs { position: absolute; }
+svg.lines { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; }
+.card { background: var(--card); border: 1.5px solid var(--card-line); border-radius: 14px; box-shadow: var(--shadow); }
+.tag { font: 600 20px var(--font-m); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 5px 12px; border-radius: 6px; display: inline-block; }
+
+/* motion: parts pop in by --i, cards float, connectors flow */
+.slide.active .pop { animation: pop .75s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 90ms + 200ms); }
+@keyframes pop { from { opacity: 0; transform: translateY(28px) scale(.96); } to { opacity: 1; transform: none; } }
+.float { animation: float 7s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -1.3s); }
+@keyframes float { 50% { translate: 0 -10px; } }
+.flow { stroke-dasharray: 10 10; animation: dash 1s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -20; } }
+
+/* lower third: the slide's narration, or its caption */
+.caption { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); z-index: 20; max-width: 1680px; width: max-content; text-align: center;
+  font: 700 34px/1.3 var(--font-b); background: var(--card); border: 1.5px solid var(--card-line); border-radius: 14px; padding: 12px 36px; box-shadow: var(--shadow); transition: opacity .4s; }
+.caption:empty, body.nocap .caption { opacity: 0; }
+.progress { position: absolute; left: 0; bottom: 0; height: 6px; background: var(--accent); z-index: 30; transition: width .6s ease; }
+.ui { position: fixed; right: 16px; bottom: 16px; z-index: 50; display: flex; gap: 6px; align-items: center; background: var(--card); border: 1px solid var(--card-line);
+  border-radius: 12px; padding: 6px; box-shadow: var(--shadow); font: 500 13px var(--font-m); color: var(--muted); opacity: .35; transition: opacity .25s; }
+.ui:hover, .ui:focus-within { opacity: 1; }
+.ui button { font: 600 13px var(--font-m); color: var(--ink); background: transparent; border: 1px solid var(--card-line); border-radius: 8px; padding: 7px 11px; cursor: pointer; }
+.ui button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.ui button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ui .n { padding: 0 8px; }
+body.clean .ui, body.clean .progress, body.clean .sheet, body.clean .tick { display: none; }
+@media (max-width: 720px) { .ui { right: 8px; bottom: 8px; gap: 4px; padding: 4px; } .ui button { padding: 5px 7px; font-size: 11px; } .ui #full, .ui #clean { display: none; } }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+/* print and PDF: every slide on its own page, finished */
 @media print {
-  @page { size: 13.333in 7.5in; margin: 0; }
-  body { background: none; padding: 0; }
-  .deck { max-width: none; gap: 0; }
-  .slide { box-shadow: none; border-radius: 0; width: 100vw; height: 100vh; aspect-ratio: auto; break-after: page; }
-  .anim .slide, .anim .fx, .anim .bar, .anim .cap, .anim .tl::before { opacity: 1 !important; transform: none !important; animation: none !important; }
-  .anim .wire { stroke-dashoffset: 0 !important; animation: none !important; } .wire-pulse { display: none; }
+  @page { size: 1920px 1080px; margin: 0; }
+  body { overflow: visible; } .viewport { position: static; } .ui, .progress, .caption { display: none !important; }
+  .stage { position: relative; left: 0; top: 0; transform: none !important; height: auto; animation: none; background: none; }
+  .slide { position: relative; height: 1080px; opacity: 1 !important; visibility: visible !important; transform: none !important; break-after: page; background-color: var(--paper); }
+  .slide * { animation: none !important; }
 }
-</style>
-<style id="theme">
-:root { --accent: #0b7a5c; --ink: #1b1f24; --muted: #5f6b7a; --paper: #f5f7f6; --slide: #ffffff; --line: #dbe2df; --font: "Inter", system-ui, sans-serif; --radius: 12px; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --accent: #3fd1a6; --ink: #eef2f0; --slide: #161c1a; } }
-:root[data-theme="dark"] { --accent: #3fd1a6; --ink: #eef2f0; --slide: #161c1a; }
 </style>
 </head>
 <body>
-<main class="deck" id="root"></main>
+<div class="viewport"><div class="stage" id="stage">
+  <div class="tick a"></div><div class="tick b"></div>
+  <div class="sheet"><span id="deckname">DECK</span><span>SHEET <b id="sheetno">01</b> / <span id="sheetall">01</span></span></div>
+
+  <!-- SLIDES -->
+<section class="slide">
+  <h1 class="pop" style="--i:0; font:800 200px/.95 var(--font-d); letter-spacing:-.04em; margin:150px 0 0; max-width:1300px">Signing in is <em>here</em></h1>
+  <p class="pop" style="--i:1; font:700 44px/1.3 var(--font-b); margin-top:36px; max-width:900px">Your own account, your own dashboard</p>
+  <p class="pop" style="--i:2; font:500 26px var(--font-m); color:var(--muted); margin-top:28px">Acme app users · 2026-10-17</p>
+  <div class="abs card float pop" style="--i:3; right:160px; top:300px; width:420px; padding:32px; color:var(--accent)"><svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><circle cx="16" cy="24" r="9"/><path d="M25 24h18M37 24v7M43 24v5"/></svg><p style="font:700 32px var(--font-b); color:var(--ink); margin:16px 0 0">Email + password</p></div>
+</section>
+<section class="slide"><div class="kicker pop" style="--i:0">What changes</div><h2 class="pop" style="--i:1">You can now sign in with your email and <em>password</em></h2>
+  <div class="abs" style="left:120px; right:120px; top:330px; display:grid; grid-template-columns:repeat(3,1fr); gap:28px">
+    <div class="card pop float" style="--i:2; padding:32px; min-height:240px; color:var(--accent)"><svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><circle cx="16" cy="24" r="9"/><path d="M25 24h18M37 24v7M43 24v5"/></svg><p style="font:600 32px/1.3 var(--font-b); color:var(--ink); margin:18px 0 0">Sign in once and land straight on your dashboard</p></div><div class="card pop float" style="--i:3; padding:32px; min-height:240px; color:var(--accent)"><svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><rect x="14" y="5" width="20" height="38" rx="4"/><path d="M21 37h6"/></svg><p style="font:600 32px/1.3 var(--font-b); color:var(--ink); margin:18px 0 0">Works on your phone without sideways scrolling</p></div><div class="card pop float" style="--i:4; padding:32px; min-height:240px; color:var(--accent)"><svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"><path d="M24 5l15 6v11c0 10-7 17-15 21C16 39 9 32 9 22V11z"/><path d="M17 24l5 5 9-10"/></svg><p style="font:600 32px/1.3 var(--font-b); color:var(--ink); margin:18px 0 0">Repeated wrong passwords are slowed down to protect you</p></div>
+  </div>
+  <div class="abs card pop" style="--i:6; left:120px; right:120px; top:690px; padding:22px 32px; border-color:var(--accent); font:700 30px var(--font-b)">Nothing to install: use the Sign in button</div>
+</section>
+<section class="slide"><div class="kicker pop" style="--i:0">Your account</div><h2 class="pop" style="--i:1">Your account gives you <em>three things</em></h2>
+  <div class="abs card pop float" style="--i:2; left:120px; top:330px; width:480px; padding:30px"><span class="tag">Dashboard</span><h3 style="font:700 38px/1.2 var(--font-b); margin:16px 0 8px">Your own dashboard</h3><p style="font:400 26px/1.4 var(--font-b); color:var(--muted); margin:0">Land on it straight after you sign in</p></div><div class="abs card pop float" style="--i:3; left:720px; top:330px; width:480px; padding:30px"><span class="tag">Phone</span><h3 style="font:700 38px/1.2 var(--font-b); margin:16px 0 8px">Works on any screen</h3><p style="font:400 26px/1.4 var(--font-b); color:var(--muted); margin:0">No sideways scrolling on a phone</p></div><div class="abs card pop float" style="--i:4; left:1320px; top:330px; width:480px; padding:30px"><span class="tag">Safety</span><h3 style="font:700 38px/1.2 var(--font-b); margin:16px 0 8px">Guarded sign-in</h3><p style="font:400 26px/1.4 var(--font-b); color:var(--muted); margin:0">Repeated wrong passwords are slowed down</p></div>
+</section>
+<section class="slide"><div class="kicker pop" style="--i:0">How it works</div><h2 class="pop" style="--i:1">How signing in <em>works</em></h2>
+  <svg class="lines" viewBox="0 0 1920 1080"><path class="flow" d="M520 560 H760" stroke="var(--accent)" stroke-width="4" fill="none"/><path class="flow" d="M1160 560 H1400" stroke="var(--accent)" stroke-width="4" fill="none"/></svg>
+  <div class="abs card pop" style="--i:2; left:120px; top:470px; width:400px; padding:30px; "><h3 style="font:800 36px/1.2 var(--font-d); margin:0">You enter email and password</h3></div><div class="abs card pop" style="--i:3; left:760px; top:470px; width:400px; padding:30px; "><h3 style="font:800 36px/1.2 var(--font-d); margin:0">We check your details</h3></div><div class="abs card pop" style="--i:4; left:1400px; top:470px; width:400px; padding:30px; background:var(--accent); color:#fff; border-color:var(--accent)"><h3 style="font:800 36px/1.2 var(--font-d); margin:0">Your dashboard opens</h3></div>
+</section>
+<section class="slide"><div class="kicker pop" style="--i:0">Safety</div><h2 class="pop" style="--i:1">Your account is guarded after <em>5 wrong tries</em></h2>
+  <div class="abs pop" style="--i:2; left:120px; top:360px; font:800 300px/1 var(--font-d); color:var(--accent)">5</div>
+  <div class="abs card pop float" style="--i:3; left:520px; top:420px; width:720px; padding:32px; color:var(--accent)"><svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"><path d="M24 5l15 6v11c0 10-7 17-15 21C16 39 9 32 9 22V11z"/><path d="M17 24l5 5 9-10"/></svg><p style="font:600 34px/1.35 var(--font-b); color:var(--ink); margin:16px 0 0">wrong tries in a minute before we pause sign-in</p></div>
+</section>
+<section class="slide"><div class="kicker pop" style="--i:0">Since launch</div><h2 class="pop" style="--i:1">Account-access requests fell <em>40%</em> after launch</h2>
+  <svg class="abs pop" style="--i:2; left:120px; top:300px" width="1000" height="560" viewBox="0 0 1000 560">
+    <line x1="0" y1="500" x2="1000" y2="500" stroke="var(--card-line)" stroke-width="3"/>
+    <rect x="140" y="80" width="240" height="420" rx="10" fill="var(--muted)" opacity=".45"/>
+    <rect x="600" y="248" width="240" height="252" rx="10" fill="var(--accent)"/>
+    <text x="260" y="65" text-anchor="middle" style="font:700 44px var(--font-d); fill:var(--ink)">120</text>
+    <text x="720" y="233" text-anchor="middle" style="font:800 56px var(--font-d); fill:var(--accent)">72</text>
+    <text x="260" y="545" text-anchor="middle" style="font:600 30px var(--font-b); fill:var(--muted)">Before</text>
+    <text x="720" y="545" text-anchor="middle" style="font:700 30px var(--font-b); fill:var(--ink)">After</text>
+  </svg>
+  <div class="abs card pop float" style="--i:4; left:1220px; top:380px; width:560px; padding:30px"><span class="tag">tickets / week</span><p style="font:700 34px/1.3 var(--font-b); margin:16px 0 8px">Sign-in launched</p><p style="font:500 22px var(--font-m); color:var(--muted); margin:0">40% = (120 − 72) / 120</p></div>
+</section>
+<section class="slide"><div class="kicker pop" style="--i:0">Get started</div><h2 class="pop" style="--i:1">Getting in takes <em>three steps</em></h2>
+  <svg class="lines" viewBox="0 0 1920 1080"><path class="flow" d="M300 470 H1620" stroke="var(--accent)" stroke-width="4" fill="none"/></svg>
+  <div class="abs" style="left:120px; right:120px; top:420px; display:grid; grid-template-columns:repeat(3,1fr); gap:60px">
+    <div class="card pop" style="--i:2; padding:30px"><div style="width:84px; height:84px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font:800 40px var(--font-d); margin-top:-72px">1</div><h3 style="font:700 36px/1.25 var(--font-b); margin:20px 0 8px">Open the app</h3></div><div class="card pop" style="--i:3; padding:30px"><div style="width:84px; height:84px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font:800 40px var(--font-d); margin-top:-72px">2</div><h3 style="font:700 36px/1.25 var(--font-b); margin:20px 0 8px">Press Sign in</h3><p style="font:400 24px var(--font-b); color:var(--muted); margin:0">Top right of every page</p></div><div class="card pop" style="--i:4; padding:30px"><div style="width:84px; height:84px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font:800 40px var(--font-d); margin-top:-72px">3</div><h3 style="font:700 36px/1.25 var(--font-b); margin:20px 0 8px">Enter your email and password</h3></div>
+  </div>
+</section>
+<section class="slide"><h2 class="pop" style="--i:1">Try it <em>today</em></h2>
+  <p class="pop" style="--i:2; font:700 52px/1.3 var(--font-b); margin-top:60px; max-width:1300px">Sign in with the email you registered</p>
+  <div class="abs card pop float" style="--i:3; left:120px; top:560px; width:900px; padding:30px; font:500 30px var(--font-b)">Need help? Reply to this message</div>
+</section>
+
+  <div class="caption" id="caption" role="status" aria-live="polite"></div>
+  <div class="progress" id="progress"></div>
+</div></div>
+<div class="ui" role="toolbar" aria-label="Slide controls">
+  <button type="button" id="prev" aria-label="Previous slide">‹</button><span class="n" id="count">1 / 1</span><button type="button" id="next" aria-label="Next slide">›</button>
+  <button type="button" id="play" aria-pressed="false">Auto-play</button><button type="button" id="caps" aria-pressed="true">Captions</button>
+  <button type="button" id="full">Fullscreen</button><button type="button" id="clean" aria-pressed="false">Hide UI</button>
+</div>
 <script type="application/json" id="deck">
 {
   "title": "Signing in is here",
@@ -184,25 +169,55 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
   "slides": [
     {
       "type": "title",
-      "headline": "Signing in is here",
+      "headline": "Signing in is *here*",
       "subtitle": "Your own account, your own dashboard",
       "client": "Acme app users",
-      "date": "2026-10-17"
+      "date": "2026-10-17",
+      "narration": "Signing in is here. Your account now keeps your own dashboard.",
+      "duration": 8
     },
     {
       "type": "bullets",
-      "headline": "You can now sign in with your email and password",
+      "headline": "You can now sign in with your email and *password*",
       "items": [
         "Sign in once and land straight on your dashboard",
         "Works on your phone without sideways scrolling",
         "Repeated wrong passwords are slowed down to protect you"
       ],
       "takeaway": "Nothing to install: use the Sign in button",
-      "source": "ac.md#Acceptance criteria"
+      "source": "ac.md#Acceptance criteria",
+      "narration": "Use your email and password. It works on your phone too.",
+      "duration": 9,
+      "kicker": "What changes"
+    },
+    {
+      "type": "features",
+      "headline": "Your account gives you *three things*",
+      "items": [
+        {
+          "tag": "Dashboard",
+          "title": "Your own dashboard",
+          "text": "Land on it straight after you sign in"
+        },
+        {
+          "tag": "Phone",
+          "title": "Works on any screen",
+          "text": "No sideways scrolling on a phone"
+        },
+        {
+          "tag": "Safety",
+          "title": "Guarded sign-in",
+          "text": "Repeated wrong passwords are slowed down"
+        }
+      ],
+      "source": "ac.md#Acceptance criteria",
+      "narration": "Three things come with your account: a dashboard, any screen, and a guarded sign-in.",
+      "duration": 9,
+      "kicker": "Your account"
     },
     {
       "type": "diagram",
-      "headline": "How signing in works",
+      "headline": "How signing in *works*",
       "nodes": [
         {
           "id": "you",
@@ -227,22 +242,28 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
           "to": "dash"
         }
       ],
-      "caption": "One step, then you are in"
+      "caption": "One step, then you are in",
+      "narration": "Enter your details, we check them, and your dashboard opens.",
+      "duration": 9,
+      "kicker": "How it works"
     },
     {
       "type": "metric",
-      "headline": "Your account is guarded after 5 wrong tries",
+      "headline": "Your account is guarded after *5 wrong tries*",
       "values": [
         {
           "value": "5",
           "label": "wrong tries in a minute before we pause sign-in",
           "source": "ac.md#Acceptance criteria"
         }
-      ]
+      ],
+      "narration": "After five wrong tries in a minute, we pause sign-in to protect you.",
+      "duration": 10,
+      "kicker": "Safety"
     },
     {
       "type": "chart",
-      "headline": "Account-access requests fell 40% after launch",
+      "headline": "Account-access requests fell *40%* after launch",
       "kind": "before-after",
       "unit": "tickets / week",
       "categories": [
@@ -266,11 +287,14 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
       "note": {
         "at": "After",
         "text": "Sign-in launched"
-      }
+      },
+      "narration": "Account-access requests fell after launch, from 120 to 72 a week.",
+      "duration": 10,
+      "kicker": "Since launch"
     },
     {
       "type": "steps",
-      "headline": "Getting in takes three steps",
+      "headline": "Getting in takes *three steps*",
       "steps": [
         {
           "label": "Open the app"
@@ -283,213 +307,66 @@ svg .ax { stroke: var(--line); stroke-width: 1.5; }
           "label": "Enter your email and password"
         }
       ],
-      "source": "ac.md#Acceptance criteria"
+      "source": "ac.md#Acceptance criteria",
+      "narration": "Three steps get you in: open the app, press Sign in, enter your details.",
+      "duration": 10,
+      "kicker": "Get started"
     },
     {
       "type": "cta",
       "kind": "act",
-      "headline": "Try it today",
+      "headline": "Try it *today*",
       "ask": "Sign in with the email you registered",
       "next": [
         "Need help? Reply to this message"
-      ]
+      ],
+      "narration": "Sign in today with the email you registered.",
+      "duration": 7
     }
   ]
 }
 </script>
 <script>
 (() => {
-  const root = document.getElementById('root');
-  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
-  const NS = 'http://www.w3.org/2000/svg';
-  const sv = (tag, attrs, txt) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (txt !== undefined) e.textContent = txt; return e; };
-  const COLORS = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)'];
-  const fmt = (n) => (Math.abs(n) >= 1000 ? n.toLocaleString() : String(+n.toFixed(2)));
-  let deck;
-  try { deck = JSON.parse(document.getElementById('deck').textContent); }
-  catch (e) { root.append(el('div', 'err', 'deck JSON does not parse: ' + e.message)); return; }
+  const $ = (id) => document.getElementById(id);
+  let deck = { slides: [] };
+  try { deck = JSON.parse($('deck').textContent); } catch (e) {}
   if (deck.language) document.documentElement.lang = deck.language;
-  if (['blueprint', 'plain', 'soft'].includes(deck.background)) document.documentElement.dataset.bg = deck.background;
-
-  const niceMax = (v) => { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p; return 10 * p; };
-
-  function chart(s) {
-    const box = el('div', 'chart');
-    const series = s.series || [], cats = s.categories || [];
-    if (series.length > 1) { const lg = el('div', 'legend'); series.forEach((x, i) => { const it = el('span'); const sw = el('i'); sw.style.background = s.highlight ? (x.name === s.highlight.series ? 'var(--accent)' : 'var(--muted)') : COLORS[i % 4]; it.append(sw, document.createTextNode(x.name)); lg.append(it); }); box.append(lg); }
-    const W = 1000, H = 420, L = 70, R = 20, T = 30, B = s.xLabel ? 84 : 60, iw = W - L - R, ih = H - T - B;
-    // highlight: one mark in --accent, every other mark muted (Storytelling with Data: mute first, then colour the point)
-    const hl = s.highlight || null, hcat = hl ? cats.indexOf(hl.category) : -1, hser = hl ? Math.max(0, series.findIndex((x) => x.name === hl.series)) : -1;
-    const tone = (si, i) => (!hl ? null : si === hser && (i === undefined || i === hcat) ? 'var(--accent)' : 'color-mix(in srgb, var(--muted) 45%, transparent)');
-    const marks = {};
-    const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'xMidYMid meet', role: 'img', 'aria-label': s.headline || '' });
-    const all = series.flatMap((x) => x.values || []);
-    const max = niceMax(Math.max(0, ...all));
-    for (let i = 0; i <= 4; i++) {
-      const y = T + ih - (ih * i) / 4;
-      svg.append(sv('line', { x1: L, x2: W - R, y1: y, y2: y, class: 'ax', 'stroke-dasharray': i ? '3 5' : '' }));
-      svg.append(sv('text', { x: L - 12, y: y + 5, 'text-anchor': 'end', 'font-size': 16, class: 'mut' }, fmt((max * i) / 4)));
-    }
-    svg.append(sv('text', { x: L - 12, y: T - 12, 'text-anchor': 'end', 'font-size': 15, class: 'mut' }, s.unit || ''));
-    const y = (v) => T + ih - (ih * v) / max;
-    const band = iw / Math.max(1, cats.length);
-    cats.forEach((c, i) => svg.append(sv('text', { x: L + band * i + band / 2, y: H - B + 30, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': i === hcat ? 700 : 400 }, c)));
-    if (s.xLabel) svg.append(sv('text', { x: L + iw / 2, y: H - 14, 'text-anchor': 'middle', 'font-size': 15, class: 'mut' }, s.xLabel));
-    if (s.kind === 'line') {
-      series.forEach((x, si) => {
-        const pts = (x.values || []).map((v, i) => [L + band * i + band / 2, y(v)]);
-        const c = hl ? (si === hser ? 'var(--accent)' : tone(si)) : COLORS[si % 4];
-        svg.append(sv('polyline', { points: pts.map((p) => p.join(',')).join(' '), fill: 'none', stroke: c, 'stroke-width': 4, 'stroke-linejoin': 'round', class: 'wire', pathLength: 1, style: `--i:${si}` }));
-        pts.forEach(([px, py], i) => {
-          const on = si === hser && i === hcat;
-          svg.append(sv('circle', { cx: px, cy: py, r: on ? 9 : 6, fill: c, class: 'fx', style: `--i:${i + 3}` }));
-          if (series.length === 1 || on) svg.append(sv('text', { x: px, y: py - 16, 'text-anchor': 'middle', 'font-size': on ? 19 : 16, 'font-weight': on ? 750 : 600 }, fmt(x.values[i])));
-          if (on) marks.hl = [px, py];
-        });
-      });
-    } else {
-      const n = series.length, gw = band * (n > 1 ? 0.8 : 0.55), bw = gw / n;
-      series.forEach((x, si) => (x.values || []).forEach((v, i) => {
-        const bx = L + band * i + (band - gw) / 2 + bw * si, by = y(v);
-        const fill = tone(si, i) || (s.kind === 'before-after' && n === 1 ? (i === 0 ? 'var(--muted)' : 'var(--accent)') : COLORS[si % 4]);
-        const k = i * n + si, on = si === hser && i === hcat;
-        svg.append(sv('rect', { x: bx + 3, y: by, width: Math.max(1, bw - 6), height: T + ih - by, rx: 4, fill, class: 'bar', style: `--i:${k}` }));
-        svg.append(sv('text', { x: bx + bw / 2, y: by - 10, 'text-anchor': 'middle', 'font-size': on ? 19 : 17, 'font-weight': on ? 750 : 600, class: 'fx', style: `--i:${k + 4}` }, fmt(v)));
-        if (on) marks.hl = [bx + bw / 2, by - 6];
-      }));
-    }
-    // note: one short label with a leader line to the highlighted mark (or to its category when nothing is highlighted)
-    if (s.note && s.note.text) {
-      const ni = cats.indexOf(s.note.at);
-      const [px, py] = marks.hl && (s.note.at === undefined || ni === hcat) ? marks.hl : [L + band * Math.max(0, ni) + band / 2, T + 20];
-      const right = px < W / 2, tx = right ? px + 70 : px - 70, ty = Math.max(T + 8, py - 70);
-      const g = sv('g', { class: 'fx', style: '--i:9' });
-      g.append(sv('line', { x1: px, y1: py - 22, x2: tx, y2: ty + 6, stroke: 'var(--ink)', 'stroke-width': 1.5 }));
-      g.append(sv('text', { x: tx + (right ? 6 : -6), y: ty, 'text-anchor': right ? 'start' : 'end', 'font-size': 17, 'font-weight': 650 }, s.note.text));
-      svg.append(g);
-    }
-    box.append(svg);
-    return box;
-  }
-
-  function diagram(s) {
-    const nodes = s.nodes || [], edges = s.edges || [];
-    const W = 1000, H = 360, gap = W / Math.max(1, nodes.length), bw = Math.min(170, gap - 30), bh = 90, cy = 210;
-    const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': s.headline || '' });
-    const defs = sv('defs', {}); const mk = sv('marker', { id: 'arr', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 8, markerHeight: 8, orient: 'auto-start-reverse' });
-    mk.append(sv('path', { d: 'M0,0 L10,5 L0,10 z', fill: 'var(--muted)' })); defs.append(mk); svg.append(defs);
-    const cx = {}; nodes.forEach((n, i) => { cx[n.id] = gap * i + gap / 2; });
-    // connectors draw in, then carry a slow flowing pulse (templates/diagram.html does the same)
-    edges.forEach((e, k) => {
-      if (cx[e.from] === undefined || cx[e.to] === undefined) return;
-      const a = cx[e.from], b = cx[e.to], dir = Math.sign(b - a) || 1, adj = Math.abs(b - a) < gap * 1.5;
-      let d, lx, ly;
-      if (adj) { d = `M${a + dir * bw / 2},${cy} L${b - dir * bw / 2 - dir * 4},${cy}`; lx = (a + b) / 2; ly = cy - 12; }
-      else { const top = cy - bh / 2, h = 40 + Math.abs(b - a) / 10; d = `M${a},${top} C${a},${top - h} ${b},${top - h} ${b},${top - 4}`; lx = (a + b) / 2; ly = top - h * 0.75 - 8; }
-      svg.append(sv('path', { d, fill: 'none', stroke: 'var(--muted)', 'stroke-width': 2.5, 'marker-end': 'url(#arr)', class: 'wire', pathLength: 1, style: `--i:${k}` }));
-      svg.append(sv('path', { d, class: 'wire-pulse', pathLength: 1 }));
-      if (e.label) svg.append(sv('text', { x: lx, y: ly, 'text-anchor': 'middle', 'font-size': 14, class: 'mut fx', style: `--i:${k + 3}` }, e.label));
-    });
-    nodes.forEach((n, k) => {
-      const g = sv('g', { class: 'fx', style: `--i:${k}` });
-      g.append(sv('rect', { x: cx[n.id] - bw / 2, y: cy - bh / 2, width: bw, height: bh, rx: 12, fill: 'var(--soft)', stroke: 'var(--accent)', 'stroke-width': 2 }));
-      const words = String(n.label).split(/\s+/), lines = []; let cur = '';
-      words.forEach((w) => { if ((cur + ' ' + w).trim().length > 16 && cur) { lines.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); }); lines.push(cur);
-      lines.slice(0, 3).forEach((ln, i) => g.append(sv('text', { x: cx[n.id], y: cy + (i - (Math.min(lines.length, 3) - 1) / 2) * 20 + 6, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 600 }, ln)));
-      svg.append(g);
-    });
-    return svg;
-  }
-
-  const R = {
-    title(s, sec) {
-      sec.classList.add('t-title');
-      sec.append(el('h1', '', s.headline), el('div', 'sub', s.subtitle || ''));
-      const m = el('div', 'meta'); if (s.client) m.append(el('span', '', s.client)); if (s.date) m.append(el('span', '', s.date)); sec.append(m);
-      return null;
-    },
-    agenda(s) { const ol = el('ol', 'agenda'); (s.items || []).forEach((t) => ol.append(el('li', '', t))); return ol; },
-    bullets(s) {
-      const f = document.createDocumentFragment(); const ul = el('ul', 'bul'); (s.items || []).forEach((t) => ul.append(el('li', '', t))); f.append(ul);
-      if (s.takeaway) f.append(el('div', 'takeaway', s.takeaway)); return f;
-    },
-    timeline(s) {
-      const tl = el('div', 'tl');
-      (s.events || []).forEach((e) => { const ev = el('div', 'ev ' + (e.status || 'planned')); ev.append(el('div', 'd', e.date), el('div', 'l', e.label)); tl.append(ev); });
-      return tl;
-    },
-    roadmap(s) {
-      const rm = el('div', 'rm');
-      (s.columns || []).forEach((c) => { const col = el('div', 'col'); col.append(el('h3', '', c.label)); (c.cards || []).forEach((k) => { const cd = el('div', 'card'); cd.append(el('b', '', k.title)); if (k.value) cd.append(el('span', '', k.value)); col.append(cd); }); rm.append(col); });
-      return rm;
-    },
-    comparison(s) {
-      const t = el('table', 'cmp'), th = el('thead'), hr = el('tr'), opts = s.options || [];
-      hr.append(el('th')); opts.forEach((o) => hr.append(el('th', o.recommended ? 'rec' : '', o.name))); th.append(hr); t.append(th);
-      const tb = el('tbody');
-      (s.criteria || []).forEach((c) => { const tr = el('tr'); tr.append(el('th', '', c.label)); opts.forEach((o, i) => tr.append(el('td', o.recommended ? 'rec' : '', (c.values || [])[i] ?? ''))); tb.append(tr); });
-      t.append(tb); return t;
-    },
-    section(s, sec) { if (s.number !== undefined) sec.append(el('div', 'secnum', String(s.number).padStart(2, '0'))); return null; },
-    steps(s) {
-      const w = el('div', 'steps');
-      (s.steps || []).forEach((x, i) => { const c = el('div', 'stp'); c.append(el('div', 'n', String(i + 1)), el('b', '', x.label)); if (x.detail) c.append(el('span', '', x.detail)); w.append(c); });
-      return w;
-    },
-    statement(s) { return s.support ? el('div', 'support', s.support) : null; },
-    chart,
-    metric(s) {
-      const mt = el('div', 'mt');
-      (s.values || []).forEach((m) => { const mv = el('div', 'mv'); const v = el('div', 'v', m.value); if (m.unit) v.append(el('span', 'u', m.unit)); mv.append(v, el('div', 'lb', m.label)); if (m.delta) mv.append(el('div', 'dl', m.delta)); mt.append(mv); });
-      return mt;
-    },
-    quote(s) { const f = document.createDocumentFragment(); f.append(el('blockquote', '', s.text)); if (s.by) f.append(el('div', 'by', '— ' + s.by)); return f; },
-    diagram,
-    cta(s, sec) {
-      sec.classList.add('t-cta');
-      const f = document.createDocumentFragment(); f.append(el('div', 'ask', s.ask || ''));
-      const ul = el('ul', 'bul'); (s.next || []).forEach((t) => ul.append(el('li', '', t))); f.append(ul);
-      if (s.contact) f.append(el('div', 'contact', s.contact)); return f;
-    },
+  const slides = [...document.querySelectorAll('.slide')], N = slides.length, pad = (n) => String(n).padStart(2, '0');
+  $('deckname').textContent = String(deck.title || document.title).toUpperCase();
+  $('sheetall').textContent = pad(N);
+  const stage = $('stage');
+  const fit = () => { const s = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `translate(-50%, -50%) scale(${s})`; };
+  addEventListener('resize', fit); fit();
+  let at = 0, timer = null;
+  const show = (i) => {
+    at = Math.max(0, Math.min(N - 1, i));
+    slides.forEach((s, k) => { s.classList.toggle('active', k === at); s.classList.toggle('past', k < at); });
+    $('sheetno').textContent = pad(at + 1); $('count').textContent = `${at + 1} / ${N}`;
+    $('progress').style.width = `${((at + 1) / N) * 100}%`;
+    const d = (deck.slides || [])[at] || {};
+    $('caption').textContent = d.narration || d.caption || '';
+    if ($('play').getAttribute('aria-pressed') === 'true') tick();
   };
-
-  // sources stay in the JSON for the requester; the audience sees only the derivation and the footnote
-  const footOf = (s) => [s.derived, s.footnote].filter(Boolean).join(' · ');
-
-  (deck.slides || []).forEach((s, i) => {
-    const sec = el('section', 'slide t-' + s.type);
-    sec.setAttribute('aria-label', `Slide ${i + 1}`);
-    const r = R[s.type];
-    if (!r) { sec.append(el('div', 'err', `unknown slide type: ${s.type}`)); root.append(sec); return; }
-    if (s.type !== 'title') sec.append(el('h2', '', s.headline));
-    const body = el('div', 'body'); const out = r(s, sec);
-    if (out) { body.append(out); sec.append(body); }
-    const ft = footOf(s); if (ft) sec.append(el('div', 'foot', ft));
-    if (s.caption) { sec.classList.add('has-cap'); sec.append(el('div', 'cap', s.caption)); }
-    sec.append(el('div', 'num', String(i + 1)));
-    // floating cards rise in one after another; svg parts set their own order
-    let n = 0;
-    sec.querySelectorAll('.secnum, h1, h2, .support, .stp, .sub, .meta, .bul li, ol.agenda li, .takeaway, .ev, .col, .card, .mv, .cmp tr, blockquote, .by, .ask, .contact, .legend').forEach((x) => { x.classList.add('fx'); x.style.setProperty('--i', n++); });
-    root.append(sec);
+  const tick = () => {
+    clearTimeout(timer);
+    const d = Number(((deck.slides || [])[at] || {}).duration) || 10;
+    timer = setTimeout(() => (at < N - 1 ? show(at + 1) : $('play').setAttribute('aria-pressed', 'false')), d * 1000);
+  };
+  const toggle = (b) => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', String(on)); return on; };
+  $('prev').onclick = () => show(at - 1); $('next').onclick = () => show(at + 1);
+  $('play').onclick = () => (toggle($('play')) ? tick() : clearTimeout(timer));
+  $('caps').onclick = () => document.body.classList.toggle('nocap', !toggle($('caps')));
+  $('full').onclick = () => document.documentElement.requestFullscreen?.().catch(() => {});
+  $('clean').onclick = () => document.body.classList.toggle('clean', toggle($('clean')));
+  addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(at + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(at - 1); }
+    else if (e.key === 'Home') show(0); else if (e.key === 'End') show(N - 1);
+    else if (e.key === 'f') $('full').click(); else if (e.key === 'c') $('caps').click(); else if (e.key === 'h') $('clean').click();
   });
-
-  const slides = [...root.querySelectorAll('.slide')];
-  // motion only when allowed and observable; without it every slide stays static and fully visible
-  if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    document.documentElement.classList.add('anim');
-    const io = new IntersectionObserver((es) => es.forEach((x) => x.target.classList.toggle('in', x.intersectionRatio >= 0.5)), { threshold: [0, 0.5, 1] });
-    slides.forEach((s) => io.observe(s));
-  }
-  const current = () => slides.reduce((best, s, i) => (Math.abs(s.getBoundingClientRect().top) < Math.abs(slides[best].getBoundingClientRect().top) ? i : best), 0);
-  document.addEventListener('keydown', (e) => {
-    if (!slides.length || e.metaKey || e.ctrlKey || e.altKey) return;
-    const k = e.key; let to = null;
-    if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(k)) to = Math.min(slides.length - 1, current() + 1);
-    else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(k)) to = Math.max(0, current() - 1);
-    else if (k === 'Home') to = 0; else if (k === 'End') to = slides.length - 1;
-    else if (k === 'f' && document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen().catch(() => {}); return; }
-    if (to !== null) { e.preventDefault(); slides[to].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-  });
+  show(0);
 })();
 </script>
 </body>

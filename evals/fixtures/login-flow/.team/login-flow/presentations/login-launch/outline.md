@@ -15,24 +15,29 @@ Background: plain (read-alone)
 
 Notes: Keep it short; most users only need the Sign in button.
 
-## 3. How signing in works
+## 3. Your account gives you three things
+- Dashboard: Your own dashboard — Land on it straight after you sign in
+- Phone: Works on any screen — No sideways scrolling on a phone
+- Safety: Guarded sign-in — Repeated wrong passwords are slowed down
+
+## 4. How signing in works
 - You enter email and password → We check your details → Your dashboard opens
 - Caption: One step, then you are in
 
-## 4. Your account is guarded after 5 wrong tries
+## 5. Your account is guarded after 5 wrong tries
 - 5 wrong tries in a minute before we pause sign-in
 
-## 5. Account-access requests fell 40% after launch
+## 6. Account-access requests fell 40% after launch
 - Before: 120 tickets / week
 - After: 72 tickets / week
 - 40% = (120 − 72) / 120
 - Highlight: After — note: Sign-in launched
 
-## 6. Getting in takes three steps
+## 7. Getting in takes three steps
 1. Open the app
 2. Press Sign in — Top right of every page
 3. Enter your email and password
 
-## 7. Try it today
+## 8. Try it today
 - Sign in with the email you registered
 - Need help? Reply to this message

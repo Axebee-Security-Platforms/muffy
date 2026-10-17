@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Validates a presenter output folder (agents/references/presenter/output-format.md).
-//   node check-presentation.mjs <folder> [more folders ...]
+// Validates a present-mode output folder (agents/references/product-manager/present/output-format.md).
+//   node check-presentation.mjs [--content] <folder> [more folders ...]   (--content: deck.json and outline only, before the designer builds deck.html)
 // Checks: deck.json fits the slide types and their limits; every number, date and timeframe the audience sees carries a
 // source that exists (or "request"); numbers not in the data carry `derived`; no internal names; deck.html is the template
 // with only <title>, the #theme style and the #deck JSON changed, and that JSON equals deck.json; #theme sets only deck
@@ -18,7 +18,7 @@ const THEME_VARS = ['paper', 'slide', 'ink', 'muted', 'line', 'soft', 'accent', 
 const DARK_MEDIA = /@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root:not\(\[data-theme="light"\]\)\s*\{([^{}]*)\}\s*\}/g;
 const ROOT_RULE = /(?::root|:root\[data-theme="dark"\])\s*\{([^{}]*)\}/g;
 const TOKENS = 'docs/design-system/tokens.css';
-const TYPES = ['title', 'agenda', 'bullets', 'timeline', 'roadmap', 'comparison', 'chart', 'metric', 'quote', 'diagram', 'section', 'steps', 'statement', 'cta'];
+const TYPES = ['title', 'agenda', 'bullets', 'timeline', 'roadmap', 'comparison', 'chart', 'metric', 'quote', 'diagram', 'section', 'steps', 'features', 'statement', 'cta'];
 const KINDS = ['bar', 'grouped-bar', 'line', 'before-after'];
 const STATUS = ['done', 'next', 'planned'];
 const BACKGROUNDS = ['blueprint', 'plain', 'soft'];
@@ -51,7 +51,7 @@ const over = (v, n) => typeof v === 'string' && (NO_SPACES.test(v) ? v.length > 
 const limit = (n) => `${n} words (${n * 5} characters in Thai)`;
 const nums = (s) => (typeof s === 'string' ? s.match(/\d[\d,]*(\.\d+)?/g) ?? [] : []).map((n) => Number(n.replace(/,/g, '')));
 
-// every string the audience can see or the presenter reads aloud: all but `source`
+// every string the audience can see or a live presenter reads aloud: all but `source`
 function visible(v, out = []) {
   if (typeof v === 'string') out.push(v);
   else if (Array.isArray(v)) v.forEach((x) => visible(x, out));
@@ -75,7 +75,7 @@ export function checkDeck(d, { root } = {}) {
   };
   if (!d || typeof d !== 'object') return ['deck is not a JSON object'];
   if (!text(d.title)) errs.push('title is required');
-  // the audience profile the requester answered (presenter/required-inputs.md); the old "client" / "end-user" strings are not enough
+  // the audience profile the requester answered (product-manager/present/required-inputs.md); the old "client" / "end-user" strings are not enough
   const a = d.audience;
   if (typeof a === 'string') errs.push(`audience "${a}" is the old form: write the profile object {who, role, familiarity, cares, setting}${a === 'client' ? ' (client was role decide)' : a === 'end-user' ? ' (end-user was role use)' : ''}`);
   else if (!a || typeof a !== 'object') errs.push('audience is required: {who, role, familiarity, cares, setting}');
@@ -86,15 +86,16 @@ export function checkDeck(d, { root } = {}) {
     if (!Array.isArray(a.cares) || a.cares.length < 1 || a.cares.length > 2 || !a.cares.every((c) => CARES.includes(c))) errs.push(`audience.cares must list one or two of ${CARES.join(', ')}`);
     if (!SETTINGS.includes(a.setting)) errs.push(`audience.setting must be one of ${SETTINGS.join(', ')}`);
   }
-  // background follows the setting for legibility (presenter/visual-style.md); no source ties it to an audience type
-  if (!BACKGROUNDS.includes(d.background)) errs.push(`background must be one of ${BACKGROUNDS.join(', ')}`);
-  else if (a?.setting === 'read-alone' && d.background !== 'plain') errs.push('a read-alone deck uses background plain (no presenter to direct attention; plain grounds read fastest)');
+  // background follows the setting for legibility (designer/presentation.md); no source ties it to an audience type
+  // optional: the designer's deck chooses its own surface; the draft template reads this
+  if (d.background !== undefined && !BACKGROUNDS.includes(d.background)) errs.push(`background must be one of ${BACKGROUNDS.join(', ')}`);
+  else if (d.background !== undefined && a?.setting === 'read-alone' && d.background !== 'plain') errs.push('a read-alone deck uses background plain (no presenter to direct attention; plain grounds read fastest)');
   const slides = Array.isArray(d.slides) ? d.slides : [];
   if (!slides.length) return [...errs, 'slides must be a non-empty array'];
   if (slides[0].type !== 'title' || slides.filter((s) => s.type === 'title').length !== 1) errs.push('exactly one title slide, and it comes first');
   if (slides.at(-1).type !== 'cta' || slides.filter((s) => s.type === 'cta').length !== 1) errs.push('exactly one cta slide, and it comes last');
   // the template draws with textContent: anything but a string shows as [object Object]
-  const nonString = (v, path) => { if (v && typeof v === 'object') { for (const [k, x] of Object.entries(v)) nonString(x, `${path}.${k}`); } else if (v !== undefined && typeof v !== 'string' && !(typeof v === 'number' && /\.(values\.\d+|number)$/.test(path)) && typeof v !== 'boolean') errs.push(`${path}: must be a string`); };
+  const nonString = (v, path) => { if (v && typeof v === 'object') { for (const [k, x] of Object.entries(v)) nonString(x, `${path}.${k}`); } else if (v !== undefined && typeof v !== 'string' && !(typeof v === 'number' && /\.(values\.\d+|number|duration)$/.test(path)) && typeof v !== 'boolean') errs.push(`${path}: must be a string`); };
 
   slides.forEach((s, i) => {
     const at = `slide ${i + 1} (${s?.type})`;
@@ -112,6 +113,21 @@ export function checkDeck(d, { root } = {}) {
     if (!optText(s.notes) || !optText(s.footnote) || !optText(s.derived)) errs.push(`${at}: notes, footnote and derived must be strings`);
     nonString(s, `${at}`);
     if (s.source !== undefined) src(at, s.source); // a source given where none is required must still be a real one
+    // kicker: the small label above the headline ("The problem"); *word* in the headline marks the one accent the designer colours
+    if (s.kicker !== undefined && (!text(s.kicker) || over(s.kicker, 3))) errs.push(`${at}: kicker is at most ${limit(3)}`);
+    if (typeof s.headline === 'string') {
+      const marks = (s.headline.match(/\*/g) ?? []).length;
+      if (marks % 2 || marks > 2) errs.push(`${at}: headline emphasis is one *word or phrase* in a pair of asterisks`);
+    }
+    // narration: the voice-over of a read-alone deck (Auto-play shows it as a caption); duration: seconds on Auto-play
+    if (s.narration !== undefined) {
+      if (!text(s.narration)) errs.push(`${at}: narration must be a non-empty string`);
+      else {
+        if (over(s.narration, 40)) errs.push(`${at}: narration is over ${limit(40)} (two short sentences)`);
+        if (DIGIT.test(s.narration)) src(`${at} narration (says a number)`, s.source);
+      }
+    }
+    if (s.duration !== undefined && !(Number.isInteger(s.duration) && s.duration >= 4 && s.duration <= 30)) errs.push(`${at}: duration must be whole seconds from 4 to 30`);
     if (typeof s.caption === 'string') {
       if (s.caption.length > 120) errs.push(`${at}: caption is over 120 characters (one short sentence)`);
       if (DIGIT.test(s.caption)) src(`${at} caption (shows a number)`, s.source);
@@ -196,8 +212,19 @@ export function checkDeck(d, { root } = {}) {
         needSlideSource([s.headline]); break;
       }
       case 'steps': {
-        const st = s.steps ?? [];
-        if (!Array.isArray(st) || st.length < 3 || st.length > 6) errs.push(`${at}: steps must be 3 to 6`);
+        // flat: 3-6 steps; grouped (a long process): 2-4 groups of 1-6 steps, 12 in all, numbered straight through
+        const grouped = s.groups !== undefined;
+        if (grouped && s.steps !== undefined) errs.push(`${at}: use steps or groups, not both`);
+        if (grouped) {
+          if (!Array.isArray(s.groups) || s.groups.length < 2 || s.groups.length > 4) errs.push(`${at}: groups must be 2 to 4`);
+          (Array.isArray(s.groups) ? s.groups : []).forEach((g, j) => {
+            if (!text(g?.label) || over(g.label, 3)) errs.push(`${at}: group ${j + 1} needs a label of at most ${limit(3)}`);
+            if (!Array.isArray(g?.steps) || !g.steps.length || g.steps.length > 6) errs.push(`${at}: group ${j + 1} needs 1 to 6 steps`);
+          });
+        }
+        const st = grouped ? (Array.isArray(s.groups) ? s.groups.flatMap((g) => (Array.isArray(g?.steps) ? g.steps : [])) : []) : s.steps ?? [];
+        if (!grouped && (!Array.isArray(st) || st.length < 3 || st.length > 6)) errs.push(`${at}: steps must be 3 to 6 (a longer process uses groups)`);
+        if (grouped && st.length > 12) errs.push(`${at}: grouped steps total ${st.length}; at most 12`);
         st.forEach((x, j) => {
           if (!text(x?.label)) errs.push(`${at}: step ${j + 1} label is required`);
           else if (/^\s*\d/.test(x.label)) errs.push(`${at}: step ${j + 1} label starts with a number; the template numbers the steps`);
@@ -206,10 +233,27 @@ export function checkDeck(d, { root } = {}) {
         });
         // a step count in the headline ("three steps", "3 steps") must match; it needs no source
         const head = typeof s.headline === 'string' ? s.headline.toLowerCase() : '';
-        const said = [...head.matchAll(/\b(\d+|zero|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:simple\s+|quick\s+|easy\s+)?steps?\b/g)].map((m) => (/\d/.test(m[1]) ? Number(m[1]) : NUMBER_WORDS.indexOf(m[1])));
+        const said = [...head.matchAll(/\b(\d+|zero|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:simple\s+|quick\s+|easy\s+)?steps?\b/g), ...head.matchAll(/(\d+)\s*ขั้น/g)].map((m) => (/\d/.test(m[1]) ? Number(m[1]) : NUMBER_WORDS.indexOf(m[1])));
         if (said.some((n) => n !== st.length)) errs.push(`${at}: the headline says ${said[0]} steps but there are ${st.length}`);
-        const rest = head.replace(/\b\d+\s+(?:simple\s+|quick\s+|easy\s+)?steps?\b/g, '');
+        const rest = head.replace(/\b\d+\s+(?:simple\s+|quick\s+|easy\s+)?steps?\b/g, '').replace(/\d+\s*ขั้น/g, '');
         needSlideSource([rest, ...st.flatMap((x) => [x?.label ?? '', x?.detail ?? ''])]); break;
+      }
+      case 'features': {
+        // a grid of equal-standing items: roles, commands, capabilities, ways something helps
+        const items = s.items ?? [];
+        if (!Array.isArray(items) || items.length < 3 || items.length > 10) errs.push(`${at}: items must be 3 to 10`);
+        (Array.isArray(items) ? items : []).forEach((x, j) => {
+          if (!text(x?.title)) errs.push(`${at}: item ${j + 1} title is required`);
+          else if (over(x.title, 6)) errs.push(`${at}: item ${j + 1} title is over ${limit(6)}`);
+          if (over(x?.text, items.length > 6 ? 14 : 22)) errs.push(`${at}: item ${j + 1} text is over ${limit(items.length > 6 ? 14 : 22)} (shorter when there are more than 6 cards)`);
+          if (over(x?.tag, 3)) errs.push(`${at}: item ${j + 1} tag is over ${limit(3)}`);
+          if (DIGIT.test(`${x?.title ?? ''}${x?.text ?? ''}`) && x?.source !== undefined) src(`${at} item ${j + 1}`, x.source);
+        });
+        // a count in the headline ("10 roles", "6 ways", "หกทาง") must match the cards
+        const count = [...String(s.headline ?? '').matchAll(/(\d+)\s*(?:[a-z]+|ตำแหน่ง|ทาง|ข้อ|คำสั่ง|เรื่อง|อย่าง)/gi)].map((m) => Number(m[1]));
+        if (count.length && Array.isArray(items) && !count.includes(items.length)) errs.push(`${at}: the headline count ${count[0]} does not match ${items.length} cards`);
+        const unsourced = (Array.isArray(items) ? items : []).filter((x) => x?.source === undefined).flatMap((x) => [x?.title ?? '', x?.text ?? '', x?.tag ?? '']);
+        needSlideSource([String(s.headline ?? '').replace(/\d+\s*(?:[a-z]+|ตำแหน่ง|ทาง|ข้อ|คำสั่ง|เรื่อง|อย่าง)/gi, ''), ...unsourced]); break;
       }
       case 'statement': {
         if (!optText(s.support)) errs.push(`${at}: support must be a string`);
@@ -237,7 +281,7 @@ export function checkDeck(d, { root } = {}) {
         needSlideSource([s.headline, ...nodes.map((n) => n?.label ?? ''), ...(s.edges ?? []).map((e) => e?.label ?? '')]); break;
       }
       case 'cta': {
-        // decide for role decide/evaluate, act for the rest (presenter/recipes.md "By audience")
+        // decide for role decide/evaluate, act for the rest (product-manager/present/recipes.md "By audience")
         const want = ['decide', 'evaluate'].includes(d.audience?.role) ? 'decide' : ROLES.includes(d.audience?.role) ? 'act' : null;
         if (!['decide', 'act'].includes(s.kind)) errs.push(`${at}: kind must be decide or act`);
         else if (want && s.kind !== want) errs.push(`${at}: kind is ${s.kind} but audience role ${d.audience.role} needs ${want}`);
@@ -291,7 +335,41 @@ export function checkHtml(html, deck, { tokens } = {}) {
   return errs;
 }
 
-export function checkFolder(dir, { root } = {}) {
+// the designer's deck (templates/presentation-stage.html): free layout, so the check is on content, not on markup.
+// Every slide's headline is in its own <section class="slide">, in order; every number on screen is one deck.json holds;
+// nothing internal is visible; the only outside requests are Google Fonts; the frame and the #deck copy are kept.
+const FONT_HOSTS = /^https:\/\/fonts\.(googleapis|gstatic)\.com(\/|$)/;
+const visibleText = (html) => html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ')
+  .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+const squash = (t) => String(t).replace(/\*/g, '').replace(/\s+/g, '');
+
+export function checkDesigned(html, deck) {
+  const errs = [];
+  const m = html.match(JSON_BLOCK);
+  if (!m) return ['deck.html has no <script type="application/json" id="deck"> block (keep the copy of deck.json the stage reads narration from)'];
+  try { if (JSON.stringify(JSON.parse(m[2])) !== JSON.stringify(deck)) errs.push('the JSON in deck.html differs from deck.json: paste deck.json into #deck again'); }
+  catch (e) { errs.push(`deck JSON in deck.html does not parse: ${e.message}`); }
+  for (const [re, what] of [[/id="stage"/, 'the stage'], [/class="ui"/, 'the controls'], [/id="caption"/, 'the caption'], [/class="sheet"/, 'the sheet label']]) if (!re.test(html)) errs.push(`deck.html lost ${what} of templates/presentation-stage.html`);
+  const sections = [...html.replace(/<!--[\s\S]*?-->/g, ' ').matchAll(/<section\b[^>]*class="[^"]*\bslide\b[^"]*"[^>]*>([\s\S]*?)<\/section>/gi)].map((x) => x[1]);
+  const slides = deck?.slides ?? [];
+  if (sections.length !== slides.length) errs.push(`deck.html has ${sections.length} slide sections; deck.json has ${slides.length}`);
+  slides.forEach((s, i) => { if (sections[i] !== undefined && text(s?.headline) && !squash(visibleText(sections[i])).includes(squash(s.headline))) errs.push(`slide ${i + 1}: its headline from deck.json is not on the slide word for word`); });
+  // every number shown must come from deck.json (or be a slide counter); a designer adds layout, never facts
+  const known = new Set(visible(deck).flatMap(nums).concat(slides.flatMap((s) => (s?.series ?? []).flatMap((x) => x?.values ?? []))));
+  const shown = visibleText(sections.join(' ')).match(/\d[\d,]*(\.\d+)?/g) ?? [];
+  const extra = [...new Set(shown.map((n) => Number(n.replace(/,/g, ''))).filter((n) => !known.has(n) && !(Number.isInteger(n) && n >= 1 && n <= slides.length)))];
+  if (extra.length) errs.push(`numbers on the slides that deck.json does not hold: ${extra.slice(0, 8).join(', ')}`);
+  const leaks = internalNames([visibleText(html)]);
+  if (leaks.length) errs.push(`internal names on the slides: ${leaks.join(', ')}`);
+  const urls = [...html.replace(/<!--[\s\S]*?-->/g, ' ').matchAll(/\b(?:src|href)\s*=\s*["']([^"']+)["']|url\(\s*["']?([^"')]+)/gi)].map((x) => x[1] ?? x[2]).filter((u) => /^(https?:)?\/\//i.test(u));
+  const bad = urls.filter((u) => !FONT_HOSTS.test(u));
+  if (bad.length) errs.push(`outside requests other than Google Fonts: ${[...new Set(bad)].slice(0, 3).join(', ')}`);
+  if (/<script\b[^>]*\bsrc=/i.test(html)) errs.push('no external scripts');
+  if (/<img\b|<video\b|<iframe\b/i.test(html)) errs.push('no images, video or frames: draw with SVG and CSS');
+  return errs;
+}
+
+export function checkFolder(dir, { root, contentOnly = false } = {}) {
   const p = (f) => join(dir, f);
   if (!existsSync(p('outline.md'))) return ['outline.md is missing'];
   const errs = [];
@@ -301,10 +379,16 @@ export function checkFolder(dir, { root } = {}) {
   let deck;
   try { deck = JSON.parse(readFileSync(p('deck.json'), 'utf8')); } catch (e) { return [...errs, `deck.json does not parse: ${e.message}`]; }
   errs.push(...checkDeck(deck, { root }));
-  if (!existsSync(p('deck.html'))) errs.push('deck.html is missing');
+  // --content: the product-manager's check before the designer builds deck.html
+  if (contentOnly) { /* deck.html is the designer's */ }
+  else if (!existsSync(p('deck.html'))) errs.push('deck.html is missing');
   else {
-    const tok = root === undefined ? undefined : existsSync(resolve(root, TOKENS)) ? readFileSync(resolve(root, TOKENS), 'utf8') : null;
-    errs.push(...checkHtml(readFileSync(p('deck.html'), 'utf8'), deck, { tokens: tok }));
+    const html = readFileSync(p('deck.html'), 'utf8');
+    if (html.includes('id="stage"')) errs.push(...checkDesigned(html, deck));
+    else {
+      const tok = root === undefined ? undefined : existsSync(resolve(root, TOKENS)) ? readFileSync(resolve(root, TOKENS), 'utf8') : null;
+      errs.push(...checkHtml(html, deck, { tokens: tok }));
+    }
   }
   if ((deck.slides ?? []).some((s) => ['chart', 'comparison', 'roadmap'].includes(s?.type)) && !existsSync(p('data.csv'))) errs.push('data.csv is missing (the deck has chart, comparison or roadmap slides)');
   return errs;
@@ -312,12 +396,12 @@ export function checkFolder(dir, { root } = {}) {
 
 // compared by file name, like the other checkers: argv[1] is not resolved through a symlink or junction, import.meta.url is
 if (basename(process.argv[1] ?? '') === 'check-presentation.mjs') {
-  const dirs = process.argv.slice(2);
-  if (!dirs.length) { console.error('usage: check-presentation.mjs <folder> [more folders ...]'); process.exit(1); }
+  const contentOnly = process.argv.includes('--content'), dirs = process.argv.slice(2).filter((a) => a !== '--content');
+  if (!dirs.length) { console.error('usage: check-presentation.mjs [--content] <folder> [more folders ...]'); process.exit(1); }
   let bad = 0;
   for (const d of dirs) {
     let errs;
-    try { errs = checkFolder(d, { root: process.cwd() }); } catch (e) { errs = [e.message]; }
+    try { errs = checkFolder(d, { root: process.cwd(), contentOnly }); } catch (e) { errs = [e.message]; }
     if (errs.length) { bad++; console.log(`FAIL ${d}`); errs.forEach((e) => console.log(`  - ${e}`)); } else console.log(`PASS ${d}`);
   }
   process.exit(bad ? 1 : 0);

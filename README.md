@@ -2,7 +2,7 @@
 
 # Muffy
 
-### One skill, eleven subagents, one feature from research to production.
+### One skill, ten subagents, one feature from research to production.
 
 **Describe a feature. The team researches, designs, builds, reviews, tests, and ships it, with a human approving the design before code starts and every production release.**
 
@@ -79,7 +79,7 @@ The Orchestrator confirms the scope (and, for user-facing features, offers an op
 /muffy present roadmap for the client, from the plan and the ADRs
 ```
 
-Outside the team flow. The presenter drafts an outline for you to confirm, then builds an HTML deck plus an outline and `data.csv` you can edit in Canva, Google Slides or PowerPoint. Every number and date must trace to a source; nothing internal (agent names, ticket ids, branches) reaches the slides. You are the reviewer. Details: [present](skills/muffy/references/present.md).
+Outside the team flow. The product manager, thinking like a solutions engineer, asks who the audience is, drafts an outline for you to confirm, then writes the content; the designer turns it into a slide show (one slide at a time, Auto-play with captions). You also get an outline and `data.csv` you can edit in Canva, Google Slides or PowerPoint. Every number and date must trace to a source; nothing internal (agent names, ticket ids, branches) reaches the slides. You are the reviewer. Details: [present](skills/muffy/references/present.md).
 
 ### Fix a small bug or cosmetic issue
 
@@ -240,8 +240,8 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 | Agent | Role |
 |---|---|
 | `researcher` | Brief, evidence, onboard baseline; asks clarifying questions |
-| `product-manager` | Acceptance criteria, plan, strategy score, project goal and budget; the only writer of cost records (`docs/strategy.md`) |
-| `designer` | Canvas, `design.md`, and the project design system |
+| `product-manager` | Acceptance criteria, plan, strategy score, project goal and budget; the only writer of cost records (`docs/strategy.md`); in `/muffy present`, the content of decks for clients and end-users, as a solutions engineer |
+| `designer` | Canvas, `design.md`, the project design system, and the look of `/muffy present` decks |
 | `architect` | API contract, ADRs, stack decisions, build vs buy (recommends third-party providers; web access only to check a provider's facts), cost delta |
 | `devops` | Deploy plan, smoke build, staging, production rollout |
 | `frontend-dev` | UI implementation on `fe/<task>` (web, mobile and desktop apps) |
@@ -249,7 +249,6 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 | `code-reviewer` | Read-only review of code and docs |
 | `qa-tester` | Tests against acceptance criteria |
 | `docs-writer` | Docs and release notes (optional announcement) |
-| `presenter` | On demand: client- or end-user-facing decks from the plan, ADRs and data (`/muffy present`); you review them |
 
 ## Example
 

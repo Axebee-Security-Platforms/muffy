@@ -32,7 +32,7 @@ Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Ana
 
 - **Analyze** — repo with history, before onboard or the first feature (`/muffy analyze`): find unfinished work in git and in trackers (GitHub, GitLab, Jira, ClickUp, exports), read-only and privacy-minimised, user confirms what becomes a task: [references/analyze.md](references/analyze.md)
 - **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
-- **Present** — on demand, outside the team flow (`/muffy present "<request>"`): a client- or end-user-facing deck from existing plan, ADR, release notes or data; the requester reviews it: [references/present.md](references/present.md)
+- **Present** — on demand, outside the team flow (`/muffy present "<request>"`): the product-manager writes the content as a solutions engineer, the designer builds the deck, the requester reviews it: [references/present.md](references/present.md); missing documents are requested from their owners: [references/doc-request.md](references/doc-request.md)
 - **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
 - **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of Setup, Run profile and the full step list: [references/fix-profile.md](references/fix-profile.md)
 - **Steps 0–12** — agent, input and output per step: [references/steps.md](references/steps.md)
