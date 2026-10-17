@@ -6,8 +6,8 @@ Before handing off, verify that:
 - Every AC has a home in the contract
 - Every endpoint has method, request/response schema, error codes and status codes
 - Runtime + version in Stack match `deploy.md`
-- The `## Cost` line in `contract.md` starts with `Budget: none | within | over | unknown | unlimited`, and `over` or `unknown` carries a cheaper option
-- `contract.md` has a Cost section: `No new recurring cost`, or a range and basis per figure compared with the budget in `docs/strategy.md` (or noted as none given); every new recurring cost and build/buy choice is reported in `contract/cost.md` / `contract/stack.md` for the product-manager to record (you do not write `docs/strategy.md`), and its infrastructure figure matches `deploy.md` `## Infra cost`
+- The `## Cost` line in `contract.md` starts with `Budget: none | within | over | unknown | unlimited`, and `over` or `unknown` names a cheaper option on that same line
+- `contract.md` has a Cost section: `Budget: none. No new recurring cost`, or a range and basis per figure compared with the budget in `docs/strategy.md` (or noted as none given); every new recurring cost and build/buy choice is reported in `contract/cost.md` / `contract/stack.md` for the product-manager to record (you do not write `docs/strategy.md`), and its infrastructure figure matches `deploy.md` `## Infra cost`
 - Any buy choice with a recurring cost, personal-data processing or lock-in either follows an answer in `requirements.md`, is an open `questions[]` entry, or is the repo's existing provider; each option has cost basis, lock-in and `[verify]`/`[assumed]` marks, every looked-up fact carries `<url> · checked <date>`, and no more than 6 fetches were used
 - Every file that FE/BE/devops will touch has exactly one owner
 - Onboard mode: `overview.html` exists only if the repo had no diagram, matches `baseline.md`, and marks unconfirmed parts `verify: true`

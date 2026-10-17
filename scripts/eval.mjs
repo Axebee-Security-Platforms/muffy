@@ -421,6 +421,156 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   rmSync(repo, { recursive: true, force: true });
 }
 
+/* 7g. designer: design-system intake questions, screen map, write scope for design files */
+{
+  const handoff = { role: 'designer', task: 't', step: '3', round: 1, status: 'needs-input', paths_written: [], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'asks the style', questions: [{ id: 'Q-1', question: 'What personality should the product have?', why: 'Sets color, type and tone', options: ['calm and professional', 'bold and technical'], default: 'calm and professional', blocking: true }] };
+  const handoffSchema = JSON.parse(readFileSync(rel('skills/muffy/schemas/handoff.schema.json'), 'utf8'));
+  check('schema: the designer may ask design-system intake questions; a frontend-dev may not', validate(handoffSchema, handoff).length === 0 && validate(handoffSchema, { ...handoff, role: 'frontend-dev' }).length > 0);
+  const { check: diagramErrors } = await import('../skills/muffy/scripts/check-diagram.mjs');
+  const tpl = readFileSync(rel('skills/muffy/templates/diagram.html'), 'utf8');
+  const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, `$1${JSON.stringify(j)}$2`);
+  const map = { kind: 'screenmap', title: 'App screens', caption: 'Sign in leads to the home tabs.', nodes: [{ id: 'in', label: 'Sign in', type: 'entry', col: 1, row: 1 }, { id: 'home', label: 'Home', type: 'screen', note: 'all roles', col: 2, row: 1 }, { id: 'set', label: 'Settings', type: 'modal', col: 3, row: 1 }], edges: [{ from: 'in', to: 'home', label: 'tap Sign in' }, { from: 'home', to: 'set', label: 'tap gear' }] };
+  check('diagram: a valid screen map passes', diagramErrors(withJson(map)).length === 0, diagramErrors(withJson(map)).join('; '));
+  check('diagram: a screen map edge without an action label, an unknown node type, or an edge over another screen fails', [{ ...map, edges: [{ from: 'in', to: 'home' }] }, { ...map, nodes: [{ ...map.nodes[0], type: 'service' }, ...map.nodes.slice(1)] }, { ...map, edges: [{ from: 'in', to: 'set', label: 'deep link' }] }].every((j) => diagramErrors(withJson(j)).length > 0));
+  const W = rel('skills/muffy/scripts/guard-write-scope.mjs');
+  const write = (agent_type, file_path) => spawnSync(process.execPath, [W], { input: JSON.stringify({ tool_name: 'Write', agent_type, tool_input: { file_path } }), encoding: 'utf8' }).status;
+  check('write-scope: only the designer writes the screen map; the designer and the architect write the design system, nobody else', write('designer', 'docs/design/screen-map.html') === 0 && write('architect', 'docs/design/screen-map.html') === 2 && write('designer', 'docs/design-system/README.md') === 0 && write('architect', 'docs/design-system/README.md') === 0 && write('frontend-dev', 'docs/design-system/tokens.css') === 2 && write('frontend-dev', 'src/Login.tsx') === 0);
+}
+
+/* 7h. review fixes for fc42674: guards, baseline, diagram, stack notes, preflight, repo facts, artifact scope, docs order */
+{
+  const S = (f) => rel('skills/muffy/scripts', f);
+  const node = (script, args, opts = {}) => spawnSync(process.execPath, [S(script), ...args], { encoding: 'utf8', ...opts });
+  const hook = (script, payload) => spawnSync(process.execPath, [S(script)], { input: JSON.stringify(payload), encoding: 'utf8' }).status;
+
+  // guard-bash: stack-note mode and the architect's stack ladder start with check-stack-notes
+  const bash = (agent_type, command) => hook('guard-bash-allowlist.mjs', { tool_name: 'Bash', agent_type, tool_input: { command } });
+  check('guard-bash: researcher and architect may run check-stack-notes', bash('researcher', 'node .claude/skills/muffy/scripts/check-stack-notes.mjs next') === 0 && bash('muffy:architect', 'node .claude/skills/muffy/scripts/check-stack-notes.mjs') === 0);
+  check('guard-bash: the documented allowlist names every script the guard allows', ['hooks-enforcement.md'].every((f) => readFileSync(rel('skills/muffy/references', f), 'utf8').includes('check-diagram,check-stack-notes}')));
+
+  // write-scope: anchored at the project root, case-folded where the file system ignores case
+  const ws = (agent_type, file_path, cwd = 'E:\\repo') => hook('guard-write-scope.mjs', { tool_name: 'Write', agent_type, cwd, tool_input: { file_path } });
+  check('write-scope: a monorepo package\'s own docs/architecture/ is not the shared one', ws('docs-writer', 'E:\\repo\\packages\\sdk\\docs\\architecture\\README.md') === 0 && ws('docs-writer', 'packages/sdk/docs/strategy.md') === 0);
+  check('write-scope: root files are still guarded by absolute and relative path', ws('frontend-dev', 'E:\\repo\\docs\\strategy.md') === 2 && ws('frontend-dev', './docs/strategy.md') === 2 && ws('product-manager', 'E:\\repo\\docs\\strategy.md') === 0);
+  check('write-scope: a path outside the project root falls back to matching anywhere', ws('architect', 'E:\\other\\docs\\strategy.md') === 2);
+  if (process.platform === 'win32' || process.platform === 'darwin') check('write-scope: Docs/Strategy.md is the same file on a case-insensitive file system', ws('frontend-dev', 'E:\\repo\\Docs\\Strategy.md') === 2 && ws('frontend-dev', 'e:\\REPO\\docs\\strategy.md') === 2);
+  check('install: write-scope hook matches NotebookEdit, and an older narrower matcher is widened', readFileSync(rel('install.mjs'), 'utf8').includes("'guard-write-scope.mjs', matcher: 'Write|Edit|MultiEdit|NotebookEdit'") && readFileSync(rel('install.mjs'), 'utf8').includes('update matcher'));
+
+  // check-baseline: code identifiers are not paths; prose numbers outside Stack/Runtime are not versions
+  {
+    const repo = mkdtempSync(join(tmpdir(), 'muffy-review-baseline-'));
+    const git = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
+    const put = (file, text) => { mkdirSync(dirname(join(repo, file)), { recursive: true }); writeFileSync(join(repo, file), text); };
+    git('init', '-q'); git('config', 'user.email', 't@t.t'); git('config', 'user.name', 't'); git('config', 'core.autocrlf', 'false');
+    put('package.json', JSON.stringify({ dependencies: { next: '^14.1.0', ms: '^2.1.3', debug: '^4.3.0' } })); put('src/a.ts', 'a\n');
+    git('add', '-A'); git('commit', '-qm', 'init');
+    const sha = git('rev-parse', '--short', 'HEAD').stdout.trim();
+    const baseline = (stack) => put('docs/architecture/baseline.md', `---\ncommit: ${sha}\n---\n## Stack\n${stack}\n## Conventions\nAuth reads \`req.user\`, config \`process.env\`, replies with \`res.json\`, starts with \`app.listen\`, logs \`console.error\`. Entry \`src/a.ts\`.\nLatency 200 ms, p99 400 ms. Next steps: 2. debug 9 calls per request.\n`);
+    baseline('Node 22, Next.js 14, ms 2, debug 4.');
+    const fresh = node('check-baseline.mjs', [repo]);
+    check('check-baseline: req.user, process.env, res.json are code, not missing paths; prose numbers outside ## Stack are not versions', fresh.status === 0 && fresh.stdout.startsWith('baseline: green'), fresh.stdout);
+    baseline('Node 22, Next.js 13, ms 2.');
+    const red = node('check-baseline.mjs', [repo]);
+    check('check-baseline: "Next.js 13" in ## Stack against next ^14 is still red', red.status === 2 && red.stdout.includes('next: baseline 13'), red.stdout);
+    baseline('Node 22, next 14. Gone: `src/gone.ts`, `lib/old/`.');
+    check('check-baseline: a cited source file that is gone still counts', node('check-baseline.mjs', [repo]).stdout.includes('src/gone.ts'));
+    rmSync(repo, { recursive: true, force: true });
+  }
+
+  // repo-facts: non-ASCII ignored folders, path tricks in stack-extensions names
+  {
+    const repo = mkdtempSync(join(tmpdir(), 'muffy-review-facts-'));
+    const git = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
+    const put = (file, text) => { mkdirSync(dirname(join(repo, file)), { recursive: true }); writeFileSync(join(repo, file), text); };
+    git('init', '-q');
+    put('.gitignore', 'gen-ทด/\n'); put('src/a.ts', 'a\n'); put('gen-ทด/b.ts', 'b\n');
+    const { gitIgnoredDirs, loadExtensions } = await import('../skills/muffy/scripts/repo-facts.mjs');
+    check('repo-facts: an ignored folder with a non-ASCII name comes back as its real name', gitIgnoredDirs(repo)?.has('gen-ทด'), JSON.stringify([...(gitIgnoredDirs(repo) ?? [])]));
+    const scan = JSON.parse(node('scan-repo.mjs', [repo]).stdout);
+    check('scan-repo: files inside that ignored folder are not counted', scan.sourceFiles.byExtension['.ts'] === 1, JSON.stringify(scan.sourceFiles));
+    put('.team/stack-extensions.json', JSON.stringify({ manifests: ['mix.exs', '../evil', 'a/../b', '/etc/passwd'], skipDirs: ['deps'] }));
+    check('repo-facts: stack-extensions names with "..", or starting with "/", are dropped by the filter itself', JSON.stringify(loadExtensions(repo).manifests) === '["mix.exs"]', JSON.stringify(loadExtensions(repo).manifests));
+    rmSync(repo, { recursive: true, force: true });
+  }
+
+  // check-diagram: script injection in any case, plain-string labels, flow actor ids, overview commit, CLI through any path
+  {
+    const { check: diagramErrors } = await import('../skills/muffy/scripts/check-diagram.mjs');
+    const tpl = readFileSync(rel('skills/muffy/templates/diagram.html'), 'utf8');
+    const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, () => `<script type="application/json" id="diagram">${JSON.stringify(j)}</script>`);
+    const arch = { kind: 'architecture', title: 'T', caption: 'c', commit: 'abc1234', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
+    const label = (l) => withJson({ ...arch, nodes: [{ ...arch.nodes[0], label: l }, arch.nodes[1]] });
+    check('diagram: "</SCRIPT>", "<script" and "<!--" in a label fail in any case', ['x</SCRIPT><img src=x onerror=alert(1)>', 'x<Script>', 'x<!--'].every((l) => diagramErrors(label(l)).some((e) => e.includes('</script'))));
+    check('diagram: a "<" written as \\u003c passes', diagramErrors(withJson(arch).replace('"label":"A"', '"label":"a \\u003c b"')).length === 0, diagramErrors(withJson(arch).replace('"label":"A"', '"label":"a \\u003c b"')).join('; '));
+    check('diagram: a label that is not a string fails', diagramErrors(label({ x: 1 })).some((e) => e.includes('plain string')));
+    const flow = { kind: 'flow', title: 'F', caption: 'c', actors: [{ id: 'u', label: 'User', type: 'app' }, { id: 'u', label: 'Again', type: 'app' }], steps: [{ from: 'u', to: 'u', label: 'x' }] };
+    check('diagram: duplicate flow actor ids fail', diagramErrors(withJson(flow)).some((e) => e.includes('duplicate')));
+    const noCommit = withJson({ ...arch, commit: undefined });
+    check('diagram: the architecture overview needs commit; another diagram does not', diagramErrors(noCommit, 'docs/architecture/overview.html').some((e) => e.includes('commit')) && diagramErrors(noCommit, 'docs/architecture/flows/x.html').length === 0 && diagramErrors(withJson(arch), 'docs\\architecture\\overview.html').length === 0);
+    const tmp = mkdtempSync(join(tmpdir(), 'muffy-review-diagram-'));
+    writeFileSync(join(tmp, 'bad.html'), label('x</SCRIPT>'));
+    const cli = node('check-diagram.mjs', [join(tmp, 'bad.html')]);
+    check('diagram: the CLI runs by file name and exits 1 on a FAIL', cli.status === 1 && cli.stdout.includes('FAIL'), cli.stdout);
+    rmSync(tmp, { recursive: true, force: true });
+  }
+
+  // check-stack-notes: Ruby, Rust, .NET and composer manifests; a framework named like a folder stays a framework
+  {
+    const repo = mkdtempSync(join(tmpdir(), 'muffy-review-stack-'));
+    const put = (file, text) => { mkdirSync(dirname(join(repo, file)), { recursive: true }); writeFileSync(join(repo, file), text); };
+    put('Gemfile', "gem 'rails', '~> 7.1.3'\n");
+    put('Cargo.toml', '[dependencies]\ntokio = { version = "1.37", features = ["full"] }\n');
+    put('App.csproj', '<Project><ItemGroup><PackageReference Include="Serilog" Version="3.1.0" /></ItemGroup></Project>\n');
+    put('composer.json', '{"require":{"laravel/framework":"^11.0"}}\n');
+    put('package.json', '{"dependencies":{"prisma":"^5.0.0"}}\n');
+    put('prisma/schema.prisma', 'x\n');
+    for (const [n, v] of [['rails', '6.0'], ['tokio', '1.30'], ['Serilog', '2.0'], ['laravel', '11.0'], ['prisma', '4.0']]) put(`docs/stacks/${n}.md`, `Source: https://example.org, version ${v}, 2026-01-01\n`);
+    const out = node('check-stack-notes.mjs', [repo]).stdout;
+    check('stack-notes: versions are read from Gemfile, Cargo tables, .csproj and composer vendor names', /rails: stale/.test(out) && /tokio: fresh/.test(out) && /Serilog: stale/.test(out) && /laravel: fresh/.test(out), out);
+    const named = node('check-stack-notes.mjs', ['prisma'], { cwd: repo });
+    check('stack-notes: "prisma" with a prisma/ folder in the repo is the framework, not the repo root', named.status === 1 && /prisma: stale/.test(named.stdout), named.stdout);
+    rmSync(repo, { recursive: true, force: true });
+  }
+
+  // devops-preflight: versions compared by leading parts, prototype names rejected
+  {
+    const [maj, min] = process.versions.node.split('.');
+    const pre = (...a) => node('devops-preflight.mjs', a).status;
+    check('preflight: --toolchain node=<major> and node=<major.minor> pass; a number that only appears inside the version fails', pre('--toolchain', `node=${maj}`) === 0 && pre('--toolchain', `node=${maj}.${min}`) === 0 && (min === maj || pre('--toolchain', `node=${min}`) === 1));
+    check('preflight: --toolchain toString or constructor is a usage error, not a crash', pre('--toolchain', 'toString') === 2 && pre('--toolchain', 'constructor') === 2);
+  }
+
+  // check-artifacts: a hook checks only the written artifact; the infra line must be in the checkpoint
+  {
+    const tmp = mkdtempSync(join(tmpdir(), 'muffy-review-artifacts-'));
+    const d = join(tmp, '.team', 'login-flow'); cpSync(fixtureDir, d, { recursive: true });
+    writeFileSync(join(d, 'deploy.md'), '# Deploy\n\nhalf written\n');
+    check('check-artifacts: the contract scope ignores a half-written deploy.md, the deploy scope reports it', checkTask(d, 'contract').length === 0 && checkTask(d, 'deploy').some((e) => e.includes('deploy.md')), checkTask(d, 'contract').join('; '));
+    const viaHook = (file) => spawnSync(process.execPath, [S('check-artifacts.mjs'), '--hook'], { input: JSON.stringify({ tool_name: 'Write', tool_input: { file_path: join(d, file) } }), encoding: 'utf8' }).status;
+    check('check-artifacts --hook: writing contract.md passes while deploy.md is half written; writing deploy.md fails', viaHook('contract.md') === 0 && viaHook('deploy.md') === 2);
+    cpSync(join(fixtureDir, 'deploy.md'), join(d, 'deploy.md'));
+    writeFileSync(join(d, 'checkpoint.md'), readFileSync(join(d, 'checkpoint.md'), 'utf8').replace(/infra: [a-z-]+ ?·? ?/, ''));
+    check('check-artifacts: a checkpoint with no infra: line fails the deploy.md check instead of skipping it', checkTask(d).some((e) => e.includes('no infra: line')), checkTask(d).join('; '));
+    rmSync(tmp, { recursive: true, force: true });
+  }
+
+  // schemas and docs: PM cost envelopes, the documented no-cost line, step 3 order, the infra copy at setup
+  {
+    const env = { goal: 'Record the cost of login-flow', task: 'login-flow', brain: 'B', mode: 'cost-record', read: ['.team/login-flow/contract.md'], write: ['docs/strategy.md'], dont_touch: [] };
+    check('envelope: product-manager cost-record and cost-reconcile modes are valid', validate(envSchema, env).length === 0 && validate(envSchema, { ...env, mode: 'cost-reconcile' }).length === 0 && validate(envSchema, { ...env, mode: 'cost-whatever' }).length > 0);
+    const arch = readFileSync(rel('agents/references/architect/workflow.md'), 'utf8');
+    const d = mkdtempSync(join(tmpdir(), 'muffy-review-cost-')); cpSync(fixtureDir, d, { recursive: true });
+    const noCost = arch.match(/one line, `([^`]+)`/)?.[1] ?? '';
+    writeFileSync(join(d, 'contract.md'), readFileSync(join(d, 'contract.md'), 'utf8').replace(/^Budget: none\. No new recurring cost$/m, noCost));
+    check('docs: the architect\'s documented no-cost line passes check-artifacts', noCost.startsWith('Budget: none') && checkTask(d).length === 0, `${noCost} → ${checkTask(d).join('; ')}`);
+    rmSync(d, { recursive: true, force: true });
+    const row3 = readFileSync(rel('skills/muffy/references/steps.md'), 'utf8').split('\n').find((l) => l.startsWith('| 3 |')) ?? '';
+    check('docs: step 3 aligns the contract with deploy.md before the Budget verdict is read, and records the chosen infra', row3.indexOf('aligns the contract') > -1 && row3.indexOf('aligns the contract') < row3.indexOf('`pause:budget`') && row3.includes('infra: existing: <chosen>'));
+    check('docs: setup copies a recorded infra: answer into every task checkpoint', readFileSync(rel('skills/muffy/references/setup.md'), 'utf8').includes('still copy that `infra:` line'));
+    check('docs: the designer defaults a missing Platform to web instead of asking every time', readFileSync(rel('agents/references/designer/workflow.md'), 'utf8').includes('none named → `web`'));
+  }
+}
+
 /* 8. fix lane (references/fix-profile.md): triage examples, fix.md fixture, diagnosis hand-offs */
 runFixLaneEvals({ check, root });
 

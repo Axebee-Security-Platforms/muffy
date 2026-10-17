@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Usage: node check-artifacts.mjs <.team/<task> dir>
-//        node check-artifacts.mjs --hook   (PostToolUse: reads hook JSON on stdin)
+//        node check-artifacts.mjs --hook   (PostToolUse: reads hook JSON on stdin; checks only the artifact that was written)
 // Checks the split hand-off artifacts (references/memory-model.md#splitting-large-artifacts):
 //   ac.md, brief.md, contract.md, fix.md ≤ 60 lines; files in ac/, brief/, contract/ ≤ 120 lines;
 //   every [label] used (outside code fences and backticks) has one definition, every definition is used, targets exist;
@@ -81,8 +81,11 @@ function checkDeploy(taskDir, errors) {
   if (!existsSync(deployPath)) return;
   const deploy = readFileSync(deployPath, 'utf8');
   for (const h of ['Chosen infra', 'Infra cost', 'Practices', 'Risks']) if (section(deploy, h) === null) errors.push(`deploy.md has no ## ${h} section`);
-  const cp = existsSync(join(taskDir, 'checkpoint.md')) ? readFileSync(join(taskDir, 'checkpoint.md'), 'utf8') : '';
-  const infra = cp.match(/\binfra:\s*([a-z-]+)/i)?.[1]?.toLowerCase();
+  const cpPath = join(taskDir, 'checkpoint.md');
+  const cp = existsSync(cpPath) ? readFileSync(cpPath, 'utf8') : null;
+  const infra = cp?.match(/\binfra:\s*([a-z-]+)/i)?.[1]?.toLowerCase();
+  // setup copies a recorded answer into every task's checkpoint; without it the Infra options rule below cannot be checked
+  if (cp !== null && !infra) errors.push('checkpoint.md has no infra: line in ## Status, so deploy.md ## Infra options cannot be checked (setup copies the recorded answer)');
   const hasOptions = section(deploy, 'Infra options') !== null;
   if (infra === 'propose' && !hasOptions) errors.push('deploy.md needs ## Infra options (checkpoint says infra: propose)');
   if (infra && infra !== 'propose' && hasOptions) errors.push(`deploy.md has ## Infra options but the checkpoint says infra: ${infra}; options are proposed only for infra: propose`);
@@ -92,13 +95,16 @@ function checkDeploy(taskDir, errors) {
   }
 }
 
-export function checkTask(taskDir) {
+// scope: 'all' (the CLI) or the artifact a hook saw written: 'ac', 'brief', 'contract', 'fix' or 'deploy'. A hook checks only the
+// written artifact, so the architect writing contract.md never gets errors about devops' half-written deploy.md, or the reverse.
+export function checkTask(taskDir, scope = 'all') {
   const errors = [];
   const files = [];
-  for (const m of MAINS) if (existsSync(join(taskDir, m))) files.push([join(taskDir, m), MAIN_MAX]);
+  const inScope = (name) => scope === 'all' || scope === name;
+  for (const m of MAINS) if (inScope(m.replace(/\.md$/, '')) && existsSync(join(taskDir, m))) files.push([join(taskDir, m), MAIN_MAX]);
   for (const d of PART_DIRS) {
     const dir = join(taskDir, d);
-    if (existsSync(dir)) for (const p of walk(dir)) files.push([p, PART_MAX]);
+    if (inScope(d) && existsSync(dir)) for (const p of walk(dir)) files.push([p, PART_MAX]);
   }
   for (const [file, max] of files) {
     const n = lineCount(readFileSync(file, 'utf8'));
@@ -109,7 +115,7 @@ export function checkTask(taskDir) {
 
   const acPath = join(taskDir, 'ac.md');
   const contractPath = join(taskDir, 'contract.md');
-  if (existsSync(acPath) && existsSync(contractPath)) {
+  if (inScope('contract') && existsSync(acPath) && existsSync(contractPath)) {
     const ids = new Set(readFileSync(acPath, 'utf8').match(/AC-\d+/g) ?? []);
     const contractDir = join(taskDir, 'contract');
     const contract = [contractPath, ...(existsSync(contractDir) ? walk(contractDir) : [])].map((p) => readFileSync(p, 'utf8')).join('\n');
@@ -117,8 +123,8 @@ export function checkTask(taskDir) {
       if (!new RegExp(`\\b${id}\\b`).test(contract)) errors.push(`contract: ${id} from ac.md is not mapped in contract.md or contract/`);
     }
   }
-  checkContract(taskDir, errors);
-  checkDeploy(taskDir, errors);
+  if (inScope('contract')) checkContract(taskDir, errors);
+  if (inScope('deploy')) checkDeploy(taskDir, errors);
   return errors;
 }
 
@@ -133,7 +139,7 @@ function fromHook() {
   const filePath = input?.tool_input?.file_path ?? '';
   const m = filePath.match(/^(.*[\\/]\.team[\\/][^\\/]+)[\\/](ac\.md|brief\.md|contract\.md|fix\.md|deploy\.md|(ac|brief|contract)[\\/].+\.md)$/);
   if (!m) process.exit(0); // not a split artifact
-  return m[1];
+  return { taskDir: m[1], scope: m[2].split(/[\\/.]/)[0] };
 }
 
 if (process.argv[1]?.endsWith('check-artifacts.mjs')) {
@@ -142,8 +148,8 @@ if (process.argv[1]?.endsWith('check-artifacts.mjs')) {
     console.error('usage: check-artifacts.mjs <.team/<task> dir> | --hook');
     process.exit(2);
   }
-  const taskDir = arg === '--hook' ? fromHook() : arg;
-  const errors = checkTask(taskDir);
+  const { taskDir, scope } = arg === '--hook' ? fromHook() : { taskDir: arg, scope: 'all' };
+  const errors = checkTask(taskDir, scope);
   if (errors.length) {
     console.error(errors.join('\n'));
     process.exit(2);

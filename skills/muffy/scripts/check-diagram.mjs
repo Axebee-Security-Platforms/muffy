@@ -5,13 +5,14 @@
 // limits; every edge points at a real node; no two cards share a grid cell; a straight (same row or column) edge never passes
 // through another card. Exit 1 on any FAIL. Zero dependencies.
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const JSON_BLOCK = /(<script type="application\/json" id="diagram">)([\s\S]*?)(<\/script>)/;
 const TITLE = /<title>[\s\S]*?<\/title>/;
 const NODE_TYPES = ['app', 'service', 'store', 'external', 'queue'];
-const LIMIT = { architecture: 15, erd: 12, actors: 6, steps: 12, fields: 12, caption: 160 };
+const SCREEN_TYPES = ['entry', 'screen', 'modal', 'external'];
+const LIMIT = { screenmap: 20, architecture: 15, erd: 12, actors: 6, steps: 12, fields: 12, caption: 160 };
 
 const template = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../templates/diagram.html'), 'utf8');
 const shell = (html) => html.replace(JSON_BLOCK, '$1$3').replace(TITLE, '<title></title>').replace(/\r\n/g, '\n');
@@ -37,18 +38,36 @@ function checkGrid(items, edges, label, errs) {
   }
 }
 
-export function check(html) {
+const text = (v) => typeof v === 'string' && v.trim() !== '';
+const optText = (v) => v === undefined || typeof v === 'string';
+
+// file: the path the page is saved at; the onboard overview (docs/architecture/overview.html) must carry the commit it was drawn from
+export function check(html, file = '') {
   const errs = [];
   const m = html.match(JSON_BLOCK);
   if (!m) return ['no <script type="application/json" id="diagram"> block'];
   if (shell(html) !== templateShell) errs.push('page differs from templates/diagram.html outside <title> and the #diagram JSON: copy the template and edit only those');
   let d;
   try { d = JSON.parse(m[2]); } catch (e) { return [...errs, `diagram JSON does not parse: ${e.message}`]; }
-  if (m[2].includes('</script')) errs.push('diagram JSON contains "</script"');
-  if (!['architecture', 'erd', 'flow'].includes(d.kind)) errs.push('kind must be architecture, erd or flow');
-  if (!d.title || typeof d.title !== 'string') errs.push('title is required');
-  if (d.caption && d.caption.length > LIMIT.caption) errs.push(`caption is over ${LIMIT.caption} characters`);
-  if (d.kind === 'architecture') {
+  // the browser ends the block at </script in any case, and <!-- or <script inside it can swallow the real closer
+  if (/<\/script|<!--|<script/i.test(m[2])) errs.push('diagram JSON contains "</script", "<script" or "<!--": write "<" as \\u003c');
+  if (!['architecture', 'erd', 'flow', 'screenmap'].includes(d.kind)) errs.push('kind must be architecture, erd, flow or screenmap');
+  if (!text(d.title)) errs.push('title is required');
+  if (!optText(d.subtitle) || !optText(d.caption)) errs.push('subtitle and caption must be plain strings');
+  if (typeof d.caption === 'string' && d.caption.length > LIMIT.caption) errs.push(`caption is over ${LIMIT.caption} characters`);
+  if (d.commit !== undefined && !/^[0-9a-f]{7,40}$/.test(String(d.commit))) errs.push('commit must be a git SHA (7 to 40 hex characters)');
+  if (/(^|[\\/])docs[\\/]architecture[\\/]overview\.html$/.test(file) && d.commit === undefined) errs.push('the architecture overview needs commit (the SHA it was drawn from) so staleness is visible');
+  // every label is drawn with textContent: anything but a string shows as [object Object] or "undefined"
+  const items = [...(d.nodes ?? []), ...(d.edges ?? []), ...(d.relations ?? []), ...(d.actors ?? []), ...(d.steps ?? [])];
+  if (items.some((n) => !optText(n?.label) || !optText(n?.note))) errs.push('every label and note must be a plain string');
+  for (const n of d.entities ?? []) if (!optText(n?.name) || !optText(n?.note) || (n.fields ?? []).some((f) => !text(f?.name) || !optText(f?.type))) errs.push(`${n?.id}: name, note and field name/type must be plain strings`);
+  if (d.kind === 'screenmap') {
+    const nodes = d.nodes ?? [], edges = d.edges ?? [];
+    if (!nodes.length || nodes.length > LIMIT.screenmap) errs.push(`nodes must be 1 to ${LIMIT.screenmap}`);
+    for (const n of nodes) { if (!SCREEN_TYPES.includes(n.type)) errs.push(`${n.id}: type must be one of ${SCREEN_TYPES.join(', ')}`); if (!n.label) errs.push(`${n.id}: label is required`); }
+    for (const e of edges) if (!e.label) errs.push(`edge ${e.from} -> ${e.to}: label is required (the action that causes it)`);
+    checkGrid(nodes, edges, 'node', errs);
+  } else if (d.kind === 'architecture') {
     const nodes = d.nodes ?? [], edges = d.edges ?? [];
     if (!nodes.length || nodes.length > LIMIT.architecture) errs.push(`nodes must be 1 to ${LIMIT.architecture}`);
     for (const n of nodes) { if (!NODE_TYPES.includes(n.type)) errs.push(`${n.id}: type must be one of ${NODE_TYPES.join(', ')}`); if (!n.label) errs.push(`${n.id}: label is required`); }
@@ -67,19 +86,22 @@ export function check(html) {
   } else if (d.kind === 'flow') {
     const actors = d.actors ?? [], steps = d.steps ?? [], ids = new Set(actors.map((a) => a.id));
     if (!actors.length || actors.length > LIMIT.actors) errs.push(`actors must be 1 to ${LIMIT.actors}`);
+    if (ids.size !== actors.length || actors.some((a) => !a.id)) errs.push('actor id missing or duplicate');
+    for (const a of actors) if (!text(a.label)) errs.push(`actor ${a.id}: label is required`);
     if (!steps.length || steps.length > LIMIT.steps) errs.push(`steps must be 1 to ${LIMIT.steps}`);
     steps.forEach((s, i) => { if (!ids.has(s.from) || !ids.has(s.to)) errs.push(`step ${i + 1}: unknown actor`); if (!s.label) errs.push(`step ${i + 1}: label is required`); });
   }
   return errs;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// compared by file name, like the other checkers: argv[1] is not resolved through a symlink or junction, import.meta.url is
+if (basename(process.argv[1] ?? '') === 'check-diagram.mjs') {
   const files = process.argv.slice(2);
   if (!files.length) { console.error('usage: check-diagram.mjs <file.html> [more.html ...]'); process.exit(1); }
   let bad = 0;
   for (const f of files) {
     let errs;
-    try { errs = check(readFileSync(f, 'utf8')); } catch (e) { errs = [e.message]; }
+    try { errs = check(readFileSync(f, 'utf8'), f); } catch (e) { errs = [e.message]; }
     if (errs.length) { bad++; console.log(`FAIL ${f}`); errs.forEach((e) => console.log(`  - ${e}`)); } else console.log(`PASS ${f}`);
   }
   process.exit(bad ? 1 : 0);

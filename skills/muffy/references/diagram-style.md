@@ -1,6 +1,6 @@
 # Diagram style
 
-Every diagram muffy produces (architecture, database, flow) is one self-contained `.html` file made from [templates/diagram.html](../templates/diagram.html). No Mermaid, no images, no external scripts, fonts or links. When to draw one is decided elsewhere ([architect diagrams](../../../agents/references/architect/diagrams.md), the fix lane's `flow.html`); this file is only how.
+Every architecture, database, flow and screen-map diagram muffy produces is one self-contained `.html` file made from [templates/diagram.html](../templates/diagram.html). No Mermaid, no images, no external scripts, fonts or links. When to draw one is decided elsewhere ([architect diagrams](../../../agents/references/architect/diagrams.md), the fix lane's `flow.html`); this file is only how. The FE/BE PR Lens diagrams are not covered here: they are SVGs from their own tool ([frontend](../../../agents/references/frontend-dev/pr-diagram.md), [backend](../../../agents/references/backend-dev/pr-diagram.md)).
 
 ## Look and motion (fixed by the template)
 - **Surface:** a blueprint grid paper background with a major line every 120 px, minimal and calm; light and dark follow the system
@@ -16,12 +16,13 @@ Every diagram muffy produces (architecture, database, flow) is one self-containe
 4. Never say the diagram looks right from the JSON alone; you cannot open it, so the check above is your evidence and the Orchestrator or the user views it
 
 ## JSON
-Common: `kind` (`architecture` | `erd` | `flow`), `title`, `subtitle`, `caption` (one sentence, at most 160 characters), optional `commit` (short SHA of the code it was drawn from; required for the onboard overview).
+Common: `kind` (`architecture` | `erd` | `flow` | `screenmap`), `title`, `subtitle`, `caption` (one sentence, at most 160 characters), optional `commit` (short SHA of the code it was drawn from; required for the onboard overview).
 
 | kind | Items | Fields | Links | Limit |
 |---|---|---|---|---|
 | `architecture` | `nodes` | `id`, `label`, `type`, optional `note`, `col`, `row`, optional `verify` | `edges`: `from`, `to`, `label`, optional `verify`, optional `dir: "both"` | 15 nodes |
 | `erd` | `entities` | `id`, `name`, `col`, `row`, `fields` of `{name, type, key}` (`key` is `pk` or `fk` or omitted), optional `note`, `verify` | `relations`: `from`, `to`, `label` such as `1 : N` | 12 entities, 12 fields each |
+| `screenmap` | `nodes` | `id`, `label`, `type` (`entry`, `screen`, `modal`, `external`), optional `note` (who sees it), `col`, `row`, optional `verify` | `edges`: `from`, `to`, `label` (the action that causes it), optional `verify` | 20 nodes |
 | `flow` | `actors` (`id`, `label`, `type`) | none | `steps`: `from`, `to`, `label`, optional `note` (shown in the caption), `fail` (marks the step that fails), `verify` | 6 actors, 12 steps |
 
 ## Content rules

@@ -8,5 +8,5 @@
 - Never ask the user directly and never guess a material unknown silently: ask through `status: needs-input` + `questions[]` (≤ 8 per round, ≤ 2 rounds), and mark any default you proceed on `[assumed]`
 - If the prompt has no `<brain>` path or the folder can't be found, do not guess or write elsewhere — say so in your final message so the Orchestrator asks the user
 - Second brain writes: only `<brain>/agents/researcher/<task>.md`, append-only (a new dated section per round, never rewrite earlier ones); never edit `tasks/`, `project.md` or other agents' folders
-- **Bash is for checks only.** You may run `node .claude/skills/muffy/scripts/validate-handoff.mjs`, `check-artifacts.mjs` and `check-checkpoint.mjs`, and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files
+- **Bash is for checks only.** You may run `node .claude/skills/muffy/scripts/validate-handoff.mjs`, `check-artifacts.mjs`, `check-checkpoint.mjs` and `check-stack-notes.mjs` (stack-note mode), and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files
 

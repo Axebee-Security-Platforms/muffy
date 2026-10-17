@@ -41,7 +41,6 @@ Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Ana
 - **Baseline freshness** — green, yellow or red from `check-baseline.mjs`, run once at setup; the thresholds and what to ask on yellow or red (read only then): [references/baseline-freshness.md](references/baseline-freshness.md)
 - **ADR ownership** — product ADRs are the product-manager's, technical ADRs the architect's; only the owner supersedes; cross-boundary conflicts go to the user through the Orchestrator: [references/adr.md](references/adr.md)
 - **Budget** — who owns the ceiling, the `Budget:` verdict, `pause:budget`, the cost line at the Human gate and closing: [references/budget.md](references/budget.md)
-- **Diagram style** — how every diagram is made (architecture, database, flow): one HTML file from the template, in the blueprint-grid card style, checked by `check-diagram.mjs`: [references/diagram-style.md](references/diagram-style.md)
 - **Design review** — step 3c, after 3b publishes the canvas: the Orchestrator's UX/UI review of the rendered canvas with the `impeccable` skill: [references/design-review.md](references/design-review.md)
 - **Requirements interview** (steps 1–2) — researcher/PM return `needs-input`; relay their questions to the user: [references/requirements.md](references/requirements.md)
 - **Loops** — read only when a reject/fail happens: fix loops (max 3), fallback ladder, escalation: [references/loops.md](references/loops.md)

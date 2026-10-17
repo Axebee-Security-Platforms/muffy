@@ -3,8 +3,8 @@
 // Usage: node devops-preflight.mjs [--nvmrc .nvmrc] [--toolchain NAME[=version] ...] [--env-file .env.staging.local --var NAME[=prefix] ...] [--health URL] [--retries 10]
 //   runtime: `node -v` must equal the .nvmrc version (a smoke on another Node proves nothing). With --toolchain and no .nvmrc
 //            this check is skipped: a Flutter, Swift, Kotlin or .NET repo has no .nvmrc
-//   toolchain: each --toolchain NAME[=version] runs that tool's version command and must find it (and, with =version, that text
-//            in its output); a missing one prints `toolchain-missing: <name> on <os>`. Names: node flutter dart xcodebuild swift dotnet java gradle android-sdk cargo go python docker
+//   toolchain: each --toolchain NAME[=version] runs that tool's version command and must find it (and, with =version, a version
+//            whose leading parts match: node=22 passes 22.14.0, fails 4.22.0); a missing one prints `toolchain-missing: <name> on <os>`. Names: node flutter dart xcodebuild swift dotnet java gradle android-sdk cargo go python docker
 //   env:     each --var is checked by name (and optional value prefix); values are never printed
 //   health:  GET URL must return 200 (retried every 2s, default 10 tries)
 // Prints one line per check plus a JSON summary line. Exit 0 = all pass, 1 = a check failed, 2 = bad usage.
@@ -18,10 +18,12 @@ const one = (name, dflt) => all(name)[0] ?? dflt;
 const TOOLCHAINS = {
   node: ['node', '--version'], flutter: ['flutter', '--version'], dart: ['dart', '--version'], xcodebuild: ['xcodebuild', '-version'],
   swift: ['swift', '--version'], dotnet: ['dotnet', '--version'], java: ['java', '-version'], gradle: ['gradle', '--version'],
-  cargo: ['cargo', '--version'], go: ['go', 'version'], python: ['python3', '--version'], docker: ['docker', '--version'],
+  cargo: ['cargo', '--version'], go: ['go', 'version'], docker: ['docker', '--version'],
+  // on Windows python3 is usually only the Microsoft Store stub: try python, then the py launcher
+  python: platform() === 'win32' ? [['python', '--version'], ['py', '-3', '--version']] : ['python3', '--version'],
   'android-sdk': null, // an environment variable pointing at an existing folder, not a command
 };
-if (args.some((a) => a.startsWith('--') && !['--nvmrc', '--toolchain', '--env-file', '--var', '--health', '--retries'].includes(a)) || all('--toolchain').some((t) => !(t.split('=')[0] in TOOLCHAINS))) {
+if (args.some((a) => a.startsWith('--') && !['--nvmrc', '--toolchain', '--env-file', '--var', '--health', '--retries'].includes(a)) || all('--toolchain').some((t) => !Object.hasOwn(TOOLCHAINS, t.split('=')[0]))) {
   console.error('usage: devops-preflight.mjs [--nvmrc F] [--toolchain NAME[=version] ...] [--env-file F --var NAME[=prefix] ...] [--health URL] [--retries N]\n  toolchain names: ' + Object.keys(TOOLCHAINS).join(' '));
   process.exit(2);
 }
@@ -51,11 +53,18 @@ for (const spec of toolchains) {
     add(`toolchain ${name}`, Boolean(dir) && existsSync(dir), dir && existsSync(dir) ? 'ANDROID_HOME or ANDROID_SDK_ROOT is set' : `toolchain-missing: ${name} on ${platform()}`);
     continue;
   }
-  const [cmd, ...cargs] = TOOLCHAINS[name];
-  const r = spawnSync(cmd, cargs, { encoding: 'utf8', shell: platform() === 'win32', timeout: 20000 }); // fixed commands from the table above, never user text
-  const out = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim().split(/\r?\n/).find(Boolean) ?? '';
+  const candidates = Array.isArray(TOOLCHAINS[name][0]) ? TOOLCHAINS[name] : [TOOLCHAINS[name]];
+  let r;
+  for (const [cmd, ...cargs] of candidates) {
+    r = spawnSync(cmd, cargs, { encoding: 'utf8', shell: platform() === 'win32', timeout: 20000 }); // fixed commands from the table above, never user text
+    if (!r.error && r.status === 0) break;
+  }
+  const lines = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim().split(/\r?\n/).filter(Boolean);
+  const out = lines.find((l) => /\d+\.\d+/.test(l)) ?? lines[0] ?? ''; // gradle prints a rule line before "Gradle 8.5"
+  const have = (out.match(/\d+(?:\.\d+)*/)?.[0] ?? '').split('.');
+  const matches = (w) => w.replace(/^v/, '').split('.').every((part, i) => have[i] === part); // node=22 matches 22.14.0, not 4.22.0
   if (r.error || r.status !== 0) add(`toolchain ${name}`, false, `toolchain-missing: ${name} on ${platform()}`);
-  else if (want && !out.includes(want)) add(`toolchain ${name}`, false, `found "${out}", wants ${want}`);
+  else if (want && !matches(want)) add(`toolchain ${name}`, false, `found "${out}", wants ${want}`);
   else add(`toolchain ${name}`, true, out);
 }
 

@@ -4,6 +4,7 @@
 - `.team/<task>/canvas/project/*` (canvas source; uses the values from `tokens.css`)
 - `docs/design-system/tokens.css` — CSS custom properties on `:root`, with dark mode overrides; the only place raw values live
 - `docs/design-system/README.md` — sections: Principles, Color, Typography, Spacing & layout, Radius & elevation, Motion, Components (each with anatomy, variants, states, tokens used, do/don't), Changelog
+- Only when [product-structure.md](product-structure.md) says it is necessary: `docs/design/screen-map.html` (self-contained diagram, `kind: screenmap`) and a **Navigation** section in `design.md`. Usually none
 - `<brain>/agents/designer/<task>.md`
 
 Final message: paths + list of artboards/screens + data the UI needs from the API + what is still a placeholder + design system changes (tokens/components added or changed) + only the Quality Checks items that failed (none → "all checks pass"). The full checklist with each item's status goes in `design.md` under `## Quality checks`

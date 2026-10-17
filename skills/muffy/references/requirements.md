@@ -1,6 +1,6 @@
 # Requirements interview
 
-Researcher (step 1), product-manager (step 2), architect (step 3, provider choices only) and devops (step 3, mode 1, infrastructure choice only) may not talk to the user. When the request leaves a decision open they return `status: needs-input` with `questions[]` in the hand-off block, and the Orchestrator relays them. This is a clarification round, not a fix loop: it never touches the loop counters.
+Researcher (step 1), product-manager (step 2), architect (step 3, provider choices only), devops (step 3, mode 1, infrastructure choice only) and designer (step 3, design-system intake only) may not talk to the user. When the request leaves a decision open they return `status: needs-input` with `questions[]` in the hand-off block, and the Orchestrator relays them. This is a clarification round, not a fix loop: it never touches the loop counters.
 
 ## Orchestrator procedure
 
@@ -23,6 +23,7 @@ Researcher (step 1), product-manager (step 2), architect (step 3, provider choic
 |---|---|---|
 | `researcher` | Context and constraints that change what to research | existing systems to integrate, stack or vendor limits, scale, compliance, budget, deadline, prior attempts, what "better" means |
 | `architect` | Which third-party provider to use, when a capability is better bought than built and the choice has a recurring cost, handles personal data or locks in ([third-party-providers.md](../../../agents/references/architect/third-party-providers.md)) | payments (Stripe vs Adyen vs build), auth (managed vs self-hosted), email, search, file storage |
+| `designer` | One question, only when the project has no design system and is not an internal tool: does the orderer have a brand or a reference? (default: no, use the starter). A second round of at most 4 questions only if the answer is yes. Never blocking ([design-system-intake.md](../../../agents/references/designer/design-system-intake.md)) | not yet, starter / yes, I will share it / pick a personality / resemble a product I describe |
 | `devops` | Where it runs, only when the user answered `infra: propose` and nothing already decides it: cloud, on-premises, hybrid or existing infrastructure, and which provider or hardware, with cost, operational load and data location ([infrastructure-options.md](../../../agents/references/devops/infrastructure-options.md)) | managed platform vs own servers, one cloud vs another, buy hardware vs colocation |
 | `product-manager` | Product decisions that change the AC or the plan | who the users are, the problem and success metric, MVP cut, priority of each need, edge-case behaviour, out-of-scope, non-functional targets |
 

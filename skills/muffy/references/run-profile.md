@@ -4,7 +4,7 @@ A small bug or cosmetic fix does not use the table below: it runs the fix lane (
 
 | Condition | Skip |
 |---|---|
-| No UI change (including a `Platform: cli` without screens, see [platforms.md](platforms.md)) | `designer`, 3b, 3c, `frontend-dev` |
+| No UI change (including a CLI without screens: the request, `requirements.md` or `baseline.md` says so before any `Platform:` line exists; see [platforms.md](platforms.md)) | `designer`, 3b, 3c, `frontend-dev` |
 | No backend/API change | `backend-dev`; `architect` writes only the parts FE needs |
 | No public API or user-facing change | `docs-writer`, step 8 |
 | Existing stack, no smoke trigger (below) | devops mode 1 is a short check against the existing `deploy.md`; **3d is skipped by default**. Regressions are still caught at step 9 (staging health + smoke) |

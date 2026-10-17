@@ -51,7 +51,7 @@ Install (persistent config — the user approves it; never add it silently):
 ```
 
 ## 9. Bash allowlist for doc agents — optional, needs user approval
-**Rule:** `architect`, `designer`, `product-manager`, `docs-writer` and `researcher` use Bash only for `node .claude/skills/muffy/scripts/{validate-handoff,check-artifacts,check-checkpoint,check-diagram}.mjs` and read-only `git status|diff|log|show`, one command at a time (no `;`, `&&`, pipes, redirects, substitution or `..`). Enforced by [scripts/guard-bash-allowlist.mjs](../scripts/guard-bash-allowlist.mjs) (exit 2 = block). It reads `agent_type` from the hook payload: calls with no `agent_type` (the Orchestrator) and other roles pass untouched. Without the hook the same rule stands as text in each agent's guardrails. Installed together with the env guard by `install.mjs --with-guard`; add it by hand otherwise.
+**Rule:** `architect`, `designer`, `product-manager`, `docs-writer` and `researcher` use Bash only for `node .claude/skills/muffy/scripts/{validate-handoff,check-artifacts,check-checkpoint,check-diagram,check-stack-notes}.mjs` and read-only `git status|diff|log|show`, one command at a time (no `;`, `&&`, pipes, redirects, substitution or `..`). Enforced by [scripts/guard-bash-allowlist.mjs](../scripts/guard-bash-allowlist.mjs) (exit 2 = block). It reads `agent_type` from the hook payload: calls with no `agent_type` (the Orchestrator) and other roles pass untouched. Without the hook the same rule stands as text in each agent's guardrails. Installed together with the env guard by `install.mjs --with-guard`; add it by hand otherwise.
 ```json
 "PreToolUse": [
   { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }
@@ -85,12 +85,12 @@ Installed with the other guards by `install.mjs --with-guard`.
 ```
 
 ## 12. Write scope for shared files
-**Rule:** `docs/strategy.md` (every cost record) is written only by `product-manager`; `docs/architecture/baseline.md` only by `researcher`; `docs/architecture/overview.html`, `data-model.html` and `flows/*.html` only by `architect`; no subagent writes any other file under `docs/architecture/`. Enforced by [scripts/guard-write-scope.mjs](../scripts/guard-write-scope.mjs) (exit 2 = block); only calls whose payload has an `agent_type` are checked, so the Orchestrator's own session is never blocked (it still follows the rule as text: it sends cost to the product-manager, never edits `strategy.md`).
+**Rule:** `docs/strategy.md` (every cost record) is written only by `product-manager`; `docs/architecture/baseline.md` only by `researcher`; `docs/architecture/overview.html`, `data-model.html` and `flows/*.html` only by `architect`; no subagent writes any other file under `docs/architecture/`; `docs/design/screen-map.html` only by `designer`; `docs/design-system/` only by `designer` (and `architect` in onboard mode). Enforced by [scripts/guard-write-scope.mjs](../scripts/guard-write-scope.mjs) (exit 2 = block); only calls whose payload has an `agent_type` are checked, so the Orchestrator's own session is never blocked (it still follows the rule as text: it sends cost to the product-manager, never edits `strategy.md`).
 - **Known limits:** writes made through Bash are not seen (the doc agents' Bash is already limited by rule 9; `frontend-dev`, `backend-dev`, `devops` and `qa-tester` are not), and a path outside these names is allowed
 Installed with the other guards by `install.mjs --with-guard`.
 ```json
 "PreToolUse": [
-  { "matcher": "Write|Edit|MultiEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-write-scope.mjs" } ] }
+  { "matcher": "Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-write-scope.mjs" } ] }
 ]
 ```
 

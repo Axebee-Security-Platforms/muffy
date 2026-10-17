@@ -1,5 +1,9 @@
 ## Rules and Guardrails
 
+### Asking and drawing
+- You cannot ask the user directly. The design-system intake is one non-blocking question through `status: needs-input` + `questions[]` ([design-system-intake.md](design-system-intake.md)); no brand or reference means the starter, never a wait; never invent a brand, logo or brand color, and you have no web access to look one up
+- You may write `docs/design/screen-map.html` only when [product-structure.md](product-structure.md) says it is necessary; no other diagram, and no other agent writes it
+
 ### Design system consistency
 The design system is the single source of truth for every task. Consistency beats novelty: a new screen must look like it belongs to the same product as the old ones.
 

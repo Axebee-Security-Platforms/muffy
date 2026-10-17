@@ -35,7 +35,7 @@ export const inSkippedDir = (relPath) => relPath.split('/').slice(0, -1).some((s
 /* A project teaches the scripts what they do not know, in .team/stack-extensions.json:
    {"manifests": ["mix.exs"], "skipDirs": ["deps"], "platforms": ["game"]}. Names only; anything else in a value is ignored. */
 export function loadExtensions(root) {
-  const names = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && /^[\w.@/-]+$/.test(x)) : []);
+  const names = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string' && /^[\w.@/-]+$/.test(x) && !x.startsWith('/') && !x.split('/').includes('..')) : []);
   try {
     const j = JSON.parse(readFileSync(join(root, '.team', 'stack-extensions.json'), 'utf8'));
     return { manifests: names(j.manifests), skipDirs: names(j.skipDirs), platforms: names(j.platforms).map((p) => p.toLowerCase()) };
@@ -49,8 +49,9 @@ export function repoHelpers(root) {
   const readText = (p) => (has(p) ? readFileSync(join(root, p), 'utf8') : null);
   const readJson = (p) => { try { return JSON.parse(readText(p)); } catch { return null; } };
   const list = (p) => (has(p) && statSync(join(root, p)).isDirectory() ? readdirSync(join(root, p)) : []);
+  // core.quotePath=false: git otherwise prints a non-ASCII path as an octal-escaped quoted string, which never matches a real folder or a cited path
   const git = (...a) => {
-    try { return execFileSync('git', a, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).trim(); } catch { return null; }
+    try { return execFileSync('git', ['-c', 'core.quotePath=false', ...a], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).trim(); } catch { return null; }
   };
   return { has, readText, readJson, list, git };
 }

@@ -17,7 +17,10 @@ const guardEntries = args.includes('--guard-entries');
 const bad = args.filter((a) => a.startsWith('--') && a !== '--guard-entries');
 if (bad.length) { console.error('usage: check-stack-notes.mjs [repo-root] [framework ...] | --guard-entries'); process.exit(3); }
 const positional = args.filter((a) => !a.startsWith('--'));
-const root = positional.length && existsSync(positional[0]) && readdirSafe(positional[0]) ? positional[0] : '.';
+// the first argument is the repo root only when it looks like one: it holds docs/stacks/, or it is a path (".", "/x", "C:\x", "a/b").
+// A framework name that is also a folder (prisma/, docker/, terraform/) stays a framework name.
+const isRoot = (p) => readdirSafe(p) !== null && (existsSync(join(p, 'docs', 'stacks')) || /^\.{1,2}$|[\\/]/.test(p)) && !p.startsWith('@');
+const root = positional.length && isRoot(positional[0]) ? positional[0] : '.';
 const named = positional.filter((a) => a !== root);
 
 function readdirSafe(p) { try { return readdirSync(p); } catch { return null; } }
@@ -43,7 +46,9 @@ const manifestText = () => {
 };
 const text = manifestText();
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
-const manifestVersion = (name) => text.match(new RegExp(`(?<![\\w-])${esc(name)}(?![\\w-])["']?\\s*[:=@~^<>"' ]*\\s*v?(\\d+(?:\\.\\d+)*)`, 'i'))?.[1];
+// name, an optional vendor suffix (composer "laravel/framework"), then separators and the word "version" only:
+//   "next": "^15.0.0" · flutter_bloc: ^8.1.0 · gem 'rails', '~> 7.1.3' · tokio = { version = "1.37" } · Include="X" Version="8.0.0"
+const manifestVersion = (name) => text.match(new RegExp(`(?<![\\w-])${esc(name)}(?:/[\\w.-]+)?(?![\\w-])(?:[\\s:=@~^<>"',{]|version)*v?(\\d+(?:\\.\\d+)*)`, 'i'))?.[1];
 const major = (v) => String(v ?? '').match(/^\d+/)?.[0];
 
 let problems = 0;

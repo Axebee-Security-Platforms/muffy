@@ -134,7 +134,7 @@ const guards = [
   { script: 'guard-bash-allowlist.mjs', matcher: 'Bash|PowerShell' },
   { script: 'guard-full-regression.mjs', matcher: 'Bash|PowerShell' },
   { script: 'guard-test-level.mjs', matcher: 'Bash|PowerShell|Write|Edit' },
-  { script: 'guard-write-scope.mjs', matcher: 'Write|Edit|MultiEdit' },
+  { script: 'guard-write-scope.mjs', matcher: 'Write|Edit|MultiEdit|NotebookEdit' },
 ].map((g) => ({ ...g, entry: { matcher: g.matcher, hooks: [{ type: 'command', command: `node .claude/skills/muffy/scripts/${g.script}` }] } }));
 const guardEntries = guards.map((g) => g.entry);
 let settingsChanged = false;
@@ -153,11 +153,20 @@ if (withGuard) {
   } else if (JSON.stringify(pre).includes('guard-env.mjs')) {
     // muffy's own hooks are already there (maybe from an older install): add only the guards still missing
     const missing = guards.filter((g) => !JSON.stringify(pre).includes(g.script));
-    if (missing.length === 0) log('guards already in hooks.PreToolUse (nothing to merge)');
+    // an older install may have a guard with a narrower matcher (write-scope without NotebookEdit): widen it in place
+    const widened = [];
+    const updated = pre.map((e) => {
+      const g = guards.find((x) => JSON.stringify(e.hooks ?? []).includes(x.script));
+      if (!g || e.matcher === g.matcher) return e;
+      widened.push(g.script);
+      return { ...e, matcher: g.matcher };
+    });
+    if (missing.length === 0 && widened.length === 0) log('guards already in hooks.PreToolUse (nothing to merge)');
     else {
-      settings.hooks.PreToolUse = [...pre, ...missing.map((g) => g.entry)];
+      settings.hooks.PreToolUse = [...updated, ...missing.map((g) => g.entry)];
       settingsChanged = true;
-      log(`merge: hooks.PreToolUse <- ${missing.map((g) => g.script).join(', ')}`);
+      if (missing.length) log(`merge: hooks.PreToolUse <- ${missing.map((g) => g.script).join(', ')}`);
+      if (widened.length) log(`update matcher: ${widened.join(', ')}`);
     }
   } else {
     warn(`hooks.PreToolUse already exists in ${rel(settingsPath, target)}; not modified. Add these entries by hand:\n${JSON.stringify(guardEntries, null, 2)}`);
@@ -204,7 +213,7 @@ if (missing.length) {
 console.log(`
 Done${dryRun ? ' (dry run, nothing written)' : ''}. Remaining manual steps:
 
-1. ${withGuard ? 'Env, Bash-allowlist, full-regression, test-level and write-scope guards are in hooks.PreToolUse of .claude/settings.local.json (see messages above if it was skipped).' : 'Hooks are not installed. Re-run with --with-guard for the guards, or add them yourself:\n     { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-full-regression.mjs" } ] }\n     { "matcher": "Bash|PowerShell|Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-test-level.mjs" } ] }'}
+1. ${withGuard ? 'Env, Bash-allowlist, full-regression, test-level and write-scope guards are in hooks.PreToolUse of .claude/settings.local.json (see messages above if it was skipped).' : 'Hooks are not installed. Re-run with --with-guard for the guards, or add them yourself:\n     { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-full-regression.mjs" } ] }\n     { "matcher": "Bash|PowerShell|Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-test-level.mjs" } ] }\n     { "matcher": "Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-write-scope.mjs" } ] }'}
    - Team-flow rules 1–4 (merge, commit, push, temporary stack) are Orchestrator rules, not hooks: see skills/muffy/references/hooks-enforcement.md.
 2. Set SECOND_BRAIN_VAULT in .claude/settings.local.json if it still shows the placeholder.
 3. Make sure the repo has docs/plan/, docs/adr/, docs/design-system/ (where the flow needs them) and .nvmrc if devops checks the runtime.
