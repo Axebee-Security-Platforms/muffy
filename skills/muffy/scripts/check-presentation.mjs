@@ -250,10 +250,13 @@ export function checkDeck(d, { root } = {}) {
           if (DIGIT.test(`${x?.title ?? ''}${x?.text ?? ''}`) && x?.source !== undefined) src(`${at} item ${j + 1}`, x.source);
         });
         // a count in the headline ("10 roles", "6 ways", "หกทาง") must match the cards
-        const count = [...String(s.headline ?? '').matchAll(/(\d+)\s*(?:[a-z]+|ตำแหน่ง|ทาง|ข้อ|คำสั่ง|เรื่อง|อย่าง)/gi)].map((m) => Number(m[1]));
+        // a number before a unit of time or size ("30 seconds", "3 percent") is a claim, not a count: it keeps needing a source
+        const COUNT = /(\d+)\s*([a-z]+|ตำแหน่ง|ทาง|ข้อ|คำสั่ง|เรื่อง|อย่าง)/gi, UNIT = /^(?:ms|sec|secs|seconds?|mins?|minutes?|hours?|days?|weeks?|months?|years?|percent|times|x)$/i;
+        const head = String(s.headline ?? '');
+        const count = [...head.matchAll(COUNT)].filter((m) => !UNIT.test(m[2])).map((m) => Number(m[1]));
         if (count.length && Array.isArray(items) && !count.includes(items.length)) errs.push(`${at}: the headline count ${count[0]} does not match ${items.length} cards`);
         const unsourced = (Array.isArray(items) ? items : []).filter((x) => x?.source === undefined).flatMap((x) => [x?.title ?? '', x?.text ?? '', x?.tag ?? '']);
-        needSlideSource([String(s.headline ?? '').replace(/\d+\s*(?:[a-z]+|ตำแหน่ง|ทาง|ข้อ|คำสั่ง|เรื่อง|อย่าง)/gi, ''), ...unsourced]); break;
+        needSlideSource([head.replace(COUNT, (m, n, w) => (UNIT.test(w) ? m : '')), ...unsourced]); break;
       }
       case 'statement': {
         if (!optText(s.support)) errs.push(`${at}: support must be a string`);
@@ -340,7 +343,8 @@ export function checkHtml(html, deck, { tokens } = {}) {
 // nothing internal is visible; the only outside requests are Google Fonts; the frame and the #deck copy are kept.
 const FONT_HOSTS = /^https:\/\/fonts\.(googleapis|gstatic)\.com(\/|$)/;
 const visibleText = (html) => html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ')
-  .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&#(\d+);|&#x([0-9a-f]+);/gi, (m, d, h) => { try { return String.fromCodePoint(d ? Number(d) : parseInt(h, 16)); } catch { return ' '; } })
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
 const squash = (t) => String(t).replace(/\*/g, '').replace(/\s+/g, '');
 
 export function checkDesigned(html, deck) {
@@ -350,7 +354,7 @@ export function checkDesigned(html, deck) {
   try { if (JSON.stringify(JSON.parse(m[2])) !== JSON.stringify(deck)) errs.push('the JSON in deck.html differs from deck.json: paste deck.json into #deck again'); }
   catch (e) { errs.push(`deck JSON in deck.html does not parse: ${e.message}`); }
   for (const [re, what] of [[/id="stage"/, 'the stage'], [/class="ui"/, 'the controls'], [/id="caption"/, 'the caption'], [/class="sheet"/, 'the sheet label']]) if (!re.test(html)) errs.push(`deck.html lost ${what} of templates/presentation-stage.html`);
-  const sections = [...html.replace(/<!--[\s\S]*?-->/g, ' ').matchAll(/<section\b[^>]*class="[^"]*\bslide\b[^"]*"[^>]*>([\s\S]*?)<\/section>/gi)].map((x) => x[1]);
+  const sections = [...html.replace(/<!--[\s\S]*?-->/g, ' ').matchAll(/<section\b[^>]*class="(?:[^"]*\s)?slide(?:\s[^"]*)?"[^>]*>([\s\S]*?)<\/section>/gi)].map((x) => x[1]);
   const slides = deck?.slides ?? [];
   if (sections.length !== slides.length) errs.push(`deck.html has ${sections.length} slide sections; deck.json has ${slides.length}`);
   slides.forEach((s, i) => { if (sections[i] !== undefined && text(s?.headline) && !squash(visibleText(sections[i])).includes(squash(s.headline))) errs.push(`slide ${i + 1}: its headline from deck.json is not on the slide word for word`); });
