@@ -3,7 +3,7 @@
 - `.team/<task>/design.md` (canvas URL at the top, personas and journey map (stages, drop-off risks), user flow, states, component map, a11y requirements, design system changes in this task, `## Quality checks` with each Definition-of-done item and its status)
 - `.team/<task>/canvas/project/*` (canvas source; uses the values from `tokens.css`)
 - `docs/design-system/tokens.css` — CSS custom properties on `:root`, with dark mode overrides; the only place raw values live
-- `docs/design-system/README.md` — sections: Principles, Color, Typography, Spacing & layout, Radius & elevation, Motion, Components (each with anatomy, variants, states, tokens used, do/don't), Changelog
+- `docs/design-system/README.md` — sections: Principles, Color, Typography, Spacing & layout, Radius & elevation, Motion, Components (each with anatomy, variants, states, tokens used, do/don't), Presentation, Changelog. **Presentation** maps the deck variables of `.claude/skills/muffy/templates/presentation.html` (`--paper`, `--slide`, `--ink`, `--muted`, `--line`, `--soft`, `--accent`, `--good`, `--warn`, `--s1`–`--s4` chart series, `--font`, `--radius`) to tokens, light and dark, as `--deck-var: --token` lines; the presenter copies the values from `tokens.css`. Chart series need four colors that stay distinct in both themes
 - Only when [product-structure.md](product-structure.md) says it is necessary: `docs/design/screen-map.html` (self-contained diagram, `kind: screenmap`) and a **Navigation** section in `design.md`. Usually none
 - `<brain>/agents/designer/<task>.md`
 

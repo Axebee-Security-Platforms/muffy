@@ -1,0 +1,129 @@
+{
+  "title": "Signing in is here",
+  "audience": {
+    "who": "Existing app users on mobile",
+    "role": "use",
+    "familiarity": "none",
+    "cares": [
+      "ease",
+      "what-changes"
+    ],
+    "setting": "read-alone"
+  },
+  "background": "plain",
+  "language": "en",
+  "slides": [
+    {
+      "type": "title",
+      "headline": "Signing in is here",
+      "subtitle": "Your own account, your own dashboard",
+      "client": "Acme app users",
+      "date": "2026-10-17"
+    },
+    {
+      "type": "bullets",
+      "headline": "You can now sign in with your email and password",
+      "items": [
+        "Sign in once and land straight on your dashboard",
+        "Works on your phone without sideways scrolling",
+        "Repeated wrong passwords are slowed down to protect you"
+      ],
+      "takeaway": "Nothing to install: use the Sign in button",
+      "source": "ac.md#Acceptance criteria"
+    },
+    {
+      "type": "diagram",
+      "headline": "How signing in works",
+      "nodes": [
+        {
+          "id": "you",
+          "label": "You enter email and password"
+        },
+        {
+          "id": "check",
+          "label": "We check your details"
+        },
+        {
+          "id": "dash",
+          "label": "Your dashboard opens"
+        }
+      ],
+      "edges": [
+        {
+          "from": "you",
+          "to": "check"
+        },
+        {
+          "from": "check",
+          "to": "dash"
+        }
+      ],
+      "caption": "One step, then you are in"
+    },
+    {
+      "type": "metric",
+      "headline": "Your account is guarded after 5 wrong tries",
+      "values": [
+        {
+          "value": "5",
+          "label": "wrong tries in a minute before we pause sign-in",
+          "source": "ac.md#Acceptance criteria"
+        }
+      ]
+    },
+    {
+      "type": "chart",
+      "headline": "Account-access requests fell 40% after launch",
+      "kind": "before-after",
+      "unit": "tickets / week",
+      "categories": [
+        "Before",
+        "After"
+      ],
+      "series": [
+        {
+          "name": "Tickets",
+          "values": [
+            120,
+            72
+          ]
+        }
+      ],
+      "source": "data/support.csv",
+      "derived": "40% = (120 − 72) / 120",
+      "highlight": {
+        "category": "After"
+      },
+      "note": {
+        "at": "After",
+        "text": "Sign-in launched"
+      }
+    },
+    {
+      "type": "steps",
+      "headline": "Getting in takes three steps",
+      "steps": [
+        {
+          "label": "Open the app"
+        },
+        {
+          "label": "Press Sign in",
+          "detail": "Top right of every page"
+        },
+        {
+          "label": "Enter your email and password"
+        }
+      ],
+      "source": "ac.md#Acceptance criteria"
+    },
+    {
+      "type": "cta",
+      "kind": "act",
+      "headline": "Try it today",
+      "ask": "Sign in with the email you registered",
+      "next": [
+        "Need help? Reply to this message"
+      ]
+    }
+  ]
+}

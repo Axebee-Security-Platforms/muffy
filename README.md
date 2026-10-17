@@ -2,7 +2,7 @@
 
 # Muffy
 
-### One skill, ten subagents, one feature from research to production.
+### One skill, eleven subagents, one feature from research to production.
 
 **Describe a feature. The team researches, designs, builds, reviews, tests, and ships it, with a human approving the design before code starts and every production release.**
 
@@ -72,6 +72,14 @@ The researcher and architect record the current stack as `docs/architecture/base
 ```
 
 The Orchestrator confirms the scope (and, for user-facing features, offers an optional release announcement; it is off unless you say yes), then runs the steps. Before research and planning, the researcher and product manager may ask you clarifying questions through the Orchestrator.
+
+### Make a presentation for a client or end-users
+
+```text
+/muffy present roadmap for the client, from the plan and the ADRs
+```
+
+Outside the team flow. The presenter drafts an outline for you to confirm, then builds an HTML deck plus an outline and `data.csv` you can edit in Canva, Google Slides or PowerPoint. Every number and date must trace to a source; nothing internal (agent names, ticket ids, branches) reaches the slides. You are the reviewer. Details: [present](skills/muffy/references/present.md).
 
 ### Fix a small bug or cosmetic issue
 
@@ -241,6 +249,7 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 | `code-reviewer` | Read-only review of code and docs |
 | `qa-tester` | Tests against acceptance criteria |
 | `docs-writer` | Docs and release notes (optional announcement) |
+| `presenter` | On demand: client- or end-user-facing decks from the plan, ADRs and data (`/muffy present`); you review them |
 
 ## Example
 

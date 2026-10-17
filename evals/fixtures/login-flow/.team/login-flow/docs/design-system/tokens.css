@@ -1,0 +1,17 @@
+:root {
+  --color-primary: #0b7a5c;
+  --color-text: #1b1f24;
+  --color-text-muted: #5f6b7a;
+  --color-bg: #f5f7f6;
+  --color-surface: #ffffff;
+  --color-border: #dbe2df;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #3fd1a6;
+    --color-text: #eef2f0;
+    --color-surface: #161c1a;
+  }
+}
