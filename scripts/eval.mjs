@@ -269,6 +269,37 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, `$1${JSON.stringify(j)}$2`);
     const arch = { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
     check('diagram: the shipped template passes', diagramErrors(tpl).length === 0);
+    check('diagram: every shipped example JSON passes in the template', ['architecture', 'erd', 'flow', 'screenmap'].every((k) => diagramErrors(withJson(JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))).length === 0));
+    {
+      const { warnings } = await import('../skills/muffy/scripts/check-diagram.mjs');
+      const many = { kind: 'architecture', title: 'T', caption: 'c', nodes: Array.from({ length: 10 }, (_, i) => ({ id: `n${i}`, label: 'N', type: 'service', col: i + 1, row: 1 })), edges: [] };
+      check('diagram: a dense diagram warns but still passes', warnings(withJson(many)).length === 1 && diagramErrors(withJson(many)).length === 0);
+      check('diagram: a small diagram does not warn', warnings(withJson(arch)).length === 0);
+    }
+    check('diagram: the template gives screen readers the connections and named flow steps', tpl.includes("'sr'") && tpl.includes("'Connections'") && tpl.includes("'Step '"));
+    {
+      // text drawn in a type colour (tag, badge) must reach 4.5:1 on the card; ink and muted likewise, in both themes
+      const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+      const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+      const vars = (s) => Object.fromEntries([...s.matchAll(/--([a-z-]+):\s*(#[0-9a-f]{6})/g)].map((m) => [m[1], m[2]]));
+      const themes = { light: vars(tpl.match(/:root \{([\s\S]*?)\n\}/)[1]), dark: vars(tpl.match(/:root\[data-theme="dark"\] \{([\s\S]*?)\n\}/)[1]) };
+      const low = Object.entries(themes).flatMap(([t, v]) => ['ink', 'muted', 'service', 'app', 'store', 'external', 'queue', 'fail'].filter((k) => ratio(v[k], v.card) < 4.5).map((k) => `${t} ${k}`));
+      check(`diagram: template text colours reach 4.5:1 on the card${low.length ? ` (low: ${low.join(', ')})` : ''}`, low.length === 0);
+    }
+    {
+      // needs a Chrome or Edge on the machine; without one the render check is skipped, like the script itself
+      const { findBrowser, layoutIssues } = await import('../skills/muffy/scripts/check-diagram-render.mjs');
+      if (findBrowser()) {
+        const dir = mkdtempSync(join(tmpdir(), 'muffy-render-eval-')), save = (n, j) => { const f = join(dir, `${n}.html`); writeFileSync(f, withJson(j)); return f; };
+        try {
+          const ok = ['architecture', 'erd', 'screenmap'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
+          check('diagram render: the shipped examples have no layout issues', ok.every((i) => Array.isArray(i) && i.length === 0));
+          const bad = layoutIssues(save('bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 2 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 3 }], edges: [{ from: 'a', to: 'c', label: 'x' }] }));
+          check('diagram render: a wire running behind a card is reported', bad.some((i) => i.includes('runs behind card B')));
+          check('diagram render: a flow diagram has no audit', layoutIssues(save('flow', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow.json'), 'utf8')))) === null);
+        } finally { rmSync(dir, { recursive: true, force: true }); }
+      }
+    }
     check('diagram: a valid architecture passes', diagramErrors(withJson(arch)).length === 0);
     check('diagram: an edge through another card fails', diagramErrors(withJson({ ...arch, edges: [{ from: 'a', to: 'c', label: 'x' }] })).some((e) => e.includes('passes through')));
     check('diagram: an unknown node, a missing edge label and a shared cell fail', [{ ...arch, edges: [{ from: 'a', to: 'z', label: 'x' }] }, { ...arch, edges: [{ from: 'a', to: 'b' }] }, { ...arch, nodes: [...arch.nodes.slice(0, 2), { ...arch.nodes[2], col: 2 }] }].every((j) => diagramErrors(withJson(j)).length > 0));

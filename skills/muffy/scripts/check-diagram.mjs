@@ -12,6 +12,8 @@ const JSON_BLOCK = /(<script type="application\/json" id="diagram">)([\s\S]*?)(<
 const TITLE = /<title>[\s\S]*?<\/title>/;
 const NODE_TYPES = ['app', 'service', 'store', 'external', 'queue'];
 const SCREEN_TYPES = ['entry', 'screen', 'modal', 'external'];
+// soft budget: above these a diagram is probably two (overview + detail). Printed as WARN, never a FAIL: the onboard overview may need the hard limit
+const SOFT = { architecture: { items: 9, links: 12 }, screenmap: { items: 12, links: 16 }, erd: { items: 8, links: 10 } };
 const LIMIT = { screenmap: 20, architecture: 15, erd: 12, actors: 6, steps: 12, fields: 12, caption: 160 };
 
 const template = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../templates/diagram.html'), 'utf8');
@@ -94,6 +96,17 @@ export function check(html, file = '') {
   return errs;
 }
 
+// advisory lines: the diagram is valid but dense. The author runs the remove test (can a node be dropped or merged, can a link be implied by layout) before hand-off
+export function warnings(html) {
+  const m = html.match(JSON_BLOCK); let d;
+  try { d = JSON.parse(m[2]); } catch { return []; }
+  const soft = SOFT[d.kind]; if (!soft) return [];
+  const items = (d.nodes ?? d.entities ?? []).length, links = (d.edges ?? d.relations ?? []).length, out = [];
+  if (items > soft.items) out.push(`${items} ${d.kind === 'erd' ? 'entities' : 'nodes'} (soft limit ${soft.items}): split into an overview and a detail diagram unless this is the onboard overview`);
+  if (links > soft.links) out.push(`${links} links (soft limit ${soft.links}): drop any link the layout already makes obvious`);
+  return out;
+}
+
 // compared by file name, like the other checkers: argv[1] is not resolved through a symlink or junction, import.meta.url is
 if (basename(process.argv[1] ?? '') === 'check-diagram.mjs') {
   const files = process.argv.slice(2);
@@ -102,7 +115,7 @@ if (basename(process.argv[1] ?? '') === 'check-diagram.mjs') {
   for (const f of files) {
     let errs;
     try { errs = check(readFileSync(f, 'utf8'), f); } catch (e) { errs = [e.message]; }
-    if (errs.length) { bad++; console.log(`FAIL ${f}`); errs.forEach((e) => console.log(`  - ${e}`)); } else console.log(`PASS ${f}`);
+    if (errs.length) { bad++; console.log(`FAIL ${f}`); errs.forEach((e) => console.log(`  - ${e}`)); } else { console.log(`PASS ${f}`); warnings(readFileSync(f, 'utf8')).forEach((w) => console.log(`  WARN ${w}`)); }
   }
   process.exit(bad ? 1 : 0);
 }

@@ -1,0 +1,17 @@
+{
+  "kind": "screenmap",
+  "title": "Checkout screens",
+  "subtitle": "Where a shopper can go from the cart.",
+  "caption": "Payment failure returns the shopper to the cart, never to a blank page.",
+  "nodes": [
+    { "id": "cart", "label": "Cart", "type": "entry", "note": "shopper", "col": 1, "row": 1 },
+    { "id": "pay", "label": "Payment", "type": "screen", "note": "shopper", "col": 2, "row": 1 },
+    { "id": "3ds", "label": "Bank check", "type": "external", "col": 3, "row": 1 },
+    { "id": "done", "label": "Receipt", "type": "screen", "col": 2, "row": 2 }
+  ],
+  "edges": [
+    { "from": "cart", "to": "pay", "label": "tap Pay" },
+    { "from": "pay", "to": "3ds", "label": "card check" },
+    { "from": "pay", "to": "done", "label": "payment ok" }
+  ]
+}

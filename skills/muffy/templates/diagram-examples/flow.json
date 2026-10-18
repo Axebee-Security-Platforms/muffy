@@ -1,0 +1,17 @@
+{
+  "kind": "flow",
+  "title": "Checkout payment",
+  "subtitle": "From the Pay click to a confirmed order.",
+  "caption": "The order is confirmed only after the provider answers.",
+  "actors": [
+    { "id": "client", "label": "Browser", "type": "app" },
+    { "id": "api", "label": "Orders API", "type": "service" },
+    { "id": "pay", "label": "Payment provider", "type": "external" }
+  ],
+  "steps": [
+    { "from": "client", "to": "api", "label": "POST /orders" },
+    { "from": "api", "to": "pay", "label": "charge", "note": "Idempotency key is the order id." },
+    { "from": "pay", "to": "api", "label": "declined", "fail": true, "note": "The order stays pending; the client sees error PAYMENT_DECLINED." },
+    { "from": "api", "to": "client", "label": "402 + error code" }
+  ]
+}

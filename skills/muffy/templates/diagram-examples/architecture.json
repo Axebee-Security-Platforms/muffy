@@ -1,0 +1,20 @@
+{
+  "kind": "architecture",
+  "title": "Orders platform",
+  "subtitle": "Web and mobile clients reach one API; orders are processed off a queue.",
+  "caption": "Every order goes through the API, then a queue, so a payment outage never blocks checkout.",
+  "commit": "abc1234",
+  "nodes": [
+    { "id": "web", "label": "Web app", "type": "app", "note": "Next.js", "col": 1, "row": 1 },
+    { "id": "api", "label": "Orders API", "type": "service", "note": "Express", "col": 2, "row": 1 },
+    { "id": "db", "label": "Postgres", "type": "store", "col": 3, "row": 1 },
+    { "id": "q", "label": "Job queue", "type": "queue", "note": "SQS", "col": 2, "row": 2 },
+    { "id": "pay", "label": "Payment provider", "type": "external", "note": "not confirmed", "col": 3, "row": 2, "verify": true }
+  ],
+  "edges": [
+    { "from": "web", "to": "api", "label": "HTTPS" },
+    { "from": "api", "to": "db", "label": "SQL" },
+    { "from": "api", "to": "q", "label": "enqueue" },
+    { "from": "q", "to": "pay", "label": "charge", "verify": true }
+  ]
+}

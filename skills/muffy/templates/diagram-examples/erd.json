@@ -1,0 +1,15 @@
+{
+  "kind": "erd",
+  "title": "Orders data model",
+  "subtitle": "Keys and the columns this change touches.",
+  "caption": "One customer has many orders; each order has many lines.",
+  "entities": [
+    { "id": "cust", "name": "customer", "col": 1, "row": 1, "fields": [ { "name": "id", "type": "uuid", "key": "pk" }, { "name": "email", "type": "text" } ] },
+    { "id": "ord", "name": "order", "col": 2, "row": 1, "fields": [ { "name": "id", "type": "uuid", "key": "pk" }, { "name": "customer_id", "type": "uuid", "key": "fk" }, { "name": "status", "type": "text" } ] },
+    { "id": "line", "name": "order_line", "col": 3, "row": 1, "fields": [ { "name": "id", "type": "uuid", "key": "pk" }, { "name": "order_id", "type": "uuid", "key": "fk" }, { "name": "qty", "type": "int" } ] }
+  ],
+  "relations": [
+    { "from": "cust", "to": "ord", "label": "1 : N" },
+    { "from": "ord", "to": "line", "label": "1 : N" }
+  ]
+}

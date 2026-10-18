@@ -13,7 +13,8 @@ Every architecture, database, flow and screen-map diagram muffy produces is one 
 1. Copy the template to the target path (`.html`)
 2. Change only `<title>` and the JSON in `<script type="application/json" id="diagram">`. Do not touch the CSS, renderer or markup: the validator rejects any other change
 3. Validate: `node .claude/skills/muffy/scripts/check-diagram.mjs <file.html>`. A FAIL is fixed before hand-off
-4. Never say the diagram looks right from the JSON alone; you cannot open it, so the check above is your evidence and the Orchestrator or the user views it
+4. Render check (architecture, erd, screenmap): `node .claude/skills/muffy/scripts/check-diagram-render.mjs <file.html>`. It opens the page in a headless Chrome or Edge and fails when a label sits on a card or another label, or a wire runs behind a card it does not join. Fix by moving cards (`col`/`row`) or shortening the label (about 10 characters fit between side-by-side cards). It prints `SKIP` when the machine has no Chrome/Edge (or `MUFFY_BROWSER` is unset); a SKIP is not a pass, so say so in the hand-off. Flow diagrams are not audited
+5. Never say the diagram looks right from the JSON alone; the checks above are your evidence, and the Orchestrator or the user views it
 
 ## JSON
 Common: `kind` (`architecture` | `erd` | `flow` | `screenmap`), `title`, `subtitle`, `caption` (one sentence, at most 160 characters), optional `commit` (short SHA of the code it was drawn from; required for the onboard overview).
@@ -25,9 +26,13 @@ Common: `kind` (`architecture` | `erd` | `flow` | `screenmap`), `title`, `subtit
 | `screenmap` | `nodes` | `id`, `label`, `type` (`entry`, `screen`, `modal`, `external`), optional `note` (who sees it), `col`, `row`, optional `verify` | `edges`: `from`, `to`, `label` (the action that causes it), optional `verify` | 20 nodes |
 | `flow` | `actors` (`id`, `label`, `type`) | none | `steps`: `from`, `to`, `label`, optional `note` (shown in the caption), `fail` (marks the step that fails), `verify` | 6 actors, 12 steps |
 
+One passing example per kind is in [templates/diagram-examples/](../templates/diagram-examples/) (`architecture.json`, `erd.json`, `flow.json`, `screenmap.json`). Read only the one for your kind and replace its content; do not read the others.
+
 ## Content rules
 - `col` and `row` place a card on a grid starting at 1. Put linked nodes next to each other; an edge in the same row or column must not pass over another card (the validator fails it). Read left to right for flow of control, top to bottom for layers
 - Every edge and relation has a label (protocol, verb or cardinality). Every card has a short label; a `note` is a few words, not a paragraph
 - An ERD lists primary and foreign keys and the columns that matter for the change, not every column
 - Facts only: what the code or contract shows. Anything unconfirmed is `verify: true`. A diagram never introduces a table, field or step that the contract, schema or traced code lacks
+- **Remove test before hand-off:** can any card be dropped, can two cards that always travel together be merged, can a wire be left out because the layout already shows it? Do it. The validator prints `WARN` above 9 nodes or 12 links (architecture), 12 nodes or 16 links (screenmap), 8 entities or 10 relations (erd): split into an overview plus a detail diagram unless it is the onboard overview. A WARN is not a FAIL, but a WARN left in place needs a reason in the brain note
+- Accessibility is built into the template (wires are decorative; a hidden connection list and named flow steps carry the same information), and its type colours are checked for 4.5:1 contrast on the card in both themes. This is one more reason the shell must not be edited
 - Text is plain: the template writes it with `textContent`, so no HTML in labels
