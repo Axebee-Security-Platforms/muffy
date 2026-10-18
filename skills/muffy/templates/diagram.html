@@ -55,7 +55,9 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
 .card.app { --tone: var(--app); } .card.service { --tone: var(--service); } .card.store { --tone: var(--store); } .card.external { --tone: var(--external); } .card.queue { --tone: var(--queue); } .card.screen { --tone: var(--service); } .card.modal { --tone: var(--app); } .card.entry { --tone: var(--store); }
 .card.initial { --tone: var(--store); } .card.state { --tone: var(--service); } .card.final { --tone: var(--muted); } .card.error { --tone: var(--fail); } .card.host { --tone: var(--app); } .card.container { --tone: var(--service); }
 .card.verify { border-style: dashed; }
-:root[data-measure] .card { animation: none; opacity: 1; transform: none; }
+:root[data-measure] .card, :root[data-measure] .step, :root[data-measure] .cap { animation: none; opacity: 1; transform: none; }
+:root[data-measure] .wire.draw { animation: none; stroke-dashoffset: 0; }
+:root[data-measure] .pulse, :root[data-measure] .ctl { display: none; }
 .tag { display: inline-block; font: 600 11px/1.5 ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .06em; color: var(--tone, var(--accent)); }
 .badge { float: right; font: 600 11px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--external); border: 1px dashed currentColor; border-radius: 6px; padding: 0 6px; }
 .card h2 { margin: 2px 0 0; font-size: 17px; letter-spacing: -.01em; }
@@ -137,7 +139,12 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
   var $ = function (id) { return document.getElementById(id); };
   var el = function (tag, cls, text, parent) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; };
   var sv = function (tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
-  if (/measure/.test(location.hash)) document.documentElement.setAttribute('data-measure', '');
+  /* #measure freezes the finished frame for check-diagram-render.mjs and diagram-export.mjs; #measure,dark or #measure,light picks the theme */
+  if (/measure/.test(location.hash)) {
+    var root = document.documentElement; root.setAttribute('data-measure', '');
+    if (/dark/.test(location.hash)) root.setAttribute('data-theme', 'dark'); else if (/light/.test(location.hash)) root.setAttribute('data-theme', 'light');
+    var setH = function () { root.setAttribute('data-h', String(root.scrollHeight)); }; window.addEventListener('load', setH); window.addEventListener('resize', setH); setTimeout(setH, 0);
+  }
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   $('title').textContent = D.title || ''; $('subtitle').textContent = D.subtitle || '';
   if (D.commit) { $('meta').hidden = false; $('meta').textContent = 'commit ' + D.commit; }

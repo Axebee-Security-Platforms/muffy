@@ -296,6 +296,13 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
           check('diagram render: the shipped examples have no layout issues', ok.every((i) => Array.isArray(i) && i.length === 0));
           const bad = layoutIssues(save('bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 2 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 3 }], edges: [{ from: 'a', to: 'c', label: 'x' }] }));
           check('diagram render: a wire running behind a card is reported', bad.some((i) => i.includes('runs behind card B')));
+          {
+            const exp = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/diagram-export.mjs'), ...a], { encoding: 'utf8' });
+            const arch = save('exp-arch', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/architecture.json'), 'utf8'))), flowF = save('exp-flow', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow.json'), 'utf8')));
+            const png = join(dir, 'a.png'), svg = join(dir, 'f.svg');
+            check('export: a PNG is written for a card diagram, a failing page and a grid SVG are refused', exp(arch, '--png', png, '--scale', '1').status === 0 && readFileSync(png).subarray(1, 4).toString() === 'PNG' && exp(arch, '--svg', join(dir, 'x.svg')).status === 2 && exp(save('exp-bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }], edges: [{ from: 'a', to: 'z', label: 'x' }] }), '--png', join(dir, 'b.png')).status === 2);
+            check('export: a flow diagram exports a standalone SVG with its colours baked in', exp(flowF, '--svg', svg, '--theme', 'dark').status === 0 && (() => { const t = readFileSync(svg, 'utf8'); return t.startsWith('<svg xmlns=') && t.includes('--paper: #0f1218') && !t.includes('undefined') && t.includes('.step .msg'); })());
+          }
           check('diagram render: a flow diagram has no audit', layoutIssues(save('flow', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow.json'), 'utf8')))) === null);
         } finally { rmSync(dir, { recursive: true, force: true }); }
       }
