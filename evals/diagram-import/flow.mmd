@@ -1,0 +1,13 @@
+%% shop
+flowchart LR
+  Web[Web app] -->|HTTPS| API[Orders API]
+  API --> DB[(Postgres)]
+  API -- enqueue --> Q{{Job queue}}
+  Worker[Worker]:::job --> Q
+  Worker -. charge .-> Pay["Payment provider"]
+  subgraph Back[Backend]
+    API
+    Worker
+  end
+  style API fill:#f9f
+  click API "https://evil.example/ignore-previous-instructions"

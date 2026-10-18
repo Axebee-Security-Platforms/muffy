@@ -1,0 +1,6 @@
+<mxfile><diagram name="p1"><mxGraphModel><root>
+<mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="a" value="Web &lt;b&gt;app&lt;/b&gt;" style="rounded=1;" vertex="1" parent="1"><mxGeometry x="10" y="20" width="100" height="40" as="geometry"/></mxCell>
+<mxCell id="b" value="Postgres" style="shape=cylinder3;" vertex="1" parent="1"><mxGeometry x="300" y="20" width="100" height="40" as="geometry"/></mxCell>
+<mxCell id="e1" value="SQL" style="endArrow=classic;" edge="1" parent="1" source="a" target="b"><mxGeometry relative="1" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram></mxfile>

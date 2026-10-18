@@ -1,0 +1,6 @@
+stateDiagram-v2
+  [*] --> Pending : checkout
+  Pending --> Paid : charged
+  Pending --> Failed : declined
+  Failed --> Pending : retry [once]
+  Paid --> [*]

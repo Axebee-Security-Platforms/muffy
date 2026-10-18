@@ -18,6 +18,9 @@
 | Database (ERD) | `docs/architecture/data-model.html` | `erd` | The contract adds two or more tables, or adds or changes a relationship (FK, join table, cardinality). One new column or index: no diagram |
 | Flow | `docs/architecture/flows/<slug>.html` | `flow` | An AC's behaviour spans three or more participants (client, API, DB, queue, third party) or its ordering is not obvious: auth handshake, payment, async job, retry or rollback. A plain CRUD endpoint: no diagram |
 
+### A diagram the user already has
+Redrawing a user's Mermaid, draw.io or Excalidraw file into muffy's format is only on request, never a trigger of its own. Follow "Importing an existing diagram" in [diagram-style.md](../../../skills/muffy/references/diagram-style.md). In onboard mode an existing diagram still counts and is linked, not redrawn.
+
 ### Say the plan before drawing
 Before writing the JSON, state in one line: the `kind`, the trigger from the table that fired, and what you leave out on purpose (components or links the reader does not need). Put it in the hand-off note, or in the question to the user when one is already being asked; do not add a round trip for it. Skip it only for an update that changes one node or edge.
 

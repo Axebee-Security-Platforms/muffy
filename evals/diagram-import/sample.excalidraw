@@ -1,0 +1,8 @@
+{"type":"excalidraw","elements":[
+{"id":"r1","type":"rectangle","x":0,"y":0,"width":100,"height":50},
+{"id":"t1","type":"text","containerId":"r1","text":"Client","x":0,"y":0},
+{"id":"r2","type":"rectangle","x":300,"y":0,"width":100,"height":50},
+{"id":"t2","type":"text","containerId":"r2","text":"Server","x":0,"y":0},
+{"id":"a1","type":"arrow","x":100,"y":25,"startBinding":{"elementId":"r1"},"endBinding":{"elementId":"r2"}},
+{"id":"t3","type":"text","containerId":"a1","text":"HTTPS","x":0,"y":0},
+{"id":"n","type":"text","text":"floating note","x":0,"y":200}]}

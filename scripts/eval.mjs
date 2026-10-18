@@ -305,6 +305,19 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
       const noStart = { ...st, nodes: st.nodes.map((n) => (n.type === 'initial' ? { ...n, type: 'state' } : n)) };
       check('diagram: a state diagram needs exactly one initial node and a state/deployment type is checked', diagramErrors(withJson(noStart)).some((e) => e.includes('exactly one node of type initial')) && diagramErrors(withJson({ ...st, nodes: [...st.nodes.slice(1), { ...st.nodes[0], type: 'host' }] })).some((e) => e.includes('type must be one of')));
     }
+    {
+      // importer: Mermaid / draw.io / Excalidraw -> a draft muffy diagram (labels are untrusted text, styling is dropped)
+      const imp = (f, ...extra) => { const r = spawnSync(process.execPath, [rel('skills/muffy/scripts/diagram-import.mjs'), rel(`evals/diagram-import/${f}`), '--json', ...extra], { encoding: 'utf8' }); const i = r.stdout.indexOf('\n{'); return { code: r.status, out: r.stdout, d: i < 0 ? null : JSON.parse(r.stdout.slice(i + 1)) }; };
+      const fl = imp('flow.mmd'), st = imp('state.mmd'), er = imp('er.mmd'), sq = imp('seq.mmd'), dx = imp('sample.drawio'), ex = imp('sample.excalidraw');
+      check('import: a Mermaid flowchart keeps nodes, labels and shapes, and drops styling and click targets', fl.d?.kind === 'architecture' && fl.d.nodes.length === 6 && fl.d.nodes.find((n) => n.label === 'Postgres')?.type === 'store' && fl.d.edges.some((e) => e.label === 'enqueue') && fl.out.includes('1 click targets') && !fl.out.includes('evil.example'));
+      check('import: a Mermaid state diagram gets one initial node and a final one', st.d?.kind === 'state' && st.d.nodes.filter((n) => n.type === 'initial').length === 1 && st.d.nodes.some((n) => n.type === 'final') && st.d.edges.some((e) => e.label === 'retry [once]') && st.out.includes('draft passes'));
+      check('import: a Mermaid ER diagram keeps keys and cardinality', er.d?.kind === 'erd' && er.d.entities.find((e) => e.name === 'CUSTOMER')?.fields.some((f) => f.key === 'pk') && er.d.relations.some((r) => r.label === '1 : 0..N'));
+      check('import: a Mermaid sequence diagram becomes a flow', sq.d?.kind === 'flow' && sq.d.actors.length === 2 && sq.d.steps.length === 2 && sq.d.actors[0].label === 'Browser');
+      check('import: draw.io strips label markup and reads the cylinder as a store', dx.d?.nodes.find((n) => n.label === 'Web app') && dx.d.nodes.find((n) => n.label === 'Postgres')?.type === 'store' && dx.d.edges[0].label === 'SQL');
+      check('import: Excalidraw bound text becomes labels and free text is reported dropped', ex.d?.edges[0]?.label === 'HTTPS' && ex.d.nodes.length === 2 && ex.out.includes('1 free-floating text'));
+      check('import: an unsupported file type exits 2, and the draft never carries a link the source lacks', spawnSync(process.execPath, [rel('skills/muffy/scripts/diagram-import.mjs'), rel('package.json')], { encoding: 'utf8' }).status === 2 && fl.d.edges.length === 5);
+      check('guard-bash: the architect may read an import but not write one with --html', guard(A, 'architect', 'node .claude/skills/muffy/scripts/diagram-import.mjs evals/diagram-import/flow.mmd --json') === 0 && guard(A, 'architect', 'node .claude/skills/muffy/scripts/diagram-import.mjs a.mmd --html docs/architecture/overview.html') === 2);
+    }
     check('diagram: a valid architecture passes', diagramErrors(withJson(arch)).length === 0);
     check('diagram: an edge through another card fails', diagramErrors(withJson({ ...arch, edges: [{ from: 'a', to: 'c', label: 'x' }] })).some((e) => e.includes('passes through')));
     check('diagram: an unknown node, a missing edge label and a shared cell fail', [{ ...arch, edges: [{ from: 'a', to: 'z', label: 'x' }] }, { ...arch, edges: [{ from: 'a', to: 'b' }] }, { ...arch, nodes: [...arch.nodes.slice(0, 2), { ...arch.nodes[2], col: 2 }] }].every((j) => diagramErrors(withJson(j)).length > 0));
