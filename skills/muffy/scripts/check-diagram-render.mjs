@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Renders diagram HTML files in a headless Chrome or Edge and reports what the template's layout audit found
-// (a label on a card or on another label, a wire running behind a card it does not join). Architecture, erd and screenmap only.
+// (a label on a card or on another label, a wire running behind a card it does not join). All kinds are audited.
 //   node check-diagram-render.mjs <file.html> [more.html ...]
 // Run check-diagram.mjs first: this needs a valid page. Browser: $MUFFY_BROWSER, else the usual Chrome/Edge/Chromium locations.
 // No browser found: prints SKIP and exits 0 (the check is advisory, never a gate that blocks a machine without one). Zero dependencies.
@@ -20,7 +20,7 @@ const CANDIDATES = [
 
 export const findBrowser = () => CANDIDATES.find((p) => existsSync(p));
 
-// the issues the page wrote to data-layout: [] when clean, null when the page has no audit (flow) or never ran it
+// the issues the page wrote to data-layout: [] when clean, null when the page has no audit or never ran it
 export function layoutIssues(file, browser = findBrowser()) {
   const profile = mkdtempSync(join(tmpdir(), 'muffy-diagram-'));
   try {
@@ -42,7 +42,7 @@ if (basename(process.argv[1] ?? '') === 'check-diagram-render.mjs') {
   for (const f of files) {
     let issues;
     try { if (!/id="diagram"/.test(readFileSync(f, 'utf8'))) throw new Error('not a muffy diagram'); issues = layoutIssues(f, browser); } catch (e) { bad++; console.log(`FAIL ${f}\n  - ${e.message}`); continue; }
-    if (issues === null) console.log(`SKIP ${f} (flow diagrams have their own layout and no audit)`);
+    if (issues === null) console.log(`SKIP ${f} (this page has no layout audit)`);
     else if (issues.length) { bad++; console.log(`FAIL ${f}`); issues.forEach((i) => console.log(`  - ${i}`)); } else console.log(`PASS ${f}`);
   }
   process.exit(bad ? 1 : 0);

@@ -116,7 +116,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
 .gantt .scale .ticks { display: grid; grid-template-columns: repeat(var(--n), 1fr); }
 .gantt .scale .ticks span { padding: 8px 0; text-align: center; border-left: 1px solid var(--line); }
 .gantt tbody td.track { position: relative; height: 44px; padding: 0; background-image: linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: calc(100% / var(--n)) 100%; }
-.gantt .bar { position: absolute; top: 9px; bottom: 9px; border-radius: 8px; background: var(--tone, var(--service)); color: #fff; font: 700 11px/26px ui-monospace, Menlo, Consolas, monospace; padding: 0 8px; white-space: nowrap; overflow: hidden; }
+.gantt .bar { position: absolute; top: 9px; bottom: 9px; border-radius: 8px; background: var(--tone, var(--service)); color: #fff; font: 700 11px/26px ui-monospace, Menlo, Consolas, monospace; padding: 0 6px; white-space: nowrap; overflow: hidden; }
 .gantt .ms { position: absolute; top: 8px; font-size: 22px; line-height: 28px; color: var(--tone, var(--service)); transform: translateX(-50%); }
 .gantt tr.phase th { background: var(--paper); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--tone); }
 .gantt .ph0 { --tone: var(--service); } .gantt .ph1 { --tone: var(--app); } .gantt .ph2 { --tone: var(--store); } .gantt .ph3 { --tone: var(--queue); }
@@ -125,6 +125,8 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
 .smap .act { background: var(--card); border: 1px solid var(--line); border-top: 4px solid var(--service); border-radius: 12px; padding: 10px 12px; font-weight: 700; box-shadow: var(--shadow); }
 .smap .rel { font: 700 12px ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding-top: 8px; }
 .smap .cell { display: grid; gap: 8px; min-height: 40px; }
+.smap .story, .smap .act, .smap .cell { min-width: 0; overflow-wrap: anywhere; }
+.gantt .lab { overflow-wrap: anywhere; }
 .smap .story { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
 .smap .story small { display: block; margin-top: 3px; font: 600 11px ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
 .smap .cut { grid-column: 1 / -1; border-top: 2px dashed var(--accent); margin: 4px 0; position: relative; height: 0; }
@@ -276,6 +278,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
           for (var d = 0; d <= len; d += 6) { var pt = w.path.getPointAtLength(d); if (hit({ x: pt.x, y: pt.y, w: 0, h: 0 }, cr[n.id], -1)) { bad.push('wire ' + nm(w.e.from) + ' to ' + nm(w.e.to) + ' runs behind card ' + nm(n.id)); break; } }
         });
       });
+      var de = document.documentElement; if (de.scrollWidth > de.clientWidth + 1) bad.push('the diagram is wider than the window (' + de.scrollWidth + ' px in ' + de.clientWidth + '): fewer columns or shorter labels');
       stage.setAttribute('data-layout', bad.length ? JSON.stringify(bad.filter(function (v, i) { return bad.indexOf(v) === i; })) : '');
     };
     wires(); if (window.ResizeObserver) new ResizeObserver(wires).observe(stage); window.addEventListener('resize', wires);
@@ -307,6 +310,14 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
       g.addEventListener('click', function () { show(i); }); g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(i); } });
       return g;
     });
+    report(function () {
+      var bad = [], boxes = nodes.map(function (g, i) { var r = g.querySelector('.pill rect'), a = x[steps[i].from], b = x[steps[i].to]; return { i: i, x: +r.getAttribute('x'), y: +r.getAttribute('y'), w: +r.getAttribute('width'), h: +r.getAttribute('height'), gap: Math.abs(a - b) }; });
+      boxes.forEach(function (p, i) {
+        if (p.gap && p.w > p.gap - 24) bad.push('step ' + (p.i + 1) + ' label "' + steps[p.i].label + '" is wider than the space between its actors: shorten it or move the actors apart');
+        boxes.slice(i + 1).forEach(function (q) { if (p.x < q.x + q.w && p.x + p.w > q.x && p.y < q.y + q.h && p.y + p.h > q.y) bad.push('step ' + (p.i + 1) + ' and ' + (q.i + 1) + ' labels overlap'); });
+      });
+      return bad;
+    });
     var cur = steps.length - 1, timer = null;
     function show(i) {
       cur = Math.max(0, Math.min(steps.length - 1, i));
@@ -316,6 +327,16 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
     function play() { clearInterval(timer); nodes.forEach(function (n) { n.style.animation = 'none'; n.style.opacity = '1'; }); var i = -1; show(0); timer = setInterval(function () { i++; if (i >= steps.length) { clearInterval(timer); return; } show(i); }, 1300); }
     $('ctl').hidden = false; $('prev').onclick = function () { clearInterval(timer); show(cur - 1); }; $('next').onclick = function () { clearInterval(timer); show(cur + 1); }; $('replay').onclick = play;
     if (D.caption) $('captext').textContent = D.caption;
+  }
+
+  /* layout audit for check-diagram-render.mjs, written to data-layout (empty when clean): the kind-specific checks, plus a page wider than the window */
+  function report(fn) {
+    var run = function () {
+      var bad = []; try { bad = fn() || []; } catch (e) { bad = ['layout audit failed: ' + e.message]; }
+      var de = document.documentElement; if (de.scrollWidth > de.clientWidth + 1) bad.push('the diagram is wider than the window (' + de.scrollWidth + ' px in ' + de.clientWidth + '): fewer columns or units, or shorter labels');
+      stage.setAttribute('data-layout', bad.length ? JSON.stringify(bad) : '');
+    };
+    run(); window.addEventListener('load', run); if (window.ResizeObserver) new ResizeObserver(run).observe(stage);
   }
 
   /* gantt: phases and tasks over a unit of time; start and length are in units, not dates */
@@ -337,6 +358,12 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
         else { var b = el('span', 'bar', (t.length || 1) + short.toLowerCase(), td); b.style.left = left + '%'; b.style.width = (t.length || 1) / span * 100 + '%'; b.setAttribute('aria-label', 'Starts ' + short + ((t.start || 0) + 1) + ', lasts ' + (t.length || 1) + ' ' + unit + (t.length === 1 ? '' : 's')); }
       });
     });
+    report(function () {
+      var bad = [], t0 = tb.querySelector('.ticks span');
+      if (t0 && t0.getBoundingClientRect().width < 26) bad.push('unit labels are cramped (' + Math.round(t0.getBoundingClientRect().width) + ' px each): use a larger unit or fewer units');
+      Array.prototype.forEach.call(tb.querySelectorAll('.bar'), function (b) { if (b.scrollWidth > b.clientWidth + 1) bad.push('the bar label "' + b.textContent + '" does not fit its bar: lengthen the task or use a larger unit'); });
+      return bad;
+    });
   }
 
   /* story map: activities across, releases down, a dashed cut line after the first release (or after D.cut) */
@@ -351,6 +378,11 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
         stories.filter(function (s) { return s.release === r.id && s.activity === a.id; }).forEach(function (s) { var c = el('div', 'story', s.label || s.id, cell); if ((s.ac || []).length) el('small', null, s.ac.join(' '), c); });
       });
       if (r.id === cutId && r !== rels[rels.length - 1]) { var cut = el('div', 'cut', null, map); el('span', null, 'cut line: ' + (r.label || r.id) + ' ships first', cut); }
+    });
+    report(function () {
+      var bad = [];
+      Array.prototype.forEach.call(map.querySelectorAll('.story, .act'), function (e) { if (e.scrollWidth > e.clientWidth + 1) bad.push('"' + e.firstChild.textContent.slice(0, 40) + '" overflows its box: shorten the label or break the long word'); });
+      return bad;
     });
   }
 

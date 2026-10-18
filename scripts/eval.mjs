@@ -293,7 +293,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
       if (findBrowser()) {
         const dir = mkdtempSync(join(tmpdir(), 'muffy-render-eval-')), save = (n, j) => { const f = join(dir, `${n}.html`); writeFileSync(f, withJson(j)); return f; };
         try {
-          const ok = ['architecture', 'state', 'deployment', 'erd', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary', 'pattern-delta', 'pattern-db-schema'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
+          const ok = ['architecture', 'state', 'deployment', 'erd', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary', 'pattern-delta', 'pattern-db-schema', 'gantt', 'story-map', 'flow'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
           check('diagram render: the shipped examples have no layout issues', ok.every((i) => Array.isArray(i) && i.length === 0));
           const bad = layoutIssues(save('bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 2 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 3 }], edges: [{ from: 'a', to: 'c', label: 'x' }] }));
           check('diagram render: a wire running behind a card is reported', bad.some((i) => i.includes('runs behind card B')));
@@ -304,7 +304,12 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
             check('export: a PNG is written for a card diagram, a failing page and a grid SVG are refused', exp(arch, '--png', png, '--scale', '1').status === 0 && readFileSync(png).subarray(1, 4).toString() === 'PNG' && exp(arch, '--svg', join(dir, 'x.svg')).status === 2 && exp(save('exp-bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }], edges: [{ from: 'a', to: 'z', label: 'x' }] }), '--png', join(dir, 'b.png')).status === 2);
             check('export: a flow diagram exports a standalone SVG with its colours baked in', exp(flowF, '--svg', svg, '--theme', 'dark').status === 0 && (() => { const t = readFileSync(svg, 'utf8'); return t.startsWith('<svg xmlns=') && t.includes('--paper: #0f1218') && !t.includes('undefined') && t.includes('.step .msg'); })());
           }
-          check('diagram render: a flow diagram has no audit', layoutIssues(save('flow', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow.json'), 'utf8')))) === null);
+          {
+            const fl = JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow.json'), 'utf8')), wide = JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/architecture.json'), 'utf8'));
+            const longLabel = layoutIssues(save('flow-long', { ...fl, steps: fl.steps.map((st, i) => (i ? st : { ...st, label: 'A very long label that cannot fit between two neighbouring actors at all' })) }));
+            const tooWide = layoutIssues(save('wide', { ...wide, nodes: Array.from({ length: 9 }, (_, i) => ({ id: 'n' + i, label: 'Node ' + i, type: 'service', col: i + 1, row: 1 })), edges: [] }));
+            check('diagram render: a flow label wider than the space between its actors, and a page wider than the window, are reported', longLabel.some((i) => i.includes('wider than the space between its actors')) && tooWide.some((i) => i.includes('wider than the window')));
+          }
         } finally { rmSync(dir, { recursive: true, force: true }); }
       }
     }
