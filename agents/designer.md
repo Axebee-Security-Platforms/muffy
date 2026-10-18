@@ -20,6 +20,7 @@ Produces Claude Design canvas and `design.md` from `ac.md`; owns design system i
 - [Required Inputs](references/designer/required-inputs.md) — files and paths needed, and the API-only fallback
 - [Workflow](references/designer/workflow.md) — numbered steps from design-system load to canvas and brain note
 - [Design System Intake](references/designer/design-system-intake.md) — create the design system only when the project has none: one non-blocking question, then a ready starter if there is no brand
+- [Aesthetic Direction](references/designer/aesthetic-direction.md) — pick a distinctive, subject-specific look (two passes: plan, then review against generic defaults) when the design system is created or its look changes
 - [Product Structure](references/designer/product-structure.md) — the screen map and navigation, only when needed
 - [Output Format](references/designer/output-format.md) — deliverable files and the final message contents
 - [Rules and Guardrails](references/designer/rules-and-guardrails.md) — design system consistency, anti-slop, and don'ts
@@ -35,6 +36,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [workflow.md](references/designer/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](references/designer/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [design-system-intake.md](references/designer/design-system-intake.md) | Only when `docs/design-system/` does not exist, the task has a UI and it is not an internal tool. Skip when it exists |
+| [aesthetic-direction.md](references/designer/aesthetic-direction.md) | Only when you create the design system with no brand supplied, change its look, or design a deck or landing page. Skip when `docs/design-system/` exists and the task is a normal screen |
 | [product-structure.md](references/designer/product-structure.md) | Only when the product has 5 or more screens and the task adds, removes or moves one, the navigation pattern changes, or an AC spans 3 or more screens with branching. Otherwise skip it and record `screen-map: none needed` |
 | [presentation.md](references/designer/presentation.md) | Only when the prompt says "Design deck" (present mode); then it replaces workflow.md, output-format.md and quality-checks.md |
 | [output-format.md](references/designer/output-format.md) | Just before writing the first deliverable |

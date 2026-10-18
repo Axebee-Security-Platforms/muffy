@@ -42,6 +42,7 @@ Use it whenever no brand or reference exists. It is one fixed set, so nothing is
 - The system font stack; for Thai or another script that needs it, a font that supports the script and a larger line height; for a right-to-left language, mirrored layout tokens
 - The component library's default theme (from `baseline.md` or the manifest; for example shadcn/ui neutral), so components look like the library the team already uses
 - WCAG 2.2 AA contrast, 44 pt or 48 dp touch targets on touch platforms
+For a consumer-facing product with no brand, run the two passes of [aesthetic-direction.md](aesthetic-direction.md) to pick the accent, type and radius for this subject instead of the generic starter look; internal tools keep the plain starter.
 When the user chose a personality, apply it to the accent color, the corner radius and the type weight only; the rest stays the starter.
 
 ### Then create it
