@@ -7,7 +7,7 @@ Every architecture, state, deployment, database, flow, screen-map, gantt and sto
 - **Nodes:** floating cards with a soft drop shadow and a colour bar by type (`app`, `service`, `store`, `external`, `queue`). The type is also written on the card, so colour is never the only signal
 - **Wires:** labelled connectors with arrowheads that draw in, then carry a slow flowing pulse. Dashed means `[verify]`, unconfirmed
 - **Motion:** cards rise in one after another and wires draw in. A flow diagram reveals its numbered steps in order, with Prev, Next and Replay, and a click on a step jumps to it. Reduced-motion users get the finished static diagram
-- **Caption:** a bold lower-third card carries the one-sentence takeaway (and the current step in a flow). Titles and captions are plain, large and short
+- **Caption:** a quiet card under the diagram carries the one-sentence takeaway. It sits in the page flow and never covers a card or wire; only a flow keeps it pinned to the bottom of the window, because it shows the current step beside Prev, Next and Replay. Titles and captions are plain and short
 
 ## How to make one
 1. Copy the template to the target path (`.html`)

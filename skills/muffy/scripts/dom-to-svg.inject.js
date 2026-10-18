@@ -17,8 +17,8 @@
 
   function run() {
     var de = document.documentElement, W = Math.ceil(de.scrollWidth), H = Math.ceil(de.scrollHeight), out = [], defs = [], clips = 0;
-    // the caption is fixed to the bottom of the window: pin it to the bottom of the page instead, as in the PNG export
-    var cap = document.querySelector('.cap'); if (cap) { var ch = cap.offsetHeight; cap.style.position = 'absolute'; cap.style.bottom = 'auto'; cap.style.top = (H - ch - 20) + 'px'; }
+    // a caption that is still fixed to the window is pinned to the bottom of the page instead
+    var cap = document.querySelector('.cap'); if (cap && getComputedStyle(cap).position === 'fixed') { var ch = cap.offsetHeight; cap.style.position = 'absolute'; cap.style.bottom = 'auto'; cap.style.top = (H - ch - 20) + 'px'; }
     out.push('<rect width="' + W + '" height="' + H + '" fill="' + getComputedStyle(document.body).backgroundColor + '"/>');
 
     function edge(x1, y1, x2, y2, c, w) { out.push('<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + c + '" stroke-width="' + w + '"/>'); }
