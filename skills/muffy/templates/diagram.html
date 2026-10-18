@@ -69,6 +69,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
 .wire { fill: none; stroke: var(--wire); stroke-width: 2; stroke-linecap: round; }
 .wire.draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .9s ease forwards; animation-delay: calc(var(--i, 0) * 120ms + 400ms); }
 .wire.verify { stroke-dasharray: 5 6; }
+.wire.blocked { stroke: var(--fail); stroke-dasharray: .025 .035; }
 .pulse { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 18; opacity: 0; animation: fadein .3s ease forwards 1.5s, flow 1.4s linear infinite 1.5s; }
 .arrow { fill: var(--wire); }
 .pill rect { fill: var(--card); stroke: var(--line); }
@@ -168,7 +169,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
       var c = el('article', 'card ' + (n.type || (isErd ? 'store' : 'service')) + (n.verify ? ' verify' : ''), null, cards);
       c.style.gridColumn = String(n.col || 1); c.style.gridRow = String(n.row || 1); c.style.setProperty('--i', i);
       if (n.verify) el('span', 'badge', 'verify', c);
-      el('span', 'tag', isErd ? 'table' : (n.type || 'service'), c);
+      el('span', 'tag', isErd ? 'table' : (n.type || 'service') + (n.zone ? ' · ' + n.zone : ''), c);
       el('h2', null, n.label || n.name || n.id, c);
       if (n.note) el('p', null, n.note, c);
       if (isErd) {
@@ -184,7 +185,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
     /* the wires are decoration for sighted users; screen readers get the same links as a list */
     var name = function (id) { var n = items.filter(function (m) { return m.id === id; })[0]; return n ? (n.label || n.name || id) : id; };
     var links = el('ul', 'sr', null, stage); links.setAttribute('aria-label', 'Connections');
-    edges.forEach(function (e) { el('li', null, name(e.from) + (e.dir === 'both' ? ' and ' : ' to ') + name(e.to) + ': ' + (e.label || '') + (e.verify ? ' (unconfirmed)' : ''), links); });
+    edges.forEach(function (e) { el('li', null, name(e.from) + (e.dir === 'both' ? ' and ' : ' to ') + name(e.to) + ': ' + (e.label || '') + (e.verify ? ' (unconfirmed)' : '') + (e.blocked ? ' (blocked, not allowed)' : ''), links); });
     function wires() {
       while (svg.lastChild && svg.lastChild.tagName !== 'defs') svg.removeChild(svg.lastChild);
       var box = stage.getBoundingClientRect(), pairCount = {}, pairTotal = {}; pills = []; paths = [];
@@ -202,13 +203,13 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
           var v = Math.abs(q[1] - p[1]) / 2; c1 = [p[0], p[1] + t * v]; c2 = [q[0], q[1] - t * v];
         }
         var d = 'M' + p + ' C' + c1 + ' ' + c2 + ' ' + q;
-        var path = sv('path', { d: d, 'class': 'wire' + (reduce ? '' : ' draw') + (e.verify ? ' verify' : ''), pathLength: '1', 'marker-end': 'url(#arrow)' }, svg);
+        var path = sv('path', { d: d, 'class': 'wire' + (reduce ? '' : ' draw') + (e.verify ? ' verify' : '') + (e.blocked ? ' blocked' : ''), pathLength: '1', 'marker-end': 'url(#arrow)' }, svg);
         path.style.setProperty('--i', i); paths.push({ e: e, path: path });
         if (e.dir === 'both') path.setAttribute('marker-start', 'url(#arrow)');
         sv('path', { d: d, 'class': 'pulse' }, svg);
         if (e.label) {
           var mid = path.getPointAtLength(path.getTotalLength() * (total > 1 ? (e.from === key.split('|')[0] ? 1 : -1) * (0.3 + 0.4 * (k - 1) / (total - 1) - 0.5) + 0.5 : 0.5)), g = sv('g', { 'class': 'pill' }, svg), tx = sv('text', { x: mid.x, y: mid.y }, g);
-          tx.textContent = e.label; var bb = tx.getBBox(); var r = sv('rect', { x: bb.x - 8, y: bb.y - 3, width: bb.width + 16, height: bb.height + 6, rx: 10 }, g); g.insertBefore(r, tx); pills.push({ e: e, x: bb.x - 8, y: bb.y - 3, w: bb.width + 16, h: bb.height + 6 });
+          tx.textContent = (e.blocked ? "✕ " : "") + e.label; var bb = tx.getBBox(); var r = sv('rect', { x: bb.x - 8, y: bb.y - 3, width: bb.width + 16, height: bb.height + 6, rx: 10 }, g); g.insertBefore(r, tx); pills.push({ e: e, x: bb.x - 8, y: bb.y - 3, w: bb.width + 16, h: bb.height + 6 });
         }
       });
     }

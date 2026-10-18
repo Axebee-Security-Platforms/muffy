@@ -269,7 +269,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, `$1${JSON.stringify(j)}$2`);
     const arch = { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
     check('diagram: the shipped template passes', diagramErrors(tpl).length === 0);
-    check('diagram: every shipped example JSON passes in the template', ['architecture', 'state', 'deployment', 'erd', 'flow', 'screenmap'].every((k) => diagramErrors(withJson(JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))).length === 0));
+    check('diagram: every shipped example JSON passes in the template', ['architecture', 'state', 'deployment', 'erd', 'flow', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary'].every((k) => diagramErrors(withJson(JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))).length === 0));
     {
       const { warnings } = await import('../skills/muffy/scripts/check-diagram.mjs');
       const many = { kind: 'architecture', title: 'T', caption: 'c', nodes: Array.from({ length: 10 }, (_, i) => ({ id: `n${i}`, label: 'N', type: 'service', col: i + 1, row: 1 })), edges: [] };
@@ -292,7 +292,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
       if (findBrowser()) {
         const dir = mkdtempSync(join(tmpdir(), 'muffy-render-eval-')), save = (n, j) => { const f = join(dir, `${n}.html`); writeFileSync(f, withJson(j)); return f; };
         try {
-          const ok = ['architecture', 'state', 'deployment', 'erd', 'screenmap'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
+          const ok = ['architecture', 'state', 'deployment', 'erd', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
           check('diagram render: the shipped examples have no layout issues', ok.every((i) => Array.isArray(i) && i.length === 0));
           const bad = layoutIssues(save('bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 2 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 3 }], edges: [{ from: 'a', to: 'c', label: 'x' }] }));
           check('diagram render: a wire running behind a card is reported', bad.some((i) => i.includes('runs behind card B')));
@@ -324,6 +324,15 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
       check('import: Excalidraw bound text becomes labels and free text is reported dropped', ex.d?.edges[0]?.label === 'HTTPS' && ex.d.nodes.length === 2 && ex.out.includes('1 free-floating text'));
       check('import: an unsupported file type exits 2, and the draft never carries a link the source lacks', spawnSync(process.execPath, [rel('skills/muffy/scripts/diagram-import.mjs'), rel('package.json')], { encoding: 'utf8' }).status === 2 && fl.d.edges.length === 5);
       check('guard-bash: the architect may read an import but not write one with --html', guard(A, 'architect', 'node .claude/skills/muffy/scripts/diagram-import.mjs evals/diagram-import/flow.mmd --json') === 0 && guard(A, 'architect', 'node .claude/skills/muffy/scripts/diagram-import.mjs a.mmd --html docs/architecture/overview.html') === 2);
+    }
+    {
+      const ex = (k) => JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')), errsOf = (j) => diagramErrors(withJson(j)).join(' | ');
+      const { warnings } = await import('../skills/muffy/scripts/check-diagram.mjs'); const qb = ex('pattern-queue-bottleneck'), tb = ex('pattern-trust-boundary'), lc = ex('state');
+      check('pattern queue-bottleneck: a capacity unit, two producers and a consumer are required', errsOf({ ...qb, nodes: qb.nodes.map((n) => (n.id === 'q' ? { ...n, note: 'high' } : n)) }).includes('capacity or rate with a unit') && errsOf({ ...qb, edges: qb.edges.filter((e) => e.from !== 'api' && e.from !== 'sched') }).includes('two or more producers') && errsOf({ ...qb, edges: qb.edges.filter((e) => e.from !== 'q') }).includes('its consumer'));
+      check('pattern trust-boundary: zones on every node, a crossing and a blocked crossing are required', errsOf({ ...tb, nodes: tb.nodes.map((n) => (n.id === 'api' ? { id: n.id, label: n.label, type: n.type, col: n.col, row: n.row } : n)) }).includes('needs a zone on every node') && errsOf({ ...tb, edges: tb.edges.map((e) => ({ ...e, blocked: undefined })) }).includes('forbidden crossing') && errsOf({ ...tb, edges: [...tb.edges, { from: 'api', to: 'db', label: 'x', blocked: true }] }).includes('stays inside one zone'));
+      const stuck = { ...lc, nodes: [...lc.nodes, { id: 'lost', label: 'Lost', type: 'state', col: 4, row: 2 }] };
+      check('pattern lifecycle: a state nobody can reach or leave fails with the pattern and only warns without it', errsOf(stuck).includes('lost cannot be reached') && errsOf(stuck).includes('lost is a dead end') && diagramErrors(withJson({ ...stuck, pattern: undefined })).length === 0 && warnings(withJson({ ...stuck, pattern: undefined })).some((w) => w.includes('lost is a dead end')));
+      check('pattern: an unknown pattern, or one on the wrong kind, fails', errsOf({ ...qb, pattern: 'magic' }).includes('pattern must be one of') && errsOf({ ...qb, pattern: 'lifecycle' }).includes('is for kind state'));
     }
     check('diagram: a valid architecture passes', diagramErrors(withJson(arch)).length === 0);
     check('diagram: an edge through another card fails', diagramErrors(withJson({ ...arch, edges: [{ from: 'a', to: 'c', label: 'x' }] })).some((e) => e.includes('passes through')));

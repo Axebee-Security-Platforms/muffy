@@ -1,5 +1,6 @@
 {
   "kind": "state",
+  "pattern": "lifecycle",
   "title": "Order lifecycle",
   "subtitle": "The states an order moves through, and what moves it.",
   "caption": "An order is paid or failed, never both; a failed payment can be retried once.",

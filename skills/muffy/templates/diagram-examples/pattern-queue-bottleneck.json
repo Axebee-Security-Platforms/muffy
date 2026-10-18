@@ -1,0 +1,20 @@
+{
+  "kind": "architecture",
+  "pattern": "queue-bottleneck",
+  "title": "Report generation backlog",
+  "subtitle": "Three producers share one slow report worker.",
+  "caption": "Reports arrive faster than the single worker finishes them, so the queue only grows at month end.",
+  "nodes": [
+    { "id": "web", "label": "Web export", "type": "app", "note": "up to 20/min", "col": 1, "row": 1 },
+    { "id": "sched", "label": "Scheduler", "type": "service", "note": "nightly burst", "col": 1, "row": 2 },
+    { "id": "api", "label": "Partner API", "type": "external", "note": "5/min", "col": 1, "row": 3 },
+    { "id": "q", "label": "Report queue", "type": "queue", "note": "10 slots", "col": 2, "row": 2 },
+    { "id": "worker", "label": "Report worker", "type": "service", "note": "2 jobs/min", "col": 3, "row": 2 }
+  ],
+  "edges": [
+    { "from": "web", "to": "q", "label": "enqueue" },
+    { "from": "sched", "to": "q", "label": "enqueue" },
+    { "from": "api", "to": "q", "label": "enqueue" },
+    { "from": "q", "to": "worker", "label": "2 jobs/min" }
+  ]
+}

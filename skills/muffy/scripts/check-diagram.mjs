@@ -45,6 +45,58 @@ function checkGrid(items, edges, label, errs) {
   }
 }
 
+// semantic patterns: an optional `pattern` says what the diagram must make visible, and the rules below enforce the primitives it needs.
+// A pattern only adds checks; it never changes the layout or raises a limit
+const CAPACITY = /\d+(?:\.\d+)?\s*(?:\/\s*(?:s|sec|min|h|hr|hour|day)\b|per\s+\w+|slots?\b|msgs?\b|jobs?\b|rps\b|rpm\b|tps\b|workers?\b|concurrent\b)/i;
+const PATTERNS = {
+  'queue-bottleneck': { kinds: ['architecture', 'deployment'], what: 'many producers feeding one finite queue or consumer' },
+  lifecycle: { kinds: ['state'], what: 'one subject moving through states to terminal outcomes' },
+  'trust-boundary': { kinds: ['architecture', 'deployment'], what: 'which routes cross a trust boundary and which are blocked' },
+};
+// states no one can leave, or reach: a lifecycle diagram that hides a stuck state misleads
+export function lifecycleGaps(d) {
+  const nodes = d.nodes ?? [], edges = d.edges ?? [], out = [], start = nodes.find((n) => n.type === 'initial');
+  const next = (id) => edges.filter((e) => e.from === id).map((e) => e.to);
+  const seen = new Set(start ? [start.id] : []), queue = start ? [start.id] : [];
+  while (queue.length) for (const t of next(queue.shift())) if (!seen.has(t)) { seen.add(t); queue.push(t); }
+  for (const n of nodes) {
+    if (start && !seen.has(n.id)) out.push(`${n.id} cannot be reached from the initial node`);
+    if ((n.type === 'state' || n.type === 'initial') && !next(n.id).length) out.push(`${n.id} is a dead end: add a transition out, or make it final or error`);
+    if (n.type === 'final' && next(n.id).length) out.push(`${n.id} is final but has a transition out`);
+  }
+  if (!nodes.some((n) => n.type === 'final' || n.type === 'error')) out.push('no final or error node: say how the subject ends');
+  return out;
+}
+function patternErrors(d) {
+  const nodes = d.nodes ?? [], edges = d.edges ?? [], errs = [], p = PATTERNS[d.pattern];
+  if (!p) return [`pattern must be one of ${Object.keys(PATTERNS).join(', ')}`];
+  if (!p.kinds.includes(d.kind)) return [`pattern ${d.pattern} is for kind ${p.kinds.join(' or ')}, not ${d.kind}`];
+  if (d.pattern === 'queue-bottleneck') {
+    const qs = nodes.filter((n) => n.type === 'queue');
+    if (!qs.length) errs.push('queue-bottleneck needs a node of type queue');
+    for (const q of qs) {
+      const into = edges.filter((e) => e.to === q.id), out = edges.filter((e) => e.from === q.id);
+      if (into.length < 2) errs.push(`queue ${q.id}: needs two or more producers, otherwise there is no contention to show`);
+      if (into.length > 5) errs.push(`queue ${q.id}: ${into.length} producers (at most 5): group the rest as one named cohort`);
+      if (!out.length) errs.push(`queue ${q.id}: needs an edge to its consumer`);
+      if (!CAPACITY.test(q.note ?? '')) errs.push(`queue ${q.id}: note must state a capacity or rate with a unit (for example "8 jobs/min" or "3 workers"), not just "high"`);
+    }
+  } else if (d.pattern === 'lifecycle') {
+    errs.push(...lifecycleGaps(d));
+    if (nodes.length > 8) errs.push(`lifecycle shows at most 8 states (this has ${nodes.length}): collapse sub-states`);
+  } else if (d.pattern === 'trust-boundary') {
+    const zone = Object.fromEntries(nodes.map((n) => [n.id, n.zone])), zones = new Set(nodes.map((n) => n.zone).filter(Boolean));
+    for (const n of nodes) if (!text(n.zone)) errs.push(`${n.id}: trust-boundary needs a zone on every node`);
+    if (zones.size < 2 || zones.size > 3) errs.push(`trust-boundary needs 2 or 3 zones (this has ${zones.size})`);
+    const cross = edges.filter((e) => zone[e.from] && zone[e.to] && zone[e.from] !== zone[e.to]);
+    if (!cross.length) errs.push('no link crosses a zone: the boundary shows nothing');
+    if (!cross.some((e) => e.blocked)) errs.push('mark at least one forbidden crossing with blocked: true (the route that must not exist)');
+    for (const e of edges.filter((e) => e.blocked)) if (zone[e.from] === zone[e.to]) errs.push(`blocked link ${e.from} -> ${e.to} stays inside one zone: it is not a boundary crossing`);
+    if (nodes.length > 9) errs.push(`trust-boundary shows at most 9 nodes (this has ${nodes.length})`);
+  }
+  return errs;
+}
+
 const text = (v) => typeof v === 'string' && v.trim() !== '';
 const optText = (v) => v === undefined || typeof v === 'string';
 
@@ -59,6 +111,8 @@ export function check(html, file = '') {
   // the browser ends the block at </script in any case, and <!-- or <script inside it can swallow the real closer
   if (/<\/script|<!--|<script/i.test(m[2])) errs.push('diagram JSON contains "</script", "<script" or "<!--": write "<" as \\u003c');
   if (![...Object.keys(GRID), 'erd', 'flow', 'screenmap'].includes(d.kind)) errs.push(`kind must be ${[...Object.keys(GRID), 'erd', 'flow', 'screenmap'].join(', ')}`);
+  if (d.pattern !== undefined) errs.push(...patternErrors(d));
+  if ((d.nodes ?? []).some((n) => !optText(n?.zone)) || (d.edges ?? []).some((e) => e?.blocked !== undefined && typeof e.blocked !== 'boolean')) errs.push('zone must be a plain string and blocked must be true or false');
   if (!text(d.title)) errs.push('title is required');
   if (!optText(d.subtitle) || !optText(d.caption)) errs.push('subtitle and caption must be plain strings');
   if (typeof d.caption === 'string' && d.caption.length > LIMIT.caption) errs.push(`caption is over ${LIMIT.caption} characters`);
@@ -109,6 +163,7 @@ export function warnings(html) {
   try { d = JSON.parse(m[2]); } catch { return []; }
   const soft = SOFT[d.kind]; if (!soft) return [];
   const items = (d.nodes ?? d.entities ?? []).length, links = (d.edges ?? d.relations ?? []).length, out = [];
+  if (d.kind === 'state' && d.pattern !== 'lifecycle') out.push(...lifecycleGaps(d).map((g) => `${g} (set pattern: "lifecycle" to make this a failure)`));
   if (items > soft.items) out.push(`${items} ${d.kind === 'erd' ? 'entities' : 'nodes'} (soft limit ${soft.items}): split into an overview and a detail diagram unless this is the onboard overview`);
   if (links > soft.links) out.push(`${links} links (soft limit ${soft.links}): drop any link the layout already makes obvious`);
   return out;
