@@ -301,7 +301,13 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
             const exp = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/diagram-export.mjs'), ...a], { encoding: 'utf8' });
             const arch = save('exp-arch', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/architecture.json'), 'utf8'))), flowF = save('exp-flow', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow.json'), 'utf8')));
             const png = join(dir, 'a.png'), svg = join(dir, 'f.svg');
-            check('export: a PNG is written for a card diagram, a failing page and a grid SVG are refused', exp(arch, '--png', png, '--scale', '1').status === 0 && readFileSync(png).subarray(1, 4).toString() === 'PNG' && exp(arch, '--svg', join(dir, 'x.svg')).status === 2 && exp(save('exp-bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }], edges: [{ from: 'a', to: 'z', label: 'x' }] }), '--png', join(dir, 'b.png')).status === 2);
+            check('export: a PNG is written for a card diagram, and a failing page is refused', exp(arch, '--png', png, '--scale', '1').status === 0 && readFileSync(png).subarray(1, 4).toString() === 'PNG' && exp(save('exp-bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }], edges: [{ from: 'a', to: 'z', label: 'x' }] }), '--png', join(dir, 'b.png')).status === 2);
+            {
+              const gantt = save('exp-gantt', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/gantt.json'), 'utf8'))), svgs = { arch: join(dir, 'arch.svg'), gantt: join(dir, 'gantt.svg') };
+              const ok = exp(arch, '--svg', svgs.arch).status === 0 && exp(gantt, '--svg', svgs.gantt, '--theme', 'dark').status === 0;
+              const a = ok ? readFileSync(svgs.arch, 'utf8') : '', g = ok ? readFileSync(svgs.gantt, 'utf8') : '';
+              check('export: a card diagram and a gantt export as native SVG (shapes and text, no script, no foreignObject), in the chosen theme', ok && [a, g].every((t) => t.startsWith('<svg xmlns=') && t.includes('<rect') && t.includes('<text') && !/<script|foreignObject|<pre/.test(t)) && a.includes('>Orders API<') && a.includes('>HTTPS<') && g.includes('>Orders schema<') && g.includes('fill="rgb(15, 18, 24)"'));
+            }
             check('export: a flow diagram exports a standalone SVG with its colours baked in', exp(flowF, '--svg', svg, '--theme', 'dark').status === 0 && (() => { const t = readFileSync(svg, 'utf8'); return t.startsWith('<svg xmlns=') && t.includes('--paper: #0f1218') && !t.includes('undefined') && t.includes('.step .msg'); })());
           }
           {

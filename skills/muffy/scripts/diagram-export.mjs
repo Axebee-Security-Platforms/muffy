@@ -3,14 +3,14 @@
 //   node diagram-export.mjs <file.html> --png out.png [--theme light|dark] [--scale 2] [--width 1280]
 //   node diagram-export.mjs <flow-file.html> --svg out.svg [--theme light|dark]
 // PNG works for every kind: the page is opened in a headless Chrome or Edge frozen on its finished frame (no animation, no
-// controls) and photographed at its full height. SVG works only for flow diagrams, which are drawn as one SVG; the other kinds are
-// HTML cards and an SVG of the wires alone would be useless. Run check-diagram.mjs first: a page that fails is not exported.
+// controls) and photographed at its full height. SVG: a flow diagram exports its own SVG; the other kinds are HTML cards, so a temporary copy of
+// the page redraws what the browser laid out (boxes, borders, wires, text) as SVG shapes and text. Shadows and the grid paper are left out. Run check-diagram.mjs first: a page that fails is not exported.
 // Browser: $MUFFY_BROWSER, else the usual Chrome/Edge locations (see check-diagram-render.mjs). Zero dependencies.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, extname, join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { check } from './check-diagram.mjs';
 import { findBrowser } from './check-diagram-render.mjs';
 
@@ -53,9 +53,23 @@ if (basename(process.argv[1] ?? '') === 'diagram-export.mjs') {
   try {
     const dom = s.run(['--dump-dom']), h = Math.min(Math.max(+(dom.match(/<html[^>]*\sdata-h="(\d+)"/)?.[1] ?? 900), 300), 8000);
     if (svg) {
-      if (kind !== 'flow') fail(`--svg works for flow diagrams only (this is ${kind}): the other kinds are HTML cards. Use --png`);
-      const out = flowSvg(dom, page, theme); if (!out) fail('no svg found in the rendered page');
-      writeFileSync(svg, out); console.log(`wrote ${svg} (flow, ${theme})`);
+      if (kind === 'flow') {
+        // a flow diagram is already one SVG: export it as it is
+        const out = flowSvg(dom, page, theme); if (!out) fail('no svg found in the rendered page');
+        writeFileSync(svg, out); console.log(`wrote ${svg} (flow diagram only, ${theme})`);
+      } else {
+        // the other kinds are HTML cards: a temporary copy of the page redraws its laid-out boxes, wires and text as SVG
+        const tmp = mkdtempSync(join(tmpdir(), 'muffy-svg-')), copy = join(tmp, 'page.html');
+        try {
+          const inject = readFileSync(fileURLToPath(new URL('./dom-to-svg.inject.js', import.meta.url)), 'utf8');
+          writeFileSync(copy, page.replace('</body>', () => `<script>\n${inject}\n</script>\n</body>`));
+          const s3 = snapshot(browser, copy, theme, [`--window-size=${width},${h}`]);
+          let dom2; try { dom2 = s3.run(['--dump-dom']); } finally { s3.done(); }
+          const m = dom2.match(/<pre id="muffy-svg"[^>]*>(&lt;svg[\s\S]*?)<\/pre>/); if (!m) fail('the page did not produce an SVG');
+          const text = m[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+          writeFileSync(svg, text); console.log(`wrote ${svg} (${kind}, full page, ${theme}; text is real text in the viewer's system font)`);
+        } finally { rmSync(tmp, { recursive: true, force: true }); }
+      }
     }
     if (png) {
       const s2 = snapshot(browser, file, theme, [`--window-size=${width},${h}`, `--force-device-scale-factor=${scale}`]);
