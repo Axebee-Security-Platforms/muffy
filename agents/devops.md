@@ -1,5 +1,6 @@
 ---
 name: devops
+display_name: Cay
 description: >
   Verify the stack is actually deployable at design time (alongside architect), prepare
   minimal infra + pin the runtime, smoke-build with real dependencies before FE/BE work is
