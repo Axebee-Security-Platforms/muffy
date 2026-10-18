@@ -1,5 +1,6 @@
 ---
 name: designer
+display_name: Gyokuro
 description: >
   Design UX/UI from acceptance criteria — user flow, wireframes, per-screen states and
   component specs following the design system, as a Claude Design canvas. Runs in parallel

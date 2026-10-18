@@ -1,5 +1,6 @@
 ---
 name: qa-tester
+display_name: Mint
 description: >
   Write and run integration / e2e / regression tests on the reviewed feature branch and
   report results with a bug list. Used after code-reviewer approves (team flow step 7) and

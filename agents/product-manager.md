@@ -1,5 +1,6 @@
 ---
 name: product-manager
+display_name: Lady Grey
 description: >
   Turn the research brief into user stories, testable acceptance criteria, a phased plan
   with priorities, and ADRs in docs/. Used after researcher and before designer/architect

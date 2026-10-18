@@ -1,5 +1,6 @@
 ---
 name: muffy
+display_name: Earl Grey
 description: >
   Run a hub-and-spoke software development subagent team (main session = Orchestrator)
   from research to deploy. Use when building a feature end to end with parallel agents,

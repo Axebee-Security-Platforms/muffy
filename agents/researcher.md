@@ -1,5 +1,6 @@
 ---
 name: researcher
+display_name: Scottish
 description: >
   Research before work starts — best practices, libraries, competitors and the existing
   codebase — and summarize it as a research brief with trade-offs. The first step of the

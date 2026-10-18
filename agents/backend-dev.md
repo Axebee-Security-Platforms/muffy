@@ -1,5 +1,6 @@
 ---
 name: backend-dev
+display_name: Sencha
 description: >
   Build endpoints, business logic, migrations and unit tests per contract.md on its own
   branch. Used for both the first round (team flow step 4) and fix rounds from review/QA.

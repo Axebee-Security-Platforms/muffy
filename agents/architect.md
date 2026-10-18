@@ -1,5 +1,6 @@
 ---
 name: architect
+display_name: Afternoon
 description: >
   Design the spec, API contract and schema from acceptance criteria so frontend-dev and
   backend-dev can work in parallel without talking to each other. Runs in parallel with

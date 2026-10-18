@@ -1,5 +1,6 @@
 ---
 name: code-reviewer
+display_name: Boba
 description: >
   Review the combined FE + BE diff and docs from docs-writer against the AC and contract —
   quality, security, correctness. Read-only. Use every time there is a new diff, including

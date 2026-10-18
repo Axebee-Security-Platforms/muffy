@@ -1,5 +1,6 @@
 ---
 name: frontend-dev
+display_name: Matcha
 description: >
   Build UI screens and wire up the API per design.md and contract.md on its own branch.
   Used for both the first round (team flow step 4) and fix rounds from review/QA. Do not use

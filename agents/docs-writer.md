@@ -1,5 +1,6 @@
 ---
 name: docs-writer
+display_name: Chai
 description: >
   Write API docs and release notes from the contract and the reviewed diff. Runs in parallel
   with qa-tester (team flow step 7); output must be sent to code-reviewer for review. Do not
