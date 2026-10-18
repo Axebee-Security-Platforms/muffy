@@ -1,0 +1,14 @@
+---
+title: Stress
+---
+flowchart TB
+  A@{ shape: cyl, label: "Orders DB" }
+  B["API<br/>server"] <--> C((Cache))
+  B ~~~ D
+  D(Worker) --o E[/Queue/]
+  E --- F[\Odd\]
+  G[Gateway] --text--> H
+  I([Stadium]) -->|"yes, and"| J{{Hex}}
+  K["Unicode ทดสอบ ☕"] --> L
+  M e1@--> N
+  linkStyle default stroke:#000

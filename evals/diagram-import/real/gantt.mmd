@@ -1,0 +1,12 @@
+gantt
+  title Checkout MVP
+  dateFormat YYYY-MM-DD
+  axisFormat %m/%d
+  section Foundations
+    Orders schema      :done, schema, 2025-03-03, 5d
+    Orders API         :api, after schema, 10d
+  section Checkout
+    Payment integration :crit, pay, after api, 15d
+    Receipt page       :receipt, after api, 10d
+  section Launch
+    Go-live review     :milestone, go, after pay receipt, 0d
