@@ -19,7 +19,8 @@ const GRID = {
 const SCREEN_TYPES = ['entry', 'screen', 'modal', 'external'];
 // soft budget: above these a diagram is probably two (overview + detail). Printed as WARN, never a FAIL: the onboard overview may need the hard limit
 const SOFT = { architecture: { items: 9, links: 12 }, state: { items: 8, links: 12 }, deployment: { items: 9, links: 12 }, screenmap: { items: 12, links: 16 }, erd: { items: 8, links: 10 } };
-const LIMIT = { screenmap: 20, erd: 12, actors: 6, steps: 12, fields: 12, caption: 160 };
+const UNITS = ['day', 'week', 'sprint', 'month'], AC_ID = /^AC-\d+$/;
+const LIMIT = { gantt: 12, phases: 4, span: 24, activities: 6, releases: 3, stories: 24, cell: 4, screenmap: 20, erd: 12, actors: 6, steps: 12, fields: 12, caption: 160 };
 
 const template = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../templates/diagram.html'), 'utf8');
 const shell = (html) => html.replace(JSON_BLOCK, '$1$3').replace(TITLE, '<title></title>').replace(/\r\n/g, '\n');
@@ -132,7 +133,7 @@ export function check(html, file = '') {
   try { d = JSON.parse(m[2]); } catch (e) { return [...errs, `diagram JSON does not parse: ${e.message}`]; }
   // the browser ends the block at </script in any case, and <!-- or <script inside it can swallow the real closer
   if (/<\/script|<!--|<script/i.test(m[2])) errs.push('diagram JSON contains "</script", "<script" or "<!--": write "<" as \\u003c');
-  if (![...Object.keys(GRID), 'erd', 'flow', 'screenmap'].includes(d.kind)) errs.push(`kind must be ${[...Object.keys(GRID), 'erd', 'flow', 'screenmap'].join(', ')}`);
+  if (![...Object.keys(GRID), 'erd', 'flow', 'screenmap', 'gantt', 'story-map'].includes(d.kind)) errs.push(`kind must be ${[...Object.keys(GRID), 'erd', 'flow', 'screenmap', 'gantt', 'story-map'].join(', ')}`);
   if (d.pattern !== undefined) errs.push(...patternErrors(d));
   if ([...(d.nodes ?? []), ...(d.edges ?? [])].some((m) => (m?.delta !== undefined && !DELTAS.includes(m.delta)) || !optText(m?.why))) errs.push(`delta must be one of ${DELTAS.join(', ')} and why must be a plain string`);
   if ((d.nodes ?? []).some((n) => !optText(n?.zone)) || (d.edges ?? []).some((e) => e?.blocked !== undefined && typeof e.blocked !== 'boolean')) errs.push('zone must be a plain string and blocked must be true or false');
@@ -178,6 +179,40 @@ export function check(html, file = '') {
     }
     for (const r of rels) if (!r.label) errs.push(`relation ${r.from} -> ${r.to}: label is required (for example "1 : N")`);
     checkGrid(ents, rels, 'entity', errs);
+  } else if (d.kind === 'gantt') {
+    const phases = d.phases ?? [], tasks = d.tasks ?? [], pid = new Set(phases.map((p) => p.id)), byId = Object.fromEntries(tasks.map((t) => [t.id, t]));
+    if (!UNITS.includes(d.unit)) errs.push(`unit must be one of ${UNITS.join(', ')} (start and length are counted in it, not dates)`);
+    if (!phases.length || phases.length > LIMIT.phases) errs.push(`phases must be 1 to ${LIMIT.phases}`);
+    if (pid.size !== phases.length || phases.some((p) => !p.id || !text(p.label))) errs.push('phase id missing or duplicate, or label missing');
+    if (!tasks.length || tasks.length > LIMIT.gantt) errs.push(`tasks must be 1 to ${LIMIT.gantt}`);
+    if (Object.keys(byId).length !== tasks.length || tasks.some((t) => !t.id)) errs.push('task id missing or duplicate');
+    const end = (t) => (t.start ?? 0) + (t.milestone ? 0 : (t.length ?? 1));
+    for (const t of tasks) {
+      if (!text(t.label)) errs.push(`${t.id}: label is required`);
+      if (!pid.has(t.phase)) errs.push(`${t.id}: phase must be one of the phases`);
+      if (!Number.isInteger(t.start) || t.start < 0) errs.push(`${t.id}: start must be an integer of 0 or more`);
+      if (t.milestone) { if (t.length !== undefined) errs.push(`${t.id}: a milestone has no length`); } else if (!Number.isInteger(t.length) || t.length < 1) errs.push(`${t.id}: length must be an integer of 1 or more`);
+      if (end(t) > LIMIT.span) errs.push(`${t.id}: ends after unit ${LIMIT.span}: split the plan or use a larger unit`);
+      for (const a of t.after ?? []) { const dep = byId[a]; if (!dep || a === t.id) errs.push(`${t.id}: after names an unknown task: ${a}`); else if ((t.start ?? 0) < end(dep)) errs.push(`${t.id} starts at ${t.start} but ${a} ends at ${end(dep)}: start no earlier than its dependencies end`); }
+      for (const a of t.ac ?? []) if (!AC_ID.test(a)) errs.push(`${t.id}: ac must be ids like AC-3`);
+    }
+  } else if (d.kind === 'story-map') {
+    const acts = d.activities ?? [], rels = d.releases ?? [], stories = d.stories ?? [], aid = new Set(acts.map((a) => a.id)), rid = new Set(rels.map((r) => r.id));
+    if (!acts.length || acts.length > LIMIT.activities) errs.push(`activities must be 1 to ${LIMIT.activities}`);
+    if (!rels.length || rels.length > LIMIT.releases) errs.push(`releases must be 1 to ${LIMIT.releases}`);
+    if (aid.size !== acts.length || rid.size !== rels.length || [...acts, ...rels].some((x) => !x.id || !text(x.label))) errs.push('activity or release id missing or duplicate, or label missing');
+    if (!stories.length || stories.length > LIMIT.stories) errs.push(`stories must be 1 to ${LIMIT.stories}`);
+    if (new Set(stories.map((s) => s.id)).size !== stories.length || stories.some((s) => !s.id)) errs.push('story id missing or duplicate');
+    if (d.cut !== undefined && !rid.has(d.cut)) errs.push('cut must be a release id');
+    const cells = {};
+    for (const s of stories) {
+      if (!text(s.label)) errs.push(`${s.id}: label is required`);
+      if (!aid.has(s.activity)) errs.push(`${s.id}: activity must be one of the activities`);
+      if (!rid.has(s.release)) errs.push(`${s.id}: release must be one of the releases`);
+      for (const a of s.ac ?? []) if (!AC_ID.test(a)) errs.push(`${s.id}: ac must be ids like AC-3`);
+      const k = `${s.release}/${s.activity}`; cells[k] = (cells[k] ?? 0) + 1;
+      if (cells[k] === LIMIT.cell + 1) errs.push(`${s.release} / ${s.activity} holds more than ${LIMIT.cell} stories: move some to a later release`);
+    }
   } else if (d.kind === 'flow') {
     const actors = d.actors ?? [], steps = d.steps ?? [], ids = new Set(actors.map((a) => a.id));
     if (!actors.length || actors.length > LIMIT.actors) errs.push(`actors must be 1 to ${LIMIT.actors}`);
@@ -193,6 +228,14 @@ export function check(html, file = '') {
 export function warnings(html) {
   const m = html.match(JSON_BLOCK); let d;
   try { d = JSON.parse(m[2]); } catch { return []; }
+  if (d.kind === 'gantt') return (d.tasks ?? []).length > 8 ? [`${d.tasks.length} tasks (soft limit 8): show phases or the critical path, and keep the rest in docs/plan`] : [];
+  if (d.kind === 'story-map') {
+    const out = [], first = (d.releases ?? [])[0]?.id;
+    if ((d.stories ?? []).length > 16) out.push(`${d.stories.length} stories (soft limit 16): the map should be readable at a glance`);
+    for (const a of d.activities ?? []) if (first && !(d.stories ?? []).some((s) => s.activity === a.id && s.release === first)) out.push(`${a.id} has no story in the first release: it is not an end-to-end slice`);
+    for (const s of (d.stories ?? []).filter((s) => s.release === first && !(s.ac ?? []).length)) out.push(`${s.id} is in the first release but links no acceptance criteria (ac)`);
+    return out;
+  }
   const soft = SOFT[d.kind]; if (!soft) return [];
   const items = (d.nodes ?? d.entities ?? []).length, links = (d.edges ?? d.relations ?? []).length, out = [];
   if (d.kind === 'state' && d.pattern !== 'lifecycle') out.push(...lifecycleGaps(d).map((g) => `${g} (set pattern: "lifecycle" to make this a failure)`));

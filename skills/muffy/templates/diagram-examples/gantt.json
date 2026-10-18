@@ -1,0 +1,19 @@
+{
+  "kind": "gantt",
+  "title": "Checkout MVP plan",
+  "subtitle": "Estimates in weeks from the start of the work, not dates.",
+  "caption": "Payments gate the launch; the receipt page can run alongside them.",
+  "unit": "week",
+  "phases": [
+    { "id": "p1", "label": "Phase 1: Foundations" },
+    { "id": "p2", "label": "Phase 2: Checkout" },
+    { "id": "p3", "label": "Phase 3: Launch" }
+  ],
+  "tasks": [
+    { "id": "schema", "label": "Orders schema", "phase": "p1", "start": 0, "length": 1, "ac": ["AC-1"] },
+    { "id": "api", "label": "Orders API", "phase": "p1", "start": 1, "length": 2, "after": ["schema"], "ac": ["AC-1", "AC-2"] },
+    { "id": "pay", "label": "Payment integration", "phase": "p2", "start": 3, "length": 3, "after": ["api"], "ac": ["AC-3"] },
+    { "id": "receipt", "label": "Receipt page", "phase": "p2", "start": 3, "length": 2, "after": ["api"], "ac": ["AC-4"] },
+    { "id": "go", "label": "Go-live review", "phase": "p3", "start": 6, "milestone": true, "after": ["pay", "receipt"] }
+  ]
+}

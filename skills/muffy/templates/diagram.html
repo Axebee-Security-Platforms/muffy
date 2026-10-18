@@ -106,6 +106,29 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
 .ctl { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
 .ctl button { font: 600 13px system-ui; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; }
 .ctl button:hover { border-color: var(--accent); } .ctl button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* gantt: a table, one row per task; the bar sits in a single wide cell so the grid lines line up */
+.gantt { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; --n: 8; }
+.gantt th, .gantt td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.gantt tr:last-child th, .gantt tr:last-child td { border-bottom: 0; }
+.gantt thead th { font: 600 11px ui-monospace, Menlo, Consolas, monospace; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.gantt .lab { width: 34%; font-weight: 600; } .gantt .lab small { display: block; margin-top: 2px; font: 500 12px system-ui, sans-serif; color: var(--muted); }
+.gantt .scale { padding: 0; position: relative; }
+.gantt .scale .ticks { display: grid; grid-template-columns: repeat(var(--n), 1fr); }
+.gantt .scale .ticks span { padding: 8px 0; text-align: center; border-left: 1px solid var(--line); }
+.gantt tbody td.track { position: relative; height: 44px; padding: 0; background-image: linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: calc(100% / var(--n)) 100%; }
+.gantt .bar { position: absolute; top: 9px; bottom: 9px; border-radius: 8px; background: var(--tone, var(--service)); color: #fff; font: 700 11px/26px ui-monospace, Menlo, Consolas, monospace; padding: 0 8px; white-space: nowrap; overflow: hidden; }
+.gantt .ms { position: absolute; top: 8px; font-size: 22px; line-height: 28px; color: var(--tone, var(--service)); transform: translateX(-50%); }
+.gantt tr.phase th { background: var(--paper); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--tone); }
+.gantt .ph0 { --tone: var(--service); } .gantt .ph1 { --tone: var(--app); } .gantt .ph2 { --tone: var(--store); } .gantt .ph3 { --tone: var(--queue); }
+/* story map: backbone across the top, releases down the side, the cut line under the first release */
+.smap { display: grid; gap: 10px 12px; grid-template-columns: 130px repeat(var(--a, 4), minmax(150px, 1fr)); align-items: start; }
+.smap .act { background: var(--card); border: 1px solid var(--line); border-top: 4px solid var(--service); border-radius: 12px; padding: 10px 12px; font-weight: 700; box-shadow: var(--shadow); }
+.smap .rel { font: 700 12px ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding-top: 8px; }
+.smap .cell { display: grid; gap: 8px; min-height: 40px; }
+.smap .story { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+.smap .story small { display: block; margin-top: 3px; font: 600 11px ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+.smap .cut { grid-column: 1 / -1; border-top: 2px dashed var(--accent); margin: 4px 0; position: relative; height: 0; }
+.smap .cut span { position: absolute; right: 0; top: -11px; background: var(--paper); padding: 0 8px; font: 700 11px ui-monospace, Menlo, Consolas, monospace; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; }
 @keyframes rise { to { opacity: 1; transform: none; } }
 @keyframes fadein { to { opacity: 1; } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
@@ -295,7 +318,45 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
     if (D.caption) $('captext').textContent = D.caption;
   }
 
-  if (D.kind === 'flow') flow();
+  /* gantt: phases and tasks over a unit of time; start and length are in units, not dates */
+  function gantt() {
+    var phases = D.phases || [], tasks = D.tasks || [], unit = D.unit || 'week', span = 1, short = { day: 'D', week: 'W', sprint: 'S', month: 'M' }[unit] || 'U';
+    tasks.forEach(function (t) { span = Math.max(span, (t.start || 0) + (t.milestone ? 1 : (t.length || 1))); });
+    var tb = el('table', 'gantt', null, stage); tb.style.setProperty('--n', span); tb.setAttribute('aria-label', (D.title || 'Plan') + ' by ' + unit);
+    var head = el('tr', null, null, el('thead', null, null, tb)); el('th', null, 'Task', head);
+    var sc = el('th', 'scale', null, head), ticks = el('div', 'ticks', null, sc); for (var i = 0; i < span; i++) el('span', null, short + (i + 1), ticks);
+    var body = el('tbody', null, null, tb);
+    phases.forEach(function (p, pi) {
+      var pr = el('tr', 'phase ph' + (pi % 4), null, body), ph = el('th', null, p.label || p.id, pr); ph.colSpan = 2;
+      tasks.filter(function (t) { return t.phase === p.id; }).forEach(function (t) {
+        var r = el('tr', 'ph' + (pi % 4), null, body), lab = el('th', 'lab', t.label || t.id, r); lab.scope = 'row';
+        var extra = [(t.after || []).length ? 'after ' + t.after.map(function (a) { var d = tasks.filter(function (x) { return x.id === a; })[0]; return d ? d.label : a; }).join(', ') : '', (t.ac || []).join(' ')].filter(Boolean).join(' · ');
+        if (extra) el('small', null, extra, lab);
+        var td = el('td', 'track', null, r), left = (t.start || 0) / span * 100;
+        if (t.milestone) { var m = el('span', 'ms', '◆', td); m.style.left = left + '%'; m.setAttribute('role', 'img'); m.setAttribute('aria-label', 'Milestone at ' + short + ((t.start || 0) + 1)); }
+        else { var b = el('span', 'bar', (t.length || 1) + short.toLowerCase(), td); b.style.left = left + '%'; b.style.width = (t.length || 1) / span * 100 + '%'; b.setAttribute('aria-label', 'Starts ' + short + ((t.start || 0) + 1) + ', lasts ' + (t.length || 1) + ' ' + unit + (t.length === 1 ? '' : 's')); }
+      });
+    });
+  }
+
+  /* story map: activities across, releases down, a dashed cut line after the first release (or after D.cut) */
+  function storymap() {
+    var acts = D.activities || [], rels = D.releases || [], stories = D.stories || [], cutId = D.cut || (rels[0] && rels[0].id);
+    var map = el('div', 'smap', null, stage); map.style.setProperty('--a', acts.length);
+    el('div', null, null, map); acts.forEach(function (a) { el('div', 'act', a.label || a.id, map); });
+    rels.forEach(function (r) {
+      el('div', 'rel', r.label || r.id, map);
+      acts.forEach(function (a) {
+        var cell = el('div', 'cell', null, map); cell.setAttribute('aria-label', (r.label || r.id) + ', ' + (a.label || a.id));
+        stories.filter(function (s) { return s.release === r.id && s.activity === a.id; }).forEach(function (s) { var c = el('div', 'story', s.label || s.id, cell); if ((s.ac || []).length) el('small', null, s.ac.join(' '), c); });
+      });
+      if (r.id === cutId && r !== rels[rels.length - 1]) { var cut = el('div', 'cut', null, map); el('span', null, 'cut line: ' + (r.label || r.id) + ' ships first', cut); }
+    });
+  }
+
+  if (D.kind === 'gantt') gantt();
+  else if (D.kind === 'story-map') storymap();
+  else if (D.kind === 'flow') flow();
   else if (D.kind === 'erd') grid(D.entities || [], D.relations || [], true);
   else grid(D.nodes || [], D.edges || [], false);
 })();

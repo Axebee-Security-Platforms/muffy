@@ -22,6 +22,7 @@ Produces testable acceptance criteria, phased plan with P0/P1/P2 priorities, and
 - [Workflow](references/product-manager/workflow.md) — step-by-step: stories, AC, traceability, plan, ADR, brain note
 - [Output Format](references/product-manager/output-format.md) — files to write, ADR format, final message
 - [Rules and Guardrails](references/product-manager/rules-and-guardrails.md) — ADR, scope, and second-brain write constraints
+- [Plan diagrams](references/product-manager/diagrams.md) — the optional gantt and story map: when to draw, rules
 - [Quality Checks](references/product-manager/quality-checks.md) — checklist to verify before handing off
 - [Present mode](references/product-manager/present/overview.md) — decks for people outside the team, as a solutions engineer; its own workflow, outputs and checks
 
@@ -33,6 +34,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 |---|---|
 | [purpose.md](references/product-manager/purpose.md), [required-inputs.md](references/product-manager/required-inputs.md), [rules-and-guardrails.md](references/product-manager/rules-and-guardrails.md) | At start, once |
 | [workflow.md](references/product-manager/workflow.md) | After the inputs are confirmed, before the first action |
+| [diagrams.md](references/product-manager/diagrams.md) | Only when the plan has 3+ phases with dependencies or 8+ stories across 3+ activities, or the user asks for a roadmap or story map |
 | [principles.md](references/product-manager/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [present/overview.md](references/product-manager/present/overview.md) | Only when the prompt says "Present deck"; then it replaces workflow.md, output-format.md and quality-checks.md and names the rest to load |
 | [output-format.md](references/product-manager/output-format.md) | Just before writing the first deliverable |

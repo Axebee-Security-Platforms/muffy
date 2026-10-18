@@ -4,6 +4,7 @@
 //   docs/architecture/baseline.md            researcher only
 //   docs/architecture/{overview,data-model,deployment}.html, docs/architecture/flows/*.html and docs/architecture/states/*.html and docs/architecture/changes/*.html   architect only
 //   any other file under docs/architecture/ no subagent
+//   docs/plan/<task>-gantt.html, docs/plan/<task>-story-map.html   product-manager only
 //   docs/design/screen-map.html              designer only
 //   docs/design-system/                       designer and architect (onboard) only
 // Hook JSON arrives on stdin. Exit 2 = block (stderr is shown to the agent), 0 = allow.
@@ -18,6 +19,7 @@ const RULES = [
   { re: /(^|\/)docs\/architecture\/(overview|data-model|deployment)\.html$/, owners: ['architect'], what: 'an architecture diagram (the architect draws it when a trigger fires)' },
   { re: /(^|\/)docs\/architecture\/(flows|states|changes)\/[^/]+\.html$/, owners: ['architect'], what: 'a flow, state or change diagram (the architect draws it when a trigger fires)' },
   { re: /(^|\/)docs\/architecture\//, owners: [], what: 'a file under docs/architecture/ that no rule names' },
+  { re: /(^|\/)docs\/plan\/[^/]+-(gantt|story-map)\.html$/, owners: ['product-manager'], what: 'a plan diagram (the product-manager draws it when the plan needs one)' },
   { re: /(^|\/)docs\/design\/screen-map\.html$/, owners: ['designer'], what: 'the screen map (the designer draws it when the structure or navigation changes)' },
   { re: /(^|\/)docs\/design-system\//, owners: ['designer', 'architect'], what: 'the design system (the designer owns it; the architect records an existing one at onboard)' },
 ];

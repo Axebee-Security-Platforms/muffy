@@ -7,6 +7,7 @@ The Orchestrator publishes every diagram an agent wrote or changed, so the user 
 |---|---|---|
 | Architect, step 3 | `docs/architecture/overview.html`, `data-model.html`, `deployment.html`, `states/<slug>.html`, `changes/<slug>.html`, `flows/<slug>.html` | Right after 3b, before the 3c gate, so the question to the user can link them |
 | Architect, onboard 0c | `docs/architecture/overview.html` | Before `pause:onboard-review` (0d), so the user reviews it with the baseline |
+| Product-manager, step 1 (only when a plan diagram was needed) | `docs/plan/<task>-gantt.html`, `docs/plan/<task>-story-map.html` | Right after the PM hand-off, before the user reviews the plan |
 | Designer, step 3 (only when a screen map was needed) | `docs/design/screen-map.html` | Right after 3b, before the 3c gate, so the design-review question can link it |
 | Diagnosing dev, fix lane 4a | `.team/<task>/flow.html` | Right after the 4a hand-off, before step 4 starts |
 
