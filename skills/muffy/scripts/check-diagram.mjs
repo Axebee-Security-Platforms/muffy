@@ -52,7 +52,9 @@ const PATTERNS = {
   'queue-bottleneck': { kinds: ['architecture', 'deployment'], what: 'many producers feeding one finite queue or consumer' },
   lifecycle: { kinds: ['state'], what: 'one subject moving through states to terminal outcomes' },
   'trust-boundary': { kinds: ['architecture', 'deployment'], what: 'which routes cross a trust boundary and which are blocked' },
+  delta: { kinds: ['architecture', 'deployment'], what: 'what a change adds, removes or alters in a topology' },
 };
+const DELTAS = ['added', 'removed', 'changed'];
 // states no one can leave, or reach: a lifecycle diagram that hides a stuck state misleads
 export function lifecycleGaps(d) {
   const nodes = d.nodes ?? [], edges = d.edges ?? [], out = [], start = nodes.find((n) => n.type === 'initial');
@@ -84,6 +86,14 @@ function patternErrors(d) {
   } else if (d.pattern === 'lifecycle') {
     errs.push(...lifecycleGaps(d));
     if (nodes.length > 8) errs.push(`lifecycle shows at most 8 states (this has ${nodes.length}): collapse sub-states`);
+  } else if (d.pattern === 'delta') {
+    const marked = [...nodes.map((n) => ({ ...n, what: n.id })), ...edges.map((e) => ({ ...e, what: `${e.from} -> ${e.to}` }))].filter((m) => m.delta);
+    if (!marked.length) errs.push('delta needs at least one node or link marked added, removed or changed');
+    if (marked.length > 8) errs.push(`delta lists at most 8 changes (this has ${marked.length}): show the ones that decide the review`);
+    for (const m of marked) if (!text(m.why)) errs.push(`${m.what}: every change needs a why (one short reason)`);
+    const gone = new Set(nodes.filter((n) => n.delta === 'removed').map((n) => n.id));
+    for (const e of edges) if (e.delta !== 'removed' && (gone.has(e.from) || gone.has(e.to))) errs.push(`link ${e.from} -> ${e.to} touches a removed component: mark it removed too`);
+    for (const e of edges.filter((e) => e.delta === 'added')) { const ends = [e.from, e.to].map((i) => nodes.find((n) => n.id === i)); if (ends.some((n) => n?.delta === 'removed')) errs.push(`added link ${e.from} -> ${e.to} points at a removed component`); }
   } else if (d.pattern === 'trust-boundary') {
     const zone = Object.fromEntries(nodes.map((n) => [n.id, n.zone])), zones = new Set(nodes.map((n) => n.zone).filter(Boolean));
     for (const n of nodes) if (!text(n.zone)) errs.push(`${n.id}: trust-boundary needs a zone on every node`);
@@ -112,6 +122,7 @@ export function check(html, file = '') {
   if (/<\/script|<!--|<script/i.test(m[2])) errs.push('diagram JSON contains "</script", "<script" or "<!--": write "<" as \\u003c');
   if (![...Object.keys(GRID), 'erd', 'flow', 'screenmap'].includes(d.kind)) errs.push(`kind must be ${[...Object.keys(GRID), 'erd', 'flow', 'screenmap'].join(', ')}`);
   if (d.pattern !== undefined) errs.push(...patternErrors(d));
+  if ([...(d.nodes ?? []), ...(d.edges ?? [])].some((m) => (m?.delta !== undefined && !DELTAS.includes(m.delta)) || !optText(m?.why))) errs.push(`delta must be one of ${DELTAS.join(', ')} and why must be a plain string`);
   if ((d.nodes ?? []).some((n) => !optText(n?.zone)) || (d.edges ?? []).some((e) => e?.blocked !== undefined && typeof e.blocked !== 'boolean')) errs.push('zone must be a plain string and blocked must be true or false');
   if (!text(d.title)) errs.push('title is required');
   if (!optText(d.subtitle) || !optText(d.caption)) errs.push('subtitle and caption must be plain strings');

@@ -37,6 +37,7 @@ Set `"pattern"` when what the reader must learn is behaviour, not just structure
 |---|---|---|---|
 | `queue-bottleneck` | architecture, deployment | several producers compete for one finite queue or worker | a `queue` node with 2 to 5 producers, an edge to its consumer, and a capacity or rate with a unit in its `note` ("10 slots", "2 jobs/min"), never just "high" |
 | `lifecycle` | state | one subject moves through states with retries and terminal outcomes | every node reachable from `initial`, no dead-end state, no transition out of a `final`, at least one `final` or `error`, at most 8 states. Without the pattern the same gaps are only WARNs |
+| `delta` | architecture, deployment | a review or ADR must show what one change adds, removes or alters in a topology | at least one node or link with `"delta": "added"`, `"removed"` or `"changed"`, a short `"why"` on every marked item (listed in a Changes ledger under the diagram), no kept link to a removed component, at most 8 marked items. Draw the after-state, with removed items still shown (struck through, red) |
 | `trust-boundary` | architecture, deployment | which routes may cross a boundary and which must not exist | a `zone` on every node (2 or 3 zones, shown on the card), at least one link crossing zones, and at least one forbidden crossing marked `"blocked": true` (drawn red, dashed, prefixed with a cross), at most 9 nodes |
 
 ## Exporting a still image
