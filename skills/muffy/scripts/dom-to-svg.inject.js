@@ -17,8 +17,6 @@
 
   function run() {
     var de = document.documentElement, W = Math.ceil(de.scrollWidth), H = Math.ceil(de.scrollHeight), out = [], defs = [], clips = 0;
-    // a caption that is still fixed to the window is pinned to the bottom of the page instead
-    var cap = document.querySelector('.cap'); if (cap && getComputedStyle(cap).position === 'fixed') { var ch = cap.offsetHeight; cap.style.position = 'absolute'; cap.style.bottom = 'auto'; cap.style.top = (H - ch - 20) + 'px'; }
     out.push('<rect width="' + W + '" height="' + H + '" fill="' + getComputedStyle(document.body).backgroundColor + '"/>');
 
     function edge(x1, y1, x2, y2, c, w) { out.push('<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + c + '" stroke-width="' + w + '"/>'); }
@@ -64,7 +62,9 @@
     function pseudoText(e, s, r) {
       var p = getComputedStyle(e, '::before'), c = p && p.content;
       if (!c || c === 'none' || c === 'normal' || c === '""' || !/^"/.test(c) || p.position === 'absolute') return;
-      out.push('<text x="' + (r.left + num(s.paddingLeft)) + '" y="' + (r.top + num(s.paddingTop) + num(p.lineHeight) / 2 || r.top + r.height / 2) + '" dominant-baseline="central" fill="' + p.color + '" font-family="' + esc(p.fontFamily.replace(/"/g, "'")) + '" font-size="' + p.fontSize + '" font-weight="' + p.fontWeight + '">' + esc(c.slice(1, -1)) + '</text>');
+      // line-height "normal" parses as 0: fall back to the usual 1.2 x font size so the text sits on its line, not on the padding edge
+    var lh = num(p.lineHeight) || num(p.fontSize) * 1.2;
+    out.push('<text x="' + (r.left + num(s.paddingLeft)) + '" y="' + (r.top + num(s.paddingTop) + lh / 2) + '" dominant-baseline="central" fill="' + p.color + '" font-family="' + esc(p.fontFamily.replace(/"/g, "'")) + '" font-size="' + p.fontSize + '" font-weight="' + p.fontWeight + '">' + esc(c.slice(1, -1)) + '</text>');
     }
 
     function walk(e) {

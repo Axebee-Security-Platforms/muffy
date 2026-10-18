@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Exports a finished muffy diagram as a still image, for a deck, a document or a chat message. Manual: run it only when asked.
 //   node diagram-export.mjs <file.html> --png out.png [--theme light|dark] [--scale 2] [--width 1280]
-//   node diagram-export.mjs <flow-file.html> --svg out.svg [--theme light|dark]
+//   node diagram-export.mjs <file.html> --svg out.svg [--theme light|dark]
 // PNG works for every kind: the page is opened in a headless Chrome or Edge frozen on its finished frame (no animation, no
 // controls) and photographed at its full height. SVG: a flow diagram exports its own SVG; the other kinds are HTML cards, so a temporary copy of
 // the page redraws what the browser laid out (boxes, borders, wires, text) as SVG shapes and text. Shadows and the grid paper are left out. Run check-diagram.mjs first: a page that fails is not exported.
@@ -30,8 +30,12 @@ export function flowSvg(dom, page, theme) {
   if (!m) return null;
   const [, , w, h] = m[1].split(/\s+/).map(Number);
   const vars = (page.match(theme === 'dark' ? /:root\[data-theme="dark"\] \{([\s\S]*?)\n\}/ : /:root \{([\s\S]*?)\n\}/) ?? [])[1] ?? '';
-  const rules = page.slice(page.indexOf('.wire {'), page.indexOf('\n.cap {'));
-  const body = m[0].replace(/<svg\b[^>]*>/, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${m[1]}" width="${w}" height="${h}" role="img" aria-label="${(page.match(/"title":\s*"([^"]*)"/) ?? [, 'diagram'])[1].replace(/[<>&"]/g, '')}">`);
+  // the rules the flow SVG needs sit between .wire and .cap in diagram.html; a missing anchor would slice in the rest of the page
+  const from = page.indexOf('\n.wire {'), to = page.indexOf('\n.cap {', from);
+  if (from < 0 || to < 0) fail('the page has no .wire ... .cap rules to copy into the SVG (was diagram.html changed?)');
+  const rules = page.slice(from + 1, to);
+  const title = String(JSON.parse(page.match(/id="diagram">([\s\S]*?)<\/script>/)[1]).title ?? 'diagram');
+  const body = m[0].replace(/<svg\b[^>]*>/, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${m[1]}" width="${w}" height="${h}" role="img" aria-label="${title.replace(/[<>&"]/g, '')}">`);
   const css = `svg { ${vars.replace(/\s+/g, ' ')} }\n${rules}\n.step { opacity: 1; animation: none; cursor: default; } .step.future { opacity: 1 !important; }`;
   return body.replace(/(<svg\b[^>]*>)/, `$1<style>${css}</style><rect x="0" y="0" width="${w}" height="${h}" fill="var(--paper)"/>`);
 }

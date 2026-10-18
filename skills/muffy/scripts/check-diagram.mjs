@@ -20,7 +20,9 @@ const SCREEN_TYPES = ['entry', 'screen', 'modal', 'external'];
 // soft budget: above these a diagram is probably two (overview + detail). Printed as WARN, never a FAIL: the onboard overview may need the hard limit
 const SOFT = { architecture: { items: 9, links: 12 }, state: { items: 8, links: 12 }, deployment: { items: 9, links: 12 }, screenmap: { items: 12, links: 16 }, erd: { items: 8, links: 10 } };
 const UNITS = ['day', 'week', 'sprint', 'month'], AC_ID = /^AC-\d+$/;
-const LIMIT = { gantt: 12, phases: 4, span: 24, activities: 6, releases: 3, stories: 24, cell: 4, screenmap: 20, erd: 12, actors: 6, steps: 12, fields: 12 };
+export const LIMIT = { gantt: 12, phases: 4, span: 24, activities: 6, releases: 3, stories: 24, cell: 4, screenmap: 20, erd: 12, actors: 6, steps: 12, fields: 12 };
+// the hard size of each kind, by its main item; diagram-import.mjs reads it to decide when a draft is too big
+export const KIND_MAX = { ...Object.fromEntries(Object.entries(GRID).map(([k, v]) => [k, v.max])), erd: LIMIT.erd, flow: LIMIT.actors, screenmap: LIMIT.screenmap, gantt: LIMIT.gantt, 'story-map': LIMIT.stories };
 
 const template = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../templates/diagram.html'), 'utf8');
 const shell = (html) => html.replace(JSON_BLOCK, '$1$3').replace(TITLE, '<title></title>').replace(/\r\n/g, '\n');
@@ -133,7 +135,7 @@ export function check(html, file = '') {
   try { d = JSON.parse(m[2]); } catch (e) { return [...errs, `diagram JSON does not parse: ${e.message}`]; }
   // the browser ends the block at </script in any case, and <!-- or <script inside it can swallow the real closer
   if (/<\/script|<!--|<script/i.test(m[2])) errs.push('diagram JSON contains "</script", "<script" or "<!--": write "<" as \\u003c');
-  if (![...Object.keys(GRID), 'erd', 'flow', 'screenmap', 'gantt', 'story-map'].includes(d.kind)) errs.push(`kind must be ${[...Object.keys(GRID), 'erd', 'flow', 'screenmap', 'gantt', 'story-map'].join(', ')}`);
+  if (!Object.hasOwn(KIND_MAX, d.kind)) errs.push(`kind must be ${Object.keys(KIND_MAX).join(', ')}`);
   if (d.pattern !== undefined) errs.push(...patternErrors(d));
   if ([...(d.nodes ?? []), ...(d.edges ?? [])].some((m) => (m?.delta !== undefined && !DELTAS.includes(m.delta)) || !optText(m?.why))) errs.push(`delta must be one of ${DELTAS.join(', ')} and why must be a plain string`);
   if ((d.nodes ?? []).some((n) => !optText(n?.zone)) || (d.edges ?? []).some((e) => e?.blocked !== undefined && typeof e.blocked !== 'boolean')) errs.push('zone must be a plain string and blocked must be true or false');

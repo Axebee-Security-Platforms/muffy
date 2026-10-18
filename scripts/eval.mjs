@@ -316,6 +316,23 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
             const tooWide = layoutIssues(save('wide', { ...wide, nodes: Array.from({ length: 9 }, (_, i) => ({ id: 'n' + i, label: 'Node ' + i, type: 'service', col: i + 1, row: 1 })), edges: [] }));
             check('diagram render: a flow label wider than the space between its actors, and a page wider than the window, are reported', longLabel.some((i) => i.includes('wider than the space between its actors')) && tooWide.some((i) => i.includes('wider than the window')));
           }
+          {
+            // 24 one-day units fit a 1280 px window; an 800 px one (a split screen) makes the unit labels and a 1-day bar too narrow
+            const g = JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/gantt.json'), 'utf8'));
+            const f = save('gantt-dense', { ...g, unit: 'day', tasks: [...g.tasks.slice(0, 4), { id: 'z', label: 'Handover', phase: 'p3', start: 23, length: 1 }] });
+            const wide = layoutIssues(f), narrow = layoutIssues(f, undefined, 800);
+            check('diagram render: gantt unit labels that are cramped and a bar label that does not fit are reported', wide.length === 0 && narrow.some((i) => i.includes('unit labels are cramped')) && narrow.some((i) => i.includes('"1d" does not fit its bar')));
+          }
+          {
+            const exp = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/diagram-export.mjs'), ...a], { encoding: 'utf8' });
+            const kinds = ['story-map', 'state', 'deployment', 'erd', 'screenmap'], bad = kinds.filter((k) => {
+              const out = join(dir, `${k}.svg`), j = JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8'));
+              if (exp(save(`exp-${k}`, j), '--svg', out).status !== 0) return true;
+              const t = readFileSync(out, 'utf8'), first = (j.nodes ?? j.entities ?? j.stories)[0];
+              return !(t.startsWith('<svg xmlns=') && t.includes('<rect') && !/<script|foreignObject|<pre/.test(t) && t.includes(`>${first.label ?? first.name}<`));
+            });
+            check(`export: every other kind exports as native SVG with its labels as text${bad.length ? ` (failed: ${bad.join(', ')})` : ''}`, bad.length === 0);
+          }
         } finally { rmSync(dir, { recursive: true, force: true }); }
       }
     }
@@ -633,7 +650,10 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   // guard-bash: stack-note mode and the architect's stack ladder start with check-stack-notes
   const bash = (agent_type, command) => hook('guard-bash-allowlist.mjs', { tool_name: 'Bash', agent_type, tool_input: { command } });
   check('guard-bash: researcher and architect may run check-stack-notes', bash('researcher', 'node .claude/skills/muffy/scripts/check-stack-notes.mjs next') === 0 && bash('muffy:architect', 'node .claude/skills/muffy/scripts/check-stack-notes.mjs') === 0);
-  check('guard-bash: the documented allowlist names every script the guard allows', ['hooks-enforcement.md'].every((f) => readFileSync(rel('skills/muffy/references', f), 'utf8').includes('check-diagram,check-stack-notes,check-presentation}')));
+  // the guard's block message lists what it allows; §9 must name each of those scripts
+  const allowed = readFileSync(rel('skills/muffy/scripts/guard-bash-allowlist.mjs'), 'utf8').match(/scripts\/\{([^}]+)\}\.mjs/)[1].split(',').map((s) => s.replace(/\s*\(.*\)$/, ''));
+  const rule9 = readFileSync(rel('skills/muffy/references/hooks-enforcement.md'), 'utf8').split(/^## 9\./m)[1].split(/^## /m)[0];
+  check('guard-bash: the documented allowlist names every script the guard allows', allowed.length >= 8 && allowed.every((s) => new RegExp(`[{,\`]${s}[,}.]`).test(rule9)));
 
   // write-scope: anchored at the project root, case-folded where the file system ignores case
   const ws = (agent_type, file_path, cwd = 'E:\\repo') => hook('guard-write-scope.mjs', { tool_name: 'Write', agent_type, cwd, tool_input: { file_path } });

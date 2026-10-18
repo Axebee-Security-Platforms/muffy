@@ -21,10 +21,11 @@ const CANDIDATES = [
 export const findBrowser = () => CANDIDATES.find((p) => existsSync(p));
 
 // the issues the page wrote to data-layout: [] when clean, null when the page has no audit or never ran it
-export function layoutIssues(file, browser = findBrowser()) {
+// width: the window width in CSS px (1280 is a laptop; a narrower one shows what a phone or a split screen sees)
+export function layoutIssues(file, browser = findBrowser(), width = 1280) {
   const profile = mkdtempSync(join(tmpdir(), 'muffy-diagram-'));
   try {
-    const dom = execFileSync(browser, ['--headless=new', '--disable-gpu', '--no-sandbox', `--user-data-dir=${profile}`, '--window-size=1280,900',
+    const dom = execFileSync(browser, ['--headless=new', '--disable-gpu', '--no-sandbox', `--user-data-dir=${profile}`, `--window-size=${width},900`,
       '--virtual-time-budget=4000', '--dump-dom', `${pathToFileURL(resolve(file)).href}#measure`], { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
     const m = dom.match(/<main[^>]*\sdata-layout="([^"]*)"/);
     if (!m) return null;

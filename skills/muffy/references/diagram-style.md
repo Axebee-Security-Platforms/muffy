@@ -30,10 +30,10 @@ Common: `kind` (`architecture` | `state` | `deployment` | `erd` | `flow` | `scre
 | `screenmap` | `nodes` | `id`, `label`, `type` (`entry`, `screen`, `modal`, `external`), optional `note` (who sees it), `col`, `row`, optional `verify` | `edges`: `from`, `to`, `label` (the action that causes it), optional `verify` | 20 nodes |
 | `flow` | `actors` (`id`, `label`, `type`) | none | `steps`: `from`, `to`, `label`, optional `note` (shown in the step bar), `fail` (marks the step that fails), `verify` | 6 actors, 12 steps |
 
-One passing example per kind is in [templates/diagram-examples/](../templates/diagram-examples/) (`architecture.json`, `erd.json`, `flow.json`, `screenmap.json`). Read only the one for your kind and replace its content; do not read the others.
+One passing example per kind is in [templates/diagram-examples/](../templates/diagram-examples/), named after the kind (`architecture.json`, `state.json`, `deployment.json`, `erd.json`, `flow.json`, `screenmap.json`, `gantt.json`, `story-map.json`). Read only the one for your kind and replace its content; do not read the others.
 
 ## Patterns (optional)
-Set `"pattern"` when what the reader must learn is behaviour, not just structure. The pattern adds checks for the primitives it needs; it never changes the layout or raises a limit. No pattern fits: leave it out.
+Set `"pattern"` when what the reader must learn is behaviour, not just structure. The pattern adds checks for the primitives it needs; it never changes the layout or raises a limit. No pattern fits: leave it out. With a pattern, start from its example instead of the kind's: `pattern-<pattern>.json` in the same folder; `lifecycle` has none of its own, because `state.json` already uses it.
 
 | pattern | kind | Use when | The validator then requires |
 |---|---|---|---|
@@ -45,7 +45,7 @@ Set `"pattern"` when what the reader must learn is behaviour, not just structure
 
 ## Exporting a still image
 Manual: only when the user asks for an image (a slide, a document, a chat message), never unprompted. Run by the Orchestrator or the user; it writes a file, so agents under the Bash guard do not.
-- `node .claude/skills/muffy/scripts/diagram-export.mjs <file.html> --png out.png [--theme light|dark] [--scale 2] [--width 1280]` works for every kind: headless Chrome/Edge opens the page on its finished frame (no animation or controls) and captures its full height, caption included
+- `node .claude/skills/muffy/scripts/diagram-export.mjs <file.html> --png out.png [--theme light|dark] [--scale 2] [--width 1280]` works for every kind: headless Chrome/Edge opens the page on its finished frame (no animation or controls) and captures its full height. A flow's step bar is left out
 - `--svg out.svg [--theme ...]` works for every kind. A `flow` diagram exports its own SVG (the diagram only). The other kinds are HTML cards, so the page is redrawn as native SVG shapes and text from what the browser laid out: positions, colours, borders, wires and text lines are kept, the whole page is included (title, subtitle, ledger), and shadows and the grid paper are left out. The text stays text, shown in the viewer's system font, so it stays editable in Figma, Inkscape or PowerPoint but may reflow slightly there
 - A page that fails `check-diagram.mjs` is not exported. No Chrome/Edge: it says so and exits 2
 
@@ -62,6 +62,6 @@ The Orchestrator or user may add `--html <path>` to write the page directly; age
 - Every edge and relation has a label (protocol, verb or cardinality). Every card has a short label; a `note` is a few words, not a paragraph
 - An ERD lists primary and foreign keys and the columns that matter for the change, not every column
 - Facts only: what the code or contract shows. Anything unconfirmed is `verify: true`. A diagram never introduces a table, field or step that the contract, schema or traced code lacks
-- **Remove test before hand-off:** can any card be dropped, can two cards that always travel together be merged, can a wire be left out because the layout already shows it? Do it. The validator prints `WARN` above 9 nodes or 12 links (architecture), 12 nodes or 16 links (screenmap), 8 entities or 10 relations (erd): split into an overview plus a detail diagram unless it is the onboard overview. A WARN is not a FAIL, but a WARN left in place needs a reason in the brain note
+- **Remove test before hand-off:** can any card be dropped, can two cards that always travel together be merged, can a wire be left out because the layout already shows it? Do it. The validator prints `WARN` above 9 nodes or 12 links (architecture, deployment), 8 states or 12 links (state), 12 nodes or 16 links (screenmap), 8 entities or 10 relations (erd): split into an overview plus a detail diagram unless it is the onboard overview. A WARN is not a FAIL, but a WARN left in place needs a reason in the brain note
 - Accessibility is built into the template (wires are decorative; a hidden connection list and named flow steps carry the same information), and its type colours are checked for 4.5:1 contrast on the card in both themes. This is one more reason the shell must not be edited
 - Text is plain: the template writes it with `textContent`, so no HTML in labels

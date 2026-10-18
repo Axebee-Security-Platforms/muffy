@@ -9,10 +9,9 @@ import { readFileSync, writeFileSync, statSync } from 'node:fs';
 import { basename, dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
-import { check } from './check-diagram.mjs';
+import { check, KIND_MAX as HARD, LIMIT } from './check-diagram.mjs';
 
 const MAX_BYTES = 4 * 1024 * 1024, MAX_NODES = 2000, MAX_EDGES = 5000, LABEL = 60;
-const HARD = { architecture: 15, deployment: 15, state: 12, screenmap: 20, erd: 12, flow: 6, gantt: 12, 'story-map': 24 };
 const fail = (m) => { console.error(`import: ${m}`); process.exit(2); };
 
 // ---------- shared helpers ----------
@@ -43,7 +42,7 @@ function edge(ir, from, to, label = '', extra = {}) {
 
 // ---------- Mermaid ----------
 const OPEN = [['[[', ']]', 'subroutine'], ['[(', ')]', 'cylinder'], ['(((', ')))', 'double-circle'], ['((', '))', 'circle'], ['([', '])', 'stadium'], ['{{', '}}', 'hexagon'], ['[', ']', 'rect'], ['(', ')', 'round'], ['{', '}', 'diamond'], ['>', ']', 'flag']];
-const ID_RE = /^[\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*/;
+const ID = String.raw`[\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*`, ID_RE = new RegExp(`^${ID}`);
 
 function mermaidBlocks(text, path) {
   if (!/\.(md|markdown)$/i.test(path)) return [text];
@@ -84,7 +83,7 @@ function mermaidFlow(lines, ir) {
     const line = raw.trim();
     if (/^(style|classDef|class|linkStyle|click|accTitle|accDescr|direction)\b/.test(line)) { drop(ir, /^click/.test(line) ? 'click targets' : 'styling lines'); continue; }
     const sg = /^subgraph\s+(.+)$/.exec(line);
-    if (sg) { const m = /^([\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*)\s*(?:\[(.*)\])?$/.exec(sg[1].trim()); const id = m ? m[1] : slug(sg[1], ir.groups.length); ir.groups.push({ id, label: clean(m?.[2] ?? sg[1]) || id, ...odd(m?.[2] ?? sg[1]), parent: stack[stack.length - 1] }); stack.push(id); continue; }
+    if (sg) { const m = new RegExp(String.raw`^(${ID})\s*(?:\[(.*)\])?$`).exec(sg[1].trim()); const id = m ? m[1] : slug(sg[1], ir.groups.length); ir.groups.push({ id, label: clean(m?.[2] ?? sg[1]) || id, ...odd(m?.[2] ?? sg[1]), parent: stack[stack.length - 1] }); stack.push(id); continue; }
     if (line === 'end') { stack.pop(); continue; }
     let s = line.replace(/\s*;\s*$/, '')
       .replace(/--\s*([^->|\s][^>|]*?)\s*(-->|---)/g, '$2|$1|').replace(/==\s*([^=>|\s][^>|]*?)\s*(==>|===)/g, '$2|$1|').replace(/-\.\s*([^.>|\s][^>|]*?)\s*(\.->|\.-)/g, '$2|$1|');
@@ -118,12 +117,12 @@ function mermaidState(lines, ir) {
     const line = raw.trim(); if (!line) continue;
     if (/^(note|classDef|class|style|click|hide|scale|direction)\b/i.test(line)) { drop(ir, 'notes and styling'); continue; }
     if (/^\}$/.test(line)) { depth.pop(); continue; }
-    const comp = /^state\s+(?:"([^"]*)"\s+as\s+)?([\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*)\s*\{$/.exec(line); if (comp) { depth.push(comp[2]); node(ir, comp[2], comp[1] ?? comp[2]); drop(ir, 'composite state nesting'); continue; }
-    const decl = /^state\s+"([^"]*)"\s+as\s+([\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*)$/.exec(line); if (decl) { node(ir, decl[2], decl[1]); continue; }
+    const comp = new RegExp(String.raw`^state\s+(?:"([^"]*)"\s+as\s+)?(${ID})\s*\{$`).exec(line); if (comp) { depth.push(comp[2]); node(ir, comp[2], comp[1] ?? comp[2]); drop(ir, 'composite state nesting'); continue; }
+    const decl = new RegExp(String.raw`^state\s+"([^"]*)"\s+as\s+(${ID})$`).exec(line); if (decl) { node(ir, decl[2], decl[1]); continue; }
     if (/^state\s+\S+\s+<<(fork|join|choice)>>/.test(line)) { const id = line.split(/\s+/)[1]; node(ir, id, id); continue; }
-    const t = /^(\[\*\]|[\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*)\s*-->\s*(\[\*\]|[\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*)\s*(?::\s*(.*))?$/.exec(line);
+    const t = new RegExp(String.raw`^(\[\*\]|${ID})\s*-->\s*(\[\*\]|${ID})\s*(?::\s*(.*))?$`).exec(line);
     if (t) { const a = ref(t[1], true), b = ref(t[2], false); node(ir, a); node(ir, b); edge(ir, a, b, t[3] ?? ''); continue; }
-    const d = /^([\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*)\s*:\s*(.*)$/.exec(line); if (d) { node(ir, d[1]); drop(ir, 'state descriptions'); continue; }
+    const d = new RegExp(String.raw`^(${ID})\s*:\s*(.*)$`).exec(line); if (d) { node(ir, d[1]); drop(ir, 'state descriptions'); continue; }
     drop(ir, 'unparsed lines');
   }
   if (start) node(ir, '__start', 'Start', { type: 'initial' });
@@ -140,7 +139,7 @@ function mermaidEr(lines, ir) {
     const ob = /^("[^"]+"|[^\s{]+)\s*(?:\[[^\]]*\])?\s*\{$/.exec(line); if (ob) { cur = node(ir, clean(ob[1]) || ob[1], undefined, { fields: [] }); continue; }
     const r = /^("[^"]+"|\S+)\s+(\S\S)(--|\.\.)(\S\S)\s+("[^"]+"|\S+)\s*(?::\s*(.*))?$/.exec(line);
     if (r) { const a = clean(r[1]), b = clean(r[5]); node(ir, a); node(ir, b); edge(ir, a, b, `${CARD[r[2]] ?? '?'} : ${CARD[[...r[4]].reverse().join('')] ?? CARD[r[4]] ?? '?'}`); continue; }
-    if (/^[\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*$/.test(line)) { node(ir, line); continue; }
+    if (new RegExp(String.raw`^${ID}$`).test(line)) { node(ir, line); continue; }
     drop(ir, 'unparsed lines');
   }
   ir.hint = 'erd';
@@ -150,7 +149,7 @@ function mermaidSequence(lines, ir) {
   for (const raw of lines) {
     const line = raw.trim(); if (!line) continue;
     const p = /^(?:participant|actor)\s+(?:"([^"]*)"|(\S+))(?:\s+as\s+(.*))?$/.exec(line); if (p) { const id = p[2] ?? slug(p[1], ir.nodes.length); node(ir, id, p[3] ?? p[1] ?? id); continue; }
-    const m = /^([\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*)\s*(--?>>?|--?[x)]|<<--?>>)\s*[+-]?([\w\u0080-\uffff.]+(?:-[\w\u0080-\uffff.]+)*)\s*:\s*(.*)$/.exec(line);
+    const m = new RegExp(String.raw`^(${ID})\s*(--?>>?|--?[x)]|<<--?>>)\s*[+-]?(${ID})\s*:\s*(.*)$`).exec(line);
     if (m) { node(ir, m[1]); node(ir, m[3]); edge(ir, m[1], m[3], m[4], /^--/.test(m[2]) ? { dashed: true } : {}); continue; }
     if (/^(loop|alt|else|opt|par|and|critical|break|rect|end)\b/.test(line)) { drop(ir, 'fragments (loop/alt/opt/par)'); continue; }
     if (/^(note|activate|deactivate|autonumber|title|box)\b/i.test(line)) { drop(ir, 'notes and activations'); continue; }
@@ -219,7 +218,7 @@ function fromMermaid(text, path, which) {
   const blocks = mermaidBlocks(text, path); if (!blocks.length) fail('no mermaid block found');
   const src = blocks[which] ?? fail(`diagram ${which} not found (${blocks.length} mermaid block(s))`);
   const ir = newIR('mermaid');
-  const lines = src.replace(/^\uFEFF/, '').replace(/^---[\s\S]*?\n---\n/, '').split(/\r?\n/).map((l) => l.replace(/%%.*$/, '')).filter((l) => l.trim());
+  const lines = src.replace(/^\uFEFF/, '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').split(/\r?\n/).map((l) => l.replace(/%%.*$/, '')).filter((l) => l.trim());
   const head = (lines.shift() ?? '').trim();
   if (/^(flowchart|graph)\b/.test(head)) mermaidFlow(lines, ir);
   else if (/^stateDiagram(-v2)?\b/.test(head)) mermaidState(lines, ir);
@@ -385,14 +384,15 @@ function digest(ir, kind, d, errs) {
 
 const argv = process.argv.slice(2), flag = (n) => { const i = argv.indexOf(n); return i < 0 ? undefined : argv.splice(i, 2)[1]; };
 if (basename(process.argv[1] ?? '') === 'diagram-import.mjs') {
-  const which = +(flag('--diagram') ?? 0), kindFlag = flag('--kind'), html = flag('--html'), json = argv.includes('--json'); if (json) argv.splice(argv.indexOf('--json'), 1);
+  const which = Number(flag('--diagram') ?? 0), kindFlag = flag('--kind'), html = flag('--html'), json = argv.includes('--json'); if (json) argv.splice(argv.indexOf('--json'), 1);
   const file = argv[0]; if (!file) fail('usage: diagram-import.mjs <file> [--diagram N] [--kind K] [--html out.html] [--json]');
+  if (!Number.isInteger(which) || which < 0) fail('--diagram takes a page or block number counted from 0');
   let text; try { if (statSync(file).size > MAX_BYTES) fail('file is over 4 MB'); text = readFileSync(file, 'utf8').replace(/^\uFEFF/, ''); } catch (e) { fail(`cannot read ${file}: ${e.message}`); }
   const ext = extname(file).toLowerCase();
   const ir = /\.(mmd|mermaid|md|markdown)$/.test(ext) ? fromMermaid(text, file, which) : /\.excalidraw$/.test(ext) || (ext === '.json' && /"elements"/.test(text.slice(0, 4000))) ? fromExcalidraw(text) : /\.(drawio|xml)$/.test(ext) ? fromDrawio(text, which) : fail(`unsupported file type "${ext}" (.mmd .mermaid .md .drawio .excalidraw)`);
   if (!ir.nodes.length) fail('no nodes found in the source');
   const kind = kindFlag ?? ir.hint; if ((kind === 'gantt' && !ir.gantt) || (kind === 'story-map' && !ir.journey)) fail('--kind ' + kind + ' needs a Mermaid ' + (kind === 'gantt' ? 'gantt' : 'journey') + ' source'); if ((ir.gantt && kind !== 'gantt') || (ir.journey && kind !== 'story-map')) fail('a Mermaid ' + (ir.gantt ? 'gantt' : 'journey') + ' imports only as ' + ir.hint); if (!(kind in HARD)) fail(`--kind must be one of ${Object.keys(HARD).join(', ')}`);
-  const tooBig = (kind === 'flow' ? ir.nodes.length > HARD.flow || ir.edges.length > 12 : ir.nodes.length > HARD[kind]);
+  const tooBig = (kind === 'flow' ? ir.nodes.length > HARD.flow || ir.edges.length > LIMIT.steps : ir.nodes.length > HARD[kind]);
   const d = tooBig ? null : draft(ir, kind, clean(basename(file, ext)).replace(/[-_]+/g, ' '));
   let errs = [], page = null;
   if (d) {

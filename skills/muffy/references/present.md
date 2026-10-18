@@ -25,7 +25,7 @@ On demand only, never a step of the team flow. The Orchestrator runs `product-ma
 10. **Commit** on the user's go-ahead only: the output folder, with the commit trailer. Nothing else changes
 
 ## Rules
-- The requester is the only reviewer. Do not route the deck to code-reviewer, product-manager or any other agent
+- The requester is the only reviewer. The product-manager and the designer build the deck; do not route it to code-reviewer or any other agent for review
 - The product-manager never reads more than the confirmed sources; do not add paths to its prompt later without the user's OK
 - The product-manager writes the content; the designer makes the deck look and move like a real slide show, from the project design system. Neither changes the other's files.
 - No `.team/<task>/` folder, checkpoint or brain note is created for present mode

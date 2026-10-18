@@ -61,7 +61,16 @@ for (const f of agentFiles) {
 
   const refDir = join(root, 'agents/references', role);
   if (!existsSync(refDir)) { fail(file, 'references', `missing agents/references/${role}/`); continue; }
-  const present = readdirSync(refDir).map((n) => n.replace(/\.md$/, ''));
+  // top-level files only; a mode folder (product-manager/present/) has its own orphan check below
+  const entries = readdirSync(refDir, { withFileTypes: true });
+  const present = entries.filter((d) => d.isFile() && d.name.endsWith('.md')).map((d) => d.name.replace(/\.md$/, ''));
+  for (const sub of entries.filter((d) => d.isDirectory())) {
+    const subFiles = readdirSync(join(refDir, sub.name)).filter((n) => n.endsWith('.md')).map((n) => join(refDir, sub.name, n));
+    for (const p of subFiles) {
+      const n = p.slice(p.lastIndexOf(sep) + 1);
+      if (!txt.includes(`${sub.name}/${n}`) && !subFiles.some((q) => q !== p && readFileSync(q, 'utf8').includes(n))) fail(p, 'references', `not linked from ${f} or any file in ${sub.name}/ (orphan)`);
+    }
+  }
   for (const r of REF_FILES) if (!present.includes(r)) fail(file, 'references', `missing references/${role}/${r}.md`);
   const loadSection = txt.split(/^## Load on demand/m)[1];
   if (loadSection === undefined) fail(file, 'lazy-load', 'missing "## Load on demand" section');
