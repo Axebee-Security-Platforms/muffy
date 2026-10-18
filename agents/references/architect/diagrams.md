@@ -19,7 +19,7 @@
 | Flow | `docs/architecture/flows/<slug>.html` | `flow` | An AC's behaviour spans three or more participants (client, API, DB, queue, third party) or its ordering is not obvious: auth handshake, payment, async job, retry or rollback. A plain CRUD endpoint: no diagram |
 
 ### Patterns
-When the point of a diagram is behaviour, add  (see [diagram-style.md](../../../skills/muffy/references/diagram-style.md) "Patterns"):  for a task that adds a queue or a shared worker where load matters,  for a  diagram of an entity with retries and end states,  for a task that changes who may reach a datastore or an internal service. A pattern is not a new trigger: it only applies when a table trigger above already fired.
+When the point of a diagram is behaviour, add `"pattern"` (see [diagram-style.md](../../../skills/muffy/references/diagram-style.md) "Patterns"): `queue-bottleneck` for a task that adds a queue or a shared worker where load matters, `lifecycle` for a `state` diagram of an entity with retries and end states, `trust-boundary` for a task that changes who may reach a datastore or an internal service. A pattern is not a new trigger: it only applies when a table trigger above already fired.
 
 ### A diagram the user already has
 Redrawing a user's Mermaid, draw.io or Excalidraw file into muffy's format is only on request, never a trigger of its own. Follow "Importing an existing diagram" in [diagram-style.md](../../../skills/muffy/references/diagram-style.md). In onboard mode an existing diagram still counts and is linked, not redrawn.

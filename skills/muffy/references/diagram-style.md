@@ -31,13 +31,13 @@ Common: `kind` (`architecture` | `state` | `deployment` | `erd` | `flow` | `scre
 One passing example per kind is in [templates/diagram-examples/](../templates/diagram-examples/) (`architecture.json`, `erd.json`, `flow.json`, `screenmap.json`). Read only the one for your kind and replace its content; do not read the others.
 
 ## Patterns (optional)
-Set  when what the reader must learn is behaviour, not just structure. The pattern adds checks for the primitives it needs; it never changes the layout or raises a limit. No pattern fits: leave it out.
+Set `"pattern"` when what the reader must learn is behaviour, not just structure. The pattern adds checks for the primitives it needs; it never changes the layout or raises a limit. No pattern fits: leave it out.
 
 | pattern | kind | Use when | The validator then requires |
 |---|---|---|---|
-|  | architecture, deployment | several producers compete for one finite queue or worker | a  node with 2 to 5 producers, an edge to its consumer, and a capacity or rate with a unit in its  ("10 slots", "2 jobs/min"), never just "high" |
-|  | state | one subject moves through states with retries and terminal outcomes | every node reachable from , no dead-end state, no transition out of a , at least one  or , at most 8 states. Without the pattern the same gaps are only WARNs |
-|  | architecture, deployment | which routes may cross a boundary and which must not exist | a  on every node (2 or 3 zones, shown on the card), at least one link crossing zones, and at least one forbidden crossing marked  (drawn red, dashed, prefixed with a cross), at most 9 nodes |
+| `queue-bottleneck` | architecture, deployment | several producers compete for one finite queue or worker | a `queue` node with 2 to 5 producers, an edge to its consumer, and a capacity or rate with a unit in its `note` ("10 slots", "2 jobs/min"), never just "high" |
+| `lifecycle` | state | one subject moves through states with retries and terminal outcomes | every node reachable from `initial`, no dead-end state, no transition out of a `final`, at least one `final` or `error`, at most 8 states. Without the pattern the same gaps are only WARNs |
+| `trust-boundary` | architecture, deployment | which routes may cross a boundary and which must not exist | a `zone` on every node (2 or 3 zones, shown on the card), at least one link crossing zones, and at least one forbidden crossing marked `"blocked": true` (drawn red, dashed, prefixed with a cross), at most 9 nodes |
 
 ## Exporting a still image
 Manual: only when the user asks for an image (a slide, a document, a chat message), never unprompted. Run by the Orchestrator or the user; it writes a file, so agents under the Bash guard do not.
