@@ -7,7 +7,7 @@ Every architecture, state, deployment, database, flow, screen-map, gantt and sto
 - **Nodes:** floating cards with a soft drop shadow and a colour bar by type (`app`, `service`, `store`, `external`, `queue`). The type is also written on the card, so colour is never the only signal
 - **Wires:** labelled connectors with arrowheads that draw in, then carry a slow flowing pulse. Dashed means `[verify]`, unconfirmed
 - **Motion:** cards rise in one after another and wires draw in. A flow diagram reveals its numbered steps in order, with Prev, Next and Replay, and a click on a step jumps to it. Reduced-motion users get the finished static diagram
-- **Caption:** a quiet card under the diagram carries the one-sentence takeaway. It sits in the page flow and never covers a card or wire; only a flow keeps it pinned to the bottom of the window, because it shows the current step beside Prev, Next and Replay. Titles and captions are plain and short
+- **No caption:** the one sentence a reader needs goes in `subtitle` under the title. Only a flow has a bar at the bottom of the window, because it holds Prev, Next and Replay and shows the note of the current step. Titles and subtitles are plain and short
 
 ## How to make one
 1. Copy the template to the target path (`.html`)
@@ -17,7 +17,7 @@ Every architecture, state, deployment, database, flow, screen-map, gantt and sto
 5. Never say the diagram looks right from the JSON alone; the checks above are your evidence, and the Orchestrator or the user views it
 
 ## JSON
-Common: `kind` (`architecture` | `state` | `deployment` | `erd` | `flow` | `screenmap` | `gantt` | `story-map`), `title`, `subtitle`, `caption` (one sentence, at most 160 characters), optional `commit` (short SHA of the code it was drawn from; required for the onboard overview).
+Common: `kind` (`architecture` | `state` | `deployment` | `erd` | `flow` | `screenmap` | `gantt` | `story-map`), `title`, `subtitle` (one plain sentence: what this shows), optional `commit` (short SHA of the code it was drawn from; required for the onboard overview).
 
 | kind | Items | Fields | Links | Limit |
 |---|---|---|---|---|
@@ -28,7 +28,7 @@ Common: `kind` (`architecture` | `state` | `deployment` | `erd` | `flow` | `scre
 | `story-map` | `activities` and `releases` (`id`, `label`), `stories` | story: `id`, `label`, `activity`, `release`, optional `ac` | optional `cut` (the release id the line sits under; default the first) | 6 activities, 3 releases, 24 stories, 4 per cell |
 | `erd` | `entities` | `id`, `name`, `col`, `row`, `fields` of `{name, type, key}` (`key` is `pk` or `fk` or omitted), optional `note`, `verify` | `relations`: `from`, `to`, `label` such as `1 : N` | 12 entities, 12 fields each |
 | `screenmap` | `nodes` | `id`, `label`, `type` (`entry`, `screen`, `modal`, `external`), optional `note` (who sees it), `col`, `row`, optional `verify` | `edges`: `from`, `to`, `label` (the action that causes it), optional `verify` | 20 nodes |
-| `flow` | `actors` (`id`, `label`, `type`) | none | `steps`: `from`, `to`, `label`, optional `note` (shown in the caption), `fail` (marks the step that fails), `verify` | 6 actors, 12 steps |
+| `flow` | `actors` (`id`, `label`, `type`) | none | `steps`: `from`, `to`, `label`, optional `note` (shown in the step bar), `fail` (marks the step that fails), `verify` | 6 actors, 12 steps |
 
 One passing example per kind is in [templates/diagram-examples/](../templates/diagram-examples/) (`architecture.json`, `erd.json`, `flow.json`, `screenmap.json`). Read only the one for your kind and replace its content; do not read the others.
 
@@ -46,7 +46,7 @@ Set `"pattern"` when what the reader must learn is behaviour, not just structure
 ## Exporting a still image
 Manual: only when the user asks for an image (a slide, a document, a chat message), never unprompted. Run by the Orchestrator or the user; it writes a file, so agents under the Bash guard do not.
 - `node .claude/skills/muffy/scripts/diagram-export.mjs <file.html> --png out.png [--theme light|dark] [--scale 2] [--width 1280]` works for every kind: headless Chrome/Edge opens the page on its finished frame (no animation or controls) and captures its full height, caption included
-- `--svg out.svg [--theme ...]` works for every kind. A `flow` diagram exports its own SVG (the diagram only). The other kinds are HTML cards, so the page is redrawn as native SVG shapes and text from what the browser laid out: positions, colours, borders, wires and text lines are kept, the whole page is included (title, caption, ledger), and shadows and the grid paper are left out. The text stays text, shown in the viewer's system font, so it stays editable in Figma, Inkscape or PowerPoint but may reflow slightly there
+- `--svg out.svg [--theme ...]` works for every kind. A `flow` diagram exports its own SVG (the diagram only). The other kinds are HTML cards, so the page is redrawn as native SVG shapes and text from what the browser laid out: positions, colours, borders, wires and text lines are kept, the whole page is included (title, subtitle, ledger), and shadows and the grid paper are left out. The text stays text, shown in the viewer's system font, so it stays editable in Figma, Inkscape or PowerPoint but may reflow slightly there
 - A page that fails `check-diagram.mjs` is not exported. No Chrome/Edge: it says so and exits 2
 
 ## Importing an existing diagram

@@ -268,12 +268,12 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     const { check: diagramErrors } = await import('../skills/muffy/scripts/check-diagram.mjs');
     const tpl = readFileSync(rel('skills/muffy/templates/diagram.html'), 'utf8');
     const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, `$1${JSON.stringify(j)}$2`);
-    const arch = { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
+    const arch = { kind: 'architecture', title: 'T', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
     check('diagram: the shipped template passes', diagramErrors(tpl).length === 0);
     check('diagram: every shipped example JSON passes in the template', ['architecture', 'state', 'deployment', 'erd', 'flow', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary', 'pattern-delta', 'pattern-db-schema', 'gantt', 'story-map'].every((k) => diagramErrors(withJson(JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))).length === 0));
     {
       const { warnings } = await import('../skills/muffy/scripts/check-diagram.mjs');
-      const many = { kind: 'architecture', title: 'T', caption: 'c', nodes: Array.from({ length: 10 }, (_, i) => ({ id: `n${i}`, label: 'N', type: 'service', col: i + 1, row: 1 })), edges: [] };
+      const many = { kind: 'architecture', title: 'T', nodes: Array.from({ length: 10 }, (_, i) => ({ id: `n${i}`, label: 'N', type: 'service', col: i + 1, row: 1 })), edges: [] };
       check('diagram: a dense diagram warns but still passes', warnings(withJson(many)).length === 1 && diagramErrors(withJson(many)).length === 0);
       check('diagram: a small diagram does not warn', warnings(withJson(arch)).length === 0);
     }
@@ -295,13 +295,13 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
         try {
           const ok = ['architecture', 'state', 'deployment', 'erd', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary', 'pattern-delta', 'pattern-db-schema', 'gantt', 'story-map', 'flow'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
           check('diagram render: the shipped examples have no layout issues', ok.every((i) => Array.isArray(i) && i.length === 0));
-          const bad = layoutIssues(save('bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 2 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 3 }], edges: [{ from: 'a', to: 'c', label: 'x' }] }));
+          const bad = layoutIssues(save('bad', { kind: 'architecture', title: 'T', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 2 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 3 }], edges: [{ from: 'a', to: 'c', label: 'x' }] }));
           check('diagram render: a wire running behind a card is reported', bad.some((i) => i.includes('runs behind card B')));
           {
             const exp = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/diagram-export.mjs'), ...a], { encoding: 'utf8' });
             const arch = save('exp-arch', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/architecture.json'), 'utf8'))), flowF = save('exp-flow', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow.json'), 'utf8')));
             const png = join(dir, 'a.png'), svg = join(dir, 'f.svg');
-            check('export: a PNG is written for a card diagram, and a failing page is refused', exp(arch, '--png', png, '--scale', '1').status === 0 && readFileSync(png).subarray(1, 4).toString() === 'PNG' && exp(save('exp-bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }], edges: [{ from: 'a', to: 'z', label: 'x' }] }), '--png', join(dir, 'b.png')).status === 2);
+            check('export: a PNG is written for a card diagram, and a failing page is refused', exp(arch, '--png', png, '--scale', '1').status === 0 && readFileSync(png).subarray(1, 4).toString() === 'PNG' && exp(save('exp-bad', { kind: 'architecture', title: 'T', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }], edges: [{ from: 'a', to: 'z', label: 'x' }] }), '--png', join(dir, 'b.png')).status === 2);
             {
               const gantt = save('exp-gantt', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/gantt.json'), 'utf8'))), svgs = { arch: join(dir, 'arch.svg'), gantt: join(dir, 'gantt.svg') };
               const ok = exp(arch, '--svg', svgs.arch).status === 0 && exp(gantt, '--svg', svgs.gantt, '--theme', 'dark').status === 0;
@@ -364,6 +364,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
       check('pattern lifecycle: a state nobody can reach or leave fails with the pattern and only warns without it', errsOf(stuck).includes('lost cannot be reached') && errsOf(stuck).includes('lost is a dead end') && diagramErrors(withJson({ ...stuck, pattern: undefined })).length === 0 && warnings(withJson({ ...stuck, pattern: undefined })).some((w) => w.includes('lost is a dead end')));
       check('pattern: an unknown pattern, or one on the wrong kind, fails', errsOf({ ...qb, pattern: 'magic' }).includes('pattern must be one of') && errsOf({ ...qb, pattern: 'lifecycle' }).includes('is for kind state'));
     }
+    check('diagram: a caption is rejected (the one sentence goes in subtitle) and the template has no caption in its JSON', diagramErrors(withJson({ ...arch, caption: 'x' })).some((e) => e.includes('caption was removed')) && !/"caption"/.test(tpl) && ['architecture', 'flow', 'gantt'].every((k) => !readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8').includes('"caption"')));
     check('diagram: a valid architecture passes', diagramErrors(withJson(arch)).length === 0);
     check('diagram: an edge through another card fails', diagramErrors(withJson({ ...arch, edges: [{ from: 'a', to: 'c', label: 'x' }] })).some((e) => e.includes('passes through')));
     check('diagram: an unknown node, a missing edge label and a shared cell fail', [{ ...arch, edges: [{ from: 'a', to: 'z', label: 'x' }] }, { ...arch, edges: [{ from: 'a', to: 'b' }] }, { ...arch, nodes: [...arch.nodes.slice(0, 2), { ...arch.nodes[2], col: 2 }] }].every((j) => diagramErrors(withJson(j)).length > 0));
@@ -615,7 +616,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   const { check: diagramErrors } = await import('../skills/muffy/scripts/check-diagram.mjs');
   const tpl = readFileSync(rel('skills/muffy/templates/diagram.html'), 'utf8');
   const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, `$1${JSON.stringify(j)}$2`);
-  const map = { kind: 'screenmap', title: 'App screens', caption: 'Sign in leads to the home tabs.', nodes: [{ id: 'in', label: 'Sign in', type: 'entry', col: 1, row: 1 }, { id: 'home', label: 'Home', type: 'screen', note: 'all roles', col: 2, row: 1 }, { id: 'set', label: 'Settings', type: 'modal', col: 3, row: 1 }], edges: [{ from: 'in', to: 'home', label: 'tap Sign in' }, { from: 'home', to: 'set', label: 'tap gear' }] };
+  const map = { kind: 'screenmap', title: 'App screens', nodes: [{ id: 'in', label: 'Sign in', type: 'entry', col: 1, row: 1 }, { id: 'home', label: 'Home', type: 'screen', note: 'all roles', col: 2, row: 1 }, { id: 'set', label: 'Settings', type: 'modal', col: 3, row: 1 }], edges: [{ from: 'in', to: 'home', label: 'tap Sign in' }, { from: 'home', to: 'set', label: 'tap gear' }] };
   check('diagram: a valid screen map passes', diagramErrors(withJson(map)).length === 0, diagramErrors(withJson(map)).join('; '));
   check('diagram: a screen map edge without an action label, an unknown node type, or an edge over another screen fails', [{ ...map, edges: [{ from: 'in', to: 'home' }] }, { ...map, nodes: [{ ...map.nodes[0], type: 'service' }, ...map.nodes.slice(1)] }, { ...map, edges: [{ from: 'in', to: 'set', label: 'deep link' }] }].every((j) => diagramErrors(withJson(j)).length > 0));
   const W = rel('skills/muffy/scripts/guard-write-scope.mjs');
@@ -684,12 +685,12 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     const { check: diagramErrors } = await import('../skills/muffy/scripts/check-diagram.mjs');
     const tpl = readFileSync(rel('skills/muffy/templates/diagram.html'), 'utf8');
     const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, () => `<script type="application/json" id="diagram">${JSON.stringify(j)}</script>`);
-    const arch = { kind: 'architecture', title: 'T', caption: 'c', commit: 'abc1234', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
+    const arch = { kind: 'architecture', title: 'T', commit: 'abc1234', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
     const label = (l) => withJson({ ...arch, nodes: [{ ...arch.nodes[0], label: l }, arch.nodes[1]] });
     check('diagram: "</SCRIPT>", "<script" and "<!--" in a label fail in any case', ['x</SCRIPT><img src=x onerror=alert(1)>', 'x<Script>', 'x<!--'].every((l) => diagramErrors(label(l)).some((e) => e.includes('</script'))));
     check('diagram: a "<" written as \\u003c passes', diagramErrors(withJson(arch).replace('"label":"A"', '"label":"a \\u003c b"')).length === 0, diagramErrors(withJson(arch).replace('"label":"A"', '"label":"a \\u003c b"')).join('; '));
     check('diagram: a label that is not a string fails', diagramErrors(label({ x: 1 })).some((e) => e.includes('plain string')));
-    const flow = { kind: 'flow', title: 'F', caption: 'c', actors: [{ id: 'u', label: 'User', type: 'app' }, { id: 'u', label: 'Again', type: 'app' }], steps: [{ from: 'u', to: 'u', label: 'x' }] };
+    const flow = { kind: 'flow', title: 'F', actors: [{ id: 'u', label: 'User', type: 'app' }, { id: 'u', label: 'Again', type: 'app' }], steps: [{ from: 'u', to: 'u', label: 'x' }] };
     check('diagram: duplicate flow actor ids fail', diagramErrors(withJson(flow)).some((e) => e.includes('duplicate')));
     const noCommit = withJson({ ...arch, commit: undefined });
     check('diagram: the architecture overview needs commit; another diagram does not', diagramErrors(noCommit, 'docs/architecture/overview.html').some((e) => e.includes('commit')) && diagramErrors(noCommit, 'docs/architecture/flows/x.html').length === 0 && diagramErrors(withJson(arch), 'docs\\architecture\\overview.html').length === 0);

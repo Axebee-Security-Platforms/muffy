@@ -3,7 +3,6 @@
   "pattern": "trust-boundary",
   "title": "Who may reach the database",
   "subtitle": "Traffic enters through the gateway only.",
-  "caption": "The browser never talks to the database; the only way in is the gateway, then the API.",
   "nodes": [
     { "id": "web", "label": "Browser", "type": "app", "zone": "internet", "col": 1, "row": 1 },
     { "id": "gw", "label": "Gateway", "type": "service", "zone": "edge", "col": 2, "row": 1 },

@@ -3,7 +3,6 @@
   "pattern": "delta",
   "title": "Payments move off the request path",
   "subtitle": "What this change adds, removes and alters.",
-  "caption": "Charging a card no longer blocks checkout: the API enqueues and a worker calls the provider.",
   "nodes": [
     { "id": "web", "label": "Web app", "type": "app", "col": 1, "row": 1 },
     { "id": "api", "label": "Orders API", "type": "service", "col": 2, "row": 1, "delta": "changed", "why": "returns 202 and enqueues instead of charging inline" },

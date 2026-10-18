@@ -312,7 +312,7 @@ function layers(ir) {
 }
 
 function draftPlan(ir, kind, title) {
-  const base = { kind, title: ir.title || title || 'Imported diagram', caption: 'Draft import: review every label before relying on it.' };
+  const base = { kind, title: ir.title || title || 'Imported diagram' };
   if (kind === 'story-map') {
     const aid = (a, i) => slug(a.label, i) + '_' + i;
     return { ...base, subtitle: 'Imported from a Mermaid journey.', activities: ir.journey.map((a, i) => ({ id: aid(a, i), label: a.label })), releases: [{ id: 'r1', label: 'Release 1 (MVP)' }], stories: ir.journey.flatMap((a, i) => a.stories.map((st, j) => ({ id: 's' + i + '_' + j, label: st, activity: aid(a, i), release: 'r1' }))) };
@@ -332,7 +332,7 @@ function draftPlan(ir, kind, title) {
 function draft(ir, kind, title) {
   if (kind === 'gantt' || kind === 'story-map') return draftPlan(ir, kind, title);
   const ids = new Map(); ir.nodes.forEach((n, i) => { let s = slug(n.id, i), k = 2; while ([...ids.values()].includes(s)) s = `${slug(n.id, i)}_${k++}`; ids.set(n.id, s); });
-  const base = { kind, title: title || 'Imported diagram', subtitle: `Imported from a ${ir.format} file.`, caption: 'Draft import: review every label and link before relying on it.' };
+  const base = { kind, title: title || 'Imported diagram', subtitle: `Imported from a ${ir.format} file.` };
   if (kind === 'flow') {
     const actors = ir.nodes.map((n) => ({ id: ids.get(n.id), label: n.label, type: guessType(n.label, n.shape) }));
     return { ...base, actors, steps: ir.edges.map((e) => ({ from: ids.get(e.from), to: ids.get(e.to), label: e.label || '(unlabelled)' })) };

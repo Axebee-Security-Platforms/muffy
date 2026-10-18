@@ -2,7 +2,6 @@
   "kind": "screenmap",
   "title": "Checkout screens",
   "subtitle": "Where a shopper can go from the cart.",
-  "caption": "Payment failure returns the shopper to the cart, never to a blank page.",
   "nodes": [
     { "id": "cart", "label": "Cart", "type": "entry", "note": "shopper", "col": 1, "row": 1 },
     { "id": "pay", "label": "Payment", "type": "screen", "note": "shopper", "col": 2, "row": 1 },

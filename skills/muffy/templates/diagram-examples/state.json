@@ -3,7 +3,6 @@
   "pattern": "lifecycle",
   "title": "Order lifecycle",
   "subtitle": "The states an order moves through, and what moves it.",
-  "caption": "An order is paid or failed, never both; a failed payment can be retried once.",
   "commit": "abc1234",
   "nodes": [
     { "id": "start", "label": "Created", "type": "initial", "col": 1, "row": 1 },

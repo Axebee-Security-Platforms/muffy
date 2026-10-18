@@ -20,7 +20,7 @@ const SCREEN_TYPES = ['entry', 'screen', 'modal', 'external'];
 // soft budget: above these a diagram is probably two (overview + detail). Printed as WARN, never a FAIL: the onboard overview may need the hard limit
 const SOFT = { architecture: { items: 9, links: 12 }, state: { items: 8, links: 12 }, deployment: { items: 9, links: 12 }, screenmap: { items: 12, links: 16 }, erd: { items: 8, links: 10 } };
 const UNITS = ['day', 'week', 'sprint', 'month'], AC_ID = /^AC-\d+$/;
-const LIMIT = { gantt: 12, phases: 4, span: 24, activities: 6, releases: 3, stories: 24, cell: 4, screenmap: 20, erd: 12, actors: 6, steps: 12, fields: 12, caption: 160 };
+const LIMIT = { gantt: 12, phases: 4, span: 24, activities: 6, releases: 3, stories: 24, cell: 4, screenmap: 20, erd: 12, actors: 6, steps: 12, fields: 12 };
 
 const template = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../templates/diagram.html'), 'utf8');
 const shell = (html) => html.replace(JSON_BLOCK, '$1$3').replace(TITLE, '<title></title>').replace(/\r\n/g, '\n');
@@ -138,8 +138,8 @@ export function check(html, file = '') {
   if ([...(d.nodes ?? []), ...(d.edges ?? [])].some((m) => (m?.delta !== undefined && !DELTAS.includes(m.delta)) || !optText(m?.why))) errs.push(`delta must be one of ${DELTAS.join(', ')} and why must be a plain string`);
   if ((d.nodes ?? []).some((n) => !optText(n?.zone)) || (d.edges ?? []).some((e) => e?.blocked !== undefined && typeof e.blocked !== 'boolean')) errs.push('zone must be a plain string and blocked must be true or false');
   if (!text(d.title)) errs.push('title is required');
-  if (!optText(d.subtitle) || !optText(d.caption)) errs.push('subtitle and caption must be plain strings');
-  if (typeof d.caption === 'string' && d.caption.length > LIMIT.caption) errs.push(`caption is over ${LIMIT.caption} characters`);
+  if (!optText(d.subtitle)) errs.push('subtitle must be a plain string');
+  if (d.caption !== undefined) errs.push('caption was removed from the format: put the one sentence in subtitle, or leave it out');
   if (d.commit !== undefined && !/^[0-9a-f]{7,40}$/.test(String(d.commit))) errs.push('commit must be a git SHA (7 to 40 hex characters)');
   if (/(^|[\\/])docs[\\/]architecture[\\/]overview\.html$/.test(file) && d.commit === undefined) errs.push('the architecture overview needs commit (the SHA it was drawn from) so staleness is visible');
   // every label is drawn with textContent: anything but a string shows as [object Object] or "undefined"

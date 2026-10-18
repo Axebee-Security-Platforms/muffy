@@ -2,7 +2,6 @@
   "kind": "flow",
   "title": "Checkout payment",
   "subtitle": "From the Pay click to a confirmed order.",
-  "caption": "The order is confirmed only after the provider answers.",
   "actors": [
     { "id": "client", "label": "Browser", "type": "app" },
     { "id": "api", "label": "Orders API", "type": "service" },

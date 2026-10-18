@@ -2,7 +2,6 @@
   "kind": "deployment",
   "title": "Production deployment",
   "subtitle": "Where each part runs and how traffic reaches it.",
-  "caption": "Two API replicas sit behind one load balancer; the database is a single managed instance.",
   "commit": "abc1234",
   "nodes": [
     { "id": "lb", "label": "Load balancer", "type": "host", "note": "443", "col": 1, "row": 1 },

@@ -3,7 +3,6 @@
   "pattern": "queue-bottleneck",
   "title": "Report generation backlog",
   "subtitle": "Three producers share one slow report worker.",
-  "caption": "Reports arrive faster than the single worker finishes them, so the queue only grows at month end.",
   "nodes": [
     { "id": "web", "label": "Web export", "type": "app", "note": "up to 20/min", "col": 1, "row": 1 },
     { "id": "sched", "label": "Scheduler", "type": "service", "note": "nightly burst", "col": 1, "row": 2 },

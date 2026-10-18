@@ -2,7 +2,6 @@
   "kind": "gantt",
   "title": "Checkout MVP plan",
   "subtitle": "Estimates in weeks from the start of the work, not dates.",
-  "caption": "Payments gate the launch; the receipt page can run alongside them.",
   "unit": "week",
   "phases": [
     { "id": "p1", "label": "Phase 1: Foundations" },

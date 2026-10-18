@@ -57,7 +57,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
 .card.verify { border-style: dashed; }
 :root[data-measure] .card, :root[data-measure] .step, :root[data-measure] .cap { animation: none; opacity: 1; transform: none; }
 :root[data-measure] .wire.draw { animation: none; stroke-dashoffset: 0; }
-:root[data-measure] .pulse, :root[data-measure] .ctl { display: none; }
+:root[data-measure] .pulse, :root[data-measure] .ctl, :root[data-measure] .cap { display: none; }
 .tag { display: inline-block; font: 600 11px/1.5 ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .06em; color: var(--tone, var(--accent)); }
 .badge { float: right; font: 600 11px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--external); border: 1px dashed currentColor; border-radius: 6px; padding: 0 6px; }
 .card h2 { margin: 2px 0 0; font-size: 17px; letter-spacing: -.01em; }
@@ -102,6 +102,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
   background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px;
   font-weight: 600; font-size: 16px; letter-spacing: -.01em; text-align: center; animation: rise .6s ease both 1s;
 }
+.cap[hidden] { display: none; }
 .cap.sticky { position: sticky; bottom: 16px; box-shadow: var(--shadow); }
 .cap small { display: block; margin-top: 2px; font-weight: 500; font-size: 12.5px; color: var(--muted); }
 .ctl { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
@@ -149,7 +150,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
   <header><h1 id="title"></h1><p class="sub" id="subtitle"></p><span class="meta" id="meta" hidden></span></header>
   <main class="stage" id="stage"></main>
 </div>
-<div class="cap" id="cap" role="status" aria-live="polite"><span id="captext"></span><div class="ctl" id="ctl" hidden>
+<div class="cap" id="cap" hidden role="status" aria-live="polite"><span id="captext"></span><div class="ctl" id="ctl" hidden>
   <button type="button" id="prev">Prev</button><button type="button" id="replay">Replay</button><button type="button" id="next">Next</button></div></div>
 
 <script type="application/json" id="diagram">
@@ -157,7 +158,6 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
   "kind": "architecture",
   "title": "Example system",
   "subtitle": "One line that says what this shows.",
-  "caption": "One sentence takeaway.",
   "commit": "abc1234",
   "nodes": [
     { "id": "web", "label": "Web app", "type": "app", "note": "Next.js", "col": 1, "row": 1 },
@@ -186,7 +186,6 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   $('title').textContent = D.title || ''; $('subtitle').textContent = D.subtitle || '';
   if (D.commit) { $('meta').hidden = false; $('meta').textContent = 'commit ' + D.commit; }
-  $('captext').textContent = D.caption || '';
 
   function defs(svg) {
     var d = sv('defs', {}, svg);
@@ -326,8 +325,8 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
       var s = steps[cur]; if (s) $('captext').textContent = (cur + 1) + '/' + steps.length + '  ' + (s.note || s.label || '');
     }
     function play() { clearInterval(timer); nodes.forEach(function (n) { n.style.animation = 'none'; n.style.opacity = '1'; }); var i = -1; show(0); timer = setInterval(function () { i++; if (i >= steps.length) { clearInterval(timer); return; } show(i); }, 1300); }
-    $('cap').classList.add('sticky'); $('ctl').hidden = false; $('prev').onclick = function () { clearInterval(timer); show(cur - 1); }; $('next').onclick = function () { clearInterval(timer); show(cur + 1); }; $('replay').onclick = play;
-    if (D.caption) $('captext').textContent = D.caption;
+    $('cap').hidden = false; $('cap').classList.add('sticky'); $('ctl').hidden = false; $('prev').onclick = function () { clearInterval(timer); show(cur - 1); }; $('next').onclick = function () { clearInterval(timer); show(cur + 1); }; $('replay').onclick = play;
+    if (steps.some(function (s) { return s.note; })) $('captext').textContent = 'Select a step to read its note.';
   }
 
   /* layout audit for check-diagram-render.mjs, written to data-layout (empty when clean): the kind-specific checks, plus a page wider than the window */

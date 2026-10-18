@@ -2,7 +2,6 @@
   "kind": "story-map",
   "title": "Online ordering",
   "subtitle": "What a shopper does, and what ships in each release.",
-  "caption": "The first release lets a shopper browse, pay and get a receipt; everything else follows.",
   "activities": [
     { "id": "find", "label": "Find a product" },
     { "id": "buy", "label": "Pay for it" },
