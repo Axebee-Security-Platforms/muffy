@@ -269,7 +269,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, `$1${JSON.stringify(j)}$2`);
     const arch = { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
     check('diagram: the shipped template passes', diagramErrors(tpl).length === 0);
-    check('diagram: every shipped example JSON passes in the template', ['architecture', 'erd', 'flow', 'screenmap'].every((k) => diagramErrors(withJson(JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))).length === 0));
+    check('diagram: every shipped example JSON passes in the template', ['architecture', 'state', 'deployment', 'erd', 'flow', 'screenmap'].every((k) => diagramErrors(withJson(JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))).length === 0));
     {
       const { warnings } = await import('../skills/muffy/scripts/check-diagram.mjs');
       const many = { kind: 'architecture', title: 'T', caption: 'c', nodes: Array.from({ length: 10 }, (_, i) => ({ id: `n${i}`, label: 'N', type: 'service', col: i + 1, row: 1 })), edges: [] };
@@ -292,13 +292,18 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
       if (findBrowser()) {
         const dir = mkdtempSync(join(tmpdir(), 'muffy-render-eval-')), save = (n, j) => { const f = join(dir, `${n}.html`); writeFileSync(f, withJson(j)); return f; };
         try {
-          const ok = ['architecture', 'erd', 'screenmap'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
+          const ok = ['architecture', 'state', 'deployment', 'erd', 'screenmap'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
           check('diagram render: the shipped examples have no layout issues', ok.every((i) => Array.isArray(i) && i.length === 0));
           const bad = layoutIssues(save('bad', { kind: 'architecture', title: 'T', caption: 'c', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 2 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 3 }], edges: [{ from: 'a', to: 'c', label: 'x' }] }));
           check('diagram render: a wire running behind a card is reported', bad.some((i) => i.includes('runs behind card B')));
           check('diagram render: a flow diagram has no audit', layoutIssues(save('flow', JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow.json'), 'utf8')))) === null);
         } finally { rmSync(dir, { recursive: true, force: true }); }
       }
+    }
+    {
+      const st = JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/state.json'), 'utf8'));
+      const noStart = { ...st, nodes: st.nodes.map((n) => (n.type === 'initial' ? { ...n, type: 'state' } : n)) };
+      check('diagram: a state diagram needs exactly one initial node and a state/deployment type is checked', diagramErrors(withJson(noStart)).some((e) => e.includes('exactly one node of type initial')) && diagramErrors(withJson({ ...st, nodes: [...st.nodes.slice(1), { ...st.nodes[0], type: 'host' }] })).some((e) => e.includes('type must be one of')));
     }
     check('diagram: a valid architecture passes', diagramErrors(withJson(arch)).length === 0);
     check('diagram: an edge through another card fails', diagramErrors(withJson({ ...arch, edges: [{ from: 'a', to: 'c', label: 'x' }] })).some((e) => e.includes('passes through')));
@@ -395,7 +400,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   const write = (agent_type, file_path, tool_name = 'Write') => spawnSync(process.execPath, [W], { input: JSON.stringify({ tool_name, agent_type, tool_input: { file_path } }), encoding: 'utf8' }).status;
   check('write-scope: only the product-manager writes docs/strategy.md', write('product-manager', 'docs/strategy.md') === 0 && ['architect', 'devops', 'backend-dev', 'muffy:researcher'].every((r) => write(r, 'E:\\repo\\docs\\strategy.md', 'Edit') === 2));
   check('write-scope: the Orchestrator (no agent_type) is never blocked', write(undefined, 'docs/strategy.md') === 0);
-  check('write-scope: architect writes its diagrams and ADRs, not baseline.md or other architecture files', write('architect', 'docs/architecture/overview.html') === 0 && write('architect', 'docs/architecture/flows/login.html') === 0 && write('architect', 'docs/adr/0002-x.md') === 0 && write('architect', 'docs/architecture/baseline.md') === 2 && write('architect', 'docs/architecture/notes.md') === 2);
+  check('write-scope: architect writes its diagrams and ADRs, not baseline.md or other architecture files', write('architect', 'docs/architecture/overview.html') === 0 && write('architect', 'docs/architecture/flows/login.html') === 0 && write('architect', 'docs/architecture/states/order.html') === 0 && write('architect', 'docs/architecture/deployment.html') === 0 && write('frontend-dev', 'docs/architecture/states/order.html') === 2 && write('architect', 'docs/adr/0002-x.md') === 0 && write('architect', 'docs/architecture/baseline.md') === 2 && write('architect', 'docs/architecture/notes.md') === 2);
   check('write-scope: only the architect writes diagrams, only the researcher the baseline', write('frontend-dev', 'docs/architecture/data-model.html') === 2 && write('researcher', 'docs/architecture/baseline.md') === 0 && write('researcher', 'docs/architecture/overview.html') === 2);
   check('write-scope: other files and non-write tools pass', write('backend-dev', 'src/a.ts') === 0 && write('architect', 'docs/strategy.md', 'Read') === 0);
 }

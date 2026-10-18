@@ -1,0 +1,21 @@
+{
+  "kind": "state",
+  "title": "Order lifecycle",
+  "subtitle": "The states an order moves through, and what moves it.",
+  "caption": "An order is paid or failed, never both; a failed payment can be retried once.",
+  "commit": "abc1234",
+  "nodes": [
+    { "id": "start", "label": "Created", "type": "initial", "col": 1, "row": 1 },
+    { "id": "pending", "label": "Pending payment", "type": "state", "note": "stock reserved", "col": 2, "row": 1 },
+    { "id": "paid", "label": "Paid", "type": "state", "col": 3, "row": 1 },
+    { "id": "done", "label": "Shipped", "type": "final", "col": 4, "row": 1 },
+    { "id": "failed", "label": "Payment failed", "type": "error", "col": 2, "row": 2 }
+  ],
+  "edges": [
+    { "from": "start", "to": "pending", "label": "checkout" },
+    { "from": "pending", "to": "paid", "label": "charged" },
+    { "from": "paid", "to": "done", "label": "dispatch" },
+    { "from": "pending", "to": "failed", "label": "declined" },
+    { "from": "failed", "to": "pending", "label": "retry [once]" }
+  ]
+}

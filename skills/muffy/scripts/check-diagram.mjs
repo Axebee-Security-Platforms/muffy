@@ -10,11 +10,16 @@ import { fileURLToPath } from 'node:url';
 
 const JSON_BLOCK = /(<script type="application\/json" id="diagram">)([\s\S]*?)(<\/script>)/;
 const TITLE = /<title>[\s\S]*?<\/title>/;
-const NODE_TYPES = ['app', 'service', 'store', 'external', 'queue'];
+// kinds drawn as cards on the grid with labelled wires: the node types each allows and its hard limit
+const GRID = {
+  architecture: { types: ['app', 'service', 'store', 'external', 'queue'], max: 15 },
+  state: { types: ['initial', 'state', 'final', 'error'], max: 12 },
+  deployment: { types: ['host', 'container', 'store', 'external', 'queue'], max: 15 },
+};
 const SCREEN_TYPES = ['entry', 'screen', 'modal', 'external'];
 // soft budget: above these a diagram is probably two (overview + detail). Printed as WARN, never a FAIL: the onboard overview may need the hard limit
-const SOFT = { architecture: { items: 9, links: 12 }, screenmap: { items: 12, links: 16 }, erd: { items: 8, links: 10 } };
-const LIMIT = { screenmap: 20, architecture: 15, erd: 12, actors: 6, steps: 12, fields: 12, caption: 160 };
+const SOFT = { architecture: { items: 9, links: 12 }, state: { items: 8, links: 12 }, deployment: { items: 9, links: 12 }, screenmap: { items: 12, links: 16 }, erd: { items: 8, links: 10 } };
+const LIMIT = { screenmap: 20, erd: 12, actors: 6, steps: 12, fields: 12, caption: 160 };
 
 const template = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../templates/diagram.html'), 'utf8');
 const shell = (html) => html.replace(JSON_BLOCK, '$1$3').replace(TITLE, '<title></title>').replace(/\r\n/g, '\n');
@@ -53,7 +58,7 @@ export function check(html, file = '') {
   try { d = JSON.parse(m[2]); } catch (e) { return [...errs, `diagram JSON does not parse: ${e.message}`]; }
   // the browser ends the block at </script in any case, and <!-- or <script inside it can swallow the real closer
   if (/<\/script|<!--|<script/i.test(m[2])) errs.push('diagram JSON contains "</script", "<script" or "<!--": write "<" as \\u003c');
-  if (!['architecture', 'erd', 'flow', 'screenmap'].includes(d.kind)) errs.push('kind must be architecture, erd, flow or screenmap');
+  if (![...Object.keys(GRID), 'erd', 'flow', 'screenmap'].includes(d.kind)) errs.push(`kind must be ${[...Object.keys(GRID), 'erd', 'flow', 'screenmap'].join(', ')}`);
   if (!text(d.title)) errs.push('title is required');
   if (!optText(d.subtitle) || !optText(d.caption)) errs.push('subtitle and caption must be plain strings');
   if (typeof d.caption === 'string' && d.caption.length > LIMIT.caption) errs.push(`caption is over ${LIMIT.caption} characters`);
@@ -69,11 +74,13 @@ export function check(html, file = '') {
     for (const n of nodes) { if (!SCREEN_TYPES.includes(n.type)) errs.push(`${n.id}: type must be one of ${SCREEN_TYPES.join(', ')}`); if (!n.label) errs.push(`${n.id}: label is required`); }
     for (const e of edges) if (!e.label) errs.push(`edge ${e.from} -> ${e.to}: label is required (the action that causes it)`);
     checkGrid(nodes, edges, 'node', errs);
-  } else if (d.kind === 'architecture') {
-    const nodes = d.nodes ?? [], edges = d.edges ?? [];
-    if (!nodes.length || nodes.length > LIMIT.architecture) errs.push(`nodes must be 1 to ${LIMIT.architecture}`);
-    for (const n of nodes) { if (!NODE_TYPES.includes(n.type)) errs.push(`${n.id}: type must be one of ${NODE_TYPES.join(', ')}`); if (!n.label) errs.push(`${n.id}: label is required`); }
-    for (const e of edges) if (!e.label) errs.push(`edge ${e.from} -> ${e.to}: label is required`);
+  } else if (GRID[d.kind]) {
+    const { types, max } = GRID[d.kind], nodes = d.nodes ?? [], edges = d.edges ?? [];
+    if (!nodes.length || nodes.length > max) errs.push(`nodes must be 1 to ${max}`);
+    for (const n of nodes) { if (!types.includes(n.type)) errs.push(`${n.id}: type must be one of ${types.join(', ')}`); if (!n.label) errs.push(`${n.id}: label is required`); }
+    for (const e of edges) if (!e.label) errs.push(`edge ${e.from} -> ${e.to}: label is required${d.kind === 'state' ? ' (event, and the guard in [brackets] when there is one)' : ''}`);
+    // a state machine starts in exactly one place; without it the reader cannot tell where the subject begins
+    if (d.kind === 'state' && nodes.filter((n) => n.type === 'initial').length !== 1) errs.push('a state diagram needs exactly one node of type initial');
     checkGrid(nodes, edges, 'node', errs);
   } else if (d.kind === 'erd') {
     const ents = d.entities ?? [], rels = d.relations ?? [];

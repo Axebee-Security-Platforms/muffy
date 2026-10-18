@@ -53,6 +53,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
 }
 .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--tone, var(--accent)); }
 .card.app { --tone: var(--app); } .card.service { --tone: var(--service); } .card.store { --tone: var(--store); } .card.external { --tone: var(--external); } .card.queue { --tone: var(--queue); } .card.screen { --tone: var(--service); } .card.modal { --tone: var(--app); } .card.entry { --tone: var(--store); }
+.card.initial { --tone: var(--store); } .card.state { --tone: var(--service); } .card.final { --tone: var(--muted); } .card.error { --tone: var(--fail); } .card.host { --tone: var(--app); } .card.container { --tone: var(--service); }
 .card.verify { border-style: dashed; }
 :root[data-measure] .card { animation: none; opacity: 1; transform: none; }
 .tag { display: inline-block; font: 600 11px/1.5 ui-monospace, Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: .06em; color: var(--tone, var(--accent)); }
@@ -179,11 +180,12 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
     edges.forEach(function (e) { el('li', null, name(e.from) + (e.dir === 'both' ? ' and ' : ' to ') + name(e.to) + ': ' + (e.label || '') + (e.verify ? ' (unconfirmed)' : ''), links); });
     function wires() {
       while (svg.lastChild && svg.lastChild.tagName !== 'defs') svg.removeChild(svg.lastChild);
-      var box = stage.getBoundingClientRect(), pairCount = {}; pills = []; paths = [];
+      var box = stage.getBoundingClientRect(), pairCount = {}, pairTotal = {}; pills = []; paths = [];
+      edges.forEach(function (e) { var kk = [e.from, e.to].sort().join('|'); pairTotal[kk] = (pairTotal[kk] || 0) + 1; });
       var rect = function (c) { var r = c.getBoundingClientRect(); return { x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height }; };
       edges.forEach(function (e, i) {
         var a = byId[e.from], b = byId[e.to]; if (!a || !b) return;
-        var A = rect(a), B = rect(b), key = [e.from, e.to].sort().join('|'), k = pairCount[key] = (pairCount[key] || 0) + 1, off = (k - 1) * 18;
+        var A = rect(a), B = rect(b), key = [e.from, e.to].sort().join('|'), k = pairCount[key] = (pairCount[key] || 0) + 1, off = (k - 1) * 24, total = pairTotal[key];
         var dx = (B.x + B.w / 2) - (A.x + A.w / 2), dy = (B.y + B.h / 2) - (A.y + A.h / 2), p, q, c1, c2;
         if (Math.abs(dx) * 0.6 >= Math.abs(dy)) {
           var s = dx >= 0 ? 1 : -1; p = [A.x + (s > 0 ? A.w : 0), A.y + A.h / 2 + off]; q = [B.x + (s > 0 ? 0 : B.w), B.y + B.h / 2 + off];
@@ -198,7 +200,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
         if (e.dir === 'both') path.setAttribute('marker-start', 'url(#arrow)');
         sv('path', { d: d, 'class': 'pulse' }, svg);
         if (e.label) {
-          var mid = path.getPointAtLength(path.getTotalLength() / 2), g = sv('g', { 'class': 'pill' }, svg), tx = sv('text', { x: mid.x, y: mid.y }, g);
+          var mid = path.getPointAtLength(path.getTotalLength() * (total > 1 ? (e.from === key.split('|')[0] ? 1 : -1) * (0.3 + 0.4 * (k - 1) / (total - 1) - 0.5) + 0.5 : 0.5)), g = sv('g', { 'class': 'pill' }, svg), tx = sv('text', { x: mid.x, y: mid.y }, g);
           tx.textContent = e.label; var bb = tx.getBBox(); var r = sv('rect', { x: bb.x - 8, y: bb.y - 3, width: bb.width + 16, height: bb.height + 6, rx: 10 }, g); g.insertBefore(r, tx); pills.push({ e: e, x: bb.x - 8, y: bb.y - 3, w: bb.width + 16, h: bb.height + 6 });
         }
       });

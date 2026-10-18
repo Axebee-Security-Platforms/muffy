@@ -1,0 +1,20 @@
+{
+  "kind": "deployment",
+  "title": "Production deployment",
+  "subtitle": "Where each part runs and how traffic reaches it.",
+  "caption": "Two API replicas sit behind one load balancer; the database is a single managed instance.",
+  "commit": "abc1234",
+  "nodes": [
+    { "id": "lb", "label": "Load balancer", "type": "host", "note": "443", "col": 1, "row": 1 },
+    { "id": "api", "label": "API", "type": "container", "note": "2 replicas, port 3000", "col": 2, "row": 1 },
+    { "id": "db", "label": "Postgres", "type": "store", "note": "managed, 5432", "col": 3, "row": 1 },
+    { "id": "worker", "label": "Worker", "type": "container", "note": "1 replica", "col": 2, "row": 2 },
+    { "id": "q", "label": "Job queue", "type": "queue", "col": 3, "row": 2 }
+  ],
+  "edges": [
+    { "from": "lb", "to": "api", "label": "HTTP" },
+    { "from": "api", "to": "db", "label": "SQL" },
+    { "from": "api", "to": "q", "label": "enqueue" },
+    { "from": "worker", "to": "q", "label": "poll" }
+  ]
+}
