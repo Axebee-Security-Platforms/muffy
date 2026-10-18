@@ -52,6 +52,7 @@ const PATTERNS = {
   'queue-bottleneck': { kinds: ['architecture', 'deployment'], what: 'many producers feeding one finite queue or consumer' },
   lifecycle: { kinds: ['state'], what: 'one subject moving through states to terminal outcomes' },
   'trust-boundary': { kinds: ['architecture', 'deployment'], what: 'which routes cross a trust boundary and which are blocked' },
+  'db-schema': { kinds: ['erd'], what: 'physical tables with constraints, references and indexes' },
   delta: { kinds: ['architecture', 'deployment'], what: 'what a change adds, removes or alters in a topology' },
 };
 const DELTAS = ['added', 'removed', 'changed'];
@@ -70,10 +71,21 @@ export function lifecycleGaps(d) {
   return out;
 }
 function patternErrors(d) {
-  const nodes = d.nodes ?? [], edges = d.edges ?? [], errs = [], p = PATTERNS[d.pattern];
+  const nodes = d.nodes ?? d.entities ?? [], edges = d.edges ?? d.relations ?? [], errs = [], p = PATTERNS[d.pattern];
   if (!p) return [`pattern must be one of ${Object.keys(PATTERNS).join(', ')}`];
   if (!p.kinds.includes(d.kind)) return [`pattern ${d.pattern} is for kind ${p.kinds.join(' or ')}, not ${d.kind}`];
-  if (d.pattern === 'queue-bottleneck') {
+  if (d.pattern === 'db-schema') {
+    for (const t of d.entities ?? []) {
+      if (!(t.fields ?? []).some((f) => f.key === 'pk')) errs.push(`${t.id}: db-schema needs a primary key (a field with key pk)`);
+      for (const f of t.fields ?? []) {
+        if (!text(f.type)) errs.push(`${t.id}.${f.name}: db-schema needs the SQL type`);
+        if (f.key === 'fk' && !f.ref) errs.push(`${t.id}.${f.name}: a foreign key needs ref ("table_id.column")`);
+      }
+      if ((t.indexes ?? []).length > 4) errs.push(`${t.id}: at most 4 indexes shown; keep the ones queries depend on`);
+    }
+    if ((d.entities ?? []).length > 8) errs.push(`db-schema shows at most 8 tables (this has ${d.entities.length}): split by domain`);
+    for (const t of d.entities ?? []) for (const f of t.fields ?? []) if (f.ref) { const target = f.ref.split('.')[0]; if (!edges.some((r) => (r.from === t.id && r.to === target) || (r.from === target && r.to === t.id))) errs.push(`${t.id}.${f.name} points at ${f.ref} but no relation is drawn between them`); }
+  } else if (d.pattern === 'queue-bottleneck') {
     const qs = nodes.filter((n) => n.type === 'queue');
     if (!qs.length) errs.push('queue-bottleneck needs a node of type queue');
     for (const q of qs) {
@@ -153,7 +165,16 @@ export function check(html, file = '') {
     for (const n of ents) {
       if (!n.name) errs.push(`${n.id}: name is required`);
       if ((n.fields ?? []).length > LIMIT.fields) errs.push(`${n.id}: more than ${LIMIT.fields} fields; list only keys and the columns this change touches`);
-      for (const f of n.fields ?? []) if (f.key && !['pk', 'fk'].includes(f.key)) errs.push(`${n.id}.${f.name}: key must be pk or fk`);
+      for (const f of n.fields ?? []) {
+        if (f.key && !['pk', 'fk'].includes(f.key)) errs.push(`${n.id}.${f.name}: key must be pk or fk`);
+        if (['notNull', 'unique'].some((k) => f[k] !== undefined && typeof f[k] !== 'boolean') || !optText(f.default) && typeof f.default !== 'number' && typeof f.default !== 'boolean') errs.push(`${n.id}.${f.name}: notNull and unique are true or false, default is plain text`);
+        if (f.ref !== undefined) {
+          const m = typeof f.ref === 'string' && f.ref.match(/^([\w-]+)\.([\w-]+)$/), target = m && ents.find((e) => e.id === m[1]);
+          if (!m) errs.push(`${n.id}.${f.name}: ref must look like "table_id.column"`);
+          else if (!target || !(target.fields ?? []).some((g) => g.name === m[2])) errs.push(`${n.id}.${f.name}: ref ${f.ref} names a table or column that is not in this diagram`);
+        }
+      }
+      for (const x of n.indexes ?? []) if (!Array.isArray(x.columns) || !x.columns.length || x.columns.some((c) => !(n.fields ?? []).some((f) => f.name === c))) errs.push(`${n.id}: every index needs columns that exist on the table`);
     }
     for (const r of rels) if (!r.label) errs.push(`relation ${r.from} -> ${r.to}: label is required (for example "1 : N")`);
     checkGrid(ents, rels, 'entity', errs);

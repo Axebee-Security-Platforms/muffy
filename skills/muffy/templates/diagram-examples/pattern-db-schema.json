@@ -1,0 +1,27 @@
+{
+  "kind": "erd",
+  "pattern": "db-schema",
+  "title": "Orders tables",
+  "subtitle": "Physical columns, constraints and the indexes the queries rely on.",
+  "caption": "Every order line points at one order; lookups by customer and status are indexed.",
+  "entities": [
+    { "id": "customer", "name": "customer", "col": 1, "row": 1, "fields": [
+      { "name": "id", "type": "uuid", "key": "pk" },
+      { "name": "email", "type": "text", "notNull": true, "unique": true }
+    ] },
+    { "id": "order", "name": "order", "col": 2, "row": 1, "fields": [
+      { "name": "id", "type": "uuid", "key": "pk" },
+      { "name": "customer_id", "type": "uuid", "key": "fk", "notNull": true, "ref": "customer.id" },
+      { "name": "status", "type": "text", "notNull": true, "default": "pending" }
+    ], "indexes": [ { "columns": ["customer_id", "status"] } ] },
+    { "id": "line", "name": "order_line", "col": 3, "row": 1, "fields": [
+      { "name": "id", "type": "uuid", "key": "pk" },
+      { "name": "order_id", "type": "uuid", "key": "fk", "notNull": true, "ref": "order.id" },
+      { "name": "qty", "type": "int", "notNull": true, "default": 1 }
+    ] }
+  ],
+  "relations": [
+    { "from": "customer", "to": "order", "label": "1 : N" },
+    { "from": "order", "to": "line", "label": "1 : N" }
+  ]
+}

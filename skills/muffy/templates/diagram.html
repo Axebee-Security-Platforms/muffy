@@ -65,6 +65,9 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
 .fields { list-style: none; margin: 10px -16px 0 -20px; padding: 0; border-top: 1px solid var(--line); font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; }
 .fields li { display: flex; gap: 8px; padding: 5px 16px 5px 20px; border-bottom: 1px solid var(--line); }
 .fields li:last-child { border-bottom: 0; }
+.fields .c { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.idx { list-style: none; margin: 0 -16px 0 -20px; padding: 6px 16px 2px 20px; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+.idx li::before { content: "IDX "; font-weight: 700; color: var(--ink); }
 .fields .n { flex: 1; min-width: 0; overflow-wrap: anywhere; } .fields .t { color: var(--muted); } .fields .k { width: 24px; color: var(--accent); font-weight: 700; }
 .wire { fill: none; stroke: var(--wire); stroke-width: 2; stroke-linecap: round; }
 .wire.draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .9s ease forwards; animation-delay: calc(var(--i, 0) * 120ms + 400ms); }
@@ -186,7 +189,10 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
         (n.fields || []).forEach(function (f) {
           var li = el('li', null, null, ul);
           el('span', 'k', f.key ? f.key.toUpperCase() : '', li); el('span', 'n', f.name, li); el('span', 't', f.type || '', li);
+          var extra = [f.notNull ? 'NN' : '', f.unique ? 'UQ' : '', f.default !== undefined ? 'default ' + f.default : '', f.ref ? '\u2192 ' + f.ref : ''].filter(Boolean).join(' \u00b7 ');
+          if (extra) el('span', 'c', extra, li);
         });
+        if ((n.indexes || []).length) { var ix = el('ul', 'idx', null, c); n.indexes.forEach(function (x) { el('li', null, (x.unique ? 'unique ' : '') + '(' + (x.columns || []).join(', ') + ')', ix); }); }
       }
       byId[n.id] = c;
     });
