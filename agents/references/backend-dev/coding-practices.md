@@ -12,6 +12,13 @@ Language-neutral core. Also read the one stack file that matches the codebase:
 
 Order of precedence: the surrounding code's conventions, then `contract.md`, then this file. Apply a practice only when the task touches that area; none of these justify extra layers or abstractions the AC doesn't need.
 
+### File size
+- Hard cap: no source file you write or edit passes ~400 lines (tests ~600); past ~300 lines, stop adding and split first. Never write one file that holds a whole feature
+- Split by responsibility, not by line count: one module per concern (routes/handlers, business rules, data access, types/DTOs, errors, config). Tests live in their own file(s), per feature
+- Write the split layout before coding (list the files and what each owns), create the files up front, and keep each focused. Do not dump everything into one file "to split later"
+- A file you edit that is already over the cap: don't grow it. Extract the part you touch into a new module, or the split goes in the same change
+- Before hand-off run `wc -l` on every file you created or changed; any over the cap is fixed, not reported
+
 ### API
 - Validate every request at the boundary (schema, types, ranges) and reject bad input with the contract's error shape and status code; never trust data past the boundary unchecked
 - Use the status codes and error shape from `contract.md`; one error shape across all endpoints, no stack traces or internal ids in responses

@@ -5,6 +5,7 @@
 - Config via env, no unnecessary vendor lock-in, schema changes only through migrations
 - Migrations must be reversible
 - **Simple code**: the least code that passes the AC; use stdlib/framework before adding libraries; add a dependency only when it truly pays off (give the reason in your report); short single-purpose functions; no layers/abstractions until something repeats 3 times
+- **Small files, any language**: split by responsibility (one module per concern: entry/wiring, handlers, business rules, data access, types, errors, config; tests in their own files). No source file you write or edit passes ~400 lines (tests ~600); plan the file layout before coding, never dump a feature into one file or grow a file already over the cap — extract instead. Applies to every stack, including ones with no stack file; a stack file only says how that language lays out modules
 
 ### Anti-slop
 - Code must read like the surrounding code: same naming, structure, comment density and idioms as existing files

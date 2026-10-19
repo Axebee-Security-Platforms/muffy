@@ -21,6 +21,13 @@ Framework-neutral core. Also read the one stack file that matches the codebase. 
 
 Order of precedence: the surrounding code's conventions, then `design.md` / the design system / `contract.md`, then these files. Apply a practice only when the task touches that area; none of these justify extra wrappers or abstractions the AC doesn't need.
 
+### File size
+- Hard cap: no source file you write or edit passes ~300 lines (tests ~500); past ~200 lines, stop adding and split first. Never write one file that holds a whole screen or feature
+- Split by responsibility: page/route composition, presentational components (one per file), hooks/composables/stores, API client calls, types, constants/helpers, styles. Tests in their own files
+- Write the split layout before coding (list the files and what each owns) and create them up front; do not dump everything into one file "to split later"
+- A file you edit that is already over the cap: don't grow it. Extract the part you touch into a new file in the same change
+- Before hand-off run `wc -l` on every file you created or changed; any over the cap is fixed, not reported
+
 ### Components
 - One component, one job; split when it has two reasons to change or its template passes ~100 lines, not before
 - Prefer composition (children/slots) over a growing list of boolean props; derive values instead of copying props into state

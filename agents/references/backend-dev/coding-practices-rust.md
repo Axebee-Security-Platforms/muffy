@@ -2,6 +2,7 @@
 
 Adds to [coding-practices.md](coding-practices.md); same precedence rules. Libraries named below apply only if already in the project's dependencies; never add one because of this file.
 
+- Module layout (the small-files rule in `rules-and-guardrails.md` applies): `main.rs`/`lib.rs` hold only `mod` declarations, wiring and startup; use a directory module (`foo/mod.rs` or `foo.rs` + `foo/`) once a module has several files and re-export the public API with `pub use`; move a `#[cfg(test)] mod tests` past ~100 lines to `tests.rs` or `tests/`
 - Code passes `cargo fmt` and `cargo clippy -- -D warnings` with no new `#[allow]` unless you explain it in a comment
 - No `unwrap()`/`expect()` in request paths or library code; return `Result` and propagate with `?`. `expect` is acceptable only for startup invariants with a message that says why it can't fail
 - Library/domain errors use a typed enum (`thiserror`); the top-level binary and handlers may use `anyhow`; map domain errors to the contract's status codes in one place
