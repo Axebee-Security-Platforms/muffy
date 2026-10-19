@@ -59,6 +59,30 @@ const PATTERNS = {
   delta: { kinds: ['architecture', 'deployment'], what: 'what a change adds, removes or alters in a topology' },
 };
 const DELTAS = ['added', 'removed', 'changed'];
+// readability of the words a reader sees (labels, notes, subtitle). Deterministic heuristics, not a judgement of meaning: the
+// wording itself is reviewed by a reader. A note over NOTE_MAX characters, or a label over LABEL_MAX, is a FAIL; a note that packs
+// several points into one line (";", "•", " | ", or three or more sentences) is a WARN, because it reads as one block
+export const NOTE_MAX = 160, LABEL_MAX = 60, SUBTITLE_MAX = 140;
+export function readability(d) {
+  const errs = [], texts = [...(d.nodes ?? []), ...(d.edges ?? []), ...(d.relations ?? []), ...(d.actors ?? []), ...(d.steps ?? []), ...(d.entities ?? [])];
+  for (const n of texts) {
+    const id = n.id ?? `${n.from} -> ${n.to}`;
+    if (typeof n.label === 'string' && n.label.length > LABEL_MAX) errs.push(`${id}: label is ${n.label.length} characters (max ${LABEL_MAX}): shorten it and move the rest to note`);
+    if (typeof n.note === 'string' && n.note.length > NOTE_MAX) errs.push(`${id}: note is ${n.note.length} characters (max ${NOTE_MAX}): cut it to the facts a reader needs, or split it with line breaks, one point per line`);
+  }
+  if (typeof d.subtitle === 'string' && d.subtitle.length > SUBTITLE_MAX) errs.push(`subtitle is ${d.subtitle.length} characters (max ${SUBTITLE_MAX}): one plain sentence`);
+  return errs;
+}
+function blockNotes(d) {
+  const out = [];
+  for (const n of [...(d.nodes ?? []), ...(d.steps ?? [])]) {
+    const t = n.note;
+    if (typeof t !== 'string' || t.includes('\n')) continue;
+    const sentences = t.split(/[.!?]\s+/).filter(Boolean).length;
+    if (/[;•]| \| /.test(t) || sentences >= 3) out.push(`${n.id ?? `step ${n.from} -> ${n.to}`}: note packs several points into one line: put each point on its own line (use "\\n- point")`);
+  }
+  return out;
+}
 // states no one can leave, or reach: a lifecycle diagram that hides a stuck state misleads
 export function lifecycleGaps(d) {
   const nodes = d.nodes ?? [], edges = d.edges ?? [], out = [], start = nodes.find((n) => n.type === 'initial');
@@ -147,6 +171,7 @@ export function check(html, file = '') {
   // every label is drawn with textContent: anything but a string shows as [object Object] or "undefined"
   const items = [...(d.nodes ?? []), ...(d.edges ?? []), ...(d.relations ?? []), ...(d.actors ?? []), ...(d.steps ?? [])];
   if (items.some((n) => !optText(n?.label) || !optText(n?.note))) errs.push('every label and note must be a plain string');
+  errs.push(...readability(d));
   for (const n of d.entities ?? []) if (!optText(n?.name) || !optText(n?.note) || (n.fields ?? []).some((f) => !text(f?.name) || !optText(f?.type))) errs.push(`${n?.id}: name, note and field name/type must be plain strings`);
   if (d.kind === 'screenmap') {
     const nodes = d.nodes ?? [], edges = d.edges ?? [];
@@ -230,6 +255,7 @@ export function check(html, file = '') {
 export function warnings(html) {
   const m = html.match(JSON_BLOCK); let d;
   try { d = JSON.parse(m[2]); } catch { return []; }
+  const blocks = blockNotes(d);
   if (d.kind === 'gantt') return (d.tasks ?? []).length > 8 ? [`${d.tasks.length} tasks (soft limit 8): show phases or the critical path, and keep the rest in docs/plan`] : [];
   if (d.kind === 'story-map') {
     const out = [], first = (d.releases ?? [])[0]?.id;
@@ -238,12 +264,12 @@ export function warnings(html) {
     for (const s of (d.stories ?? []).filter((s) => s.release === first && !(s.ac ?? []).length)) out.push(`${s.id} is in the first release but links no acceptance criteria (ac)`);
     return out;
   }
-  const soft = SOFT[d.kind]; if (!soft) return [];
+  const soft = SOFT[d.kind]; if (!soft) return blocks;
   const items = (d.nodes ?? d.entities ?? []).length, links = (d.edges ?? d.relations ?? []).length, out = [];
   if (d.kind === 'state' && d.pattern !== 'lifecycle') out.push(...lifecycleGaps(d).map((g) => `${g} (set pattern: "lifecycle" to make this a failure)`));
   if (items > soft.items) out.push(`${items} ${d.kind === 'erd' ? 'entities' : 'nodes'} (soft limit ${soft.items}): split into an overview and a detail diagram unless this is the onboard overview`);
   if (links > soft.links) out.push(`${links} links (soft limit ${soft.links}): drop any link the layout already makes obvious`);
-  return out;
+  return [...blocks, ...out];
 }
 
 // compared by file name, like the other checkers: argv[1] is not resolved through a symlink or junction, import.meta.url is

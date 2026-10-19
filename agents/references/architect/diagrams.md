@@ -33,6 +33,8 @@ You write the diagram's **content**, not the file: the `kind`, the JSON body per
 ### Rules
 - **Update, don't add:** if the file exists, your spec changes only the part this task touches (the JSON for that part). Never spec a second overview or a per-task copy; a flow gets its own file only because it is a distinct flow
 - The diagram shows what the contract and schema already decide. It never introduces a decision, a table or a field that `contract.md` / `contract/schemas.md` lacks. When they disagree, the contract wins and you fix the spec
+- **Terms are the code's terms.** Before the spec goes out, check every table, field, status, state and endpoint name in the JSON against the schema or code it comes from (grep the identifier). Use that exact spelling and meaning: a field `eos` (end of support) is not "EOL". A name you cannot find in the code is `verify: true`, never a guessed synonym
+- **Notes are written for a reader who did not write the code.** One short point per line (`"\n- point"`), no paragraph, labels short enough to fit a card or a step. Full wording goes in the contract, not the diagram
 - Add one line with a link to `contract.md` (under the section it explains) only for a diagram you spec'd or changed this round
 - Record in the brain note either the paths spec'd or `diagrams: none needed (<reason>)`
 
