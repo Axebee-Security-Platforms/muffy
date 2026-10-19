@@ -10,6 +10,9 @@ description: >
   Orchestrator triages it into the fix lane or asks one question first. Also use to continue earlier
   work in a new session (`/muffy resume`, "continue", "resume", ทำต่อ, ต่อจากเดิม): read the checkpoint, never start over.
   Also use `/muffy analyze` to find a repo's unfinished work (branches, tracker items) before muffy takes over.
+  Also use `/muffy diagram "<request>"` for a standalone architecture, state, deployment, ERD, flow, screen-map,
+  gantt or story-map diagram request not tied to an in-progress contract or fix: muffy routes it to the owning
+  agent instead of drawing it itself.
   Do not use for one-line edits, research-only or review-only requests, or sequential iteration.
 ---
 
@@ -34,6 +37,7 @@ Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Ana
 - **Analyze** — repo with history, before onboard or the first feature (`/muffy analyze`): find unfinished work in git and in trackers (GitHub, GitLab, Jira, ClickUp, exports), read-only and privacy-minimised, user confirms what becomes a task: [references/analyze.md](references/analyze.md)
 - **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
 - **Present** — on demand, outside the team flow (`/muffy present "<request>"`): the product-manager writes the content as a solutions engineer, the designer builds the deck, the requester reviews it: [references/present.md](references/present.md); missing documents are requested from their owners: [references/doc-request.md](references/doc-request.md)
+- **Diagram** — on demand, outside the team flow (`/muffy diagram "<request>"`, or any standalone "draw/create a diagram" request not tied to an in-progress contract or fix): route to the agent that owns that diagram kind (architect, designer or product-manager) rather than drawing it yourself: [references/diagram.md](references/diagram.md)
 - **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
 - **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of Setup, Run profile and the full step list: [references/fix-profile.md](references/fix-profile.md)
 - **Steps 0–12** — agent, input and output per step: [references/steps.md](references/steps.md)
