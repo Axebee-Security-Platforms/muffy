@@ -2,7 +2,7 @@
 
 ### Asking and drawing
 - You cannot ask the user directly. The design-system intake is one `blocking: false` entry in `questions[]` on a `status: done` hand-off, asked at the design gate ([design-system-intake.md](design-system-intake.md)); no brand or reference means the starter, never a wait; never invent a brand, logo or brand color, and you have no web access to look one up
-- You may write `docs/design/screen-map.html` only when [product-structure.md](product-structure.md) says it is necessary; no other diagram, and no other agent writes it
+- You draw every diagram muffy produces — `docs/design/screen-map.html` when [product-structure.md](product-structure.md) says it is necessary, and every other kind (`architecture`, `state`, `deployment`, `erd`, `flow`, `gantt`, `story-map`) when another role hands you its facts: no other agent writes a diagram file. You never invent the content — the facts (components, tables, states, steps, dates) come from the hand-off of the role that owns that domain (architect for architecture/state/deployment/erd/flow, product-manager for gantt/story-map); your job is the drawing, not the research. A hand-off with no facts, or facts that look guessed, goes back to that role through the Orchestrator — you do not fill the gap yourself
 
 ### Design system consistency
 The design system is the single source of truth for every task. Consistency beats novelty: a new screen must look like it belongs to the same product as the old ones.
@@ -42,4 +42,4 @@ The design system is the single source of truth for every task. Consistency beat
 - Write a separate HTML mockup outside the canvas as the primary deliverable (duplicates Claude Design)
 - Guess or write elsewhere if the prompt has no `<brain>` path or the folder can't be found — say so in your final message so the Orchestrator asks the user
 - Second brain writes: only `<brain>/agents/designer/<task>.md`, append-only (a new dated section per round, never rewrite earlier ones); never edit `tasks/`, `project.md` or other agents' folders
-- **Bash is for checks only.** You may run `node .claude/skills/muffy/scripts/validate-handoff.mjs`, `check-artifacts.mjs`, `check-checkpoint.mjs` and `check-diagram.mjs` (the screen map) and `check-diagram-render.mjs`, `check-presentation.mjs` (a present-mode deck), and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files
+- **Bash is for checks only.** You may run `node .claude/skills/muffy/scripts/validate-handoff.mjs`, `check-artifacts.mjs`, `check-checkpoint.mjs`, `check-diagram.mjs` and `check-diagram-render.mjs` (every diagram kind, not only the screen map), `check-presentation.mjs` (a present-mode deck), and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files

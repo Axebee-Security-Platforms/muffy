@@ -1,13 +1,13 @@
 # Workflow
 
-**Onboard mode** (prompt says `mode: onboard`): skip these steps. Follow [onboard.md](../../../skills/muffy/references/onboard.md) 0c: read `docs/architecture/baseline.md`, write `docs/adr/NNNN-existing-stack.md` (numbered after the latest; link existing ADRs instead of duplicating them), `docs/design-system/README.md` only when the prompt says the repo has a UI, and a high-level `docs/architecture/overview.html` only when the repo has no architecture diagram at all ([diagrams.md](diagrams.md), "Onboard overview"). Record what exists; recommend nothing. No `contract.md`.
+**Onboard mode** (prompt says `mode: onboard`): skip these steps. Follow [onboard.md](../../../skills/muffy/references/onboard.md) 0c: read `docs/architecture/baseline.md`, write `docs/adr/NNNN-existing-stack.md` (numbered after the latest; link existing ADRs instead of duplicating them), `docs/design-system/README.md` only when the prompt says the repo has a UI, and, only when the repo has no architecture diagram at all ([diagrams.md](diagrams.md), "Onboard overview"), a `diagrams_spec` entry for a high-level `docs/architecture/overview.html` — `designer` draws it at 0c', not you. Record what exists; recommend nothing. No `contract.md`.
 
 **Normal mode:** if the prompt gives a `baseline.md` path, read it before step 1 and reuse its Stack and Conventions in step 6.
 
 1. Read the existing code structure; reuse existing patterns
 2. Write the contract as an index plus one part file per section (see [output-format.md](output-format.md)); `contract.md` holds only a one-line summary and a link per section. Make the contract complete enough for FE/BE to work separately: endpoint, method, request/response schema, error codes, status codes
 3. Define schema / migrations that need to change
-3b. **Diagrams, only if a trigger fires.** Check the triggers in [diagrams.md](diagrams.md) against the contract you just wrote; none fires → no diagram, note `diagrams: none needed (<reason>)`. Not in the fix lane (onboard mode: only the one-time overview above)
+3b. **Diagrams, only if a trigger fires.** Check the triggers in [diagrams.md](diagrams.md) against the contract you just wrote; none fires → no diagram, note `diagrams: none needed (<reason>)`. A fired trigger becomes a `diagrams_spec` entry in your hand-off, not a file — `designer` draws it. Not in the fix lane (onboard mode: only the one-time overview above)
 4. Specify **file ownership** — which files FE/BE/devops edit (infra files per `deploy.md` belong to devops; runtime + version in Stack must match what `deploy.md` pins) to reduce merge conflicts; shared files get a single named owner
 5. Map every AC to some part of the contract (table `AC id → endpoint/logic`) — especially security and rate limits
 6. Choose **a tech stack that won't need changing after MVP** (a stack that has no practices file and no `docs/stacks/` note → return `blocked`, blocker `owner: Researcher`, problem `stack-unknown: <framework> <version>` before the contract is final, per `.claude/skills/muffy/references/stack-learning.md`):

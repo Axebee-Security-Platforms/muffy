@@ -83,6 +83,22 @@
         "reason": { "type": "string", "minLength": 3, "maxLength": 300, "description": "Why the cause is unknown, or why the fix needs the full flow" }
       }
     },
+    "diagrams_spec": {
+      "type": "array",
+      "description": "architect / product-manager only: diagram content for designer to draw. The spec'ing role never writes the diagram file itself.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "path", "content"],
+        "properties": {
+          "kind": { "enum": ["architecture", "state", "deployment", "erd", "flow", "gantt", "story-map"] },
+          "path": { "type": "string", "minLength": 1 },
+          "pattern": { "type": "string", "minLength": 1 },
+          "content": { "type": "object", "description": "The diagram JSON body per diagram-style.md for this kind" },
+          "contract_ref": { "type": "string", "minLength": 1, "description": "contract.md section this diagram explains" }
+        }
+      }
+    },
     "brain_note": { "type": "string", "description": "Path of the <brain>/agents/<role>/<task>.md written; absent for code-reviewer (Orchestrator writes it)" },
     "summary": { "type": "string", "minLength": 3, "maxLength": 600 }
   },
@@ -99,6 +115,7 @@
     { "if": { "properties": { "status": { "enum": ["done", "blocked", "not-ready"] } }, "required": ["status", "questions"] }, "then": { "properties": { "questions": { "items": { "properties": { "blocking": { "enum": [false] } } } } } } },
     { "if": { "properties": { "questions": { "minItems": 1 } }, "required": ["questions"] }, "then": { "properties": { "role": { "enum": ["researcher", "product-manager", "architect", "devops", "designer", "docs-writer"] } } } },
     { "if": { "properties": { "verdict": { "enum": ["Reject", "Fail"] } }, "required": ["verdict"] }, "then": { "properties": { "blockers": { "minItems": 1 } } } },
-    { "if": { "properties": { "quality_checks": { "properties": { "passed": { "enum": [false] } }, "required": ["passed"] } }, "required": ["quality_checks"] }, "then": { "properties": { "status": { "enum": ["not-ready", "blocked", "needs-input"] }, "quality_checks": { "properties": { "failed": { "minItems": 1 } } } } } }
+    { "if": { "properties": { "quality_checks": { "properties": { "passed": { "enum": [false] } }, "required": ["passed"] } }, "required": ["quality_checks"] }, "then": { "properties": { "status": { "enum": ["not-ready", "blocked", "needs-input"] }, "quality_checks": { "properties": { "failed": { "minItems": 1 } } } } } },
+    { "if": { "properties": { "diagrams_spec": { "minItems": 1 } }, "required": ["diagrams_spec"] }, "then": { "properties": { "role": { "enum": ["architect", "product-manager"] } } } }
   ]
 }

@@ -24,5 +24,6 @@ At step 3 (first round, parallel with architect) the canvas source is ready to p
 - [ ] Icons and illustrations are optimized SVG with `viewBox`, metadata stripped, alt text or `aria-hidden` set
 - [ ] Design system: it already existed and was obeyed, or it was created after at most one question (a second round only when the user has a brand), nothing was asked that a file answered, no intake question was blocking, and the README has one `Style:` line (`starter` when no brand was supplied) with `[user]` or `[from code]` only on sourced values, not `[assumed]` on every value
 - [ ] Screen map: none drawn with `screen-map: none needed (<reason>)` in the brain note, or it matches a trigger in `product-structure.md`, adds no screen the design lacks, and passes `check-diagram.mjs`
+- [ ] Every other diagram you drew this round came from a `diagrams_spec` entry in the prompt (never one you invented), passes `check-diagram.mjs` and `check-diagram-render.mjs`, and shows nothing the spec didn't give it
 - [ ] The `<brain>` note is written
 - [ ] The final message ends with a valid JSON hand-off block
