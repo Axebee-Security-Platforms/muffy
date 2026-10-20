@@ -84,6 +84,17 @@ for (const f of agentFiles) {
   }
 }
 
+/* shared agent references: read by several agents, linked from at least one agent or skill file */
+const sharedDir = join(root, 'agents/references/shared');
+if (existsSync(sharedDir)) {
+  const linkers = walk(root).filter((p) => p.endsWith('.md') && !p.startsWith(sharedDir) && (relative(root, p).startsWith('agents') || relative(root, p).startsWith('skills')));
+  for (const n of readdirSync(sharedDir).filter((x) => x.endsWith('.md'))) {
+    const f = join(sharedDir, n);
+    if (!/^#{1,2} \S/.test(readFileSync(f, 'utf8'))) fail(f, 'structure', 'must start with a # / ## heading');
+    if (!linkers.some((p) => readFileSync(p, 'utf8').includes(`shared/${n}`))) fail(f, 'references', 'not linked from any agent or skill file (orphan)');
+  }
+}
+
 /* skills */
 const skillDirs = readdirSync(join(root, 'skills'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
 for (const s of skillDirs) {
@@ -128,6 +139,12 @@ const refTypes = typesLine(readFileSync(outFormats[0], 'utf8'));
 for (const f of outFormats) if (typesLine(readFileSync(f, 'utf8')) !== refTypes) fail(f, 'drift', 'the "Types that are often wrong" hint differs from the other output-format.md files');
 const [feFix, beFix] = ['frontend-dev', 'backend-dev'].map((a) => join(root, 'agents/references', a, 'fix-profile.md'));
 if (norm(readFileSync(feFix, 'utf8')) !== norm(readFileSync(beFix, 'utf8'))) fail(beFix, 'drift', 'frontend-dev and backend-dev fix-profile.md must stay identical; edit both');
+
+/* drift: every agent except the read-only code-reviewer saves and validates its own hand-off file */
+for (const f of agentFiles.filter((n) => n !== 'code-reviewer.md')) {
+  const txt = readFileSync(join(root, 'agents', f), 'utf8').split(/^## Hand-off block/m)[1] ?? '';
+  if (!txt.includes('validate-handoff.mjs') || !txt.includes('with the Write tool')) fail(join(root, 'agents', f), 'drift', 'Hand-off block must say to save the JSON with the Write tool and run validate-handoff.mjs');
+}
 
 /* json */
 for (const file of walk(root).filter((p) => p.endsWith('.json'))) {

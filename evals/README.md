@@ -24,6 +24,7 @@ npm run eval:sync # re-copy each agent's rubric from its quality-checks.md
 | Fix lane | `mock-scenarios/fix-*.json` (`"profile": "fix"`) → `scripts/lib/loop-sim.mjs` | Step 4a cannot be skipped, step 4 is blocked without a passed 4a, `unknown` diagnosis asks once then escalates, `needs-full-flow` or more than 5 source files promotes to the full flow |
 | File ownership | `scripts/lib/ownership-evals.mjs` → `skills/muffy/scripts/ownership.mjs`, `check-ownership.mjs` on a throwaway git repo | One owner per `contract/ownership.md` row, no overlapping patterns across owners; before the step-5 merge an out-of-lane file or one changed on both fe and be fails, an unowned file is a note; a step-4 hand-off whose `contract_commit` is not the latest contract commit fails as stale-contract |
 | Lite lane | `lite-triage-scenarios.json` → `triageLite` in `scripts/lib/triage-sim.mjs`, `scripts/lib/lite-lane-evals.mjs` | The Examples table in `lite-profile.md` and the scenarios agree; the 15-file limit is stated; review, QA, staging and the Human gate are never skipped; promote owners exist in the hand-off schema; the envelope accepts `profile: lite` |
+| Routing | `route-scenarios.json` → `scripts/lib/route-sim.mjs`, `scripts/lib/route-evals.mjs` | The decision order in `route.md` gives the expected route for each scenario (stop point beats outcome, resume beats everything, bug → fix triage, internal → lite triage); the Examples table and the scenarios list the same prompts and routes (mostly Thai); every route has a minimum-intake row; the held-out set in `route-live-scenarios.json` has valid routes and never appears in `route.md` |
 
 When you change a rule in `skills/muffy/references/loops.md`, change `scripts/lib/loop-sim.mjs` and the matching scenario in the same commit.
 
@@ -31,7 +32,9 @@ When you change a rule in `skills/muffy/references/loops.md`, change `scripts/li
 
 Whether a real model follows the prompts. `live_scenarios` in each `*.eval.json` are the cases to run by hand (or a future LLM-graded runner): spawn the agent with `input` against the golden fixture, then grade the final message and files against `must` / `must_not`, plus the rubric. Record results in the PR; treat any `must_not` hit as a regression.
 
-`triage-scenarios.json` also has the raw `request` text of each example: paste it after `/muffy` (without `fix`) to check by hand that the Orchestrator picks the same lane.
+`triage-scenarios.json` and `route-scenarios.json` also have the raw `request` text of each example: paste it after `/muffy` (without `fix`) to check by hand that the Orchestrator picks the same lane.
+
+Routing has a held-out live set, `route-live-scenarios.json`: prompts that are in no doc, with the route expected. Give a subagent `SKILL.md`, `route.md` and the triage sections of `fix-profile.md` and `lite-profile.md`, plus the prompts without `expect`, and compare its answers. Record the score in `about` and in the PR.
 
 ## Adding a scenario
 

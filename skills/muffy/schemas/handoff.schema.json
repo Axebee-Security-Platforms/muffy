@@ -95,7 +95,7 @@
           "kind": { "enum": ["architecture", "state", "deployment", "erd", "flow", "gantt", "story-map"] },
           "path": { "type": "string", "minLength": 1 },
           "pattern": { "type": "string", "minLength": 1 },
-          "content": { "type": "object", "description": "The diagram JSON body per diagram-style.md for this kind" },
+          "content": { "type": "object", "description": "The diagram JSON body per agents/references/shared/diagram-style.md for this kind" },
           "contract_ref": { "type": "string", "minLength": 1, "description": "contract.md section this diagram explains" }
         }
       }

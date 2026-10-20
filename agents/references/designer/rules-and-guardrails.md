@@ -26,6 +26,7 @@ The design system is the single source of truth for every task. Consistency beat
 - **One primary action per view**; the hierarchy primary → secondary → ghost is consistent across screens
 - **Consistent patterns**: the same state looks the same everywhere — one pattern each for loading (skeleton or spinner, pick one), empty, inline field error, page-level error, and success feedback
 - **Changes go through the system, not around it**: if a screen needs something the system lacks, add or change the token/component in `docs/design-system/` first, note it in the Changelog with the reason, then use it. Never fork a one-off variant inside a single screen
+- **Outside the web** (`Platform:` mobile or desktop): `tokens.css` and `var(--color-*)` are the web binding only. Name the same semantic tokens in `design.md` so a native app can bind them to its own theme layer (Flutter `ThemeData`, RN theme object, SwiftUI Asset colors, Compose `MaterialTheme`, a XAML `ResourceDictionary`, Electron CSS). Accessibility means the platform's own labels and roles (VoiceOver, TalkBack, UI Automation), dynamic type or font scaling, and touch targets of at least 44 pt / 48 dp
 - **Don't break existing screens**: changing an existing token or component is a breaking change — list the affected screens in `design.md` so the Orchestrator can route the follow-up to FE
 
 ### Anti-slop

@@ -2,16 +2,16 @@
 name: muffy
 display_name: Earl Grey
 description: >
-  Do not use for a question about the code, a one-line edit, or sequential iteration in the main session.
-  Run a hub-and-spoke subagent team (main session = Orchestrator) from research to
-  deploy. Use to build a feature end to end with parallel agents, or `/muffy fix` for a small bug or
-  cosmetic fix. Also use when the user reports a bug with a symptom, error or broken behaviour ("found a bug",
-  "it errors", "this is broken", "fix this", เจอบั๊ก, พัง): the Orchestrator triages it into the fix lane or asks one
-  question first. `/muffy lite`: internal API, refactor, perf, migration. Also use to resume
-  work (`/muffy resume`, "continue", ทำต่อ), `/muffy analyze` for unfinished work, and
-  `/muffy diagram "<request>"` for a standalone architecture, state, deployment, ERD, flow, screen-map, gantt or
-  story-map diagram outside a running task. Also use for any other build, design, spec, plan, research, review, test, deploy
-  or docs request (ออกแบบ, รีวิว, วางแผน, วิจัย, ทดสอบ, deploy, ทำเอกสาร): it runs the smallest route.
+  Run a subagent team (main session = Orchestrator) from research to deploy, on the smallest route.
+  Use to build a feature end to end (ทำฟีเจอร์, สร้างระบบ); for a bug report
+  with a symptom or error ("found a bug", "it errors", "this is broken", เจอบั๊ก, พัง, error) via the fix lane
+  (`/muffy fix`); for an internal API, refactor, measured perf fix or migration (`/muffy lite`, ทำให้เร็วขึ้น);
+  and for a single-step request: research or compare (วิจัย, เปรียบเทียบ), plan or user stories (วางแผน),
+  screens (ออกแบบหน้าจอ), API or schema (ออกแบบ API), a UX/UI review (รีวิวดีไซน์), an architecture or ADR review
+  or a new ADR, a code/PR review (รีวิว PR), tests (เขียนเทสต์), docs or README (ทำเอกสาร), deploy or rollback.
+  Also: resume work (`/muffy resume`, "continue", ทำต่อ), `/muffy analyze` for unfinished work, `/muffy onboard`,
+  `/muffy present` for a client deck (ทำสไลด์), `/muffy diagram` for a standalone diagram.
+  Not for a question about the code, a text-only one-line edit, or step-by-step work in the main session.
 ---
 
 # Muffy — Feature Development Team
@@ -36,7 +36,7 @@ Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Ana
 - **Analyze** — repo with history, before onboard or the first feature (`/muffy analyze`): find unfinished work in git and in trackers (GitHub, GitLab, Jira, ClickUp, exports), read-only and privacy-minimised, user confirms what becomes a task: [references/analyze.md](references/analyze.md)
 - **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
 - **Present** — on demand, outside the team flow (`/muffy present "<request>"`): the product-manager writes the content as a solutions engineer, the designer builds the deck, the requester reviews it: [references/present.md](references/present.md); missing documents are requested from their owners: [references/doc-request.md](references/doc-request.md)
-- **Diagram** — on demand, outside the team flow (`/muffy diagram "<request>"`, or any standalone "draw/create a diagram" request not tied to an in-progress contract or fix): route the facts to the agent that owns that kind's domain (architect or product-manager), then always to `designer` to draw — never draw it yourself: [references/diagram.md](references/diagram.md)
+- **Diagram** — on demand, outside the team flow (`/muffy diagram "<request>"`, or any standalone "draw/create a diagram" request not tied to an in-progress contract or fix): route the facts to the agent that owns that kind's domain (architect or product-manager), then always to `designer` to draw — never draw it yourself: [references/diagram.md](references/diagram.md). A still image (PNG/SVG) only on the user's ask: [references/diagram-export.md](references/diagram-export.md)
 - **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
 - **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of Setup, Run profile and the full step list: [references/fix-profile.md](references/fix-profile.md). Internal API, refactor, measured performance or reversible DB change with nothing a user sees (`/muffy lite`, or a request that passes its triage): use the lite lane, architect straight to build: [references/lite-profile.md](references/lite-profile.md)
 - **Steps 0–12** — agent, input and output per step: [references/steps.md](references/steps.md)

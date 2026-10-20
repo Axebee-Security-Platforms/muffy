@@ -4,6 +4,10 @@
 
 **Lite profile** (prompt says `Profile: lite`): there is no `brief.md` and no `design.md`; `ac.md` was written by the Orchestrator and names `Kind:` and `Owner:`. Write the contract as in normal mode below, for the owners named only. If the work needs something this lane skips, do not design around it: hand off `status: blocked` with one blocker whose `owner` says who is missing (`Researcher` for a new dependency, provider or stack fact; `PM` for a change users or outside callers see, or auth, permissions or personal data; `Designer` for a screen, flow or component) and whose `problem` names the AC. The Orchestrator promotes the task to the full flow ([lite-profile.md](../../../skills/muffy/references/lite-profile.md#promote-to-the-full-flow)).
 
+**Review only** (prompt says `Review only`, route `arch-review`): read the ADR, contract, baseline or module the prompt names and the code it describes; write no file. Return findings in the final message, one per line: `A-<n> · where · problem · why it matters · suggested change`, and say which finding would need a new ADR. Hand-off `status: done`, `paths_written: []`.
+
+**ADR only** (prompt says `ADR only`, route `adr`): write one technical ADR in `docs/adr/` per [adr.md](../../../skills/muffy/references/adr.md), numbered after the latest, `Kind: technical`, superseding an older one only when the prompt names it. A product decision is not yours: return `blocked` with a blocker `owner: PM`. No contract, no task folder.
+
 **Normal mode:** if the prompt gives a `baseline.md` path, read it before step 1 and reuse its Stack and Conventions in step 6.
 
 1. Read the existing code structure; reuse existing patterns
@@ -12,7 +16,7 @@
 3b. **Diagrams, only if a trigger fires.** Check the triggers in [diagrams.md](diagrams.md) against the contract you just wrote; none fires → no diagram, note `diagrams: none needed (<reason>)`. A fired trigger becomes a `diagrams_spec` entry in your hand-off, not a file — `designer` draws it. Not in the fix lane (onboard mode: only the one-time overview above)
 4. Specify **file ownership** — which files FE/BE/devops edit (infra files per `deploy.md` belong to devops; runtime + version in Stack must match what `deploy.md` pins) to reduce merge conflicts; shared files get a single named owner. One owner per row (`FE`, `BE` or `devops`), and no two owners' patterns may overlap (`src/**` for BE next to `src/ui/**` for FE fails `check-artifacts`); the Orchestrator checks every branch against this table before merging
 5. Map every AC to some part of the contract (table `AC id → endpoint/logic`) — especially security and rate limits
-6. Choose **a tech stack that won't need changing after MVP** (a stack that has no practices file and no `docs/stacks/` note → return `blocked`, blocker `owner: Researcher`, problem `stack-unknown: <framework> <version>` before the contract is final, per `.claude/skills/muffy/references/stack-learning.md`):
+6. Choose **a tech stack that won't need changing after MVP** (a stack that has no practices file and no `docs/stacks/` note → return `blocked`, blocker `owner: Researcher`, problem `stack-unknown: <framework> <version>` before the contract is final, per [stack-ladder.md](../shared/stack-ladder.md)):
    - Existing codebase? Reuse patterns (context defaults)
    - New codebase + confident? Document choice in contract.md + reasons
    - New codebase + unsure? Consult [`stack-defaults.md`](stack-defaults.md) — use gating defaults (Next.js + Postgres) or ranked catalog by language

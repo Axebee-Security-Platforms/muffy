@@ -336,7 +336,7 @@ The Orchestrator reads `.team/<task>/checkpoint.md` and the vault task note inst
 - [SKILL.md](skills/muffy/SKILL.md): the skill entry point and its rules.
 - [Steps](skills/muffy/references/steps.md) and [run profile](skills/muffy/references/run-profile.md): who does what, and what can be skipped.
 - [Hooks and guards](skills/muffy/references/hooks-enforcement.md): the rules a hook can enforce, including who may write `docs/strategy.md` and the architecture files.
-- [Diagram style](skills/muffy/references/diagram-style.md): the HTML template, JSON schema and validator for architecture, database and flow diagrams.
+- [Diagram style](agents/references/shared/diagram-style.md): the HTML template, JSON schema and validator for architecture, database and flow diagrams.
 - [Platforms](skills/muffy/references/platforms.md): web, mobile (Flutter, React Native, Swift, Kotlin), desktop (Electron, Mac, Windows) and CLI or console apps. What changes per target, the toolchain the host needs, and what only you may do (sign, upload, publish).
 - [Fix profile](skills/muffy/references/fix-profile.md): the lane for small bugs and cosmetic fixes, with diagnose-first and promotion rules.
 - [Requirements interview](skills/muffy/references/requirements.md): how clarifying questions reach you.

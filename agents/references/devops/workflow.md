@@ -57,7 +57,17 @@ Production:
 4. Pass → expand to 100%; fail → **roll back immediately** and report
 
 ### Non-web platforms (`Platform:` mobile, desktop or cli)
-Modes 1 to 3 keep their purpose; the evidence changes. Read `.claude/skills/muffy/references/platforms.md` and follow its tables: the toolchain check first (missing → `status: blocked`, `toolchain-missing: <name> on <host OS>`, never a faked pass), then what smoke and staging mean for the platform (emulator or simulator launch, unsigned installer, TestFlight or internal track, binary run on a clean directory). Skip the Docker and HTTP health checks above unless the app also ships a server, and skip the `devops-preflight.mjs` Node/`.nvmrc` check unless the project is Node-based (no `.nvmrc` is normal for Flutter, Swift, Kotlin and .NET; run `node .claude/skills/muffy/scripts/devops-preflight.mjs --toolchain <name>[=<version from contract.md>]` for each tool the target needs: names are `flutter`, `dart`, `xcodebuild`, `swift`, `dotnet`, `java`, `gradle`, `android-sdk`, `cargo`, `go`, `python`, `docker`, `node`. A FAIL prints `toolchain-missing: <name> on <os>`: report it as the blocker, never as a pass). Write the chosen evidence per step in `deploy.md`. Signing, notarization, store upload and package publishing are the user's: prepare the artifact and a checklist, do not run them.
+Modes 1 to 3 keep their purpose; the evidence changes. The toolchain check comes first ([platforms.md](../../../skills/muffy/references/platforms.md#toolchain-on-the-host); missing → `status: blocked`, `toolchain-missing: <name> on <host OS>`, never a faked pass), then the evidence for the platform:
+
+| Platform | Smoke build (mode 2, step 3d) | Staging (mode 3, step 9) |
+|---|---|---|
+| `web` | Container builds and the health route answers | Deploy to staging, health + smoke |
+| Android | Debug APK/AAB builds; app installs and launches on an emulator | Internal-testing track or a signed-debug APK handed to the user |
+| iOS | Simulator build launches | TestFlight internal build, or a simulator build handed to the user |
+| Mac / Windows / Electron | App builds and starts, main window opens, exits cleanly | Unsigned installer or app bundle produced by CI, run by the user |
+| `cli` | Binary builds; `--help` and one core command exit 0 | The release binary run against a smoke command on a clean directory (no repo files) |
+
+Skip the Docker and HTTP health checks above unless the app also ships a server, and skip the `devops-preflight.mjs` Node/`.nvmrc` check unless the project is Node-based (no `.nvmrc` is normal for Flutter, Swift, Kotlin and .NET; run `node .claude/skills/muffy/scripts/devops-preflight.mjs --toolchain <name>[=<version from contract.md>]` for each tool the target needs: names are `flutter`, `dart`, `xcodebuild`, `swift`, `dotnet`, `java`, `gradle`, `android-sdk`, `cargo`, `go`, `python`, `docker`, `node`. A FAIL prints `toolchain-missing: <name> on <os>`: report it as the blocker, never as a pass). Write the chosen evidence per step in `deploy.md`. Signing, notarization, store upload and package publishing are the user's: prepare the artifact and a checklist, do not run them.
 
 ### All modes
 **Keep command output out of context.** Build, test, migration, smoke and `docker logs` output goes to a file, never straight into the conversation: `<cmd> > .team/<task>/logs/<name>.log 2>&1; echo "exit $?"`. On exit 0, read nothing. On failure read only the tail (`tail -n 30`) or `grep -iE 'error|fail|fatal'` of that file, then widen only if the cause is still unclear. Quote at most ~20 log lines in the report and give the log path for the rest. `logs/` stays out of git.

@@ -15,6 +15,7 @@ import { runFixLaneEvals } from './lib/fix-lane-evals.mjs';
 import { runOwnershipEvals } from './lib/ownership-evals.mjs';
 import { runLiteLaneEvals } from './lib/lite-lane-evals.mjs';
 import { runPendingEvals } from './lib/pending-evals.mjs';
+import { runRouteEvals } from './lib/route-evals.mjs';
 import { chooseEffort, defaultEffort, PROTECTED_ROLES, STALLED_AFTER } from './lib/effort-sim.mjs';
 import { smokeRequired, SMOKE_TRIGGERS } from './lib/smoke-sim.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
@@ -489,7 +490,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   const write = (agent_type, file_path, tool_name = 'Write') => spawnSync(process.execPath, [W], { input: JSON.stringify({ tool_name, agent_type, tool_input: { file_path } }), encoding: 'utf8' }).status;
   check('write-scope: only the product-manager writes docs/strategy.md', write('product-manager', 'docs/strategy.md') === 0 && ['architect', 'devops', 'backend-dev', 'muffy:researcher'].every((r) => write(r, 'E:\\repo\\docs\\strategy.md', 'Edit') === 2));
   check('write-scope: the Orchestrator (no agent_type) is never blocked', write(undefined, 'docs/strategy.md') === 0);
-  check('write-scope: the designer draws every architecture diagram; the architect writes ADRs and specs, never a diagram file or baseline.md', write('designer', 'docs/architecture/overview.html') === 0 && write('designer', 'docs/architecture/flows/login.html') === 0 && write('designer', 'docs/architecture/states/order.html') === 0 && write('designer', 'docs/architecture/changes/payments.html') === 0 && write('designer', 'docs/architecture/deployment.html') === 0 && write('architect', 'docs/architecture/overview.html') === 2 && write('architect', 'docs/architecture/flows/login.html') === 2 && write('architect', 'docs/architecture/deployment.html') === 2 && write('frontend-dev', 'docs/architecture/changes/payments.html') === 2 && write('frontend-dev', 'docs/architecture/states/order.html') === 2 && write('architect', 'docs/adr/0002-x.md') === 0 && write('architect', 'docs/architecture/baseline.md') === 2 && write('architect', 'docs/architecture/notes.md') === 2);
+  check('write-scope: the designer draws every architecture diagram; the architect writes ADRs and specs, never a diagram file or baseline.md', write('designer', 'docs/architecture/overview.html') === 0 && write('designer', 'docs/architecture/flows/login.html') === 0 && write('designer', 'docs/architecture/states/order.html') === 0 && write('designer', 'docs/architecture/changes/payments.html') === 0 && write('designer', 'docs/architecture/data-models/coupon.html') === 0 && write('architect', 'docs/architecture/data-models/coupon.html') === 2 && write('designer', 'docs/architecture/deployment.html') === 0 && write('architect', 'docs/architecture/overview.html') === 2 && write('architect', 'docs/architecture/flows/login.html') === 2 && write('architect', 'docs/architecture/deployment.html') === 2 && write('frontend-dev', 'docs/architecture/changes/payments.html') === 2 && write('frontend-dev', 'docs/architecture/states/order.html') === 2 && write('architect', 'docs/adr/0002-x.md') === 0 && write('architect', 'docs/architecture/baseline.md') === 2 && write('architect', 'docs/architecture/notes.md') === 2);
   check('write-scope: only the designer writes architecture diagrams, only the researcher the baseline', write('frontend-dev', 'docs/architecture/data-model.html') === 2 && write('researcher', 'docs/architecture/baseline.md') === 0 && write('researcher', 'docs/architecture/overview.html') === 2);
       check('write-scope: only the designer writes plan diagrams; the product-manager specs their facts and cannot write the file', write('designer', 'docs/plan/pay-gantt.html') === 0 && write('product-manager', 'docs/plan/pay-gantt.html') === 2 && write('architect', 'docs/plan/pay-story-map.html') === 2 && write('architect', 'docs/plan/pay.md') === 0);
   check('write-scope: other files and non-write tools pass', write('backend-dev', 'src/a.ts') === 0 && write('architect', 'docs/strategy.md', 'Read') === 0);
@@ -825,6 +826,9 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
 runFixLaneEvals({ check, root });
 runOwnershipEvals({ check, root });
 runLiteLaneEvals({ check, root });
+
+/* 8b. routing (references/route.md): decision order, Examples table, intake rows */
+runRouteEvals({ check, root });
 
 /* 9. analyze mode (references/analyze.md): pending-work scan, privacy filters */
 runPendingEvals({ check, root });

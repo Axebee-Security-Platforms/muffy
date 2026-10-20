@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Validates diagram HTML files made from templates/diagram.html (references/diagram-style.md).
+// Validates diagram HTML files made from templates/diagram.html (agents/references/shared/diagram-style.md).
 //   node check-diagram.mjs <file.html> [more.html ...]
 // Checks: the page is the template with only <title> and the #diagram JSON changed; the JSON fits the schema and the size
 // limits; every edge points at a real node; no two cards share a grid cell; a straight (same row or column) edge never passes

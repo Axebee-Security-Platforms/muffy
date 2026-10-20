@@ -1,0 +1,185 @@
+{
+ "about": "Held-out prompts for a live routing test. None may appear in route.md (an eval checks it). Run them blind: a subagent gets SKILL.md, route.md and the triage sections, never the expect values; then compare. Last runs 2026-10-20: h01-h25 25/25; after the diagram checks, h01-h28 28/28; h29-h36 (non-ERD diagram kinds) 8/8.",
+ "scenarios": [
+  {
+   "id": "h01",
+   "prompt": "หน้า profile กดบันทึกแล้วขึ้น error 'Cannot read properties of undefined' ที่ src/pages/profile.tsx:88",
+   "expect": "fix"
+  },
+  {
+   "id": "h02",
+   "prompt": "อยากได้ระบบ export รายงานยอดขายเป็น Excel ให้ฝ่ายบัญชี",
+   "expect": "full"
+  },
+  {
+   "id": "h03",
+   "prompt": "ช่วยดูหน่อยว่า middleware auth ของเราทำงานยังไง",
+   "expect": "none"
+  },
+  {
+   "id": "h04",
+   "prompt": "แก้คำว่า 'Recieve' เป็น 'Receive' ในหน้า settings",
+   "expect": "none"
+  },
+  {
+   "id": "h05",
+   "prompt": "ระยะห่างการ์ดในหน้า pricing ไม่ตรงกับ design system ช่วยปรับให้ใช้ spacing token",
+   "expect": "fix"
+  },
+  {
+   "id": "h06",
+   "prompt": "เปรียบเทียบ Stripe กับ Omise สำหรับรับชำระเงินในไทย ยังไม่ต้องทำอะไร",
+   "expect": "research"
+  },
+  {
+   "id": "h07",
+   "prompt": "ขอ user story กับ acceptance criteria สำหรับระบบคูปองส่วนลด ยังไม่ต้องออกแบบ",
+   "expect": "plan"
+  },
+  {
+   "id": "h08",
+   "prompt": "ออกแบบหน้าจอ onboarding 3 ขั้นสำหรับแอปมือถือ ยังไม่เขียนโค้ด",
+   "expect": "design"
+  },
+  {
+   "id": "h09",
+   "prompt": "ออกแบบ schema ตาราง subscriptions กับ invoices ให้ทีม backend ใช้",
+   "expect": "spec"
+  },
+  {
+   "id": "h10",
+   "prompt": "ช่วยรีวิว branch feature/coupon ก่อนผม merge",
+   "expect": "review"
+  },
+  {
+   "id": "h11",
+   "prompt": "ช่วยรีวิว UX หน้า dashboard บน staging ให้หน่อย https://staging.example.com/dashboard",
+   "expect": "design-review"
+  },
+  {
+   "id": "h12",
+   "prompt": "อ่าน contract.md ของ task payments แล้วบอกว่าออกแบบตรงไหนเสี่ยง",
+   "expect": "arch-review"
+  },
+  {
+   "id": "h13",
+   "prompt": "บันทึกการตัดสินใจว่าเราจะใช้ Redis เป็น cache แทน in-memory",
+   "expect": "adr"
+  },
+  {
+   "id": "h14",
+   "prompt": "เขียนคู่มือการติดตั้งสำหรับ ops ของ service notification ที่มีอยู่แล้ว",
+   "expect": "docs-existing"
+  },
+  {
+   "id": "h15",
+   "prompt": "เขียน e2e test ให้ flow checkout บน branch feature/coupon",
+   "expect": "qa"
+  },
+  {
+   "id": "h16",
+   "prompt": "rollback production ไปเวอร์ชัน v2.3.1",
+   "expect": "ops"
+  },
+  {
+   "id": "h17",
+   "prompt": "ย้าย logic คำนวณภาษีออกจาก controller ไปไว้ใน service แยก ผลลัพธ์ต้องเหมือนเดิม (src/tax/)",
+   "expect": "lite"
+  },
+  {
+   "id": "h18",
+   "prompt": "ระบบช้ามาก",
+   "expect": "ask"
+  },
+  {
+   "id": "h19",
+   "prompt": "แอปมันพัง",
+   "expect": "ask"
+  },
+  {
+   "id": "h20",
+   "prompt": "ทำต่อ task coupon",
+   "expect": "resume"
+  },
+  {
+   "id": "h21",
+   "prompt": "วาด ERD ของฐานข้อมูลตอนนี้ให้ดูหน่อย",
+   "expect": "diagram"
+  },
+  {
+   "id": "h22",
+   "prompt": "หาว่ามีงานอะไรค้างอยู่ใน repo นี้บ้าง",
+   "expect": "analyze"
+  },
+  {
+   "id": "h23",
+   "prompt": "รีวิวหน่อย",
+   "expect": "ask"
+  },
+  {
+   "id": "h24",
+   "prompt": "ออกแบบระบบ loyalty point",
+   "expect": "ask"
+  },
+  {
+   "id": "h25",
+   "prompt": "เพิ่ม field เบอร์โทรในฟอร์มสมัครสมาชิก",
+   "expect": "full"
+  },
+  {
+   "id": "h26",
+   "prompt": "วาด flow การจ่ายเงินที่ระบบเราใช้อยู่ตอนนี้ จากโค้ดใน src/payments/",
+   "expect": "diagram"
+  },
+  {
+   "id": "h27",
+   "prompt": "อยากเห็น ERD ของระบบ loyalty ใหม่ที่จะทำไตรมาสหน้า",
+   "expect": "spec"
+  },
+  {
+   "id": "h28",
+   "prompt": "ขอ state diagram ของ order ใน task checkout-v2 ที่ทีมกำลังทำ",
+   "expect": "diagram-in-task"
+  },
+  {
+   "id": "h29",
+   "prompt": "วาด architecture overview ของระบบที่รันอยู่ตอนนี้ จาก repo นี้",
+   "expect": "diagram"
+  },
+  {
+   "id": "h30",
+   "prompt": "ขอ architecture diagram ของ microservice ใหม่ที่เรายังไม่ได้ออกแบบเลย",
+   "expect": "spec"
+  },
+  {
+   "id": "h31",
+   "prompt": "ทำ timeline gantt ให้ task mobile-app ที่กำลังทำอยู่",
+   "expect": "diagram-in-task"
+  },
+  {
+   "id": "h32",
+   "prompt": "วาด story map จาก roadmap ใน docs/plan/roadmap.md",
+   "expect": "diagram"
+  },
+  {
+   "id": "h33",
+   "prompt": "อยากได้ story map ของไอเดีย marketplace ที่ยังไม่ได้คุยเรื่อง scope กันเลย",
+   "expect": "plan"
+  },
+  {
+   "id": "h34",
+   "prompt": "วาด screen map ของเว็บเราตอนนี้ทั้งหมด",
+   "expect": "diagram"
+  },
+  {
+   "id": "h35",
+   "prompt": "ขอ state diagram ของสถานะ subscription ที่มีอยู่ในโค้ด",
+   "expect": "diagram"
+  },
+  {
+   "id": "h36",
+   "prompt": "วาด deployment ของระบบใหม่ที่จะย้ายไป Kubernetes ซึ่งยังไม่ได้ออกแบบ",
+   "expect": "spec"
+  }
+ ]
+}
