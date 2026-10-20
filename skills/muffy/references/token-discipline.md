@@ -3,6 +3,7 @@
 - **Prompt template** — every subagent prompt is only this, no pasted file contents (parsed shape: [prompt-envelope.schema.json](../schemas/prompt-envelope.schema.json)):
   ```
   Goal: <one line>
+  Done when: <one observable result that ends this step, e.g. "handoff validates and every AC-n in ac.md is listed">
   Task: <task>  Brain: <brain>  [Vault: <vault> — researcher only]  [Mode: 1 | 2 | 3 — devops; onboard | stack-note — researcher; onboard — architect]  [Profile: fix — fix lane only; Read: fix.md replaces ac/contract/brief/design]
   [Worktree: <path> · Branch: <branch> — frontend-dev, backend-dev, qa-tester, devops mode 2; created by the Orchestrator (setup.md step 7)]
   Read: <paths>

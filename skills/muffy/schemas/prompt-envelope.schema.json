@@ -8,6 +8,7 @@
   "required": ["goal", "task", "brain", "read", "write", "dont_touch"],
   "properties": {
     "goal": { "type": "string", "minLength": 3, "maxLength": 200 },
+    "done_when": { "type": "string", "minLength": 3, "maxLength": 200, "description": "The observable result that ends the step; part of the prompt template in token-discipline.md" },
     "task": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
     "brain": { "type": "string", "minLength": 1 },
     "vault": { "type": "string" },

@@ -13,7 +13,10 @@ description: >
   Also use `/muffy diagram "<request>"` for a standalone architecture, state, deployment, ERD, flow, screen-map,
   gantt or story-map diagram request not tied to an in-progress contract or fix: muffy routes the facts to the
   owning role and always has the designer draw it, instead of drawing it itself.
-  Do not use for one-line edits, research-only or review-only requests, or sequential iteration.
+  Also use for any other build, design, spec, plan, research, review, test, deploy or docs request in a codebase:
+  the Orchestrator reads the prompt's outcome and runs the smallest route that delivers it, one agent or the full flow
+  (ออกแบบ, รีวิว, วางแผน, วิจัย, ทดสอบ, deploy, ทำเอกสาร).
+  Do not use for a question about the code, a one-line edit, or sequential iteration in the main session.
 ---
 
 # Muffy — Feature Development Team
@@ -34,6 +37,7 @@ Load lazily: open each reference only at the step that needs it, never all up fr
 
 Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Analyze, Onboard, Setup and Run profile: follow [references/resume.md](references/resume.md), which finds the task's `checkpoint.md` and picks up at its `next:`.
 
+- **Route** — first, on every request: read the prompt's outcome and stop point, pick the entry (full flow, fix lane, a single agent, or a mode) and say it in one line before spawning: [references/route.md](references/route.md)
 - **Analyze** — repo with history, before onboard or the first feature (`/muffy analyze`): find unfinished work in git and in trackers (GitHub, GitLab, Jira, ClickUp, exports), read-only and privacy-minimised, user confirms what becomes a task: [references/analyze.md](references/analyze.md)
 - **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
 - **Present** — on demand, outside the team flow (`/muffy present "<request>"`): the product-manager writes the content as a solutions engineer, the designer builds the deck, the requester reviews it: [references/present.md](references/present.md); missing documents are requested from their owners: [references/doc-request.md](references/doc-request.md)
@@ -84,4 +88,4 @@ Verify after every step: [references/quality-checks.md](references/quality-check
 
 ---
 
-**Not for:** one-line edits with no behaviour risk, research-only or review-only requests, step-by-step iteration in main session
+**Not for:** questions about the code, one-line edits with no behaviour risk, step-by-step iteration in main session. Research-only, review-only, design-only and spec-only requests are not refused: they route to the single agent that owns them ([route.md](references/route.md))
