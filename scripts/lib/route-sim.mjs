@@ -7,11 +7,16 @@ import { triage, triageLite } from './triage-sim.mjs';
 export const MODES = ['analyze', 'onboard', 'present', 'diagram'];
 // Routes whose outcome is not a code change (decision order steps 4 and 5).
 export const NON_CODE_ROUTES = ['research', 'plan', 'design', 'design-review', 'spec', 'arch-review', 'adr', 'review', 'qa', 'docs', 'docs-existing', 'ops'];
-export const ROUTES = ['resume', ...MODES, 'none', ...NON_CODE_ROUTES, 'fix', 'lite', 'full', 'ask'];
+export const ROUTES = ['resume', ...MODES, 'diagram-in-task', 'none', ...NON_CODE_ROUTES, 'fix', 'lite', 'full', 'ask'];
 
-// s: { resume, mode, question, stop_point, outcome, ambiguous, missing_intake, text_only, bug, internal, fix: {...}, lite: {...} }
+// s: { resume, mode, open_task, not_designed, question, stop_point, outcome, ambiguous, missing_intake, text_only, bug, internal, fix: {...}, lite: {...} }
 export function route(s = {}) {
   if (s.resume === true) return { route: 'resume', step: 1 };
+  if (s.mode === 'diagram') {
+    // diagram.md "Before the scope question": an open task takes it; a subject not designed yet is spec work
+    if (s.open_task === true) return { route: 'diagram-in-task', step: 2 };
+    if (s.not_designed === true) return { route: s.missing_intake === true ? 'ask' : 'spec', step: 2 };
+  }
   if (s.mode) return { route: MODES.includes(s.mode) ? s.mode : 'ask', step: 2 };
   if (s.question === true) return { route: 'none', step: 3 };
   if (s.ambiguous === true) return { route: 'ask', step: 7 };

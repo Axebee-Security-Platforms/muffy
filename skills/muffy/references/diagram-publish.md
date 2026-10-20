@@ -5,7 +5,7 @@ The Orchestrator publishes every diagram `designer` drew or changed, so the user
 ## When it runs
 | Facts from | Drawn by | Files | Runs |
 |---|---|---|---|
-| Architect, step 3 | `designer` | `docs/architecture/overview.html`, `data-model.html`, `deployment.html`, `states/<slug>.html`, `changes/<slug>.html`, `flows/<slug>.html` | Right after 3b, before the 3c gate, so the question to the user can link them |
+| Architect, step 3 | `designer` | `docs/architecture/overview.html`, `data-model.html`, `deployment.html`, `states/<slug>.html`, `changes/<slug>.html`, `flows/<slug>.html`, `data-models/<slug>.html` | Right after 3b, before the 3c gate, so the question to the user can link them |
 | Architect, onboard 0c | `designer` | `docs/architecture/overview.html` | Before `pause:onboard-review` (0d), so the user reviews it with the baseline |
 | Product-manager, step 1 (only when a plan diagram was needed) | `designer` | `docs/plan/<task>-gantt.html`, `docs/plan/<task>-story-map.html` | Right after the designer's hand-off, before the user reviews the plan |
 | Designer, step 3 (only when a screen map was needed) | `designer` | `docs/design/screen-map.html` | Right after 3b, before the 3c gate, so the design-review question can link it |

@@ -25,7 +25,7 @@ export function runRouteEvals({ check, root }) {
     const out = route(sc.signals);
     check(`route:${sc.id}`, out.route === sc.expect, `expected ${sc.expect}, got ${out.route} (step ${out.step})`);
   }
-  for (const r of ['none', 'fix', 'lite', 'full', 'ask', 'resume']) check(`route: "${r}" has a scenario`, scenarios.some((x) => x.expect === r));
+  for (const r of ['none', 'fix', 'lite', 'full', 'ask', 'resume', 'diagram', 'diagram-in-task']) check(`route: "${r}" has a scenario`, scenarios.some((x) => x.expect === r));
   check('route: a Thai prompt exists for at least half the scenarios', scenarios.filter((x) => /[฀-๿]/.test(x.request)).length * 2 >= scenarios.length);
 
   /* doc Examples ↔ scenarios */
@@ -43,9 +43,14 @@ export function runRouteEvals({ check, root }) {
   const intake = tableRows(section('Minimum intake \\(ask before spawning\\)'), /^\| Route /).map((r) => r[0]);
   const routed = routes.map(toId);
   for (const r of new Set(routes)) {
-    if (['diagram', 'present', 'analyze', 'onboard', 'resume'].includes(r)) continue; // modes carry their own intake
+    if (['diagram', 'diagram-in-task', 'present', 'analyze', 'onboard', 'resume'].includes(r)) continue; // modes carry their own intake
     check(`route-doc: route "${r}" has a minimum-intake row`, intake.includes(r));
   }
   for (const r of routed) check(`route-sim: knows route "${r}"`, ROUTES.includes(r));
+  /* held-out live set: valid routes, and never copied into route.md (that would leak the answers) */
+  const live = JSON.parse(readFileSync(rel('evals/route-live-scenarios.json'), 'utf8')).scenarios;
+  check('route-live: every expected route is a known route', live.every((x) => ROUTES.includes(x.expect)), live.filter((x) => !ROUTES.includes(x.expect)).map((x) => x.id).join(', '));
+  check('route-live: no held-out prompt appears in route.md', live.every((x) => !doc.includes(x.prompt)), live.filter((x) => doc.includes(x.prompt)).map((x) => x.id).join(', '));
+  check('route-live: ids are unique', new Set(live.map((x) => x.id)).size === live.length);
   check('route-doc: the decision order has seven steps', (section('Decision order').match(/^\d\. \*\*/gm) ?? []).length === 7);
 }

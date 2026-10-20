@@ -9,7 +9,7 @@ The route is decided by the **outcome asked for**, not by a single keyword. "Bug
 Walk it top to bottom and stop at the first step that answers. The fix and lite lanes keep their own triage; this order only decides which triage runs.
 
 1. **Continue earlier work** ("continue", "resume", ทำต่อ) → resume
-2. **A named mode** (`/muffy analyze | onboard | present | diagram`, or a request that can only mean one of them: "find what is half done", "make a deck for the client", "draw the deployment diagram") → that mode
+2. **A named mode** (`/muffy analyze | onboard | present | diagram`, or a request that can only mean one of them: "find what is half done", "make a deck for the client", "draw the deployment diagram") → that mode. A diagram request first passes the two checks in [diagram.md](diagram.md#before-the-scope-question): the subject has an open task → **diagram-in-task**; the subject is not designed yet (no schema, migration, model or code) → **spec**, with the diagram as its stop point
 3. **A question** about the code or the repo ("how does X work?", "X ทำงานยังไง") → none
 4. **A stated stop point** ("just the design", "plan it, don't build", "research, no code", "ยังไม่ต้องเขียนโค้ด", "แค่รีวิว") → the route for that stop point, even when the request also names a feature
 5. **The outcome is not a code change** (a brief, a plan, a design, a design review, a contract, an architecture review, an ADR, a review verdict, tests, docs, a deployment) → that route from the table below
@@ -42,6 +42,8 @@ The verb alone never decides. Read the object of the verb, then use the tie-brea
 | เขียน / write | test, เทสต์ | qa | — |
 | เขียน / write | docs, README, คู่มือ | docs (a change) or docs-existing (code as it is) | Ask: "for a recent change, or the code as it is?" |
 | เขียน / write | ADR, บันทึกการตัดสินใจ | adr | — |
+| สร้าง / วาด / draw | ERD, flow, state, diagram of something that exists | diagram | The subject has an open task → diagram-in-task |
+| สร้าง / ออกแบบ | ERD, data model of a feature not designed yet | spec | Not sure it exists → check the repo for its schema, migration or model before asking |
 | ทำ / สร้าง / build / add | a feature | full flow (or lite or fix by triage) | — |
 | วางแผน / plan | a feature or a roadmap | plan | — |
 | วิจัย / หาข้อมูล / compare | options, libraries, competitors | research | — |
@@ -91,7 +93,8 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | Write or run tests, QA, regression on a branch | qa | `qa-tester` | `qa-report.md`. No production code change. Whole-system run needs `pause:full-regression` |
 | API docs or release notes for a change | docs | `docs-writer`, then `code-reviewer` on the docs | the reviewed docs. If the diff is not yet approved, route to review first |
 | README, a guide or API docs for code as it already is (no new change) | docs-existing | `docs-writer` ("Docs for existing code" in the prompt), then `code-reviewer` on the docs | the reviewed docs |
-| A standalone diagram | diagram | per [diagram.md](diagram.md) | the diagram file |
+| A standalone diagram of something that already exists, with no open task | diagram | per [diagram.md](diagram.md) | the diagram file |
+| A diagram of a feature whose task is still open | diagram-in-task | the task's `architect` (or `product-manager` for gantt and story-map) specs it, `designer` draws, step 3e publishes ([diagram.md](diagram.md#inside-an-open-task)) | the diagram, recorded in that task; the task's next step is unchanged |
 | A deck or presentation for a client or end-users | present | per [present.md](present.md) | the deck |
 | Find unfinished work in a repo or tracker | analyze | per [analyze.md](analyze.md) | the confirmed task list |
 | First run on an existing codebase | onboard | per [onboard.md](onboard.md) | `baseline.md` and ADR, after review |
@@ -143,4 +146,7 @@ Every row is also a scenario in `evals/route-scenarios.json`; change both togeth
 | "วางแผน roadmap ไตรมาสหน้าให้หน่อย" | plan | Outcome is a plan |
 | "ทำต่อจากเมื่อวาน" | resume | Continue earlier work |
 | "ทำสไลด์สรุปฟีเจอร์ login ให้ลูกค้า" | present | A deck for a client |
+| "วาด ERD ของตารางที่มีอยู่ในโมดูล billing" | diagram | Draw something that exists, no open task |
+| "สร้าง ERD ของ feature คูปองที่ยังไม่ได้เริ่มทำ" | spec | Not designed yet: the ERD is the data model to design |
+| "สร้าง ERD ของ task coupon ที่กำลังทำอยู่" | diagram-in-task | The task is open: its contract is the source |
 | "deploy ให้หน่อย" | ask first | No target; production is never assumed |
