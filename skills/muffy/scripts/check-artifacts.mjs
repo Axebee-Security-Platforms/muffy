@@ -7,12 +7,14 @@
 //   every AC id in ac.md appears in contract.md or a file under contract/ (when ac.md and contract.md exist);
 //   contract.md: the ## Cost summary starts with `Budget: none|within|over|unknown|unlimited` (over/unknown name a cheaper option);
 //   the Stack's `Platform:` is web|mobile|desktop|cli, and cli has contract/cli.md;
+//   contract/ownership.md: every row has one owner (FE, BE or devops) and no two owners' patterns overlap;
 //   deploy.md: ## Chosen infra, ## Infra cost, ## Practices and ## Risks exist, ## Infra options only when the checkpoint says `infra: propose`,
 //   and every `gap (<risk>)` under Practices appears under Risks.
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { loadExtensions } from './repo-facts.mjs';
+import { parseOwnership, ownershipErrors } from './ownership.mjs';
 
 const MAIN_MAX = 60;
 const PART_MAX = 120;
@@ -68,6 +70,8 @@ function checkContract(taskDir, errors) {
     else if (/^(over|unknown)$/i.test(m[1]) && !/cheaper/i.test(first)) errors.push(`contract.md ## Cost says Budget: ${m[1].toLowerCase()} but names no cheaper option`);
   }
   const contractDir = join(taskDir, 'contract');
+  const ownershipPath = join(contractDir, 'ownership.md');
+  if (existsSync(ownershipPath)) errors.push(...ownershipErrors(parseOwnership(readFileSync(ownershipPath, 'utf8'))));
   const all = [contract, ...(existsSync(contractDir) ? walk(contractDir).map((p) => readFileSync(p, 'utf8')) : [])].join('\n');
   const platform = all.match(/\bPlatform:\s*([A-Za-z-]+)/)?.[1]?.toLowerCase();
   if (platform) {
