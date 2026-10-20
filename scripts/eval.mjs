@@ -15,6 +15,7 @@ import { runFixLaneEvals } from './lib/fix-lane-evals.mjs';
 import { runOwnershipEvals } from './lib/ownership-evals.mjs';
 import { runLiteLaneEvals } from './lib/lite-lane-evals.mjs';
 import { runPendingEvals } from './lib/pending-evals.mjs';
+import { runRouteEvals } from './lib/route-evals.mjs';
 import { chooseEffort, defaultEffort, PROTECTED_ROLES, STALLED_AFTER } from './lib/effort-sim.mjs';
 import { smokeRequired, SMOKE_TRIGGERS } from './lib/smoke-sim.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
@@ -815,6 +816,9 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
 runFixLaneEvals({ check, root });
 runOwnershipEvals({ check, root });
 runLiteLaneEvals({ check, root });
+
+/* 8b. routing (references/route.md): decision order, Examples table, intake rows */
+runRouteEvals({ check, root });
 
 /* 9. analyze mode (references/analyze.md): pending-work scan, privacy filters */
 runPendingEvals({ check, root });

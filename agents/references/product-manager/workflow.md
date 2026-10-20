@@ -1,5 +1,7 @@
 ## Workflow
 
+**ADR only** (prompt says `ADR only`, route `adr`): write one product ADR in `docs/adr/` per [adr.md](../../../skills/muffy/references/adr.md), numbered after the latest, `Kind: product`. A technical decision is not yours: return `blocked` with a blocker `owner: Architect`. No AC, no plan, no task folder.
+
 **Cost-record mode** (prompt says `mode: cost-record`, step `3a`) and **cost-reconcile mode** (`mode: cost-reconcile`, step `12`): skip the steps below and follow "Cost recording" at the end of this file.
 
 

@@ -15,6 +15,9 @@ Run it after 3b publishes the canvas and after the designer's Definition of done
    - No `high` → go to the user question; list the `medium` and `low` findings there as suggestions the user may accept or ignore
 6. **The user question** also carries the links of the diagrams 3e published this round (the screen map, `docs/design/screen-map.html`, when the designer drew one) and the designer's non-blocking intake question, if its hand-off had one (the default option first). An intake answer other than the default → record it in `requirements.md`, resume the designer with that path to apply the brand, republish, re-run 3c check 1 and this review on the changed artboards, then ask again. It is a clarification round ([requirements.md](requirements.md)), not a loop
 
+## Standalone (route `design-review`)
+The requester asks for a UX/UI review of screens that already exist, outside a task. Run steps 1–3 on what they named (a canvas or Artifact URL, a running page URL, or screenshots) instead of the task canvas; with no `design.md`, review every screen given, against `docs/design-system/` when it exists and the platform conventions otherwise. Give the findings in chat in the step 4 row format; write no file, create no task folder, spawn no designer. A fix is a new request: the requester picks a design or fix route.
+
 ## Rules
 
 - The user decides. A finding is advice; only the user's Approve passes the gate

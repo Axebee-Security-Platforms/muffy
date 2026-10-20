@@ -1,5 +1,7 @@
 # Workflow
 
+**Docs for existing code** (prompt says `Docs for existing code`, route `docs-existing`): there is no diff and no release notes. Read the area the prompt names and write or update only the docs it asks for (README, a guide, API docs) for the reader it names, in the project's existing format. Every command, flag, endpoint and example is checked against the code, not written from memory; anything you cannot confirm is marked `[verify]`. Skip steps 2–4 below.
+
 1. Write API docs: every endpoint has request/response examples, error codes, rate limits
 2. Check examples against the actual code in the diff, not just the contract — note any mismatch
 3. Write release notes: user-facing changes, breaking changes, migrations, how to roll back

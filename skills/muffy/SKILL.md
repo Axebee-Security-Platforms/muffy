@@ -2,16 +2,16 @@
 name: muffy
 display_name: Earl Grey
 description: >
-  Do not use for a question about the code, a one-line edit, or sequential iteration in the main session.
-  Run a hub-and-spoke subagent team (main session = Orchestrator) from research to
-  deploy. Use to build a feature end to end with parallel agents, or `/muffy fix` for a small bug or
-  cosmetic fix. Also use when the user reports a bug with a symptom, error or broken behaviour ("found a bug",
-  "it errors", "this is broken", "fix this", เจอบั๊ก, พัง): the Orchestrator triages it into the fix lane or asks one
-  question first. `/muffy lite`: internal API, refactor, perf, migration. Also use to resume
-  work (`/muffy resume`, "continue", ทำต่อ), `/muffy analyze` for unfinished work, and
-  `/muffy diagram "<request>"` for a standalone architecture, state, deployment, ERD, flow, screen-map, gantt or
-  story-map diagram outside a running task. Also use for any other build, design, spec, plan, research, review, test, deploy
-  or docs request (ออกแบบ, รีวิว, วางแผน, วิจัย, ทดสอบ, deploy, ทำเอกสาร): it runs the smallest route.
+  Run a subagent team (main session = Orchestrator) from research to deploy, on the smallest route.
+  Use to build a feature end to end (ทำฟีเจอร์, สร้างระบบ); for a bug report
+  with a symptom or error ("found a bug", "it errors", "this is broken", เจอบั๊ก, พัง, error) via the fix lane
+  (`/muffy fix`); for an internal API, refactor, measured perf fix or migration (`/muffy lite`, ทำให้เร็วขึ้น);
+  and for a single-step request: research or compare (วิจัย, เปรียบเทียบ), plan or user stories (วางแผน),
+  screens (ออกแบบหน้าจอ), API or schema (ออกแบบ API), a UX/UI review (รีวิวดีไซน์), an architecture or ADR review
+  or a new ADR, a code/PR review (รีวิว PR), tests (เขียนเทสต์), docs or README (ทำเอกสาร), deploy or rollback.
+  Also: resume work (`/muffy resume`, "continue", ทำต่อ), `/muffy analyze` for unfinished work, `/muffy onboard`,
+  `/muffy present` for a client deck (ทำสไลด์), `/muffy diagram` for a standalone diagram.
+  Not for a question about the code, a text-only one-line edit, or step-by-step work in the main session.
 ---
 
 # Muffy — Feature Development Team
