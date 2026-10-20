@@ -69,6 +69,7 @@
       "items": { "type": "string", "minLength": 3, "maxLength": 200 },
       "description": "Defaults the agent proceeded on without an answer; each is marked [assumed] in its deliverable"
     },
+    "contract_commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "frontend-dev / backend-dev step 4 (full flow and lite lane): the commit of contract.md + contract/ on feature/<task> the work was built against; check-ownership.mjs compares it with the latest before the step-5 merge" },
     "diagnosis": {
       "type": "object",
       "additionalProperties": false,
