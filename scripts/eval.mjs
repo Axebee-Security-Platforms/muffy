@@ -673,6 +673,16 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('write-scope: root files are still guarded by absolute and relative path', ws('frontend-dev', 'E:\\repo\\docs\\strategy.md') === 2 && ws('frontend-dev', './docs/strategy.md') === 2 && ws('product-manager', 'E:\\repo\\docs\\strategy.md') === 0);
   check('write-scope: a path outside the project root falls back to matching anywhere', ws('architect', 'E:\\other\\docs\\strategy.md') === 2);
   if (process.platform === 'win32' || process.platform === 'darwin') check('write-scope: Docs/Strategy.md is the same file on a case-insensitive file system', ws('frontend-dev', 'E:\\repo\\Docs\\Strategy.md') === 2 && ws('frontend-dev', 'e:\\REPO\\docs\\strategy.md') === 2);
+  // guard-git: subagents never change git config, remotes, hooks or .git/; the Orchestrator is never blocked
+  const gitBash = (agent_type, command, tool_name = 'Bash') => hook('guard-git.mjs', { tool_name, agent_type, tool_input: { command } });
+  const gitWrite = (agent_type, file_path) => hook('guard-git.mjs', { tool_name: 'Edit', agent_type, tool_input: { file_path } });
+  check('guard-git: config writes, -c overrides, remote changes and core.hooksPath are blocked for subagents',
+    ['git config core.hooksPath x', 'git config --global user.name bot', 'git -C .worktrees/be-x config remote.origin.url u', 'git -c commit.gpgsign=false commit -m x', 'git remote set-url origin https://evil', 'git remote add up u', 'git status && git config --unset core.bare'].every((c) => gitBash('backend-dev', c) === 2) && gitBash('devops', 'git config alias.x "!sh"', 'PowerShell') === 2);
+  check('guard-git: git reads and everyday commands pass',
+    ['git config --get remote.origin.url', 'git config --list', 'git remote -v', 'git remote get-url origin', 'git status', 'git commit -m "add .gitignore"', 'cp .gitignore .gitignore.bak', 'cat .git/HEAD', 'git log --oneline -5'].every((c) => gitBash('backend-dev', c) === 0));
+  check('guard-git: writes into .git/ by tool or shell are blocked, .github/ is not', gitWrite('frontend-dev', 'E:\\repo\\.git\\config') === 2 && gitWrite('qa-tester', '.worktrees/qa-x/.git') === 2 && gitWrite('devops', '.github/workflows/ci.yml') === 0 && gitBash('devops', 'echo "#!/bin/sh" > .git/hooks/pre-push') === 2 && gitBash('backend-dev', 'rm -rf .git/hooks') === 2 && gitBash('backend-dev', 'Set-Content .git\\config x', 'PowerShell') === 2);
+  check('guard-git: the Orchestrator (no agent_type) is never blocked', gitBash(undefined, 'git remote set-url origin u') === 0 && gitWrite(undefined, '.git/config') === 0);
+  check('install: the git guard is installed with --with-guard and documented in §13', readFileSync(rel('install.mjs'), 'utf8').includes("'guard-git.mjs', matcher: 'Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit'") && /^## 13\. Git setup/m.test(readFileSync(rel('skills/muffy/references/hooks-enforcement.md'), 'utf8')));
   check('install: write-scope hook matches NotebookEdit, and an older narrower matcher is widened', readFileSync(rel('install.mjs'), 'utf8').includes("'guard-write-scope.mjs', matcher: 'Write|Edit|MultiEdit|NotebookEdit'") && readFileSync(rel('install.mjs'), 'utf8').includes('update matcher'));
 
   // check-baseline: code identifiers are not paths; prose numbers outside Stack/Runtime are not versions
