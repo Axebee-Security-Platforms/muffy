@@ -4,12 +4,13 @@ display_name: Earl Grey
 description: >
   Do not use for a question about the code, a one-line edit, or sequential iteration in the main session.
   Run a hub-and-spoke subagent team (main session = Orchestrator) from research to
-  deploy. Use when building a feature end to end with parallel agents, or `/muffy fix` for a small bug or
+  deploy. Use to build a feature end to end with parallel agents, or `/muffy fix` for a small bug or
   cosmetic fix. Also use when the user reports a bug with a symptom, error or broken behaviour ("found a bug",
   "it errors", "this is broken", "fix this", เจอบั๊ก, พัง): the Orchestrator triages it into the fix lane or asks one
-  question first. Also use to continue earlier work (`/muffy resume`, "continue", ทำต่อ). Also use `/muffy analyze` for a repo's unfinished work, and `/muffy diagram "<request>"` for a
-  standalone architecture, state, deployment, ERD, flow, screen-map, gantt or story-map diagram not tied to an
-  in-progress contract or fix. Also use for any other build, design, spec, plan, research, review, test, deploy
+  question first. `/muffy lite`: internal API, refactor, perf, migration. Also use to resume
+  work (`/muffy resume`, "continue", ทำต่อ), `/muffy analyze` for unfinished work, and
+  `/muffy diagram "<request>"` for a standalone architecture, state, deployment, ERD, flow, screen-map, gantt or
+  story-map diagram outside a running task. Also use for any other build, design, spec, plan, research, review, test, deploy
   or docs request (ออกแบบ, รีวิว, วางแผน, วิจัย, ทดสอบ, deploy, ทำเอกสาร): it runs the smallest route.
 ---
 
@@ -37,7 +38,7 @@ Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Ana
 - **Present** — on demand, outside the team flow (`/muffy present "<request>"`): the product-manager writes the content as a solutions engineer, the designer builds the deck, the requester reviews it: [references/present.md](references/present.md); missing documents are requested from their owners: [references/doc-request.md](references/doc-request.md)
 - **Diagram** — on demand, outside the team flow (`/muffy diagram "<request>"`, or any standalone "draw/create a diagram" request not tied to an in-progress contract or fix): route the facts to the agent that owns that kind's domain (architect or product-manager), then always to `designer` to draw — never draw it yourself: [references/diagram.md](references/diagram.md)
 - **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
-- **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of Setup, Run profile and the full step list: [references/fix-profile.md](references/fix-profile.md)
+- **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of Setup, Run profile and the full step list: [references/fix-profile.md](references/fix-profile.md). Internal API, refactor, measured performance or reversible DB change with nothing a user sees (`/muffy lite`, or a request that passes its triage): use the lite lane, architect straight to build: [references/lite-profile.md](references/lite-profile.md)
 - **Steps 0–12** — agent, input and output per step: [references/steps.md](references/steps.md)
 - **Platforms** — web, mobile, desktop or CLI: who builds it, what design, smoke and staging mean, which toolchain the host needs, what only the user may do (sign, upload, publish). Read when the contract's Stack line has a `Platform:` other than `web`, or the request names an app or a CLI: [references/platforms.md](references/platforms.md)
 - **Publishing diagrams** — step 3e: validate, publish each diagram as an Artifact and record it in the task note: [references/diagram-publish.md](references/diagram-publish.md)

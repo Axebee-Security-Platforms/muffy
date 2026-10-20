@@ -16,7 +16,7 @@
 
 You have a feature to build and a Claude Code session. Ask the `muffy` skill to run it. The main session becomes the **Orchestrator** and starts specialist subagents in a fixed 12-step flow: research, product, design, architecture, devops, frontend, backend, review, QA, docs. Each step has an owner, its inputs, and a gate. Work moves as files in `.team/<task>/` plus a validated JSON hand-off, not as chat summaries.
 
-Small bugs and cosmetic fixes use a lighter [fix lane](#fix-lane) instead of the full flow.
+Small bugs and cosmetic fixes use a lighter [fix lane](#fix-lane) instead of the full flow; internal APIs, refactors and measured performance work use the [lite lane](#lite-lane).
 
 The flow replaces ad-hoc multi-agent prompts. Unreviewed code and lost hand-offs stop reaching `main`; a repeated failure stops after three fix loops and goes to you.
 
@@ -211,6 +211,19 @@ The Orchestrator skips steps the feature does not need (no UI change skips desig
 | 9, 10, 11 | `devops`, Human gate | Staging, your approval, production, as in the full flow |
 
 Research, product, design, architecture, docs and step 8 are skipped. The cause may be unknown at the start: an `unknown` diagnosis asks you for more evidence once, then escalates. A diagnosis that finds the cause in the contract, a dependency or the stack (`needs-full-flow`), or a fix that touches more than 5 source files, is promoted to the full flow.
+
+### Lite lane
+
+`/muffy lite <description>` is for internal work whose shape you already know: an internal API, a refactor, a measured performance fix, an index or a reversible migration. The triage needs all of: a goal and a named area (and a measured before-number for performance work), nothing a user or outside caller sees changes, no new dependency or stack change, no auth or personal-data change, no migration that drops data, and at most 15 source files. Otherwise it runs the full flow. Examples are in [lite-profile](skills/muffy/references/lite-profile.md#examples).
+
+| Step | Owner | What happens |
+|---|---|---|
+| Setup-lite | Orchestrator | Writes `ac.md` (kind, owner, AC); one confirmation at `pause:scope` |
+| 3 | `architect` (+ `devops` for a migration) | Contract and cost verdict; `pause:budget` still applies |
+| 4–7 | devs, `code-reviewer`, `qa-tester` | As in the full flow; QA at L2 (L3 for an internal API with new AC) |
+| 9, 10, 11 | `devops`, Human gate | Staging, your approval, production |
+
+Research, product, design, docs and step 8 are skipped. If the architect or a dev reports a blocker owned by `Researcher`, `PM` or `Designer`, or the work passes 15 source files, the run is promoted to the full flow.
 
 ### Gates and pauses
 

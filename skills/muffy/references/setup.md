@@ -1,6 +1,6 @@
 # Setup
 
-Small bug or cosmetic fix (`/muffy fix`, or it passes the triage in [fix-profile.md](fix-profile.md)): follow the setup-lite in `fix-profile.md` instead of the steps below.
+Small bug or cosmetic fix (`/muffy fix`, or it passes the triage in [fix-profile.md](fix-profile.md)): follow the setup-lite in `fix-profile.md` instead of the steps. Internal work that passes the triage in [lite-profile.md](lite-profile.md) (`/muffy lite`) follows that file's setup-lite instead below.
 
 1. `<brain>` = `<vault>/Projects/<repo-name>/`, or `.team/brain/` when there is no vault; create `project.md`, `tasks/`, `agents/<role>/` (one per agent) if missing. The task's `.team/` folders come at step 7, inside the feature worktree
 2. Create `<brain>/tasks/<task>.md` (frontmatter `project`, `task`, `date`, `status` + `[[agents/<role>/<task>]]` links); add the task to `project.md` → `## Tasks` as `in progress`

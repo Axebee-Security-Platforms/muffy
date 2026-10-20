@@ -18,6 +18,7 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | Route | Must be known before spawning | Missing → ask |
 |---|---|---|
 | fix | symptom, plus a location or a way to reproduce | what happens, and where or how to trigger it |
+| lite | the goal, the named area (module, endpoint, table or query), and for performance work a measured before-number | the missing one, in one question |
 | full flow | the goal in one sentence and who it is for | requirements interview ([requirements.md](requirements.md)) |
 | research | the question and the decision it feeds | the decision |
 | plan | the goal and the stop point | the goal |
@@ -36,6 +37,7 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | A question about the code or the repo ("how does X work?") | none | main session answers, reading with Grep/Read | the answer. No muffy |
 | A one-line edit with no behaviour risk (typo, one line) | none | main session edits | the edit. No muffy |
 | A bug or cosmetic fix with a symptom | fix ([fix-profile.md](fix-profile.md)) | diagnose and fix (FE and/or BE), `code-reviewer`, `qa-tester`, `devops` staging | Human gate |
+| Internal work with a known shape: an internal API, a refactor, a measured performance fix, an index or reversible migration, nothing a user sees ("split this module", "add an index, p95 is 1.8 s") | lite ([lite-profile.md](lite-profile.md)) | `architect` (+ devops for a migration), frontend-dev ∥ backend-dev, code-reviewer, qa-tester, devops staging | Human gate, then production |
 | A new feature or behaviour change across UI, API or data, "build X" | full flow ([steps.md](steps.md), [run-profile.md](run-profile.md)) | researcher, product-manager, designer ∥ architect ∥ devops, frontend-dev ∥ backend-dev, code-reviewer, qa-tester ∥ docs-writer, devops | Human gate, then production |
 | Compare options, "what is the best library", "what do competitors do" | research | `researcher` (L0–L2 by the question's depth) | the research brief, in chat. Saved to `docs/research/<slug>.md` only if asked |
 | User stories, acceptance criteria, a phased plan, priorities | plan | `researcher` only if facts are missing, then `product-manager` | `ac.md` and the plan, for the requester to approve |
