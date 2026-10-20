@@ -18,17 +18,19 @@ Researcher (step 1), product-manager (step 2), architect (step 3, provider choic
 - A question already answered in `requirements.md`, the request, `baseline.md` or an ADR is never asked again. Orchestrator drops duplicates before asking
 - The user's answer overrides the agent's default. If an answer contradicts an accepted ADR, tell the user once and let them choose; a changed decision needs a new ADR from the owner of that ADR's kind (product-manager for product, architect for technical; [adr.md](adr.md))
 
-## What each agent asks
+## Who may ask, and when
 
-| Agent | Asks about | Examples |
-|---|---|---|
-| `researcher` | Context and constraints that change what to research | existing systems to integrate, stack or vendor limits, scale, compliance, budget, deadline, prior attempts, what "better" means |
-| `architect` | Which third-party provider to use, when a capability is better bought than built and the choice has a recurring cost, handles personal data or locks in ([third-party-providers.md](../../../agents/references/architect/third-party-providers.md)) | payments (Stripe vs Adyen vs build), auth (managed vs self-hosted), email, search, file storage |
-| `designer` | One question, only when the project has no design system and is not an internal tool: does the orderer have a brand or a reference? (default: no, use the starter). Asked on a `done` hand-off at `pause:design-review`; a second round of at most 4 questions only if the answer is yes. Never blocking ([design-system-intake.md](../../../agents/references/designer/design-system-intake.md)) | not yet, starter / yes, I will share it / pick a personality / resemble a product I describe |
-| `devops` | Where it runs, only when the user answered `infra: propose` and nothing already decides it: cloud, on-premises, hybrid or existing infrastructure, and which provider or hardware, with cost, operational load and data location ([infrastructure-options.md](../../../agents/references/devops/infrastructure-options.md)) | managed platform vs own servers, one cloud vs another, buy hardware vs colocation |
-| `product-manager` | Product decisions that change the AC or the plan | who the users are, the problem and success metric, MVP cut, priority of each need, edge-case behaviour, out-of-scope, non-functional targets |
+What each agent asks about lives in its own workflow; the Orchestrator only needs to know who may return `needs-input`, so it can tell a clarification round from a protocol error.
 
-The PM reads `requirements.md` and `brief.md` first and asks only what is still open. The researcher never decides requirements; its questions gather facts and constraints, and anything that is a product choice goes into the brief as an open question for the PM to ask.
+| Agent | Step | May return `needs-input` for | Its rules |
+|---|---|---|---|
+| `researcher` | 1 | context and constraints that change what to research (never product decisions: those go to the PM as open questions in the brief) | [workflow](../../../agents/references/researcher/workflow.md) step 1b |
+| `product-manager` | 2 | product decisions that change the AC or the plan | [workflow](../../../agents/references/product-manager/workflow.md) step 1b |
+| `architect` | 3 | a third-party provider choice only | [third-party-providers.md](../../../agents/references/architect/third-party-providers.md) |
+| `devops` | 3, mode 1 | the infrastructure choice, only when `infra: propose` | [infrastructure-options.md](../../../agents/references/devops/infrastructure-options.md) |
+| `designer` | 3 | never for the design-system intake (that is one non-blocking question on a `done` hand-off, asked at `pause:design-review`); only a Platform conflict between sources, or the intake's follow-up round when the user said they have a brand | [design-system-intake.md](../../../agents/references/designer/design-system-intake.md) |
+
+Outside the team flow, present mode and doc requests have their own `needs-input` rounds ([present.md](present.md), [doc-request.md](doc-request.md)).
 
 ## Question shape
 

@@ -32,6 +32,7 @@ Test files are code, so all work happens in a dedicated git worktree on the revi
 - [Output Format](references/qa-tester/output-format.md) - qa-report, brain note, final message
 - [Rules and Guardrails](references/qa-tester/rules-and-guardrails.md) - what not to edit, brain write rules
 - [Fix Profile](references/qa-tester/fix-profile.md) — test scope and manual AC rules for the fix lane
+- [Platform Runners](references/qa-tester/platform-runners.md) — test runner per platform for mobile, desktop and CLI
 - [Quality Checks](references/qa-tester/quality-checks.md) - pre-handoff verification list
 
 ## Load on demand
@@ -46,6 +47,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [output-format.md](references/qa-tester/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/qa-tester/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [fix-profile.md](references/qa-tester/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
+| [platform-runners.md](references/qa-tester/platform-runners.md) | Only when the contract's `Platform:` is not `web`, before running tests |
 | [when-to-use.md](references/qa-tester/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
 
 ## Final message style
@@ -54,5 +56,5 @@ The final message goes to the Orchestrator, not a person. Write it terse: fragme
 
 ## Hand-off block
 
-End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (7), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `verdict` (Pass | Fail) and `tests` {passed,total}; every bug is a blocker with a stable `id`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform.
+End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json`: `role`, `task`, `step` (7), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `verdict` (Pass | Fail) and `tests` {passed,total}; every bug is a blocker with a stable `id`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform. When your prompt's `Write:` line lists a hand-off file (`…/handoff/<step>-<role>-r<round>.json`), save the same JSON to that exact path (it sits under the feature worktree, so never rebuild it yourself) with the Write tool, forward slashes only (never a heredoc, `printf` or `echo`), and run `node .claude/skills/muffy/scripts/validate-handoff.mjs <file>` on it; fix and rewrite it until it passes. No hand-off file in `Write:` (present, diagram, doc request, chat-only routes) → the block in your final message is the hand-off; create no `.team/` folder.
 

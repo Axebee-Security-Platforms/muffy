@@ -1,6 +1,6 @@
 # Publishing diagrams (step 3e)
 
-The Orchestrator publishes every diagram `designer` drew or changed, so the user can open it, and records where it lives. Read this only when a hand-off's `paths_written` lists a diagram file; otherwise skip the step and write nothing about it. Who specs the facts, who draws, triggers and the file format are in [diagram-style.md](diagram-style.md) and the architect's `diagrams.md`.
+The Orchestrator publishes every diagram `designer` drew or changed, so the user can open it, and records where it lives. Read this only when a hand-off's `paths_written` lists a diagram file; otherwise skip the step and write nothing about it. Who specs the facts, who draws, triggers and the file format are in [diagram-style.md](../../../agents/references/shared/diagram-style.md) and the architect's `diagrams.md`.
 
 ## When it runs
 | Facts from | Drawn by | Files | Runs |

@@ -1,6 +1,6 @@
 ## Coding Practices
 
-Framework-neutral core. Also read the one stack file that matches the codebase. The `Platform:` on the contract's Stack line says whether this is web, mobile or desktop ([platforms.md](../../../skills/muffy/references/platforms.md)); the HTML, CSS and layout-shift bullets below are web rules, and a native stack file replaces them with its own. Detect from the manifest:
+Framework-neutral core. Also read the one stack file that matches the codebase. The `Platform:` on the contract's Stack line says whether this is web, mobile or desktop ([platforms.md](../../../skills/muffy/references/platforms.md)); the HTML, CSS and layout-shift bullets below are web rules, and a native stack file replaces them with its own. Outside the web, `tokens.css` and `var(--color-*)` do not apply: bind the same semantic tokens to the platform's theme layer (Flutter `ThemeData`, RN theme object, SwiftUI Asset colors, Compose `MaterialTheme`, a XAML `ResourceDictionary`, Electron CSS), and accessibility means the platform's own labels and roles (VoiceOver, TalkBack, UI Automation), dynamic type or font scaling, and touch targets of at least 44 pt / 48 dp. Detect from the manifest:
 - `pubspec.yaml` → [coding-practices-flutter.md](coding-practices-flutter.md)
 - `react-native` or `expo` in `package.json` → [coding-practices-react-native.md](coding-practices-react-native.md) (plus the React file)
 - `Package.swift` or `*.xcodeproj` / `*.xcworkspace` → [coding-practices-swift.md](coding-practices-swift.md) (iOS and Mac)
@@ -15,7 +15,7 @@ Framework-neutral core. Also read the one stack file that matches the codebase. 
 - `solid-js` or `@solidjs/start` → [coding-practices-solid.md](coding-practices-solid.md)
 - `astro` → [coding-practices-astro.md](coding-practices-astro.md) (plus the stack file of any framework used for its islands)
 - anything else (unknown framework), in this order, stop at the first step that gives enough to code correctly:
-  1. `docs/stacks/<framework>.md` exists → run `node .claude/skills/muffy/scripts/check-stack-notes.mjs <framework>`: `fresh` or `unchecked` → read it and treat it as the stack file; `stale` → treat it as missing (step 3, problem `stack-unknown: <framework> <version> (note is for <old>)`). The whole ladder is in [stack-learning.md](../../../skills/muffy/references/stack-learning.md)
+  1. `docs/stacks/<framework>.md` exists → run `node .claude/skills/muffy/scripts/check-stack-notes.mjs <framework>`: `fresh` or `unchecked` → read it and treat it as the stack file; `stale` → treat it as missing (step 3, problem `stack-unknown: <framework> <version> (note is for <old>)`). The whole ladder is in [stack-ladder.md](../shared/stack-ladder.md)
   2. Learn from local sources only, no web access: the version in the lockfile, the package's README/types in `node_modules`, existing code, `docs/architecture/baseline.md`. If the repo already has working examples of the idioms you need, follow them and say which stack you assumed
   3. Still unsure of idioms that change correctness (reactivity, routing, data loading, SSR) → don't guess: return `status: blocked` with a blocker `owner: Researcher`, problem `stack-unknown: <framework> <version>`, and stop. The Orchestrator gets a capped stack note written, then resumes you
 
