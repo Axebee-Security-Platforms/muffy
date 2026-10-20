@@ -673,6 +673,13 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('write-scope: root files are still guarded by absolute and relative path', ws('frontend-dev', 'E:\\repo\\docs\\strategy.md') === 2 && ws('frontend-dev', './docs/strategy.md') === 2 && ws('product-manager', 'E:\\repo\\docs\\strategy.md') === 0);
   check('write-scope: a path outside the project root falls back to matching anywhere', ws('architect', 'E:\\other\\docs\\strategy.md') === 2);
   if (process.platform === 'win32' || process.platform === 'darwin') check('write-scope: Docs/Strategy.md is the same file on a case-insensitive file system', ws('frontend-dev', 'E:\\repo\\Docs\\Strategy.md') === 2 && ws('frontend-dev', 'e:\\REPO\\docs\\strategy.md') === 2);
+  // guard-env: .env is never printed, including through inline interpreter code
+  const env = (command, tool_name = 'Bash') => hook('guard-env.mjs', { tool_name, tool_input: { command } });
+  check('guard-env: printing .env and an unquiet grep are blocked; a NAME= presence check passes', env('cat .env') === 2 && env('Get-Content .env.local', 'PowerShell') === 2 && env('grep API .env') === 2 && env("grep -q '^API_KEY=sk-' .env.local && echo present") === 0);
+  check('guard-env: inline code that names .env or dotenv is blocked',
+    [`node -e "console.log(require('fs').readFileSync('.env','utf8'))"`, `node -p "require('dotenv').config().parsed"`, `python3 -c "print(open('.env.local').read())"`, `python -c "from dotenv import dotenv_values; print(dotenv_values())"`, `ruby -e 'puts File.read(".env")'`, `perl -ne print .env`, `node --env-file=.env -e "console.log(process.env)"`, `python - <<'EOF'\nprint(open('.env').read())\nEOF`, `pwsh -Command "Get-Content .env"`].every((c) => env(c) === 2));
+  check('guard-env: inline code without .env, a script run with --env-file, and .env.example pass',
+    [`node -e "console.log(process.version)"`, `python -c "import sys; print(sys.version)"`, 'node --env-file=.env server.js', 'npm run migrate', `node -e "require('fs').readFileSync('.env.example','utf8')"`, 'python -m pytest tests/unit'].every((c) => env(c) === 0));
   // guard-git: subagents never change git config, remotes, hooks or .git/; the Orchestrator is never blocked
   const gitBash = (agent_type, command, tool_name = 'Bash') => hook('guard-git.mjs', { tool_name, agent_type, tool_input: { command } });
   const gitWrite = (agent_type, file_path) => hook('guard-git.mjs', { tool_name: 'Edit', agent_type, tool_input: { file_path } });

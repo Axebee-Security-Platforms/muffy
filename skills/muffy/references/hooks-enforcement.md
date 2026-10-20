@@ -24,8 +24,9 @@ Enforced by a PreToolUse hook. The guard is [scripts/guard-env.mjs](../scripts/g
 - `Grep` on `.env*` in `content` mode (`files_with_matches` and `count` are allowed)
 - `Bash` / `PowerShell` that print an `.env*` file (`cat`, `Get-Content`, `type`, `<`, …), `findstr` over it, `grep`/`rg` over it without `-q`/`-c`/`-l`, `Select-String` over it without `-Quiet`/`-List`/`-Count`, or a search with no `NAME=` pattern
 - `echo`/`printf` of a secret-named variable (`$…KEY`, `TOKEN`, `SECRET`, `PASSWORD`)
+- Inline interpreter code that names `.env` or loads dotenv: `node -e|-p|--eval`, `bun`/`deno eval`, `python -c`, `perl`/`ruby -e`, `php -r`, `pwsh -Command`, or code fed on stdin (`python - <<EOF`, `node < x`). Running the project's own script (`node --env-file=.env server.js`, `npm run migrate`) is allowed
 
-Known limits: reads through `node -e`, `python -c` or .NET calls are not caught. Keep those out of agent prompts; the rule in §6 still applies.
+Known limits: a script file that reads `.env`, inline code that builds the path (`'.e'+'nv'`), and .NET calls are not caught. A hook is a tripwire for mistakes, not a sandbox; the rule in §6 still applies.
 
 Install (persistent config — the user approves it; never add it silently):
 ```json
