@@ -13,7 +13,7 @@ A request is a **fix** only if all hold; otherwise run the full flow:
 
 If the request says it is a bug or asks for a fix but gives no symptom and no location or repro, do not guess a lane and do not start the full flow: ask **one** `AskUserQuestion` for what happens (error text or wrong result), where (page, endpoint or file) and how to trigger it, then triage on the answer. The words "bug", "fix", "บั๊ก" or "แก้" never decide the lane on their own; the four conditions do.
 
-If one fails, say which in one line and run the full flow. Trivial edits with no behaviour risk (a typo, one line): do them in the main session, no muffy.
+If one fails, say which in one line and run the full flow. Internal work that is not a bug fix (an internal API, a refactor, a measured performance fix, an index) is triaged by [lite-profile.md](lite-profile.md) instead. Trivial edits with no behaviour risk (a typo, one line): do them in the main session, no muffy.
 
 ### Examples
 
