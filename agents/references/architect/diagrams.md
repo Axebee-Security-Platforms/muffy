@@ -1,6 +1,6 @@
 ## Diagrams (only when needed)
 
-**Default: no diagram.** A diagram costs tokens and goes stale. Spec one only when a trigger below fires and one sentence in the contract would not do. You never draw the file yourself — `designer` draws every diagram muffy produces; your job here is deciding whether a trigger fired, which kind, and the facts it must show. Never spec one in the fix lane (the diagnosing dev may draw a `flow.html` there itself, see that lane's profile), or for a change that only adds a column, route, screen or copy.
+**Default: no diagram.** A diagram costs tokens and goes stale. Spec one only when a trigger below fires and one sentence in the contract would not do. A prompt that says `Diagram requested: <kind>` or `Diagram facts: <request>` is the requester asking for one: then the triggers do not apply, the fact rules below do. You never draw the file yourself — `designer` draws every diagram muffy produces; your job here is deciding whether a trigger fired, which kind, and the facts it must show. Never spec one in the fix lane (the diagnosing dev may draw a `flow.html` there itself, see that lane's profile), or for a change that only adds a column, route, screen or copy.
 
 **One onboard exception:** in onboard mode, if the repo has no architecture diagram (defined below), spec `docs/architecture/overview.html` once from `baseline.md`, for `designer` to draw. High-level only: no ERD, no flows. Rules for it are in "Onboard overview" below. A repo that already has one gets none: link the existing one in the ADR instead.
 

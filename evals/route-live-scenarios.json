@@ -1,5 +1,5 @@
 {
- "about": "Held-out prompts for a live routing test. None may appear in route.md (an eval checks it). Run them blind: a subagent gets SKILL.md, route.md and the triage sections, never the expect values; then compare. Last runs 2026-10-20: h01-h25 25/25; after the diagram checks, h01-h28 28/28.",
+ "about": "Held-out prompts for a live routing test. None may appear in route.md (an eval checks it). Run them blind: a subagent gets SKILL.md, route.md and the triage sections, never the expect values; then compare. Last runs 2026-10-20: h01-h25 25/25; after the diagram checks, h01-h28 28/28; h29-h36 (non-ERD diagram kinds) 8/8.",
  "scenarios": [
   {
    "id": "h01",
@@ -140,6 +140,46 @@
    "id": "h28",
    "prompt": "ขอ state diagram ของ order ใน task checkout-v2 ที่ทีมกำลังทำ",
    "expect": "diagram-in-task"
+  },
+  {
+   "id": "h29",
+   "prompt": "วาด architecture overview ของระบบที่รันอยู่ตอนนี้ จาก repo นี้",
+   "expect": "diagram"
+  },
+  {
+   "id": "h30",
+   "prompt": "ขอ architecture diagram ของ microservice ใหม่ที่เรายังไม่ได้ออกแบบเลย",
+   "expect": "spec"
+  },
+  {
+   "id": "h31",
+   "prompt": "ทำ timeline gantt ให้ task mobile-app ที่กำลังทำอยู่",
+   "expect": "diagram-in-task"
+  },
+  {
+   "id": "h32",
+   "prompt": "วาด story map จาก roadmap ใน docs/plan/roadmap.md",
+   "expect": "diagram"
+  },
+  {
+   "id": "h33",
+   "prompt": "อยากได้ story map ของไอเดีย marketplace ที่ยังไม่ได้คุยเรื่อง scope กันเลย",
+   "expect": "plan"
+  },
+  {
+   "id": "h34",
+   "prompt": "วาด screen map ของเว็บเราตอนนี้ทั้งหมด",
+   "expect": "diagram"
+  },
+  {
+   "id": "h35",
+   "prompt": "ขอ state diagram ของสถานะ subscription ที่มีอยู่ในโค้ด",
+   "expect": "diagram"
+  },
+  {
+   "id": "h36",
+   "prompt": "วาด deployment ของระบบใหม่ที่จะย้ายไป Kubernetes ซึ่งยังไม่ได้ออกแบบ",
+   "expect": "spec"
   }
  ]
 }

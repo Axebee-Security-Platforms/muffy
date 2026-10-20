@@ -1,6 +1,6 @@
 ## Product structure and navigation (only when needed)
 
-**Default: no screen map.** The task's user flow and artboards already show how one feature moves. Make the product's structure explicit only when a trigger below fires and a few lines in `design.md` would not do.
+**Default: no screen map.** The task's user flow and artboards already show how one feature moves. Make the product's structure explicit only when a trigger below fires and a few lines in `design.md` would not do, or when your prompt says `Diagram requested: screenmap` (the requester asked for it): then the triggers do not apply, the rest of this file does.
 
 ### When it is necessary
 - The product has, or this task creates, **5 or more screens or destinations**, and the task adds, removes or moves one
