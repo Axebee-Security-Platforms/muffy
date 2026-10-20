@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // PreToolUse guard: blocks reading the contents of .env* files (references/hooks-enforcement.md §6).
 // Hook JSON arrives on stdin. Exit 2 = block (stderr is shown to the agent), 0 = allow.
-// Known limits: reads done through `node -e`, `python -c` or .NET calls are not caught.
+// Inline code (`node -e`, `python -c`, `pwsh -Command`, a heredoc on stdin, …) that names .env or dotenv is blocked.
+// Known limits: a script file that reads .env, inline code that builds the path (`'.e'+'nv'`), and .NET calls are not caught.
 import { readFileSync } from 'node:fs';
 
 const SAFE = /\.env\.(example|template|sample)$/i;
@@ -15,7 +16,10 @@ const FINDSTR = /(^|[\s;&|(])findstr(\s|$)/i;
 // grep/rg are quiet only with -q, -c, -l (or long forms): they never print matching lines
 const GREP_QUIET = /(^|\s)-[A-Za-z]*[qcl][A-Za-z]*(?=\s|$)|--quiet|--count|--files-with-matches/;
 const PS_QUIET = /\s-(Quiet|List|Count)\b/i;
-const MENTIONS_ENV = /(^|[\s'"=\\/])\.env(\.[\w.-]+)?(?=$|[\s'"|;&)])/;
+const MENTIONS_ENV = /(^|[\s'"=\\/(])\.env(\.[\w.-]+)?(?=$|[\s'"|;&)`,])/;
+// an interpreter running code given on the command line or on stdin, not a script file
+const INLINE_CODE = /(^|[\s;&|(])((node|bun|deno)(\.exe)?\s+(\S+\s+)*?(-e|-p|--eval|--print|eval|-)(\s|$)|(python[\d.]*|py|perl|ruby)(\.exe)?\s+(\S+\s+)*?(-[A-Za-z]*[ceE]|-)(\s|$)|php(\.exe)?\s+(\S+\s+)*?-r(\s|$)|(pwsh|powershell)(\.exe)?\s+(\S+\s+)*?-(c|command|e|encodedcommand)(\s|$)|(node|bun|deno|python[\d.]*|py|perl|ruby|php)(\.exe)?\s*<)/i;
+const DOTENV = /dotenv|load_dotenv|Dotenv::load|--env-file/i;
 
 const block = (why) => {
   console.error(`[muffy] blocked: ${why}. Check variables by name and prefix only (references/hooks-enforcement.md §6).`);
@@ -52,6 +56,7 @@ if (tool === 'Bash' || tool === 'PowerShell') {
   if (touchesEnv && GREP.test(cmd) && !(NAME_CHECK.test(cmd) && GREP_QUIET.test(cmd))) block('grep over .env needs a NAME= pattern and -q, -c or -l');
   if (touchesEnv && PS_SEARCH.test(cmd) && !(NAME_CHECK.test(cmd) && PS_QUIET.test(cmd))) block('Select-String over .env needs a NAME= pattern and -Quiet, -List or -Count');
   if (printsValue) block('command echoes a secret variable');
+  if (INLINE_CODE.test(cmd) && (touchesEnv || DOTENV.test(cmd))) block('inline code (node -e, python -c, …) that loads .env can print its values; run the project script that needs it instead');
 }
 
 process.exit(0);

@@ -15,6 +15,11 @@
 - Tests must check real behavior, not re-assert the implementation or mock until nothing is left to test; test names describe behavior
 - Reports and commit messages: short, direct, no self-praise, no filler, never claim "passing" without actually running it
 
+### Secrets
+- Never Read, grep or print a `.env*` file in full. Check a variable by name and prefix only (e.g. `grep -q '^DATABASE_URL=postgres' .env.local && echo present`)
+- Code that needs the env runs through a project script (`npm run db:seed`, `node --env-file=.env scripts/seed.js`), never inline `node -e` / `python -c` that loads `.env` or dotenv: the env guard blocks it ([hooks-enforcement.md](../../../skills/muffy/references/hooks-enforcement.md) §6). No script for it → add one to the repo that never prints a value; don't work around the guard
+- A key that shows up in output → report it to the Orchestrator as a rotate item
+
 ### Don't
 - Edit files FE owns or change the contract yourself — tell the Orchestrator instead
 - Use real secrets in tests

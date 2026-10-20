@@ -504,6 +504,18 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later · budget: ok', 'infra: maybe · budget: fine · diagrams: 2 published'));
   const bad = checkpoint(d);
   check('check-checkpoint: unknown infra and budget values fail, a valid diagrams item passes', bad.some((e) => e.includes('infra: maybe')) && bad.some((e) => e.includes('budget: fine')) && !bad.some((e) => e.includes('diagrams')), bad.join('; '));
+  const spawnLine = (step, agent, note) => [step, agent, 'sonnet', 'low', '1', 'pass', '0', note].join('\t');
+  d = copy(); writeFileSync(join(d, 'spawns.tsv'), `${[spawnLine('1', 'researcher', 'L2 brief tok:95290'), spawnLine('2', 'product-manager', '22 AC tok:n/a')].join('\n')}\n`);
+  const tokOk = checkpoint(d);
+  writeFileSync(join(d, 'spawns.tsv'), `${spawnLine('1', 'researcher', 'L2 brief, 95k tokens')}\n`);
+  const tokMissing = checkpoint(d);
+  check('check-checkpoint: a spawn note must end with tok:<n> or tok:n/a', tokOk.length === 0 && tokMissing.some((e) => e.includes('tok:<n>')), [...tokOk, ...tokMissing].join('; '));
+  writeFileSync(join(d, 'spawns.tsv'), `${['1', '2', '3'].map((s, i) => spawnLine(s, 'architect', i ? 'contract tok:n/a' : 'contract tok:4100')).join('\n')}\n`);
+  const open = checkpoint(d);
+  patch(d, 'checkpoint.md', (t) => t.replace('Step 6 approved.', 'Step 12 closed.'));
+  const closed = checkpoint(d);
+  writeFileSync(join(d, 'spawns.tsv'), `${['1', '2', '3'].map((s, i) => spawnLine(s, 'architect', i === 2 ? 'contract tok:n/a' : 'contract tok:4100')).join('\n')}\n`);
+  check('check-checkpoint: tok:n/a on most spawns fails only once the task is closed', open.length === 0 && closed.some((e) => e.includes('2 of 3')) && checkpoint(d).length === 0, [...open, ...closed].join('; '));
   const pre = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/devops-preflight.mjs'), ...a], { cwd: tmp, encoding: 'utf8' });
   check('preflight: --toolchain node passes with no .nvmrc (a non-Node repo), a wrong version fails, an unknown name is a usage error', pre('--toolchain', 'node').status === 0 && pre('--toolchain', 'node=0.0.1').status === 1 && pre('--toolchain', 'toaster').status === 2 && pre().status === 1);
   rmSync(tmp, { recursive: true, force: true });
@@ -661,6 +673,25 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('write-scope: root files are still guarded by absolute and relative path', ws('frontend-dev', 'E:\\repo\\docs\\strategy.md') === 2 && ws('frontend-dev', './docs/strategy.md') === 2 && ws('product-manager', 'E:\\repo\\docs\\strategy.md') === 0);
   check('write-scope: a path outside the project root falls back to matching anywhere', ws('architect', 'E:\\other\\docs\\strategy.md') === 2);
   if (process.platform === 'win32' || process.platform === 'darwin') check('write-scope: Docs/Strategy.md is the same file on a case-insensitive file system', ws('frontend-dev', 'E:\\repo\\Docs\\Strategy.md') === 2 && ws('frontend-dev', 'e:\\REPO\\docs\\strategy.md') === 2);
+  // guard-env: .env is never printed, including through inline interpreter code
+  const env = (command, tool_name = 'Bash') => hook('guard-env.mjs', { tool_name, tool_input: { command } });
+  check('guard-env: printing .env and an unquiet grep are blocked; a NAME= presence check passes', env('cat .env') === 2 && env('Get-Content .env.local', 'PowerShell') === 2 && env('grep API .env') === 2 && env("grep -q '^API_KEY=sk-' .env.local && echo present") === 0);
+  check('guard-env: inline code that names .env or dotenv is blocked',
+    [`node -e "console.log(require('fs').readFileSync('.env','utf8'))"`, `node -p "require('dotenv').config().parsed"`, `python3 -c "print(open('.env.local').read())"`, `python -c "from dotenv import dotenv_values; print(dotenv_values())"`, `ruby -e 'puts File.read(".env")'`, `perl -ne print .env`, `node --env-file=.env -e "console.log(process.env)"`, `python - <<'EOF'\nprint(open('.env').read())\nEOF`, `pwsh -Command "Get-Content .env"`].every((c) => env(c) === 2));
+  check('guard-env: inline code without .env, a script run with --env-file, and .env.example pass',
+    [`node -e "console.log(process.version)"`, `python -c "import sys; print(sys.version)"`, 'node --env-file=.env server.js', 'npm run migrate', `node -e "require('fs').readFileSync('.env.example','utf8')"`, 'python -m pytest tests/unit'].every((c) => env(c) === 0));
+  check('guard-env: every role with free Bash is told to run env-loading code through a project script, not inline',
+    ['backend-dev', 'frontend-dev', 'devops', 'qa-tester'].every((r) => { const t = readFileSync(rel(`agents/references/${r}/rules-and-guardrails.md`), 'utf8'); return t.includes('`.env*`') && /never inline `node -e`/.test(t) && t.includes('hooks-enforcement.md](../../../skills/muffy/references/hooks-enforcement.md) §6'); }));
+  // guard-git: subagents never change git config, remotes, hooks or .git/; the Orchestrator is never blocked
+  const gitBash = (agent_type, command, tool_name = 'Bash') => hook('guard-git.mjs', { tool_name, agent_type, tool_input: { command } });
+  const gitWrite = (agent_type, file_path) => hook('guard-git.mjs', { tool_name: 'Edit', agent_type, tool_input: { file_path } });
+  check('guard-git: config writes, -c overrides, remote changes and core.hooksPath are blocked for subagents',
+    ['git config core.hooksPath x', 'git config --global user.name bot', 'git -C .worktrees/be-x config remote.origin.url u', 'git -c commit.gpgsign=false commit -m x', 'git remote set-url origin https://evil', 'git remote add up u', 'git status && git config --unset core.bare'].every((c) => gitBash('backend-dev', c) === 2) && gitBash('devops', 'git config alias.x "!sh"', 'PowerShell') === 2);
+  check('guard-git: git reads and everyday commands pass',
+    ['git config --get remote.origin.url', 'git config --list', 'git remote -v', 'git remote get-url origin', 'git status', 'git commit -m "add .gitignore"', 'cp .gitignore .gitignore.bak', 'cat .git/HEAD', 'git log --oneline -5'].every((c) => gitBash('backend-dev', c) === 0));
+  check('guard-git: writes into .git/ by tool or shell are blocked, .github/ is not', gitWrite('frontend-dev', 'E:\\repo\\.git\\config') === 2 && gitWrite('qa-tester', '.worktrees/qa-x/.git') === 2 && gitWrite('devops', '.github/workflows/ci.yml') === 0 && gitBash('devops', 'echo "#!/bin/sh" > .git/hooks/pre-push') === 2 && gitBash('backend-dev', 'rm -rf .git/hooks') === 2 && gitBash('backend-dev', 'Set-Content .git\\config x', 'PowerShell') === 2);
+  check('guard-git: the Orchestrator (no agent_type) is never blocked', gitBash(undefined, 'git remote set-url origin u') === 0 && gitWrite(undefined, '.git/config') === 0);
+  check('install: the git guard is installed with --with-guard and documented in §13', readFileSync(rel('install.mjs'), 'utf8').includes("'guard-git.mjs', matcher: 'Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit'") && /^## 13\. Git setup/m.test(readFileSync(rel('skills/muffy/references/hooks-enforcement.md'), 'utf8')));
   check('install: write-scope hook matches NotebookEdit, and an older narrower matcher is widened', readFileSync(rel('install.mjs'), 'utf8').includes("'guard-write-scope.mjs', matcher: 'Write|Edit|MultiEdit|NotebookEdit'") && readFileSync(rel('install.mjs'), 'utf8').includes('update matcher'));
 
   // check-baseline: code identifiers are not paths; prose numbers outside Stack/Runtime are not versions
