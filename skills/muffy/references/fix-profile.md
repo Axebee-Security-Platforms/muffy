@@ -36,11 +36,15 @@ When the request is borderline (for example a bug plus "while you are there, als
 
 ## Setup-lite (replaces [setup.md](setup.md))
 
-1. Name the task `fix-<slug>`. Create `.team/<task>/`, `handoff/`, `rounds/` and the vault task note `<brain>/tasks/<task>.md`; add it to `project.md` → `## Tasks`. Read `project.md` Lessons and Open issues
-2. Write `.team/<task>/fix.md` (≤ 60 lines, below). The Orchestrator writes it from the request and a quick read of the named files; no agent is spawned for it
-3. `pause:scope`, shortened: one `AskUserQuestion` with the classification (bug or cosmetic), the owner (FE, BE or both), the AC list from `fix.md`, and out of scope. Staging: take `staging:` from `project.md` / the last checkpoint; ask only if never recorded
-4. Create one worktree per owner from `<base>` (the branch the fix merges into, recorded as `base:` in checkpoint `## Status`; ask in the `pause:scope` question when `main` and the current branch differ, never assume `main`): commit `fix.md` to `<base>` first, then `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> <base>`. qa gets one at step 7 as usual
-5. Write `checkpoint.md` with `## Run profile` = `fix: skipped 1, 2, 3, 3b, 3c, 3d, 8`
+1. Name the task `fix-<slug>`. Create the vault task note `<brain>/tasks/<task>.md`; add it to `project.md` → `## Tasks`. Read `project.md` Lessons and Open issues
+2. `pause:scope`, shortened, in one `AskUserQuestion` call of up to 4 questions (2–4 options each):
+   - **Kind + owner**: bug or cosmetic; FE, BE or both
+   - **AC + out of scope**: the AC list drafted from the request and a quick read of the named files, with out of scope. Confirm / Change it
+   - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
+   - **Staging** (only when `project.md` / the last checkpoint never recorded `staging:`)
+3. Create the feature worktree from `<base>`, which holds the team folder: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/fix.md` there (≤ 60 lines, below). The Orchestrator writes it from the same reads; no agent is spawned for it
+4. Commit `fix.md` to `feature/<task>` (never to `<base>`), then cut one worktree per owner from that commit: `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> feature/<task>`. qa gets one at step 7 as usual
+5. Write `checkpoint.md` in the feature worktree with `## Run profile` = `fix: skipped 1, 2, 3, 3b, 3c, 3d, 8`
 
 ## `fix.md`
 

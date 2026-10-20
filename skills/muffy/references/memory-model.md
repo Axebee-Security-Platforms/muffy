@@ -5,7 +5,7 @@ The repo wins over the vault: an ADR overrides a vault note.
 | Layer | Location | Holds |
 |---|---|---|
 | Source of truth | `docs/adr/`, `docs/plan/`, `docs/design-system/`, code | Decisions in force |
-| Working files | `.team/<task>/` (committed audit trail) | Hand-offs between agents, `handoff/*.json`, `checkpoint.md`, `requirements.md` (user's answers to agent questions, Orchestrator-written) |
+| Working files | `.team/<task>/` inside the feature worktree `.worktrees/feature-<task>/` (committed audit trail on `feature/<task>`, setup.md step 7; the main checkout has none) | Hand-offs between agents, `handoff/*.json`, `checkpoint.md`, `requirements.md` (user's answers to agent questions, Orchestrator-written) |
 | Second brain | `<brain>` = `<vault>/Projects/<repo-name>/`, or `.team/brain/` when `SECOND_BRAIN_VAULT` is unset | Notes, lessons, open issues |
 
 ```

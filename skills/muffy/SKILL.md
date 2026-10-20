@@ -2,21 +2,15 @@
 name: muffy
 display_name: Earl Grey
 description: >
-  Run a hub-and-spoke software development subagent team (main session = Orchestrator)
-  from research to deploy. Use when building a feature end to end with parallel agents,
-  or `/muffy fix` for a small bug or cosmetic fix (diagnose, fix, review, QA, staging). Also use when
-  the user reports a bug or asks for a fix with a symptom, error or broken behaviour in a codebase
-  ("found a bug", "it errors", "this is broken", "fix this", เจอบั๊ก, แก้ไขให้หน่อย, พัง, error): the
-  Orchestrator triages it into the fix lane or asks one question first. Also use to continue earlier
-  work in a new session (`/muffy resume`, "continue", "resume", ทำต่อ, ต่อจากเดิม): read the checkpoint, never start over.
-  Also use `/muffy analyze` to find a repo's unfinished work (branches, tracker items) before muffy takes over.
-  Also use `/muffy diagram "<request>"` for a standalone architecture, state, deployment, ERD, flow, screen-map,
-  gantt or story-map diagram request not tied to an in-progress contract or fix: muffy routes the facts to the
-  owning role and always has the designer draw it, instead of drawing it itself.
-  Also use for any other build, design, spec, plan, research, review, test, deploy or docs request in a codebase:
-  the Orchestrator reads the prompt's outcome and runs the smallest route that delivers it, one agent or the full flow
-  (ออกแบบ, รีวิว, วางแผน, วิจัย, ทดสอบ, deploy, ทำเอกสาร).
   Do not use for a question about the code, a one-line edit, or sequential iteration in the main session.
+  Run a hub-and-spoke subagent team (main session = Orchestrator) from research to
+  deploy. Use when building a feature end to end with parallel agents, or `/muffy fix` for a small bug or
+  cosmetic fix. Also use when the user reports a bug with a symptom, error or broken behaviour ("found a bug",
+  "it errors", "this is broken", "fix this", เจอบั๊ก, พัง): the Orchestrator triages it into the fix lane or asks one
+  question first. Also use to continue earlier work (`/muffy resume`, "continue", ทำต่อ). Also use `/muffy analyze` for a repo's unfinished work, and `/muffy diagram "<request>"` for a
+  standalone architecture, state, deployment, ERD, flow, screen-map, gantt or story-map diagram not tied to an
+  in-progress contract or fix. Also use for any other build, design, spec, plan, research, review, test, deploy
+  or docs request (ออกแบบ, รีวิว, วางแผน, วิจัย, ทดสอบ, deploy, ทำเอกสาร): it runs the smallest route.
 ---
 
 # Muffy — Feature Development Team
@@ -61,7 +55,7 @@ Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Ana
 
 ## Output Format
 
-- `.team/<task>/`: `brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `design-review-<n>.md` (UX/UI review at 3c), `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/` (only when a main file passes 60 lines), `contract/` (always: `contract.md` is an index), `handoff/<step>-<role>-r<round>.json`, `escalation-<n>.json` (only if a loop was cut off)
+- `.team/<task>/`: `brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `design-review-<n>.md` (UX/UI review at 3c), `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/` (only when a main file passes 60 lines), `contract/` (always: `contract.md` is an index), `handoff/<step>-<role>-r<round>.json`, `spawns.tsv` (one line per fresh spawn), `fix.md` (fix lane, instead of `ac.md`/`contract.md`/`design.md`), `test-level` (L0–L4, Orchestrator-written), `full-regression.approved` (only while a user-approved full run is in progress), `canvas/`, `diagrams/`, `escalation-<n>.json` (only if a loop was cut off)
 - Repo: `docs/plan/<task>.md`, `docs/adr/NNNN-*.md`, `docs/design-system/` (if changed), merged `feature/<task>`
 - Vault: `tasks/<task>.md`, consolidated `project.md`
 - Final message to the user: see `references/closing.md` step 5
@@ -80,7 +74,7 @@ Critical rules — Orchestrator rules 1–4 plus the opt-in hooks: [references/h
 - Never Read, grep or print `.env*` files in full; check that a variable exists and its prefix is right, by name only ([hooks-enforcement.md](references/hooks-enforcement.md) §6). A key shown or pasted in chat → rotate it; log the rotation in checkpoint `## Open blockers`
 - Every commit by every agent ends with the run's `Commit trailer`, passed in the prompt envelope. The Orchestrator copies it verbatim from the attribution line its harness provides; no model name is hard-coded in this skill. If the harness gives none, ask once at setup
 - Pauses are named (`pause:<id>`) and only the ones in [run-profile.md](references/run-profile.md); each records its resume condition in checkpoint `## Status`
-- Worktrees are created by the Orchestrator, never on the fly: ops at setup; fe/be from `ops/<task>` right after 3d passes; qa at step 7 ([setup.md](references/setup.md))
+- Worktrees are created by the Orchestrator, never on the fly: feature at setup; ops at 3d, cut from the planning commit on `feature/<task>`; fe/be from `ops/<task>` right after 3d passes (from `feature/<task>` when 3d is skipped); qa at step 7 ([setup.md](references/setup.md))
 
 ## Quality Checks
 

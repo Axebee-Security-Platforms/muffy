@@ -13,7 +13,7 @@
 // Known limits: a runner reached through a wrapper script the patterns don't know, `node -e`, or a filter
 // flag's value mistaken for a path (fails open). Only calls with agent_type qa-tester are checked.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve, sep } from 'node:path';
 import { parseSegment, splitCommand } from './test-runners.mjs';
 
 const block = (seg) => {
@@ -23,16 +23,25 @@ const block = (seg) => {
   process.exit(2);
 };
 
-const approved = (start) => {
+// Where the task's markers may live: each `.worktrees/feature-<name>/.team` (the authoritative copy, setup.md
+// step 7), then the main checkout's `.team`. A qa worktree's own `.team` is skipped: a committed copy there
+// can be stale.
+const teamDirs = (start) => {
+  const out = [];
   for (let dir = resolve(start); ; dir = dirname(dir)) {
-    const team = join(dir, '.team');
-    if (existsSync(team)) {
-      try {
-        for (const t of readdirSync(team)) if (existsSync(join(team, t, 'full-regression.approved'))) return true;
-      } catch { /* unreadable: treat as not approved */ }
-    }
-    if (dirname(dir) === dir) return false;
+    const wt = join(dir, '.worktrees');
+    if (existsSync(wt)) for (const w of readdirSync(wt)) if (w.startsWith('feature-')) out.push(join(wt, w, '.team'));
+    if (basename(dirname(dir)) !== '.worktrees') out.push(join(dir, '.team'));
+    if (dirname(dir) === dir) return out;
   }
+};
+
+// Approval belongs to one task: only a qa worktree named qa-<task> can use `.team/<task>/full-regression.approved`.
+// Another task's marker, or a cwd with no task name, does not unlock the full suite.
+const approved = (start) => {
+  const task = resolve(start).split(sep).map((p) => p.match(/^qa-(.+)$/)?.[1]).find(Boolean);
+  if (!task) return false;
+  return teamDirs(start).some((team) => existsSync(join(team, task, 'full-regression.approved')));
 };
 
 const extraPatterns = (start) => {

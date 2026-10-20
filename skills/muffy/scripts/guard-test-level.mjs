@@ -20,25 +20,37 @@ import { kindOf, parseSegment, splitCommand } from './test-runners.mjs';
 const TEST_FILE = /(\.(test|spec)\.[cm]?[jt]sx?$)|(^|[\\/])(__tests__|tests?)[\\/]|(^|[\\/])test_[^\\/]+\.py$|_test\.(go|py)$|(Test|Tests)\.(java|kt|cs)$|_spec\.rb$/i;
 const SUITE_PATH = /(^|[\\/])(e2e|integration|playwright|cypress)([\\/]|\.|-|$)|(playwright|cypress|vitest\.e2e)\.config\./i;
 
+// Where the task's markers may live: each `.worktrees/feature-<name>/.team` (the authoritative copy, setup.md
+// step 7), then the main checkout's `.team`. A qa worktree's own `.team` is skipped: a committed copy there
+// can be stale.
+const teamDirs = (start) => {
+  const out = [];
+  for (let dir = resolve(start); ; dir = dirname(dir)) {
+    const wt = join(dir, '.worktrees');
+    if (existsSync(wt)) for (const w of readdirSync(wt)) if (w.startsWith('feature-')) out.push(join(wt, w, '.team'));
+    if (basename(dirname(dir)) !== '.worktrees') out.push(join(dir, '.team'));
+    if (dirname(dir) === dir) return out;
+  }
+};
+
 const level = (start) => {
   const rank = (l) => Number(String(l).trim().replace(/^L/i, ''));
   const resolved = resolve(start);
   const fromWorktree = resolved.split(sep).map((p) => p.match(/^qa-(.+)$/)?.[1]).find(Boolean);
-  for (let dir = resolved; ; dir = dirname(dir)) {
-    const team = join(dir, '.team');
-    if (existsSync(team)) {
-      try {
-        const files = readdirSync(team)
-          .filter((t) => existsSync(join(team, t, 'test-level')))
-          .map((t) => [t, readFileSync(join(team, t, 'test-level'), 'utf8').trim()]);
-        const own = files.find(([t]) => t === fromWorktree);
-        const pick = own ? [own] : files;
-        const ranks = pick.map(([, l]) => rank(l)).filter((n) => n >= 0 && n <= 4);
-        if (ranks.length) return Math.min(...ranks);
-      } catch { /* unreadable: no ceiling */ }
-    }
-    if (dirname(dir) === dir) return null;
+  // The first team with a level for this task wins: the feature worktree's copy comes before the main checkout's.
+  for (const team of teamDirs(start)) {
+    if (!existsSync(team)) continue;
+    try {
+      const files = readdirSync(team)
+        .filter((t) => existsSync(join(team, t, 'test-level')))
+        .map((t) => [t, readFileSync(join(team, t, 'test-level'), 'utf8').trim()]);
+      const own = files.find(([t]) => t === fromWorktree);
+      const pick = own ? [own] : files;
+      const ranks = pick.map(([, l]) => rank(l)).filter((n) => n >= 0 && n <= 4);
+      if (ranks.length) return Math.min(...ranks);
+    } catch { /* unreadable: no ceiling */ }
   }
+  return null;
 };
 
 const block = (why, lvl) => {

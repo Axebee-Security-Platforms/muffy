@@ -1,6 +1,6 @@
 # Token discipline
 
-- **Prompt template** — every subagent prompt is only this, no pasted file contents (parsed shape: [prompt-envelope.schema.json](../schemas/prompt-envelope.schema.json)):
+- **Prompt template** — every subagent prompt is only this, no pasted file contents (parsed shape: [prompt-envelope.schema.json](../schemas/prompt-envelope.schema.json)). Team-folder paths in `Read:` and `Write:` go under the feature worktree (`.worktrees/feature-<task>/.team/<task>/…`), never bare `.team/<task>/…`, which resolves in the main checkout:
   ```
   Goal: <one line>
   Done when: <one observable result that ends this step, e.g. "handoff validates and every AC-n in ac.md is listed">

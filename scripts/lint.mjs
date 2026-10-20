@@ -2,7 +2,7 @@
 // Prompt & link linter for agents/ and skills/. Zero dependencies.
 //   node scripts/lint.mjs
 // Rules (each failure prints file + rule):
-//   frontmatter   agents/*.md and skills/*/SKILL.md have name/description (+ tools/model for agents)
+//   frontmatter   agents/*.md and skills/*/SKILL.md have name/description (+ tools/model for agents); SKILL description ≤ 1024 chars
 //   model         only haiku or sonnet (token-discipline.md forbids opus/fable)
 //   effort        optional; only low, medium or high
 //   links         every relative markdown link and `references/...` path resolves
@@ -93,6 +93,7 @@ for (const s of skillDirs) {
   const fm = frontmatter(txt);
   if (!fm?.name || !fm?.description) fail(file, 'frontmatter', 'needs name and description');
   else if (fm.name !== s) fail(file, 'frontmatter', `name "${fm.name}" != folder "${s}"`);
+  if (fm?.description && fm.description.length > 1024) fail(file, 'frontmatter', `description is ${fm.description.length} chars (limit 1024)`);
   for (const h of ['## Purpose', '## Inputs', '## Workflow', '## Output Format', '## Rules and Guardrails', '## Quality Checks']) if (!txt.includes(h)) fail(file, 'structure', `missing section "${h}"`);
   const refDir = join(root, 'skills', s, 'references');
   if (existsSync(refDir)) for (const r of readdirSync(refDir)) if (!txt.includes(`references/${r}`) && !walk(refDir).some((p) => p !== join(refDir, r) && readFileSync(p, 'utf8').includes(r))) fail(join(refDir, r), 'references', 'not linked from SKILL.md or any sibling reference (orphan)');
