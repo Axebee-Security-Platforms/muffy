@@ -17,6 +17,7 @@ export const GATED_STEPS = ['3c', '3d']; // must pass before step 4; 3c passes o
 export const NEVER_SKIP = ['6', '7', '9', '10'];
 export const FIX_NEVER_SKIP = ['4a']; // fix lane (references/fix-profile.md): diagnose before any code
 export const FIX_MAX_FILES = 5; // source files (tests and .team/ excluded) before a fix is promoted to the full flow
+export const LITE_MAX_FILES = 15; // same count for the lite lane (references/lite-profile.md)
 const isSource = (p) => !/(^|[\\/])\.team[\\/]/.test(p) && !/(^|[\\/])(tests?|__tests__)[\\/]|\.(test|spec)\.[a-z]+$/i.test(p);
 
 const REJECTING = new Set(['Reject', 'Fail']);

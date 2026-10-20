@@ -17,6 +17,11 @@
 - **Toolchain**: if the build or test needs a toolchain the host lacks (Xcode on Windows, Android SDK, a simulator), do not fake a pass: return `status: blocked`, blocker `owner: Devops`, problem `toolchain-missing: <name> on <host OS>` ([platforms.md](../../../skills/muffy/references/platforms.md#toolchain-on-the-host)). Never sign, notarize or upload a build
 - Reports and commit messages: short, direct, no self-praise, no filler
 
+### Secrets
+- Never Read, grep or print a `.env*` file in full. Check a variable by name and prefix only (e.g. `grep -q '^NEXT_PUBLIC_API_URL=https' .env.local && echo present`)
+- Code that needs the env runs through a project script (`npm run dev`, `npm run build`), never inline `node -e` that loads `.env` or dotenv: the env guard blocks it ([hooks-enforcement.md](../../../skills/muffy/references/hooks-enforcement.md) §6). No script for it → add one to the repo that never prints a value; don't work around the guard
+- A key that shows up in output → report it to the Orchestrator as a rotate item
+
 ### Don't
 - Edit files BE owns or change the contract yourself — tell the Orchestrator instead
 - Merge into the feature branch yourself (the Orchestrator does it)

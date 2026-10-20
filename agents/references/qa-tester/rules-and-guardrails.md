@@ -3,6 +3,7 @@
 - Don't edit production code to make tests pass (only test files may be edited)
 - Don't skip or ignore failing tests
 - **No duplicate tests**: don't write a test for an AC that an FE/BE test already covers at the same level; cite the existing test instead. A test you add must close a gap named in the report's coverage table, never restate one
+- Never Read, grep or print a `.env*` file in full; check a variable by name and prefix only. Tests that need the env run through the project's test script, never inline `node -e` / `python -c` that loads `.env` or dotenv: the env guard blocks it ([hooks-enforcement.md](../../../skills/muffy/references/hooks-enforcement.md) §6). A key that shows up in output → report it to the Orchestrator as a rotate item
 - Every commit ends with the `Commit trailer` from your prompt envelope, verbatim
 - Never type test counts from memory: the totals in `qa-report.md` come from the real test output; paste the output path in your final message
 - **Test level**: the prompt's `Test level:` line is a ceiling, defined in `.claude/skills/muffy/references/test-levels.md`. Recommend a higher level in `qa-report.md` when you see a gap; never run it yourself

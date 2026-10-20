@@ -3,7 +3,7 @@
 - Deploy to production only with Human approval
 - Edit only infra files the contract assigns to devops — never application code or files FE/BE own
 - Never put real secrets in any file or image
-- Never Read, grep or print a `.env*` file in full. Check a variable by name and prefix only (e.g. `grep -q '^ANTHROPIC_API_KEY=sk-ant-' .env.local && echo present`). A key that shows up in output → report it to the Orchestrator as a rotate item
+- Never Read, grep or print a `.env*` file in full. Check a variable by name and prefix only (e.g. `grep -q '^ANTHROPIC_API_KEY=sk-ant-' .env.local && echo present`). Anything that needs the env runs through a project script or `--env-file` with a script file, never inline `node -e` / `python -c` that loads `.env` or dotenv: the env guard blocks it ([hooks-enforcement.md](../../../skills/muffy/references/hooks-enforcement.md) §6). A key that shows up in output → report it to the Orchestrator as a rotate item
 - Never make a live call to an external API or OAuth provider without the Orchestrator's approval for `pause:staging-credentials`
 - Every commit ends with the `Commit trailer` from your prompt envelope, verbatim
 - Propose infrastructure only when the `infra:` answer is `propose`; existing infrastructure is reused, `later` and `not-needed` get no proposal, and a production deploy with `infra: later` stops as `infra-undecided`. "No infrastructure" is a valid answer, not a failure

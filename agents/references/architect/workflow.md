@@ -2,6 +2,8 @@
 
 **Onboard mode** (prompt says `mode: onboard`): skip these steps. Follow [onboard.md](../../../skills/muffy/references/onboard.md) 0c: read `docs/architecture/baseline.md`, write `docs/adr/NNNN-existing-stack.md` (numbered after the latest; link existing ADRs instead of duplicating them), `docs/design-system/README.md` only when the prompt says the repo has a UI, and, only when the repo has no architecture diagram at all ([diagrams.md](diagrams.md), "Onboard overview"), a `diagrams_spec` entry for a high-level `docs/architecture/overview.html` — `designer` draws it at 0c', not you. Record what exists; recommend nothing. No `contract.md`.
 
+**Lite profile** (prompt says `Profile: lite`): there is no `brief.md` and no `design.md`; `ac.md` was written by the Orchestrator and names `Kind:` and `Owner:`. Write the contract as in normal mode below, for the owners named only. If the work needs something this lane skips, do not design around it: hand off `status: blocked` with one blocker whose `owner` says who is missing (`Researcher` for a new dependency, provider or stack fact; `PM` for a change users or outside callers see, or auth, permissions or personal data; `Designer` for a screen, flow or component) and whose `problem` names the AC. The Orchestrator promotes the task to the full flow ([lite-profile.md](../../../skills/muffy/references/lite-profile.md#promote-to-the-full-flow)).
+
 **Normal mode:** if the prompt gives a `baseline.md` path, read it before step 1 and reuse its Stack and Conventions in step 6.
 
 1. Read the existing code structure; reuse existing patterns

@@ -1,6 +1,6 @@
 # Hooks Enforcement for Team Flow
 
-Rules 1–4 are **Orchestrator rules**, not hooks: Claude Code has no merge, commit or push hook event, so the Orchestrator checks them itself before each merge, commit and push. Rules 6–11 are real `PreToolUse` / `PostToolUse` hooks in `.claude/settings.local.json`. There is no rule 5.
+Rules 1–4 are **Orchestrator rules**, not hooks: Claude Code has no merge, commit or push hook event, so the Orchestrator checks them itself before each merge, commit and push. Rules 6–13 are real `PreToolUse` / `PostToolUse` hooks in `.claude/settings.local.json`. There is no rule 5.
 
 ## 1. Merge — only the Orchestrator
 Only the Orchestrator merges branches and saves reviews as `review-<n>.md`. A subagent hand-off that reports a merge is reverted, and the agent gets its rule again.
@@ -24,8 +24,9 @@ Enforced by a PreToolUse hook. The guard is [scripts/guard-env.mjs](../scripts/g
 - `Grep` on `.env*` in `content` mode (`files_with_matches` and `count` are allowed)
 - `Bash` / `PowerShell` that print an `.env*` file (`cat`, `Get-Content`, `type`, `<`, …), `findstr` over it, `grep`/`rg` over it without `-q`/`-c`/`-l`, `Select-String` over it without `-Quiet`/`-List`/`-Count`, or a search with no `NAME=` pattern
 - `echo`/`printf` of a secret-named variable (`$…KEY`, `TOKEN`, `SECRET`, `PASSWORD`)
+- Inline interpreter code that names `.env` or loads dotenv: `node -e|-p|--eval`, `bun`/`deno eval`, `python -c`, `perl`/`ruby -e`, `php -r`, `pwsh -Command`, or code fed on stdin (`python - <<EOF`, `node < x`). Running the project's own script (`node --env-file=.env server.js`, `npm run migrate`) is allowed
 
-Known limits: reads through `node -e`, `python -c` or .NET calls are not caught. Keep those out of agent prompts; the rule in §6 still applies.
+Known limits: a script file that reads `.env`, inline code that builds the path (`'.e'+'nv'`), and .NET calls are not caught. A hook is a tripwire for mistakes, not a sandbox; the rule in §6 still applies.
 
 Install (persistent config — the user approves it; never add it silently):
 ```json
@@ -91,6 +92,16 @@ Installed with the other guards by `install.mjs --with-guard`.
 ```json
 "PreToolUse": [
   { "matcher": "Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-write-scope.mjs" } ] }
+]
+```
+
+## 13. Git setup — only the Orchestrator
+**Rule:** no subagent changes git's own setup: git config (`git config` writes, `git -c`, `--config-env`), remotes (`git remote add|set-url|remove|rename|set-head|set-branches`), `core.hooksPath`, or any file inside `.git/` (including a worktree's `.git` file). Every worktree shares the repo's `.git/config` and hooks, so one agent's change reaches every branch and the Orchestrator's own pushes. An agent that needs one reports it in its hand-off. Enforced by [scripts/guard-git.mjs](../scripts/guard-git.mjs) (exit 2 = block); only calls with an `agent_type` are checked, so the Orchestrator's session is never blocked. Reads pass: `git config --get|--list`, `git remote -v`, `git remote get-url`.
+- **Known limits:** a write through `node -e`, a script file or a git alias is not seen. `git config <key>` with no flag is a read but is blocked (use `--get`), and a command that both names `.git/` and runs a writer (`tee`, `cp`, …) is blocked even when the writer targets another file
+Installed with the other guards by `install.mjs --with-guard`.
+```json
+"PreToolUse": [
+  { "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-git.mjs" } ] }
 ]
 ```
 
