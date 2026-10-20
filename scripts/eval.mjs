@@ -680,6 +680,8 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     [`node -e "console.log(require('fs').readFileSync('.env','utf8'))"`, `node -p "require('dotenv').config().parsed"`, `python3 -c "print(open('.env.local').read())"`, `python -c "from dotenv import dotenv_values; print(dotenv_values())"`, `ruby -e 'puts File.read(".env")'`, `perl -ne print .env`, `node --env-file=.env -e "console.log(process.env)"`, `python - <<'EOF'\nprint(open('.env').read())\nEOF`, `pwsh -Command "Get-Content .env"`].every((c) => env(c) === 2));
   check('guard-env: inline code without .env, a script run with --env-file, and .env.example pass',
     [`node -e "console.log(process.version)"`, `python -c "import sys; print(sys.version)"`, 'node --env-file=.env server.js', 'npm run migrate', `node -e "require('fs').readFileSync('.env.example','utf8')"`, 'python -m pytest tests/unit'].every((c) => env(c) === 0));
+  check('guard-env: every role with free Bash is told to run env-loading code through a project script, not inline',
+    ['backend-dev', 'frontend-dev', 'devops', 'qa-tester'].every((r) => { const t = readFileSync(rel(`agents/references/${r}/rules-and-guardrails.md`), 'utf8'); return t.includes('`.env*`') && /never inline `node -e`/.test(t) && t.includes('hooks-enforcement.md](../../../skills/muffy/references/hooks-enforcement.md) §6'); }));
   // guard-git: subagents never change git config, remotes, hooks or .git/; the Orchestrator is never blocked
   const gitBash = (agent_type, command, tool_name = 'Bash') => hook('guard-git.mjs', { tool_name, agent_type, tool_input: { command } });
   const gitWrite = (agent_type, file_path) => hook('guard-git.mjs', { tool_name: 'Edit', agent_type, tool_input: { file_path } });
