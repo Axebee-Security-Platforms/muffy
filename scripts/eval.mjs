@@ -201,7 +201,10 @@ for (const [key, kw] of Object.entries({ runtime_or_dependency_changed: 'lockfil
   check(`smoke-doc: run-profile.md documents trigger ${key}`, triggerLine.includes(kw), `missing "${kw}"`);
 }
 check('smoke-doc: every SMOKE_TRIGGERS key has a documented keyword', Object.keys(SMOKE_TRIGGERS).length === 4);
-check('smoke-doc: setup.md asks the staging question at pause:scope', /Staging: is there one/.test(readFileSync(rel('skills/muffy/references/setup.md'), 'utf8')));
+{
+  const scope = (readFileSync(rel('skills/muffy/references/setup.md'), 'utf8').match(/^5\. \*\*Confirm scope\*\* \(`pause:scope`\)[\s\S]*?(?=^\d+\. )/m) ?? [''])[0];
+  check('smoke-doc: setup.md asks the staging question at pause:scope', /\*\*Staging\*\*: yes \/ substitute[^\n]*\/ none/.test(scope) && /staging: <yes \| substitute/.test(scope), scope.slice(0, 80));
+}
 check('smoke-scenarios: every trigger has a positive scenario', Object.keys(SMOKE_TRIGGERS).every((k) => readJson(rel('evals/smoke-scenarios.json')).some((s) => s.signals[k] === true && s.expect === true)));
 
 /* 6. split-diff: topic split keeps every file once, bytes intact, tests with their source */
@@ -468,7 +471,14 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   rmSync(join(tmp, '.team', 'x', 'test-level'));
   check('guard-level: no level file means no ceiling', spawnSync('node', [rel('skills/muffy/scripts', L)], { input: JSON.stringify({ tool_name: 'Bash', agent_type: 'qa-tester', cwd: tmp, tool_input: { command: 'npx playwright test e2e/a.spec.ts' } }), encoding: 'utf8' }).status === 0);
   writeFileSync(join(tmp, '.team', 'x', 'full-regression.approved'), 'npm test 2026-01-01');
-  check('guard-regression: approval marker lets qa-tester run it', guard(F, 'qa-tester', 'npm test') === 0);
+  // approval is scoped to one task: only a qa worktree named qa-<task> may use that task's marker (guard-full-regression.mjs)
+  for (const w of ['qa-x', 'qa-y']) mkdirSync(join(tmp, '.worktrees', w), { recursive: true });
+  check('guard-regression: approval marker lets qa-tester run it from its own qa-<task> worktree', guard(F, 'qa-tester', 'npm test', join(tmp, '.worktrees', 'qa-x')) === 0);
+  check('guard-regression: the marker does not unlock another task or a cwd with no task name', guard(F, 'qa-tester', 'npm test', join(tmp, '.worktrees', 'qa-y')) === 2 && guard(F, 'qa-tester', 'npm test') === 2);
+  rmSync(join(tmp, '.team', 'x', 'full-regression.approved'));
+  mkdirSync(join(tmp, '.worktrees', 'feature-x', '.team', 'x'), { recursive: true });
+  writeFileSync(join(tmp, '.worktrees', 'feature-x', '.team', 'x', 'full-regression.approved'), 'npm test 2026-01-01');
+  check('guard-regression: a marker in the feature worktree (the authoritative .team) is found', guard(F, 'qa-tester', 'npm test', join(tmp, '.worktrees', 'qa-x')) === 0);
   rmSync(tmp, { recursive: true, force: true });
 }
 
