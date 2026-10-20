@@ -504,6 +504,18 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later · budget: ok', 'infra: maybe · budget: fine · diagrams: 2 published'));
   const bad = checkpoint(d);
   check('check-checkpoint: unknown infra and budget values fail, a valid diagrams item passes', bad.some((e) => e.includes('infra: maybe')) && bad.some((e) => e.includes('budget: fine')) && !bad.some((e) => e.includes('diagrams')), bad.join('; '));
+  const spawnLine = (step, agent, note) => [step, agent, 'sonnet', 'low', '1', 'pass', '0', note].join('\t');
+  d = copy(); writeFileSync(join(d, 'spawns.tsv'), `${[spawnLine('1', 'researcher', 'L2 brief tok:95290'), spawnLine('2', 'product-manager', '22 AC tok:n/a')].join('\n')}\n`);
+  const tokOk = checkpoint(d);
+  writeFileSync(join(d, 'spawns.tsv'), `${spawnLine('1', 'researcher', 'L2 brief, 95k tokens')}\n`);
+  const tokMissing = checkpoint(d);
+  check('check-checkpoint: a spawn note must end with tok:<n> or tok:n/a', tokOk.length === 0 && tokMissing.some((e) => e.includes('tok:<n>')), [...tokOk, ...tokMissing].join('; '));
+  writeFileSync(join(d, 'spawns.tsv'), `${['1', '2', '3'].map((s, i) => spawnLine(s, 'architect', i ? 'contract tok:n/a' : 'contract tok:4100')).join('\n')}\n`);
+  const open = checkpoint(d);
+  patch(d, 'checkpoint.md', (t) => t.replace('Step 6 approved.', 'Step 12 closed.'));
+  const closed = checkpoint(d);
+  writeFileSync(join(d, 'spawns.tsv'), `${['1', '2', '3'].map((s, i) => spawnLine(s, 'architect', i === 2 ? 'contract tok:n/a' : 'contract tok:4100')).join('\n')}\n`);
+  check('check-checkpoint: tok:n/a on most spawns fails only once the task is closed', open.length === 0 && closed.some((e) => e.includes('2 of 3')) && checkpoint(d).length === 0, [...open, ...closed].join('; '));
   const pre = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/devops-preflight.mjs'), ...a], { cwd: tmp, encoding: 'utf8' });
   check('preflight: --toolchain node passes with no .nvmrc (a non-Node repo), a wrong version fails, an unknown name is a usage error', pre('--toolchain', 'node').status === 0 && pre('--toolchain', 'node=0.0.1').status === 1 && pre('--toolchain', 'toaster').status === 2 && pre().status === 1);
   rmSync(tmp, { recursive: true, force: true });

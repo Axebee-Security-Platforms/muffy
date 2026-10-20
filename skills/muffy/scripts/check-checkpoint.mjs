@@ -3,7 +3,8 @@
 //        node check-checkpoint.mjs --hook   (PostToolUse: reads hook JSON on stdin)
 // Checks: checkpoint.md ≤ 40 lines (not counting ## Goal), rounds/*.md ≤ 100 lines,
 //         every [label] used has one definition, every definition is used, targets exist,
-//         spawns.tsv lines have 8 tab-separated columns and a pass|fail|blocked verdict,
+//         spawns.tsv lines have 8 tab-separated columns, a pass|fail|blocked verdict and a note ending in
+//         tok:<n> or tok:n/a (a closed task may not have n/a on more than half its spawns),
 //         and the ## Status items baseline:, infra:, budget:, diagrams: and cost-record: have a known value.
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -13,6 +14,7 @@ const CHECKPOINT_MAX = 40;
 const ROUND_MAX = 100;
 const SPAWN_COLS = 8; // step agent model effort round verdict reruns note
 const SPAWN_VERDICTS = new Set(['pass', 'fail', 'blocked']);
+const SPAWN_TOK = /(?:^|\s)tok:(\d+|n\/a)$/; // the note ends with the runtime's token count
 const DEF =/^\[([A-Za-z0-9.-]+)\]:\s*(\S+)\s*$/;
 const USE = /\[([A-Za-z0-9.-]+)\](?!\(|:)/g;
 
@@ -78,12 +80,22 @@ export function checkTask(taskDir) {
   }
   if (/\bclosed\b/.test(status) && !existsSync(spawnsPath)) errors.push('checkpoint is closed but spawns.tsv is missing (log every spawn; closing needs it for ## Usage and Lessons)');
   if (existsSync(spawnsPath)) {
+    let spawns = 0;
+    let unknown = 0;
     readFileSync(spawnsPath, 'utf8').split('\n').forEach((line, i) => {
       if (!line.trim()) return;
       const cols = line.split('\t');
-      if (cols.length !== SPAWN_COLS) errors.push(`spawns.tsv line ${i + 1} has ${cols.length} columns (need ${SPAWN_COLS})`);
-      else if (!SPAWN_VERDICTS.has(cols[5])) errors.push(`spawns.tsv line ${i + 1} verdict "${cols[5]}" is not pass|fail|blocked`);
+      if (cols.length !== SPAWN_COLS) return errors.push(`spawns.tsv line ${i + 1} has ${cols.length} columns (need ${SPAWN_COLS})`);
+      if (!SPAWN_VERDICTS.has(cols[5])) errors.push(`spawns.tsv line ${i + 1} verdict "${cols[5]}" is not pass|fail|blocked`);
+      const tok = cols[7].trim().match(SPAWN_TOK);
+      if (!tok) return errors.push(`spawns.tsv line ${i + 1} note does not end with tok:<n> or tok:n/a`);
+      spawns += 1;
+      if (tok[1] === 'n/a') unknown += 1;
     });
+    // n/a is only for a spawn the runtime gave no count for; a closed task where most are n/a was not copied
+    if (/\bclosed\b/.test(status) && unknown * 2 > spawns) {
+      errors.push(`spawns.tsv has tok:n/a on ${unknown} of ${spawns} spawns; copy the token count the runtime reported when each agent finished (n/a only when none was reported)`);
+    }
   }
   return errors;
 }
