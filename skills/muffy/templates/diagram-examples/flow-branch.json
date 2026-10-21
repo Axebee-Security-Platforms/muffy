@@ -1,0 +1,16 @@
+{
+  "kind": "flow",
+  "title": "Placing an order",
+  "subtitle": "What happens after Pay is pressed, depending on whether the item is in stock.",
+  "actors": [
+    { "id": "customer", "label": "Customer", "type": "app" },
+    { "id": "shop", "label": "Shop", "type": "service" },
+    { "id": "pay", "label": "Payment provider", "type": "external" }
+  ],
+  "steps": [
+    { "from": "customer", "to": "shop", "label": "Place order", "note": "The shop first checks that the item is in stock." },
+    { "from": "shop", "to": "pay", "label": "Charge card", "group": "stock", "option": "In stock", "note": "The card is charged once, even if the request is repeated." },
+    { "from": "shop", "to": "customer", "label": "Order confirmed", "group": "stock", "option": "In stock" },
+    { "from": "shop", "to": "customer", "label": "Sorry, sold out", "group": "stock", "option": "Out of stock", "fail": true, "note": "Nothing is charged.\n- The customer is offered a similar item" }
+  ]
+}

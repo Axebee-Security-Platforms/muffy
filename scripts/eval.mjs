@@ -273,12 +273,25 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     const withJson = (j) => tpl.replace(/(<script type="application\/json" id="diagram">)[\s\S]*?(<\/script>)/, `$1${JSON.stringify(j)}$2`);
     const arch = { kind: 'architecture', title: 'T', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 1 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 1 }], edges: [{ from: 'a', to: 'b', label: 'x' }] };
     check('diagram: the shipped template passes', diagramErrors(tpl).length === 0);
-    check('diagram: every shipped example JSON passes in the template', ['architecture', 'state', 'deployment', 'erd', 'flow', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary', 'pattern-delta', 'pattern-db-schema', 'gantt', 'story-map'].every((k) => diagramErrors(withJson(JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))).length === 0));
+    check('diagram: every shipped example JSON passes in the template', ['architecture', 'state', 'deployment', 'erd', 'flow', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary', 'pattern-delta', 'pattern-db-schema', 'gantt', 'story-map', 'flow-branch'].every((k) => diagramErrors(withJson(JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))).length === 0));
     {
       const { warnings } = await import('../skills/muffy/scripts/check-diagram.mjs');
       const many = { kind: 'architecture', title: 'T', nodes: Array.from({ length: 10 }, (_, i) => ({ id: `n${i}`, label: 'N', type: 'service', col: i + 1, row: 1 })), edges: [] };
       check('diagram: a dense diagram warns but still passes', warnings(withJson(many)).length === 1 && diagramErrors(withJson(many)).length === 0);
       check('diagram: a small diagram does not warn', warnings(withJson(arch)).length === 0);
+      const fb = JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow-branch.json'), 'utf8')), fbErr = (steps) => diagramErrors(withJson({ ...fb, steps }));
+      const [s0, s1, s2, s3] = fb.steps;
+      check('diagram flow: an either/or with two options passes and the shipped flow examples carry no warning', fbErr(fb.steps).length === 0 && warnings(withJson(fb)).length === 0 && warnings(withJson(JSON.parse(readFileSync(rel('skills/muffy/templates/diagram-examples/flow.json'), 'utf8')))).length === 0);
+      check('diagram flow: a group without an option (or the reverse) fails', fbErr([s0, { ...s1, option: undefined }, s2, s3]).some((e) => e.includes('go together')));
+      check('diagram flow: a group with one option fails', fbErr([s0, s1, { ...s2, option: 'In stock' }, { ...s3, group: undefined, option: undefined }]).some((e) => e.includes('one option')));
+      check('diagram flow: an option split in two runs fails', fbErr([s0, s1, s3, { ...s2, option: 'In stock' }]).some((e) => e.includes('split in two')));
+      check('diagram flow: a group that is not adjacent fails', fbErr([s1, s3, s0, s2]).some((e) => e.includes('not adjacent')));
+      check('diagram flow: an option name over 40 characters fails', fbErr([s0, { ...s1, option: 'x'.repeat(41) }, s2, s3]).some((e) => e.includes('max 40')));
+      check('diagram flow: more than two either/or groups fails', fbErr([s0, ...['a', 'b', 'c'].flatMap((g) => [{ ...s1, group: g }, { ...s3, group: g }])]).some((e) => e.includes('at most 2')));
+      const plain = { kind: 'flow', title: 'T', subtitle: 'Uses a webhook and SSO', actors: [{ id: 'a', label: 'A', type: 'app' }, { id: 'b', label: 'B', type: 'service' }], steps: [{ from: 'a', to: 'b', label: 'POST /orders' }] };
+      check('diagram plain words: engineering words, code-like labels and acronyms warn', ['webhook', 'reads like code', 'SSO'].every((k) => warnings(withJson(plain)).some((w) => w.includes(k))));
+      const long = { ...plain, subtitle: 'Fine', actors: [...plain.actors, ...['c', 'd', 'e'].map((id) => ({ id, label: id, type: 'app' }))], steps: Array.from({ length: 9 }, (_, i) => ({ from: 'b', to: 'a', label: 'Step ' + i, ...(i === 3 ? { fail: true } : {}) })) };
+      check('diagram sequence: too many steps or actors, an unused actor, a late start and a silent failure warn', ['9 steps', '5 actors', 'takes part in no step', 'not the first actor', 'fails but does not say'].every((k) => warnings(withJson(long)).some((w) => w.includes(k))));
     }
     check('diagram: the template gives screen readers the connections and named flow steps', tpl.includes("'sr'") && tpl.includes("'Connections'") && tpl.includes("'Step '"));
     {
@@ -296,7 +309,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
       if (findBrowser()) {
         const dir = mkdtempSync(join(tmpdir(), 'muffy-render-eval-')), save = (n, j) => { const f = join(dir, `${n}.html`); writeFileSync(f, withJson(j)); return f; };
         try {
-          const ok = ['architecture', 'state', 'deployment', 'erd', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary', 'pattern-delta', 'pattern-db-schema', 'gantt', 'story-map', 'flow'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
+          const ok = ['architecture', 'state', 'deployment', 'erd', 'screenmap', 'pattern-queue-bottleneck', 'pattern-trust-boundary', 'pattern-delta', 'pattern-db-schema', 'gantt', 'story-map', 'flow-branch', 'flow'].map((k) => layoutIssues(save(k, JSON.parse(readFileSync(rel(`skills/muffy/templates/diagram-examples/${k}.json`), 'utf8')))));
           check('diagram render: the shipped examples have no layout issues', ok.every((i) => Array.isArray(i) && i.length === 0));
           const bad = layoutIssues(save('bad', { kind: 'architecture', title: 'T', nodes: [{ id: 'a', label: 'A', type: 'app', col: 1, row: 1 }, { id: 'b', label: 'B', type: 'service', col: 2, row: 2 }, { id: 'c', label: 'C', type: 'store', col: 3, row: 3 }], edges: [{ from: 'a', to: 'c', label: 'x' }] }));
           check('diagram render: a wire running behind a card is reported', bad.some((i) => i.includes('runs behind card B')));

@@ -62,6 +62,7 @@ const DELTAS = ['added', 'removed', 'changed'];
 // readability of the words a reader sees (labels, notes, subtitle). Deterministic heuristics, not a judgement of meaning: the
 // wording itself is reviewed by a reader. A note over NOTE_MAX characters, or a label over LABEL_MAX, is a FAIL; a note that packs
 // several points into one line (";", "•", " | ", or three or more sentences) is a WARN, because it reads as one block
+export const OPTION_MAX = 40, MAX_GROUPS = 2;
 export const NOTE_MAX = 160, LABEL_MAX = 60, SUBTITLE_MAX = 140;
 export function readability(d) {
   const errs = [], texts = [...(d.nodes ?? []), ...(d.edges ?? []), ...(d.relations ?? []), ...(d.actors ?? []), ...(d.steps ?? []), ...(d.entities ?? [])];
@@ -72,6 +73,35 @@ export function readability(d) {
   }
   if (typeof d.subtitle === 'string' && d.subtitle.length > SUBTITLE_MAX) errs.push(`subtitle is ${d.subtitle.length} characters (max ${SUBTITLE_MAX}): one plain sentence`);
   return errs;
+}
+// plain words for a reader who is not an engineer. Heuristics, so WARN only: code-like tokens, a short list of engineering words,
+// and capitalised acronyms in the sentences a reader meets first (subtitle, notes, flow step labels). A name on a card is the code's name and is left alone
+const JARGON = /\b(idempoten\w*|payload|endpoint|middleware|webhook|latency|throughput|serializ\w*|deserializ\w*|asynchronous|synchronous|race condition|rollback|cron|regex|oauth|jwt|csrf|cors|ttl|upsert|orchestrat\w*|instantiat\w*|refactor\w*|deprecat\w*|polling|handshake|sharding|failover|backoff|mutex)\b/i;
+const CODEISH = /[a-z]+_[a-z_]+|\b[a-z]+[A-Z][A-Za-z]+\b|`|\b(GET|POST|PUT|PATCH|DELETE)\b|(^|\s)\/[a-z{][\w/{}-]*/;
+const KNOWN = new Set(['API', 'URL', 'PDF', 'SMS', 'ID', 'UI', 'OK', 'AI', 'FAQ', 'CSV', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE']); // everyday, or an HTTP verb (the code check reports those)
+const ACRONYM = /\b[A-Z]{2,6}\b/g;
+function plainWords(d) {
+  const out = [], seenAcr = new Set();
+  const spots = [['subtitle', d.subtitle], ...[...(d.nodes ?? []), ...(d.steps ?? []), ...(d.entities ?? [])].flatMap((n) => [[n.id ?? `step ${n.from} -> ${n.to}`, n.note], ...(d.kind === 'flow' && n.label ? [[`step ${n.from} -> ${n.to} label`, n.label]] : [])])];
+  for (const [where, t] of spots) {
+    if (typeof t !== 'string') continue;
+    const j = t.match(JARGON); if (j) out.push(`${where}: "${j[0]}" is an engineering word: say what happens in everyday words`);
+    if (CODEISH.test(t)) out.push(`${where}: reads like code (an identifier, path or HTTP verb): say it in a sentence a non-engineer follows, keep the exact name on the card`);
+    for (const a of t.match(ACRONYM) ?? []) if (!KNOWN.has(a) && !seenAcr.has(a) && !t.includes(`(${a})`)) { seenAcr.add(a); out.push(`${where}: "${a}" is an acronym: write it out in full where it first appears`); }
+  }
+  return out;
+}
+// the order of a flow, read by someone who did not write it
+function sequenceReadability(d) {
+  if (d.kind !== 'flow') return [];
+  const out = [], steps = d.steps ?? [], actors = d.actors ?? [];
+  if (steps.length > 8) out.push(`${steps.length} steps (readable limit 8): a non-engineer loses the thread past eight; draw the happy path, and the failure as a second diagram`);
+  if (actors.length > 4) out.push(`${actors.length} actors (readable limit 4): merge actors the reader does not need to tell apart`);
+  if (steps.length > 5 && !steps.some((s) => s.note)) out.push('no step has a note: with more than five steps, say in a few words why the key steps happen');
+  if (steps[0] && actors[0] && steps[0].from !== actors[0].id) out.push(`the first step starts at ${steps[0].from}, not the first actor (${actors[0].id}): put the actor who starts it on the left`);
+  for (const a of actors) if (!steps.some((s) => s.from === a.id || s.to === a.id)) out.push(`actor ${a.id} takes part in no step: remove it`);
+  steps.forEach((s, i) => { if (s.fail && !s.note) out.push(`step ${i + 1} (${s.label}) fails but does not say what the user sees or what happens next`); });
+  return out;
 }
 function blockNotes(d) {
   const out = [];
@@ -247,6 +277,20 @@ export function check(html, file = '') {
     for (const a of actors) if (!text(a.label)) errs.push(`actor ${a.id}: label is required`);
     if (!steps.length || steps.length > LIMIT.steps) errs.push(`steps must be 1 to ${LIMIT.steps}`);
     steps.forEach((s, i) => { if (!ids.has(s.from) || !ids.has(s.to)) errs.push(`step ${i + 1}: unknown actor`); if (!s.label) errs.push(`step ${i + 1}: label is required`); });
+    // either/or frames: a step with group + option belongs to one branch; the steps of a group are adjacent, each option is one run, one level only
+    const groups = new Map(), seenRun = new Set();
+    steps.forEach((s, i) => {
+      if ((s.group === undefined) !== (s.option === undefined)) { errs.push(`step ${i + 1}: group and option go together`); return; }
+      if (s.group === undefined) return;
+      if (!text(s.group) || !text(s.option)) errs.push(`step ${i + 1}: group and option must be non-empty text`);
+      else if (s.option.length > OPTION_MAX) errs.push(`step ${i + 1}: option is ${s.option.length} characters (max ${OPTION_MAX}): name the case in a few words`);
+      const p = steps[i - 1], runKey = `${s.group}|${s.option}`;
+      if (!p || p.group !== s.group) { if (groups.has(s.group)) errs.push(`step ${i + 1}: group "${s.group}" is not adjacent: keep its steps together`); groups.set(s.group, new Set()); }
+      if (!p || p.group !== s.group || p.option !== s.option) { if (seenRun.has(runKey)) errs.push(`step ${i + 1}: option "${s.option}" is split in two: keep its steps together`); seenRun.add(runKey); }
+      groups.get(s.group)?.add(s.option);
+    });
+    for (const [g, opts] of groups) if (opts.size < 2) errs.push(`group "${g}" has one option: an either/or needs at least two, otherwise drop group and option`);
+    if (groups.size > MAX_GROUPS) errs.push(`at most ${MAX_GROUPS} either/or groups: split the flow`);
   }
   return errs;
 }
@@ -255,7 +299,7 @@ export function check(html, file = '') {
 export function warnings(html) {
   const m = html.match(JSON_BLOCK); let d;
   try { d = JSON.parse(m[2]); } catch { return []; }
-  const blocks = blockNotes(d);
+  const blocks = [...blockNotes(d), ...plainWords(d), ...sequenceReadability(d)];
   if (d.kind === 'gantt') return (d.tasks ?? []).length > 8 ? [`${d.tasks.length} tasks (soft limit 8): show phases or the critical path, and keep the rest in docs/plan`] : [];
   if (d.kind === 'story-map') {
     const out = [], first = (d.releases ?? [])[0]?.id;

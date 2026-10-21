@@ -8,9 +8,9 @@
     { "id": "pay", "label": "Payment provider", "type": "external" }
   ],
   "steps": [
-    { "from": "client", "to": "api", "label": "POST /orders" },
-    { "from": "api", "to": "pay", "label": "charge", "note": "Idempotency key is the order id." },
-    { "from": "pay", "to": "api", "label": "declined", "fail": true, "note": "The order stays pending; the client sees error PAYMENT_DECLINED." },
-    { "from": "api", "to": "client", "label": "402 + error code" }
+    { "from": "client", "to": "api", "label": "Place order", "note": "The shop receives the order and the amount to charge." },
+    { "from": "api", "to": "pay", "label": "Charge card", "note": "The order number is sent too, so a retry never charges twice." },
+    { "from": "pay", "to": "api", "label": "declined", "fail": true, "note": "The order stays pending.\n- The customer is told the card was declined" },
+    { "from": "api", "to": "client", "label": "Show the problem", "note": "The customer sees why the payment failed and can try another card." }
   ]
 }
