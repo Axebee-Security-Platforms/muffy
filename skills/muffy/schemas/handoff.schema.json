@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": ["role", "task", "step", "round", "status", "paths_written", "blockers", "quality_checks", "summary"],
   "properties": {
-    "role": { "enum": ["researcher", "product-manager", "designer", "architect", "devops", "frontend-dev", "backend-dev", "code-reviewer", "qa-tester", "docs-writer"] },
+    "role": { "enum": ["researcher", "product-manager", "designer", "architect", "devops", "frontend-dev", "backend-dev", "code-reviewer", "qa-tester", "docs-writer", "diagrammer"] },
     "task": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
     "step": { "type": "string", "pattern": "^((0|[1-9]|1[0-2])[a-d]?|present)$" },
     "mode": { "enum": [1, 2, 3], "description": "devops only" },
@@ -86,13 +86,13 @@
     },
     "diagrams_spec": {
       "type": "array",
-      "description": "architect / product-manager only: diagram content for designer to draw. The spec'ing role never writes the diagram file itself.",
+      "description": "architect / product-manager / designer (screen map) only: diagram content for diagrammer to draw. The spec'ing role never writes the diagram file itself.",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["kind", "path", "content"],
         "properties": {
-          "kind": { "enum": ["architecture", "state", "deployment", "erd", "flow", "gantt", "story-map"] },
+          "kind": { "enum": ["architecture", "state", "deployment", "erd", "flow", "screenmap", "gantt", "story-map"] },
           "path": { "type": "string", "minLength": 1 },
           "pattern": { "type": "string", "minLength": 1 },
           "content": { "type": "object", "description": "The diagram JSON body per agents/references/shared/diagram-style.md for this kind" },
@@ -117,6 +117,6 @@
     { "if": { "properties": { "questions": { "minItems": 1 } }, "required": ["questions"] }, "then": { "properties": { "role": { "enum": ["researcher", "product-manager", "architect", "devops", "designer", "docs-writer"] } } } },
     { "if": { "properties": { "verdict": { "enum": ["Reject", "Fail"] } }, "required": ["verdict"] }, "then": { "properties": { "blockers": { "minItems": 1 } } } },
     { "if": { "properties": { "quality_checks": { "properties": { "passed": { "enum": [false] } }, "required": ["passed"] } }, "required": ["quality_checks"] }, "then": { "properties": { "status": { "enum": ["not-ready", "blocked", "needs-input"] }, "quality_checks": { "properties": { "failed": { "minItems": 1 } } } } } },
-    { "if": { "properties": { "diagrams_spec": { "minItems": 1 } }, "required": ["diagrams_spec"] }, "then": { "properties": { "role": { "enum": ["architect", "product-manager"] } } } }
+    { "if": { "properties": { "diagrams_spec": { "minItems": 1 } }, "required": ["diagrams_spec"] }, "then": { "properties": { "role": { "enum": ["architect", "product-manager", "designer"] } } } }
   ]
 }

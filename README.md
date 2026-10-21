@@ -255,6 +255,7 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 | `researcher` | Brief, evidence, onboard baseline; asks clarifying questions |
 | `product-manager` | Acceptance criteria, plan, strategy score, project goal and budget; the only writer of cost records (`docs/strategy.md`); in `/muffy present`, the content of decks for clients and end-users, as a solutions engineer |
 | `designer` | Canvas, `design.md`, the project design system, and the look of `/muffy present` decks |
+| `diagrammer` | Draws every diagram (architecture, deployment, state, ERD, flow, screen map, gantt, story map) from facts the other roles decided, checks it renders, and keeps the words plain for readers who are not engineers |
 | `architect` | API contract, ADRs, stack decisions, build vs buy (recommends third-party providers; web access only to check a provider's facts), cost delta |
 | `devops` | Deploy plan, smoke build, staging, production rollout |
 | `frontend-dev` | UI implementation on `fe/<task>` (web, mobile and desktop apps) |

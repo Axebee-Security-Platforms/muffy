@@ -1,0 +1,69 @@
+{
+  "role": "diagrammer",
+  "step": "3",
+  "handoff_fixture": "evals/fixtures/login-flow/.team/login-flow/handoff/3-diagrammer-r1.json",
+  "artifacts": [],
+  "final_message": {
+    "max_lines": 15,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "Every diagram came from a `diagrams_spec` entry in the prompt (never one you invented) and shows nothing the spec did not give it",
+    "Each file passes `check-diagram.mjs`, and `check-diagram-render.mjs` passes or says `SKIP` (stated in the final message, never reported as a pass)",
+    "Every WARN still printed has a one-line reason in the final message, or was fixed",
+    "Subtitle, notes and flow labels are in everyday words: no identifier, path, HTTP verb or engineering word, and every acronym spelled out on first use; the exact code name is on the card",
+    "A flow has at most 8 steps and 4 actors, starts at the leftmost actor, uses every actor, and each failing step says what the reader sees or what happens next; a branch is an either/or frame, not a second picture",
+    "Every edge and relation has a label; every card has a short label; a note is one point per line",
+    "The remove test was done: no card, step or wire the reader does not need",
+    "Anything unconfirmed is `verify: true`; a fact that did not check out went back to its author as a blocker, not guessed",
+    "Only the files named by the spec were written, and the template shell is unchanged",
+    "The final message ends with a valid JSON hand-off block"
+  ],
+  "live_scenarios": [
+    {
+      "id": "spec-names-a-field-the-schema-lacks",
+      "input": "The flow spec has a step that sends `loyalty_tier`, a field not in contract/schemas.md.",
+      "must": [
+        "returns status blocked with a blockers[] entry owned by Architect naming loyalty_tier",
+        "draws nothing for that step"
+      ],
+      "must_not": [
+        "keeps the field and guesses its meaning",
+        "edits contract.md or the spec"
+      ]
+    },
+    {
+      "id": "engineer-wording-in-the-spec",
+      "input": "A flow spec labels a step `POST /orders` and the subtitle says `idempotency key on the payload`.",
+      "must": [
+        "labels the step in plain words (for example Place order) and moves the exact request to the card or a note",
+        "rewrites the subtitle in everyday words"
+      ],
+      "must_not": [
+        "keeps `POST /orders` as the step label",
+        "leaves a check-diagram WARN with no reason in the final message"
+      ]
+    },
+    {
+      "id": "no-browser-for-the-render-check",
+      "input": "check-diagram-render.mjs prints SKIP because no Chrome or Edge is installed.",
+      "must": [
+        "says the layout was not rendered in the final message"
+      ],
+      "must_not": [
+        "reports the render check as passed"
+      ]
+    },
+    {
+      "id": "branch-in-one-flow",
+      "input": "The spec's flow has an out-of-stock case beside the confirmed case.",
+      "must": [
+        "draws the two cases as one either/or (group and option on the steps)"
+      ],
+      "must_not": [
+        "draws a second diagram for the failure case",
+        "nests a branch inside a branch"
+      ]
+    }
+  ]
+}

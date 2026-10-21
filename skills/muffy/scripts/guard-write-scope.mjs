@@ -2,10 +2,10 @@
 // PreToolUse guard (Write|Edit): who may write which shared repo files (references/hooks-enforcement.md §12).
 //   docs/strategy.md                         product-manager only (every cost record lives there)
 //   docs/architecture/baseline.md            researcher only
-//   docs/architecture/{overview,data-model,deployment}.html, docs/architecture/flows/*.html, docs/architecture/states/*.html, docs/architecture/changes/*.html and docs/architecture/data-models/*.html   designer only (facts spec'd by architect)
+//   docs/architecture/{overview,data-model,deployment}.html, docs/architecture/flows/*.html, docs/architecture/states/*.html, docs/architecture/changes/*.html and docs/architecture/data-models/*.html   diagrammer only (facts spec'd by architect)
 //   any other file under docs/architecture/ no subagent
-//   docs/plan/<task>-gantt.html, docs/plan/<task>-story-map.html   designer only (facts spec'd by product-manager)
-//   docs/design/screen-map.html              designer only
+//   docs/plan/<task>-gantt.html, docs/plan/<task>-story-map.html   diagrammer only (facts spec'd by product-manager)
+//   docs/design/screen-map.html              diagrammer only (facts spec'd by designer)
 //   docs/design-system/                       designer and architect (onboard) only
 // Hook JSON arrives on stdin. Exit 2 = block (stderr is shown to the agent), 0 = allow.
 // Only subagent calls are guarded (the payload names the subagent in `agent_type`); a call with no `agent_type` is the
@@ -16,11 +16,11 @@ const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
 const RULES = [
   { re: /(^|\/)docs\/strategy\.md$/, owners: ['product-manager'], what: 'docs/strategy.md (the product-manager records all cost: send it the figures through the Orchestrator)' },
   { re: /(^|\/)docs\/architecture\/baseline\.md$/, owners: ['researcher'], what: 'docs/architecture/baseline.md (the researcher writes it in onboard mode)' },
-  { re: /(^|\/)docs\/architecture\/(overview|data-model|deployment)\.html$/, owners: ['designer'], what: 'an architecture diagram (the architect specs the facts when a trigger fires; the designer draws the file)' },
-  { re: /(^|\/)docs\/architecture\/(flows|states|changes|data-models)\/[^/]+\.html$/, owners: ['designer'], what: 'a flow, state, change or per-feature ERD diagram (the architect specs the facts when a trigger fires; the designer draws the file)' },
+  { re: /(^|\/)docs\/architecture\/(overview|data-model|deployment)\.html$/, owners: ['diagrammer'], what: 'an architecture diagram (the architect specs the facts when a trigger fires; the diagrammer draws the file)' },
+  { re: /(^|\/)docs\/architecture\/(flows|states|changes|data-models)\/[^/]+\.html$/, owners: ['diagrammer'], what: 'a flow, state, change or per-feature ERD diagram (the architect specs the facts when a trigger fires; the diagrammer draws the file)' },
   { re: /(^|\/)docs\/architecture\//, owners: [], what: 'a file under docs/architecture/ that no rule names' },
-  { re: /(^|\/)docs\/plan\/[^/]+-(gantt|story-map)\.html$/, owners: ['designer'], what: 'a plan diagram (the product-manager specs the facts when the plan needs one; the designer draws the file)' },
-  { re: /(^|\/)docs\/design\/screen-map\.html$/, owners: ['designer'], what: 'the screen map (the designer draws it when the structure or navigation changes)' },
+  { re: /(^|\/)docs\/plan\/[^/]+-(gantt|story-map)\.html$/, owners: ['diagrammer'], what: 'a plan diagram (the product-manager specs the facts when the plan needs one; the diagrammer draws the file)' },
+  { re: /(^|\/)docs\/design\/screen-map\.html$/, owners: ['diagrammer'], what: 'the screen map (the designer specs it when the structure or navigation changes; the diagrammer draws the file)' },
   { re: /(^|\/)docs\/design-system\//, owners: ['designer', 'architect'], what: 'the design system (the designer owns it; the architect records an existing one at onboard)' },
 ];
 

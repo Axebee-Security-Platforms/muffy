@@ -14,6 +14,7 @@
   { "id": "reviewer-may-lower-outside-production", "role": "code-reviewer", "mode": "prototype", "signals": { "exactFix": true }, "expect": "medium" },
   { "id": "qa-default", "role": "qa-tester", "signals": {}, "expect": "medium" },
   { "id": "designer-default", "role": "designer", "signals": {}, "expect": "medium" },
+  { "id": "diagrammer-default", "role": "diagrammer", "signals": {}, "expect": "medium" },
   { "id": "frontend-exact-fix-lowers", "role": "frontend-dev", "signals": { "exactFix": true }, "expect": "low" },
   { "id": "product-manager-assumed-ac-raises", "role": "product-manager", "signals": { "assumedAc": true }, "expect": "medium" }
 ]

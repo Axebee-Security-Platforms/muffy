@@ -1,8 +1,8 @@
 ## Diagrams (only when needed)
 
-**Default: no diagram.** A diagram costs tokens and goes stale. Spec one only when a trigger below fires and one sentence in the contract would not do. A prompt that says `Diagram requested: <kind>` or `Diagram facts: <request>` is the requester asking for one: then the triggers do not apply, the fact rules below do. You never draw the file yourself — `designer` draws every diagram muffy produces; your job here is deciding whether a trigger fired, which kind, and the facts it must show. Never spec one in the fix lane (the diagnosing dev may draw a `flow.html` there itself, see that lane's profile), or for a change that only adds a column, route, screen or copy.
+**Default: no diagram.** A diagram costs tokens and goes stale. Spec one only when a trigger below fires and one sentence in the contract would not do. A prompt that says `Diagram requested: <kind>` or `Diagram facts: <request>` is the requester asking for one: then the triggers do not apply, the fact rules below do. You never draw the file yourself — `diagrammer` draws every diagram muffy produces; your job here is deciding whether a trigger fired, which kind, and the facts it must show. Never spec one in the fix lane (the diagnosing dev may draw a `flow.html` there itself, see that lane's profile), or for a change that only adds a column, route, screen or copy.
 
-**One onboard exception:** in onboard mode, if the repo has no architecture diagram (defined below), spec `docs/architecture/overview.html` once from `baseline.md`, for `designer` to draw. High-level only: no ERD, no flows. Rules for it are in "Onboard overview" below. A repo that already has one gets none: link the existing one in the ADR instead.
+**One onboard exception:** in onboard mode, if the repo has no architecture diagram (defined below), spec `docs/architecture/overview.html` once from `baseline.md`, for `diagrammer` to draw. High-level only: no ERD, no flows. Rules for it are in "Onboard overview" below. A repo that already has one gets none: link the existing one in the ADR instead.
 
 **What counts as an existing architecture diagram.** Only a drawn picture of components and how they connect, found by looking in `docs/`, `docs/architecture/` and the README:
 - counts: `docs/architecture/overview.html`; a Mermaid/PlantUML/D2 block (```mermaid …) or `.mmd`/`.puml`/`.d2`/`.drawio` file showing components; an image (`.svg`/`.png`/`.jpg`) of an architecture or system diagram, linked from the README or `docs/`
@@ -10,7 +10,7 @@
 - Unsure whether something is a diagram: it does not count; write the overview and mention the doubt in the ADR as `[verify]`
 - Record in the brain note which file counted, or `existing diagram: none`
 
-| Diagram | File | `kind` | Spec it for `designer` only when |
+| Diagram | File | `kind` | Spec it for `diagrammer` only when |
 |---|---|---|---|
 | High-level architecture | `docs/architecture/overview.html` | `architecture` | The task adds or removes a component, datastore, queue, external integration or changes the deploy model (and the change is not already clear from `deploy.md` / an ADR). For a mobile, desktop or CLI target show the app, its local storage, the backend if any, and the OS or external services it calls |
 | State | `docs/architecture/states/<slug>.html` | `state` | The task adds or changes a status field or lifecycle with three or more states and a rule on how it moves (order, job, subscription, approval): events, guards, retries and the terminal states. A boolean or a two-value status: no diagram |
@@ -27,8 +27,8 @@ Redrawing a user's Mermaid, draw.io or Excalidraw file into muffy's format is on
 ### Say the plan before handing off
 Before writing the spec, state in one line: the `kind`, the trigger from the table that fired, and what you leave out on purpose (components or links the reader does not need). Put it in the hand-off note, or in the question to the user when one is already being asked; do not add a round trip for it. Skip it only for an update that changes one node or edge.
 
-### What you hand `designer`
-You write the diagram's **content**, not the file: the `kind`, the JSON body per [diagram-style.md](../shared/diagram-style.md) (nodes/edges or the kind's equivalent, with `col`/`row` left to `designer` if you have no layout opinion), the target path, the pattern if any, and the link to the `contract.md` section it explains. Put this in your hand-off (`diagrams_spec`, one entry per diagram) for the Orchestrator to pass to `designer`. `designer` copies the template, pastes the JSON, runs `check-diagram.mjs` and `check-diagram-render.mjs`, and fixes layout-only failures itself; a content failure (a fact that doesn't check out) goes back to you.
+### What you hand `diagrammer`
+You write the diagram's **content**, not the file: the `kind`, the JSON body per [diagram-style.md](../shared/diagram-style.md) (nodes/edges or the kind's equivalent, with `col`/`row` left to `diagrammer` if you have no layout opinion), the target path, the pattern if any, and the link to the `contract.md` section it explains. Put this in your hand-off (`diagrams_spec`, one entry per diagram) for the Orchestrator to pass to `diagrammer`. `diagrammer` copies the template, pastes the JSON, runs `check-diagram.mjs` and `check-diagram-render.mjs`, and fixes layout-only failures itself; a content failure (a fact that doesn't check out) goes back to you.
 
 ### Rules
 - **Update, don't add:** if the file exists, your spec changes only the part this task touches (the JSON for that part). Never spec a second overview or a per-task copy; a flow gets its own file only because it is a distinct flow
