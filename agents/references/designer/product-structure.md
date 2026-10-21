@@ -12,7 +12,7 @@ Not necessary: a single screen, a change inside one screen, or a small linear fl
 ### What you produce
 - `docs/design/screen-map.html`: one self-contained diagram of the whole product, `kind: screenmap` ([diagram-style.md](../shared/diagram-style.md)). Nodes are `entry`, `screen`, `modal` and `external`; each edge is labelled with the action that causes it (for example `tap Sign in`, `session expired`). `note` says who sees it (role) or any condition. At most 20 nodes; linked screens sit next to each other
 - **One map per project, updated, never copied:** if the file exists, change only the part this task touches (edit its JSON). On an existing product the first map comes from the code's routes and menus; anything you could not confirm is `verify: true`
-- Validate it with `node .claude/skills/muffy/scripts/check-diagram.mjs docs/design/screen-map.html`; a FAIL is fixed before hand-off. The Orchestrator publishes it (step 3e)
+- Validate it with `node .claude/skills/muffy/scripts/check-diagram.mjs docs/design/screen-map.html`, then `check-diagram-render.mjs` on the same file; a FAIL from either is fixed before hand-off. The Orchestrator publishes it (step 3e)
 - In `design.md`, a short **Navigation** section: the pattern used (tab bar, side menu, stack), entry and exit points, back behaviour, and the **information structure** this task adds: how content is grouped and the terms used for it. Words only; the same word for the same thing everywhere, matching the design system's terminology
 - Navigation components the structure needs (menu, breadcrumb, tab bar) are documented in `docs/design-system/README.md` like any component, with a Changelog entry
 
