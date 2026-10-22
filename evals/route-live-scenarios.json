@@ -109,7 +109,7 @@
   {
    "id": "h22",
    "prompt": "หาว่ามีงานอะไรค้างอยู่ใน repo นี้บ้าง",
-   "expect": "ticket"
+   "expect": "pending"
   },
   {
    "id": "h23",

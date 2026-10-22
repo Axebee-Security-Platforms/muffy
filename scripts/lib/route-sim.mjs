@@ -4,7 +4,7 @@
 // evals/route-scenarios.json.
 import { triage, triageLite } from './triage-sim.mjs';
 
-export const MODES = ['ticket', 'onboard', 'present', 'diagram'];
+export const MODES = ['pending', 'onboard', 'present', 'diagram'];
 // Routes whose outcome is not a code change (decision order steps 4 and 5).
 export const NON_CODE_ROUTES = ['research', 'plan', 'design', 'design-review', 'spec', 'arch-review', 'adr', 'review', 'qa', 'docs', 'docs-existing', 'ops'];
 // diagram.md "Kinds": the route a diagram of something not designed yet goes to, by kind.

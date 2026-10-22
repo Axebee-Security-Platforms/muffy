@@ -1,6 +1,6 @@
 # Present mode (`/muffy present "<request>"`)
 
-On demand only, never a step of the team flow. The Orchestrator runs `product-manager` in present mode to write the content of a deck for a client or end-users from documents that already exist, then hands it to the requester to review. No other agent reviews it. Skips Ticket, Onboard, Setup and Run profile; needs no task folder.
+On demand only, never a step of the team flow. The Orchestrator runs `product-manager` in present mode to write the content of a deck for a client or end-users from documents that already exist, then hands it to the requester to review. No other agent reviews it. skips Pending, Onboard, Setup and Run profile; needs no task folder.
 
 ## Procedure
 1. **Scope, one question round.** Always ask the five audience questions below, in this order, even when the request seems to answer them. Ask in the requester's language, word for word as written here: no explanation after the question, no system terms (`role`, `setting`). Who comes first because its answer suggests the rest: put the option the request or the "who" answer points to first, marked "(recommended)", and let the user confirm. Map each answer to the profile value yourself.

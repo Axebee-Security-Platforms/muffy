@@ -1,6 +1,6 @@
 # Route — pick the entry and the agents from the prompt
 
-Runs first on a free-text request, before any other reference. A request that starts with a mode command (`/muffy ticket | onboard | present | diagram | resume | fix | lite | feature`) is already routed: skip this file. The Orchestrator reads the requester's prompt and picks the smallest route that delivers the outcome they asked for. It then says the route in one line before spawning anything: `Route: <name> → <agents>. Because: <the words in the prompt that decided it>.` The requester can override it.
+Runs first on a free-text request, before any other reference. A request that starts with a mode command (`/muffy pending | onboard | present | diagram | resume | fix | lite | feature`) is already routed: skip this file. The Orchestrator reads the requester's prompt and picks the smallest route that delivers the outcome they asked for. It then says the route in one line before spawning anything: `Route: <name> → <agents>. Because: <the words in the prompt that decided it>.` The requester can override it.
 
 The route is decided by the **outcome asked for**, not by a single keyword. "Bug" alone does not make a fix, "review" alone does not make a review-only run, "ออกแบบ" alone does not make a design run; the decision order below decides.
 
@@ -10,7 +10,7 @@ Walk it top to bottom and stop at the first step that answers. The fix and lite 
 
 1. **Continue earlier work** ("continue", "resume", ทำต่อ) → resume
 2. **`/muffy feature <request>`** → full flow, with no fix or lite triage and no Examples read. It skips only this decision; minimum intake, `pause:scope` and every gate still run. When the request is plainly a typo or a one-line text edit, say so once ("`/muffy fix` is cheaper") and carry on as asked
-   **A named mode** (`/muffy ticket | onboard | present | diagram`, or a request that can only mean one of them: "find what is half done", "make a deck for the client", "draw the deployment diagram") → that mode. A diagram request first passes the two checks in [diagram.md](diagram.md#before-the-scope-question): the subject has an open task → **diagram-in-task**; the subject is not designed yet → the kind's own route (**spec** for architecture, deployment, erd, state and flow; **design** for a screen map; **plan** for a gantt or story map), with the diagram as its stop point ([kinds table](diagram.md#kinds-fixed-never-ask-the-user-to-pick-an-agent))
+   **A named mode** (`/muffy pending | onboard | present | diagram`, or a request that can only mean one of them: "find what is half done", "make a deck for the client", "draw the deployment diagram") → that mode. A diagram request first passes the two checks in [diagram.md](diagram.md#before-the-scope-question): the subject has an open task → **diagram-in-task**; the subject is not designed yet → the kind's own route (**spec** for architecture, deployment, erd, state and flow; **design** for a screen map; **plan** for a gantt or story map), with the diagram as its stop point ([kinds table](diagram.md#kinds-fixed-never-ask-the-user-to-pick-an-agent))
 3. **A question** about the code or the repo ("how does X work?", "X ทำงานยังไง") → none
 4. **A stated stop point** ("just the design", "plan it, don't build", "research, no code", "ยังไม่ต้องเขียนโค้ด", "แค่รีวิว") → the route for that stop point, even when the request also names a feature
 5. **The outcome is not a code change** (a brief, a plan, a design, a design review, a contract, an architecture review, an ADR, a review verdict, tests, docs, a deployment) → that route from the table below
@@ -99,7 +99,7 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | A standalone diagram of something that already exists, with no open task | diagram | per [diagram.md](diagram.md) | the diagram file |
 | A diagram of a feature whose task is still open | diagram-in-task | the task's owner of that kind specs it (`architect`; `product-manager` for gantt and story map; `designer` for the screen map), `diagrammer` draws, step 3e publishes ([diagram.md](diagram.md#inside-an-open-task)) | the diagram, recorded in that task; the task's next step is unchanged |
 | A deck or presentation for a client or end-users | present | per [present.md](present.md) | the deck |
-| Find unfinished tasks in `.team` | ticket | per [ticket.md](ticket.md) | the list of not-done tasks |
+| Find unfinished tasks in `.team` | pending | per [pending.md](pending.md) | the list of not-done tasks |
 | First run on an existing codebase | onboard | per [onboard.md](onboard.md) | `baseline.md` and ADR, after review |
 | Continue earlier work ("continue", "resume") | resume | per [resume.md](resume.md) | the next step in `checkpoint.md` |
 
