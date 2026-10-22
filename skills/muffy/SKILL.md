@@ -7,11 +7,11 @@ description: >
   with a symptom or error ("found a bug", "it errors", "this is broken", เจอบั๊ก, พัง, error) via the fix lane
   (`/muffy fix`); for an internal API, refactor, measured perf fix or migration (`/muffy lite`, ทำให้เร็วขึ้น);
   and for a single-step request: research or compare (วิจัย, เปรียบเทียบ), plan or user stories (วางแผน),
-  screens (ออกแบบหน้าจอ), API or schema (ออกแบบ API), a UX/UI review (รีวิวดีไซน์), an architecture or ADR review
-  or a new ADR, a code/PR review (รีวิว PR), tests (เขียนเทสต์), docs or README (ทำเอกสาร), deploy or rollback.
+  screens (ออกแบบหน้าจอ), API or schema (ออกแบบ API), a UX/UI review (รีวิวดีไซน์), an architecture or ADR review,
+  a new ADR, a code/PR review (รีวิว PR), tests (เขียนเทสต์), docs or README (ทำเอกสาร), deploy or rollback.
   Also: resume (`/muffy resume`, "continue", ทำต่อ), `/muffy todo` for unfinished `.team` tasks, `/muffy onboard`,
   `/muffy present` for a client deck (ทำสไลด์), `/muffy diagram` for a standalone diagram.
-  Not for a question about the code, a text-only one-line edit, or step-by-step work in the main session.
+  Not for a question about the code, a text-only one-line edit, or step-by-step work in main session.
 ---
 
 # Muffy — Feature Development Team
