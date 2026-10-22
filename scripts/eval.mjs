@@ -517,7 +517,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('write-scope: only the product-manager writes docs/strategy.md', write('product-manager', 'docs/strategy.md') === 0 && ['architect', 'devops', 'backend-dev', 'muffy:researcher'].every((r) => write(r, 'E:\\repo\\docs\\strategy.md', 'Edit') === 2));
   check('write-scope: the Orchestrator (no agent_type) is never blocked', write(undefined, 'docs/strategy.md') === 0);
   check('write-scope: the diagrammer draws every architecture diagram; the architect writes ADRs and specs, never a diagram file or baseline.md; the designer cannot draw them', write('diagrammer', 'docs/architecture/overview.html') === 0 && write('diagrammer', 'docs/architecture/flows/login.html') === 0 && write('diagrammer', 'docs/architecture/states/order.html') === 0 && write('diagrammer', 'docs/architecture/changes/payments.html') === 0 && write('diagrammer', 'docs/architecture/data-models/coupon.html') === 0 && write('designer', 'docs/architecture/overview.html') === 2 && write('designer', 'docs/architecture/flows/login.html') === 2 && write('architect', 'docs/architecture/data-models/coupon.html') === 2 && write('diagrammer', 'docs/architecture/deployment.html') === 0 && write('architect', 'docs/architecture/overview.html') === 2 && write('architect', 'docs/architecture/flows/login.html') === 2 && write('architect', 'docs/architecture/deployment.html') === 2 && write('frontend-dev', 'docs/architecture/changes/payments.html') === 2 && write('frontend-dev', 'docs/architecture/states/order.html') === 2 && write('architect', 'docs/adr/0002-x.md') === 0 && write('architect', 'docs/architecture/baseline.md') === 2 && write('architect', 'docs/architecture/notes.md') === 2);
-  check('write-scope: only the diagrammer writes architecture diagrams, only the researcher the baseline; the diagrammer writes no baseline, design system or strategy', write('frontend-dev', 'docs/architecture/data-model.html') === 2 && write('researcher', 'docs/architecture/baseline.md') === 0 && write('researcher', 'docs/architecture/overview.html') === 2 && write('diagrammer', 'docs/architecture/baseline.md') === 2 && write('diagrammer', 'docs/design-system/README.md') === 2 && write('diagrammer', 'docs/strategy.md') === 2);
+  check('write-scope: only the diagrammer writes architecture diagrams, only the researcher the baseline; the diagrammer writes no baseline, design system or strategy', write('frontend-dev', 'docs/architecture/data-model.html') === 2 && write('researcher', 'docs/architecture/baseline.md') === 0 && write('researcher', 'docs/architecture/overview.html') === 2 && write('diagrammer', 'docs/architecture/baseline.md') === 2 && write('researcher', 'docs/architecture/baseline/stack.md') === 0 && write('architect', 'docs/architecture/baseline/stack.md') === 2 && write('diagrammer', 'docs/architecture/baseline/layout.md') === 2 && write('researcher', 'docs/architecture/baseline/deep/x.md') === 2 && write('diagrammer', 'docs/design-system/README.md') === 2 && write('diagrammer', 'docs/strategy.md') === 2);
       check('write-scope: only the diagrammer writes plan diagrams; the product-manager specs their facts and cannot write the file', write('diagrammer', 'docs/plan/pay-gantt.html') === 0 && write('designer', 'docs/plan/pay-gantt.html') === 2 && write('product-manager', 'docs/plan/pay-gantt.html') === 2 && write('architect', 'docs/plan/pay-story-map.html') === 2 && write('architect', 'docs/plan/pay.md') === 0);
   check('write-scope: other files and non-write tools pass', write('backend-dev', 'src/a.ts') === 0 && write('architect', 'docs/strategy.md', 'Read') === 0);
 }
@@ -624,6 +624,34 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('check-baseline: manifests committed inside dependency folders do not age the baseline', r.status === 0 && r.stdout.startsWith('baseline: green'), r.stdout);
   put('package.json', '{}\n'); git('add', '-A'); git('commit', '-qm', 'real manifest');
   check('check-baseline: a real manifest change still counts', spawnSync(process.execPath, [rel('skills/muffy/scripts/check-baseline.mjs'), repo, '--yellow', '1'], { encoding: 'utf8' }).status === 1);
+  rmSync(repo, { recursive: true, force: true });
+}
+
+/* 7e'. onboard refresh (references/onboard.md → Refresh): baseline-delta.mjs narrows the researcher to what changed */
+{
+  const repo = mkdtempSync(join(tmpdir(), 'muffy-delta-'));
+  const git = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
+  const put = (file, text) => { mkdirSync(dirname(join(repo, file)), { recursive: true }); writeFileSync(join(repo, file), text); };
+  const delta = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/baseline-delta.mjs'), repo, ...a], { encoding: 'utf8' });
+  git('init', '-q'); git('config', 'user.email', 't@t.t'); git('config', 'user.name', 't'); git('config', 'core.autocrlf', 'false');
+  put('src/a.ts', 'a\n'); put('api/b.ts', 'b\n'); git('add', '-A'); git('commit', '-qm', 'init');
+  const sha = git('rev-parse', 'HEAD').stdout.trim();
+  check('delta: no baseline is mode full (exit 1)', delta().status === 1 && delta().stdout.startsWith('mode: full'));
+  put('docs/architecture/baseline.md', `---\ncommit: ${sha}\n---\n## Layout\nEntry \`src/a.ts:1\`, api \`api/b.ts\`.\n`);
+  git('add', '-A'); git('commit', '-qm', 'baseline');
+  const same = delta();
+  check('delta: nothing changed is mode refresh with no changed folders', same.status === 0 && same.stdout.includes('mode: refresh') && !same.stdout.includes('changed (folder'), same.stdout);
+  put('src/a.ts', 'a2\n'); put('web/c.ts', 'c\n'); git('add', '-A'); git('commit', '-qm', 'change');
+  const r = delta();
+  check('delta: changed files are grouped by folder and the baseline line citing one is named', r.status === 0 && /- src: 1 \(modified\)/.test(r.stdout) && /- web: 1 \(added\)/.test(r.stdout) && /L5: src\/a\.ts/.test(r.stdout) && !r.stdout.includes('api/b.ts'), r.stdout);
+  check('delta: over --max changed files is mode full with the reason', (() => { const f = delta('--max', '1'); return f.status === 1 && f.stdout.includes('more than 1'); })());
+  check('delta: --json prints one parseable object', (() => { try { const j = JSON.parse(delta('--json').stdout); return j.mode === 'refresh' && j.groups.length === 2; } catch { return false; } })());
+  put('docs/architecture/baseline.md', 'no commit line\n');
+  check('delta: a baseline with no commit line is mode full', delta().stdout.includes('no commit: line'));
+  check('delta: an unknown flag is a usage error (exit 3)', delta('--nope').status === 3);
+  const doc = readFileSync(rel('skills/muffy/references/onboard.md'), 'utf8');
+  const wf = readFileSync(rel('agents/references/researcher/workflow.md'), 'utf8');
+  check('delta: onboard.md has a Refresh section and 0a runs baseline-delta.mjs; the researcher workflow points at it', /^## Refresh\r?$/m.test(doc) && doc.includes('baseline-delta.mjs') && wf.includes('refresh: delta') && wf.includes('onboard.md → Refresh'));
   rmSync(repo, { recursive: true, force: true });
 }
 

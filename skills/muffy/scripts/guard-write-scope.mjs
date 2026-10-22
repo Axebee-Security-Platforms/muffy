@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // PreToolUse guard (Write|Edit): who may write which shared repo files (references/hooks-enforcement.md §12).
 //   docs/strategy.md                         product-manager only (every cost record lives there)
-//   docs/architecture/baseline.md            researcher only
+//   docs/architecture/baseline.md and docs/architecture/baseline/*.md   researcher only (the index and its section files)
 //   docs/architecture/{overview,data-model,deployment}.html, docs/architecture/flows/*.html, docs/architecture/states/*.html, docs/architecture/changes/*.html and docs/architecture/data-models/*.html   diagrammer only (facts spec'd by architect)
 //   any other file under docs/architecture/ no subagent
 //   docs/plan/<task>-gantt.html, docs/plan/<task>-story-map.html   diagrammer only (facts spec'd by product-manager)
@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
 const RULES = [
   { re: /(^|\/)docs\/strategy\.md$/, owners: ['product-manager'], what: 'docs/strategy.md (the product-manager records all cost: send it the figures through the Orchestrator)' },
-  { re: /(^|\/)docs\/architecture\/baseline\.md$/, owners: ['researcher'], what: 'docs/architecture/baseline.md (the researcher writes it in onboard mode)' },
+  { re: /(^|\/)docs\/architecture\/baseline(\.md|\/[^/]+\.md)$/, owners: ['researcher'], what: 'docs/architecture/baseline.md or a section file docs/architecture/baseline/<section>.md (the researcher writes them in onboard mode)' },
   { re: /(^|\/)docs\/architecture\/(overview|data-model|deployment)\.html$/, owners: ['diagrammer'], what: 'an architecture diagram (the architect specs the facts when a trigger fires; the diagrammer draws the file)' },
   { re: /(^|\/)docs\/architecture\/(flows|states|changes|data-models)\/[^/]+\.html$/, owners: ['diagrammer'], what: 'a flow, state, change or per-feature ERD diagram (the architect specs the facts when a trigger fires; the diagrammer draws the file)' },
   { re: /(^|\/)docs\/architecture\//, owners: [], what: 'a file under docs/architecture/ that no rule names' },
