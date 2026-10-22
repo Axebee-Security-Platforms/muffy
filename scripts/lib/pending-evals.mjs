@@ -1,4 +1,4 @@
-// Offline checks for analyze mode (skills/muffy/references/analyze.md, scripts/scan-pending.mjs).
+// Offline checks for ticket mode (skills/muffy/references/ticket.md, scripts/scan-pending.mjs).
 // The point is privacy: planted secrets, personal data and prompt-injection text must never reach pending.json.
 import { mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';

@@ -44,7 +44,7 @@ export function runRouteEvals({ check, root }) {
   const intake = tableRows(section('Minimum intake \\(ask before spawning\\)'), /^\| Route /).map((r) => r[0]);
   const routed = routes.map(toId);
   for (const r of new Set(routes)) {
-    if (['diagram', 'diagram-in-task', 'present', 'analyze', 'onboard', 'resume'].includes(r)) continue; // modes carry their own intake
+    if (['diagram', 'diagram-in-task', 'present', 'ticket', 'onboard', 'resume'].includes(r)) continue; // modes carry their own intake
     check(`route-doc: route "${r}" has a minimum-intake row`, intake.includes(r));
   }
   for (const r of routed) check(`route-sim: knows route "${r}"`, ROUTES.includes(r));

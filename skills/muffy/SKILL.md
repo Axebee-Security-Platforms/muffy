@@ -9,7 +9,7 @@ description: >
   and for a single-step request: research or compare (วิจัย, เปรียบเทียบ), plan or user stories (วางแผน),
   screens (ออกแบบหน้าจอ), API or schema (ออกแบบ API), a UX/UI review (รีวิวดีไซน์), an architecture or ADR review
   or a new ADR, a code/PR review (รีวิว PR), tests (เขียนเทสต์), docs or README (ทำเอกสาร), deploy or rollback.
-  Also: resume (`/muffy resume`, "continue", ทำต่อ), `/muffy analyze` for unfinished work, `/muffy onboard`,
+  Also: resume (`/muffy resume`, "continue", ทำต่อ), `/muffy ticket` for unfinished `.team` tasks, `/muffy onboard`,
   `/muffy present` for a client deck (ทำสไลด์), `/muffy diagram` for a standalone diagram.
   Not for a question about the code, a text-only one-line edit, or step-by-step work in the main session.
 ---
@@ -30,10 +30,10 @@ Orchestrate the subagents in `.claude/agents/` from research to deploy for one f
 
 Load lazily: open a reference only at the step that needs it; subagents do the same through the "Load on demand" table in their own definitions. This list is the order of the references, not step numbers: "step N" is a row of [steps.md](references/steps.md). If this file is already in the session (after a compact or a resume too), follow it from where you are; do not invoke `/muffy` again to reload it.
 
-Resume (`/muffy resume`, "continue", ทำต่อ) skips Analyze, Onboard, Setup and Run profile: [references/resume.md](references/resume.md).
+Resume (`/muffy resume`, "continue", ทำต่อ) skips Ticket, Onboard, Setup and Run profile: [references/resume.md](references/resume.md).
 
-- **Route** — first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy analyze | onboard | present | diagram | resume | fix | lite | feature`): the command is the route, so say `Route: <mode>` and open that mode's reference instead
-- **Analyze** (`/muffy analyze`) — unfinished work in git and trackers, read-only: [analyze.md](references/analyze.md)
+- **Route** — first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy ticket | onboard | present | diagram | resume | fix | lite | feature`): the command is the route, so say `Route: <mode>` and open that mode's reference instead
+- **Ticket** (`/muffy ticket`) — tasks in `.team` that are not done, read-only: [ticket.md](references/ticket.md)
 - **Onboard** (`/muffy onboard`) — existing codebase, first run: [onboard.md](references/onboard.md)
 - **Present** (`/muffy present`) — client deck outside the team flow: [present.md](references/present.md), missing documents: [doc-request.md](references/doc-request.md)
 - **Diagram** (`/muffy diagram`, or a standalone "draw a diagram") — route facts to the owning agent, then always `diagrammer`: [diagram.md](references/diagram.md); PNG/SVG only on request: [diagram-export.md](references/diagram-export.md)

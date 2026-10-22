@@ -1,6 +1,6 @@
 # Diagram mode (`/muffy diagram "<request>"`)
 
-On demand only, never a step of the team flow. The Orchestrator does not gather the facts or draw the file itself: it routes the request to the agent that owns that diagram kind's content, and `diagrammer` draws every diagram muffy produces. Skips Analyze, Onboard, Setup and Run profile; needs no task folder, checkpoint or brain note.
+On demand only, never a step of the team flow. The Orchestrator does not gather the facts or draw the file itself: it routes the request to the agent that owns that diagram kind's content, and `diagrammer` draws every diagram muffy produces. Skips Ticket, Onboard, Setup and Run profile; needs no task folder, checkpoint or brain note.
 
 Use this only for a diagram requested on its own, not tied to an in-progress contract or fix. A diagram that belongs to the team flow (architect's step 3 triggers, the designer's screen-map spec, the fix lane's `flow.html`) is drawn there instead, per its normal trigger — do not reroute it here.
 

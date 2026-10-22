@@ -10,7 +10,6 @@ A new session has no memory of the run. Everything it needs is in `.team/<task>/
 
 1. Find the task, reading as little as possible:
    - **Index first**: `<brain>/project.md` → `## Tasks`. Rows marked `in progress` are the unfinished tasks; no checkpoint is opened to learn this
-   - A row added by [analyze](analyze.md) has a starter `checkpoint.md` and a tracker id and url; treat it like any other unfinished task, and re-check its branch against git before acting
    - **No vault or no project.md**: `grep -m1 "^Updated:" .team/*/checkpoint.md` (also under `.worktrees/*/`), then read only the `## Status` of those; a task whose `## Status` says `closed` is finished
    - One unfinished task → use it. Several → `AskUserQuestion` listing each task with its `Updated:` line. None → say there is nothing to resume and ask what to build
 2. Read only that task's `checkpoint.md` and `<brain>/tasks/<task>.md`. A `## Run profile` that starts `fix:` or `lite:` means the task runs that lane: read [fix-profile.md](fix-profile.md) or [lite-profile.md](lite-profile.md) before continuing. Do not replay old conversations or re-read finished artifacts

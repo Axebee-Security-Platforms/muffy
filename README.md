@@ -43,19 +43,13 @@ The installer copies the agents to `.claude/agents/` and the skill to `.claude/s
 
 The checkpoint and artifact size hooks are opt-in and added by hand; team-flow rules 1–4 are Orchestrator rules, not hooks. Full steps: [INSTALL.md](INSTALL.md).
 
-### Find unfinished work first (once)
+### Find unfinished tasks
 
 ```text
-/muffy analyze
+/muffy ticket
 ```
 
-Before muffy takes over a repo that already has history, analyze lists what is half done: unmerged branches, stashes, uncommitted changes, TODO markers, skipped tests, and open items from GitHub, GitLab, Jira, ClickUp or any tracker that exports CSV or JSON. You confirm each group; only confirmed items become tasks that `/muffy resume` can continue. It can run from a checkout of muffy against a repo that does not have muffy yet:
-
-```bash
-node skills/muffy/scripts/scan-pending.mjs /path/to/your-repo --import jira=issues.csv --out pending.json
-```
-
-Privacy: read-only and offline. Only id, title, status, url and date are read; descriptions, comments and people are never read or stored; emails, tokens and url queries are redacted; nothing is written back to a tracker. Details: [analyze](skills/muffy/references/analyze.md).
+Lists the tasks in `.team/` that are not done (checkpoint status is not `closed`), then asks which to continue with `/muffy resume`. Read-only. It does not look at git branches or trackers. Details: [ticket](skills/muffy/references/ticket.md).
 
 ### Onboard an existing codebase (once)
 
@@ -110,7 +104,7 @@ Run the installer again with `--clean`, and restart Claude Code.
 | `/muffy fix <request>` | Small bug or cosmetic fix ([fix lane](#fix-lane)) |
 | `/muffy lite <request>` | Internal work with a known shape ([lite lane](#lite-lane)) |
 | `/muffy resume` | Continue an interrupted run from its checkpoint |
-| `/muffy analyze` | List unfinished work in git and trackers |
+| `/muffy ticket` | List tasks in `.team/` that are not done |
 | `/muffy onboard` | Record the baseline of an existing codebase |
 | `/muffy present <request>` | Client or end-user presentation |
 | `/muffy diagram <request>` | Standalone diagram |
