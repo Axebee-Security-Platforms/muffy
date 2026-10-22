@@ -68,7 +68,7 @@ The researcher and architect record the current stack as `docs/architecture/base
 ### Ask for a feature
 
 ```text
-/muffy add password reset, task name password-reset
+/muffy feature add password reset, task name password-reset
 ```
 
 The Orchestrator confirms the scope (and, for user-facing features, offers an optional release announcement; it is off unless you say yes), then runs the steps. Before research and planning, the researcher and product manager may ask you clarifying questions through the Orchestrator.
@@ -294,7 +294,7 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 
 ## Example
 
-Request in the main session: `/muffy add password reset, task name password-reset`
+Request in the main session: `/muffy feature add password reset, task name password-reset`
 
 <details open>
 <summary><strong>Walkthrough</strong></summary>
