@@ -7,6 +7,7 @@
 - **UX/UI review finds `high` issues (3c, before the user is asked)** → findings to `designer` → republish → review again. Counts at loop point `3c:designer`, like a user's change request
 - **Budget: cheaper option or cut scope (`pause:budget`)** → reasons to `architect` (+ `product-manager` if scope is cut) → new contract and `Budget:` verdict → ask again if still `over`. Counts at loop point `3:architect`
 - **Design review: changes requested (3c)** → reasons to `designer` (+ `architect` if the contract is affected) → republish canvas → Definition of done again → ask the user again. FE/BE stay blocked
+- **Plan review: changes requested (2b)** → reasons to `product-manager` → revised `ac.md` + plan → ask the user again. Step 3 stays blocked. Counts at loop point `2b:product-manager`
 - **Human reject** → reasons to the relevant agents → redo review + QA
 - **Production health fail** → devops rolls back; report to the user before anything else
 - **Diagnose unknown (4a, fix lane)** → ask the user for more evidence → one more diagnose round with the same agent; a second `unknown` escalates `loop-limit`. A `needs-full-flow` diagnosis is not a loop: promote to the full flow ([fix-profile.md](fix-profile.md))
@@ -28,7 +29,7 @@ Apply in order. Each rung applies to one loop point; the validator is `node .cla
 3. **Same blocker id open in 3 consecutive rejects** (the owner has already failed two fix attempts at it) → escalate `repeated-blocker` right away instead of spending the 4th-rejection budget. One failed fix is normal and not an escalation. Default recommendation: `change-approach` (often the contract or AC is wrong → architect/PM decides)
 4. **Fourth rejection at a point** → escalate `loop-limit`
 5. **Agent unreachable** (`SendMessage` fails, agent gone) → spawn once fresh with `Checkpoint:` + the path of its last hand-off. Fails again → escalate `agent-unavailable`
-6. **Human gate rejected** (step 10 or `pause:design-review`) twice for the same reason → escalate `human-reject-limit`
+6. **Human gate rejected** (step 10, `pause:plan-review` or `pause:design-review`) twice for the same reason → escalate `human-reject-limit`
 
 A reject that is not repeated and is under the limit is handled by the loop bullets above, not by this ladder.
 

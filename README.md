@@ -253,6 +253,7 @@ Research, product, design, docs and step 8 are skipped. If the architect or a de
 |---|---|---|
 | `pause:scope` | Setup (fix lane: one short question with the classification and AC list) | You confirm the scope |
 | `pause:onboard-review` | Onboard step 0d | You approve or edit the baseline, ADR, and agent-context change |
+| `pause:plan-review` (2b) | After the product-manager writes the AC and plan | You approve the AC, plan phases and out of scope (or request changes and approve the revision). Nothing goes to `designer` / `architect` / `devops` before this |
 | `pause:design-review` (3c) | After design, once the designer's definition of done is fully checked | You approve the design (or request changes and approve the revision). Nothing goes to `frontend-dev` / `backend-dev` before this |
 | Smoke build (3d) | After devops mode 1, only when the stack changes (new runtime, dependency or devops-owned file) or no smoke has passed yet | Real dependencies run in one process. Feature-only changes skip it; staging still smoke-tests |
 | `pause:staging-credentials` | Before a live call to an external API | You approve each call and the keys are confirmed by name and prefix |

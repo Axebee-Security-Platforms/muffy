@@ -7,6 +7,7 @@ After every step:
 - The agent wrote `<brain>/agents/<role>/<task>.md`
 - The plan has ordered phases and every task has a priority
 - Test/QA runtime matches the `deploy.md` pin
+- Gate 2b (AC and plan approved by the user at `pause:plan-review`) passed before step 3 (unless the run profile skipped step 2, recorded with the reason)
 - Gates 3c (UX/UI review run or recorded as skipped, then design approved by the user at `pause:design-review`) and 3d passed before step 4 (unless the run profile skipped them, recorded with the reason)
 - When a diagram file was written or changed (step 3e): `check-diagram.mjs` and `check-diagram-render.mjs` passed (a render SKIP is recorded as `render: not checked`), it is published and listed in `<brain>/tasks/<task>.md` → `## Diagrams` (and `project.md` → `## Diagrams`), or the note says why it was not ([diagram-publish.md](diagram-publish.md))
 - `checkpoint.md` was rewritten at the boundaries listed in [memory-model.md](memory-model.md#checkpoint)
