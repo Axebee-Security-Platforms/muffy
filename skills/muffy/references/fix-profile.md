@@ -67,11 +67,11 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 
 | # | Agent | Notes |
 |---|---|---|
-| 4a | `frontend-dev` / `backend-dev` (FE ∥ BE if both) | **Diagnose, no code yet.** Reproduce, trace the failing path, test the hypothesis against a second piece of evidence, write `## Cause` and `## Repro` in `fix.md`. Hand-off carries `diagnosis` ([schema](../schemas/handoff.schema.json)) |
+| 4a | `frontend-dev` / `backend-dev` (FE ∥ BE if both) | **Diagnose, no code yet.** Reproduce with a tight, shrunk repro, trace the failing path, test 2 or 3 falsifiable hypotheses against a second piece of evidence, write `## Cause` and `## Repro` in `fix.md`. Hand-off carries `diagnosis` ([schema](../schemas/handoff.schema.json)) |
 | 4 | same agent, via `SendMessage` | Fix + regression test that fails before and passes after. Cosmetic: the AC's visual check. Same context, so the code read in 4a is not read again |
 | 5 | Orchestrator | Merge into `feature/<task>` with `--no-ff`, as usual |
 | 6 | `code-reviewer` | Diff + `fix.md` (including Cause and Repro). Never skipped, never downgraded |
-| 7 | `qa-tester` | `fix.md` AC replace `ac.md` and `design.md`. Level L0, L1 or L2 from [test-levels.md](test-levels.md); qa-tester runs exactly what that row allows (L0 build + lint, L1 the regression test + unit tests of the touched files, L2 also one boundary integration test), by path; never the whole suite ([hooks-enforcement.md](hooks-enforcement.md) §10). Cosmetic AC with no automated check are marked `manual` in `qa-report.md` and shown at the Human gate. No docs-writer, no step 8 |
+| 7 | `qa-tester` | `fix.md` AC replace `ac.md` and `design.md`. Level L0, L1 or L2 from [test-levels.md](test-levels.md); qa-tester runs exactly what that row allows (L0 build + lint, L1 the regression test + unit tests of the touched files, L2 also one boundary integration test), by path; never the whole suite ([hooks-enforcement.md](hooks-enforcement.md) §10). Cosmetic AC with no automated check, and an AC the dev says no seam can reach, are marked `manual` in `qa-report.md` and shown at the Human gate. No docs-writer, no step 8 |
 | 9 | `devops` mode 3 | Staging health + smoke against the newest `.team/*/deploy.md` (path in the prompt). No `deploy.md` and no staging → near-production env per `project.md` |
 | 10, 11 | Human gate, devops production | Unchanged. One question: qa-report, staging result, the diff summary |
 | 12 | Orchestrator | [closing.md](closing.md) steps 2–6 in full, not abbreviated: `## Usage` from `spawns.tsv`, Lessons tally (step 4 marks the checkpoint `closed`, so a resume skips it); skip step 1 unless a decision or stack learning came out of the fix |

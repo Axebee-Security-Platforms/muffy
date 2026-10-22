@@ -1,0 +1,28 @@
+{
+  "about": "Gate for `node scripts/review-bench.mjs score <dir> --gate`. null = not gated. Limits are the first recorded run plus slack for sampling noise (one clean run in nine is 0.11; two misses in 27 defects is 0.07); tighten them as the reviewer and the cases improve, and re-record after changing the cases or the parser. The limits were set from the full run (--all, 36 runs). The default core run has only 4 clean runs, where one false reject is 25%, so read a core-run gate failure as 'rerun', not as a regression.",
+  "recorded": {
+    "date": "2026-10-23",
+    "model": "sonnet",
+    "effort": "high",
+    "runs_per_case": 3,
+    "cases": 12,
+    "reviewer_rules": "code-reviewer principles with 7. A Blocker Must Be Provable (uncommitted at recording)",
+    "metrics": {
+      "runs": 36,
+      "defects": 27,
+      "clean_runs": 9,
+      "miss_rate": 0,
+      "hard_miss_rate": 0,
+      "demotion_rate": 0,
+      "false_reject_rate": 0,
+      "false_blockers_per_clean_run": 0,
+      "extra_blockers_per_defect_run": 0.852,
+      "verdict_accuracy": 1,
+      "unparsed_runs": 0
+    }
+  },
+  "max_miss_rate": 0.1,
+  "max_demotion_rate": 0.1,
+  "max_false_reject_rate": 0.12,
+  "max_false_blockers_per_clean_run": 0.25
+}

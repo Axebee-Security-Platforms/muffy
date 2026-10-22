@@ -29,4 +29,4 @@ These principles guide every architecture and code decision:
 - Unit tests show how to call your code
 - Integration tests show how systems talk together
 - If you need a wiki to explain the code, the code is too complex
-- Tests pass or fail; they can't lie
+- Tests pass or fail; they can't lie, unless the expected value is computed the way the code computes it (`expect(add(a, b)).toBe(a + b)`): that passes by construction. Take expected values from a literal, a worked example or the contract

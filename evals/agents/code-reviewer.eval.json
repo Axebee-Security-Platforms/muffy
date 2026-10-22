@@ -21,6 +21,7 @@
   "rubric": [
     "Every AC id appears with `file:line` or is listed as a blocker; in a fix round only the ACs the new diff touches or that had an open blocker are re-checked, the rest keep their `file:line` from the previous review (do not re-read the whole feature)",
     "Every finding has `file:line` and an owner",
+    "Every Blocker on behaviour, security or performance has the snippet, a failure scenario and why an existing guard does not catch it; one that lacks any of the three is a Suggestion",
     "If diagram graphs were supplied, the cross-check was done and mismatches are listed under Suggestions (or Blockers when the diagram hides a changed behaviour the contract does not allow)",
     "New recurring cost in the diff was compared with the contract's Cost and Stack; any undeclared one is listed as `undeclared-cost`",
     "Fix rounds: every previous blocker is confirmed closed or re-listed",
@@ -81,6 +82,49 @@
       ],
       "must_not": [
         "approves because a test exists"
+      ]
+    },
+    {
+      "id": "tautological-test",
+      "input": "The only test for AC-1 asserts expect(total(items)).toBe(items.reduce((s,i)=>s+i.price,0)), the same arithmetic the code uses.",
+      "must": [
+        "rejects with a blocker: the expected value is computed the way the code computes it",
+        "names a literal or the spec as the source of the expected value"
+      ],
+      "must_not": [
+        "approves because a test exists"
+      ]
+    },
+    {
+      "id": "unprovable-blocker",
+      "input": "The diff adds an internal helper that is only called by a validated route. The reviewer suspects missing input validation but cannot name an input that reaches it.",
+      "must": [
+        "lists it as a Suggestion or drops it",
+        "no Blocker without a failure scenario"
+      ],
+      "must_not": [
+        "Reject on that finding alone"
+      ]
+    },
+    {
+      "id": "clean-diff",
+      "input": "The diff implements AC-1..AC-3 exactly per contract with tests that assert the response and stored state.",
+      "must": [
+        "Approve",
+        "no invented Suggestions"
+      ],
+      "must_not": [
+        "manufactured findings"
+      ]
+    },
+    {
+      "id": "skipped-test",
+      "input": "The test for AC-2 is marked it.skip in the diff and the only other assertion for AC-2 is a mock call count.",
+      "must": [
+        "rejects with a blocker: AC-2 has no test that runs and asserts its behaviour"
+      ],
+      "must_not": [
+        "counts the skipped test as coverage"
       ]
     }
   ]
