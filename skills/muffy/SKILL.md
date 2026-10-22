@@ -3,13 +3,13 @@ name: muffy
 display_name: Earl Grey
 description: >
   Run a subagent team (main session = Orchestrator) from research to deploy, on the smallest route.
-  Use to build a feature end to end (ทำฟีเจอร์, สร้างระบบ); for a bug report
+  Use to build a feature end to end (ทำฟีเจอร์, `/muffy feature`); for a bug report
   with a symptom or error ("found a bug", "it errors", "this is broken", เจอบั๊ก, พัง, error) via the fix lane
   (`/muffy fix`); for an internal API, refactor, measured perf fix or migration (`/muffy lite`, ทำให้เร็วขึ้น);
   and for a single-step request: research or compare (วิจัย, เปรียบเทียบ), plan or user stories (วางแผน),
   screens (ออกแบบหน้าจอ), API or schema (ออกแบบ API), a UX/UI review (รีวิวดีไซน์), an architecture or ADR review
   or a new ADR, a code/PR review (รีวิว PR), tests (เขียนเทสต์), docs or README (ทำเอกสาร), deploy or rollback.
-  Also: resume work (`/muffy resume`, "continue", ทำต่อ), `/muffy analyze` for unfinished work, `/muffy onboard`,
+  Also: resume (`/muffy resume`, "continue", ทำต่อ), `/muffy analyze` for unfinished work, `/muffy onboard`,
   `/muffy present` for a client deck (ทำสไลด์), `/muffy diagram` for a standalone diagram.
   Not for a question about the code, a text-only one-line edit, or step-by-step work in the main session.
 ---
@@ -32,13 +32,13 @@ Load lazily: open a reference only at the step that needs it; subagents do the s
 
 Resume (`/muffy resume`, "continue", ทำต่อ) skips Analyze, Onboard, Setup and Run profile: [references/resume.md](references/resume.md).
 
-- **Route** — first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy analyze | onboard | present | diagram | resume | fix | lite`): the command is the route, so say `Route: <mode>` and open that mode's reference instead
+- **Route** — first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy analyze | onboard | present | diagram | resume | fix | lite | feature`): the command is the route, so say `Route: <mode>` and open that mode's reference instead
 - **Analyze** (`/muffy analyze`) — unfinished work in git and trackers, read-only: [analyze.md](references/analyze.md)
 - **Onboard** (`/muffy onboard`) — existing codebase, first run: [onboard.md](references/onboard.md)
 - **Present** (`/muffy present`) — client deck outside the team flow: [present.md](references/present.md), missing documents: [doc-request.md](references/doc-request.md)
 - **Diagram** (`/muffy diagram`, or a standalone "draw a diagram") — route facts to the owning agent, then always `diagrammer`: [diagram.md](references/diagram.md); PNG/SVG only on request: [diagram-export.md](references/diagram-export.md)
 - **Setup** — folders and task note: [setup.md](references/setup.md)
-- **Run profile** — which steps to skip, never review/QA/staging/Human gate: [run-profile.md](references/run-profile.md). Small bug: fix lane [fix-profile.md](references/fix-profile.md) (`/muffy fix`). Internal API, refactor, measured perf, reversible migration: lite lane [lite-profile.md](references/lite-profile.md) (`/muffy lite`)
+- **Run profile** — which steps to skip, never review/QA/staging/Human gate: [run-profile.md](references/run-profile.md). Small bug: fix lane [fix-profile.md](references/fix-profile.md) (`/muffy fix`). Internal API, refactor, measured perf, reversible migration: lite lane [lite-profile.md](references/lite-profile.md) (`/muffy lite`). Forced full flow, no triage: `/muffy feature <request>` runs every step; it skips only the route and the fix/lite triage, never a gate
 - **Steps 0–12** — agent, input and output per step: [steps.md](references/steps.md)
 - **Platforms** — when the contract's `Platform:` is not `web`, or the request names an app or CLI: [platforms.md](references/platforms.md)
 - **Publishing diagrams** (3e): [diagram-publish.md](references/diagram-publish.md) · **Design review** (3c): [design-review.md](references/design-review.md)

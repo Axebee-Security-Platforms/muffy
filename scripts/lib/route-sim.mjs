@@ -11,9 +11,11 @@ export const NON_CODE_ROUTES = ['research', 'plan', 'design', 'design-review', '
 export const NOT_DESIGNED_ROUTE = { architecture: 'spec', deployment: 'spec', erd: 'spec', state: 'spec', flow: 'spec', screenmap: 'design', gantt: 'plan', 'story-map': 'plan' };
 export const ROUTES = ['resume', ...MODES, 'diagram-in-task', 'none', ...NON_CODE_ROUTES, 'fix', 'lite', 'full', 'ask'];
 
-// s: { resume, mode, kind, open_task, not_designed, question, stop_point, outcome, ambiguous, missing_intake, text_only, bug, internal, fix: {...}, lite: {...} }
+// s: { resume, command, mode, kind, open_task, not_designed, question, stop_point, outcome, ambiguous, missing_intake, text_only, bug, internal, fix: {...}, lite: {...} }
 export function route(s = {}) {
   if (s.resume === true) return { route: 'resume', step: 1 };
+  // `/muffy feature <request>`: the requester forced the full flow; only this decision is skipped, intake and gates still run
+  if (s.command === 'feature') return { route: 'full', step: 2 };
   if (s.mode === 'diagram') {
     // diagram.md "Before the scope question": an open task takes it; a subject not designed yet is spec work
     if (s.open_task === true) return { route: 'diagram-in-task', step: 2 };

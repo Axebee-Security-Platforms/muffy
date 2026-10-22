@@ -92,4 +92,8 @@
     "signals": { "outcome": "code", "internal": true, "lite": { "has_goal": true, "has_area": true, "kind": "refactor", "user_visible": true } }, "expect": "full" },
   { "id": "feature-no-goal", "request": "ทำฟีเจอร์ใหม่ให้หน่อย",
     "signals": { "outcome": "code", "missing_intake": true }, "expect": "full", "note": "the goal is asked by the requirements interview, not before routing" }
+  ,{ "id": "feature-command", "request": "/muffy feature fix the typo in the footer and add dark mode",
+    "signals": { "command": "feature", "text_only": true, "outcome": "code" }, "expect": "full", "note": "the command forces the full flow even when triage would pick none or fix" },
+  { "id": "feature-command-th", "request": "/muffy feature แก้บั๊กปุ่มล็อกอินให้หน่อย",
+    "signals": { "command": "feature", "outcome": "code", "bug": true, "fix": { "has_symptom": true, "has_location": true, "expected_source_files": 1 } }, "expect": "full", "note": "explicit command beats the fix triage" }
 ]

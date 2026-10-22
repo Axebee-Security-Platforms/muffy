@@ -212,6 +212,10 @@ The Orchestrator skips steps the feature does not need (no UI change skips desig
 
 Research, product, design, architecture, docs and step 8 are skipped. The cause may be unknown at the start: an `unknown` diagnosis asks you for more evidence once, then escalates. A diagnosis that finds the cause in the contract, a dependency or the stack (`needs-full-flow`), or a fix that touches more than 5 source files, is promoted to the full flow.
 
+### Feature command
+
+`/muffy feature <description>` forces the full flow: research through deploy, with no fix or lite triage and no route read. Use it when you already know the work is a feature. It skips only the choice of route; the intake question, `pause:scope`, review, QA and the Human gate still run. For a small bug `/muffy fix` costs far less, and the Orchestrator says so once before carrying on as asked.
+
 ### Lite lane
 
 `/muffy lite <description>` is for internal work whose shape you already know: an internal API, a refactor, a measured performance fix, an index or a reversible migration. The triage needs all of: a goal and a named area (and a measured before-number for performance work), nothing a user or outside caller sees changes, no new dependency or stack change, no auth or personal-data change, no migration that drops data, and at most 15 source files. Otherwise it runs the full flow. Examples are in [lite-profile](skills/muffy/references/lite-profile.md#examples).
