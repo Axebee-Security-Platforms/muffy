@@ -96,7 +96,7 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | API docs or release notes for a change | docs | `docs-writer`, then `code-reviewer` on the docs | the reviewed docs. If the diff is not yet approved, route to review first |
 | README, a guide or API docs for code as it already is (no new change) | docs-existing | `docs-writer` ("Docs for existing code" in the prompt), then `code-reviewer` on the docs | the reviewed docs |
 | A standalone diagram of something that already exists, with no open task | diagram | per [diagram.md](diagram.md) | the diagram file |
-| A diagram of a feature whose task is still open | diagram-in-task | the task's owner of that kind specs it (`architect`; `product-manager` for gantt and story map; `designer` for the screen map), `designer` draws, step 3e publishes ([diagram.md](diagram.md#inside-an-open-task)) | the diagram, recorded in that task; the task's next step is unchanged |
+| A diagram of a feature whose task is still open | diagram-in-task | the task's owner of that kind specs it (`architect`; `product-manager` for gantt and story map; `designer` for the screen map), `diagrammer` draws, step 3e publishes ([diagram.md](diagram.md#inside-an-open-task)) | the diagram, recorded in that task; the task's next step is unchanged |
 | A deck or presentation for a client or end-users | present | per [present.md](present.md) | the deck |
 | Find unfinished work in a repo or tracker | analyze | per [analyze.md](analyze.md) | the confirmed task list |
 | First run on an existing codebase | onboard | per [onboard.md](onboard.md) | `baseline.md` and ADR, after review |

@@ -89,6 +89,8 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
 .lane .life { stroke: var(--line); stroke-width: 2; stroke-dasharray: 4 6; }
 .lane .name { font: 700 14px system-ui, sans-serif; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
 .lane .kind { font: 600 10px ui-monospace, Menlo, monospace; fill: var(--muted); text-anchor: middle; text-transform: uppercase; letter-spacing: .06em; }
+.frame { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 2 5; }
+.opt { font: 700 12px system-ui, sans-serif; fill: var(--muted); }
 .step { opacity: 0; animation: fadein .5s ease forwards; animation-delay: calc(var(--i, 0) * 260ms + 300ms); transition: opacity .25s; cursor: pointer; pointer-events: all; }
 .step.future { opacity: .2 !important; }
 .step .msg { stroke: var(--wire); stroke-width: 2; fill: none; stroke-linecap: round; }
@@ -269,6 +271,7 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
       items.forEach(function (n) { var r = byId[n.id].getBoundingClientRect(); cr[n.id] = { x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height }; });
       var hit = function (a, b, m) { return a.x < b.x + b.w - m && a.x + a.w > b.x + m && a.y < b.y + b.h - m && a.y + a.h > b.y + m; };
       var nm = function (id) { return name(id); };
+      items.forEach(function (n) { var c = byId[n.id]; if (c.scrollWidth > c.clientWidth + 1 || c.scrollHeight > c.clientHeight + 1) bad.push('text is cut off inside card ' + nm(n.id) + ': shorten the label or note, or break the long word'); });
       pills.forEach(function (p, i) {
         items.forEach(function (n) { if (hit(p, cr[n.id], 0)) bad.push('label "' + p.e.label + '" (' + nm(p.e.from) + ' to ' + nm(p.e.to) + ') overlaps card ' + nm(n.id)); });
         pills.slice(i + 1).forEach(function (q) { if (hit(p, q, 0)) bad.push('labels "' + p.e.label + '" and "' + q.e.label + '" overlap'); });
@@ -302,7 +305,15 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
   /* flow: actors across the top, numbered messages down the page */
   function flow() {
     var actors = D.actors || [], steps = D.steps || [], W = Math.max(stage.clientWidth || 900, actors.length * 190), colW = W / Math.max(actors.length, 1);
-    var H = 120 + steps.length * 68 + 30, svg = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', role: 'img', 'aria-label': D.title || 'flow' }, stage);
+    /* a step may carry group + option: consecutive steps of one group are an either/or frame, each option starts under its own header band */
+    var ys = [], yy = 120, hdr = [], groups = {};
+    steps.forEach(function (s, i) {
+      var p = steps[i - 1], start = s.group && (!p || p.group !== s.group || p.option !== s.option);
+      if (start) { yy += 30; hdr[i] = { y: yy - 56, text: (p && p.group === s.group ? 'Or: ' : 'If: ') + s.option }; }
+      ys[i] = yy; yy += 68;
+      if (s.group) { var g = groups[s.group] || (groups[s.group] = { a: i, b: i }); g.b = i; }
+    });
+    var H = yy + 30, svg = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', role: 'img', 'aria-label': D.title || 'flow' }, stage);
     svg.style.overflow = 'visible'; svg.style.display = 'block'; defs(svg);
     var x = {}, actorName = {}; actors.forEach(function (a, i) {
       actorName[a.id] = a.label || a.id;
@@ -312,8 +323,13 @@ svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
       sv('text', { x: x[a.id], y: 30, 'class': 'kind' }, g).textContent = a.type || 'actor';
       sv('text', { x: x[a.id], y: 48, 'class': 'name' }, g).textContent = a.label || a.id;
     });
+    Object.keys(groups).forEach(function (k) {
+      var g = groups[k], top = ys[g.a] - 62, bot = ys[g.b] + 34;
+      sv('rect', { x: 6, y: top, width: W - 12, height: bot - top, rx: 12, 'class': 'frame' }, svg);
+    });
+    hdr.forEach(function (h, i) { if (h) sv('text', { x: 18, y: ys[i] - 36, 'class': 'opt' }, svg).textContent = h.text; });
     var nodes = steps.map(function (s, i) {
-      var y = 120 + i * 68, g = sv('g', { 'class': 'step' + (s.fail ? ' fail' : '') + (s.verify ? ' verify' : ''), tabindex: '0' }, svg), x1 = x[s.from], x2 = x[s.to];
+      var y = ys[i], g = sv('g', { 'class': 'step' + (s.fail ? ' fail' : '') + (s.verify ? ' verify' : ''), tabindex: '0' }, svg), x1 = x[s.from], x2 = x[s.to];
       g.setAttribute('role', 'button'); g.setAttribute('aria-label', 'Step ' + (i + 1) + ': ' + (actorName[s.from] || s.from) + ' to ' + (actorName[s.to] || s.to) + ', ' + (s.label || '') + (s.fail ? ', fails here' : ''));
       g.style.setProperty('--i', reduce ? 0 : i); if (reduce) g.style.animation = 'none', g.style.opacity = 1;
       if (x1 === x2) { sv('path', { d: 'M' + x1 + ' ' + (y - 14) + ' h46 v28 h-46', 'class': 'msg', 'marker-end': 'url(#arrow)' }, g); }

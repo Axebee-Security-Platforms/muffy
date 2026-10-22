@@ -6,6 +6,4 @@
 - Existing UI code (e.g. `demo/style.css`) to extract values already in use
 - `.team/<task>/contract.md` (once it exists, for field alignment)
 - `<brain>` path from the Orchestrator
-- When drawing a non-screen-map diagram: the `diagrams_spec` entry (kind, path, content, pattern, `contract_ref`) relayed by the Orchestrator from `architect` or `product-manager`'s hand-off — never gathered yourself
-
 If the user doesn't need a UI (e.g. the MVP is API-only), produce only `design.md` covering the API consumer experience.

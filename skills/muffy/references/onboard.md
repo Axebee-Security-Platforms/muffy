@@ -13,11 +13,11 @@ Not for a new, empty repo (nothing to record) or when `docs/architecture/baselin
 | 0a | Orchestrator | Setup as in [setup.md](setup.md) (skip setup step 3 baseline check, the scope pause and worktrees). Run `node .claude/skills/muffy/scripts/scan-repo.mjs . --out .team/onboard/scan.json` unless `install.mjs --scan` already did | `scan.json`: facts only |
 | 0b | `researcher` (onboard mode) | Reads `scan.json`, then the code to confirm and fill it (entrypoints, patterns in use, auth, data access, error handling, naming, test style, build/test/lint commands) | `docs/architecture/baseline.md` |
 | 0c | `architect` (onboard mode) | Reads `baseline.md`; records the stack in force; adds `docs/design-system/` only when `scan.json` → `ui.likely`; specs `docs/architecture/overview.html` (only if the repo has no architecture diagram) as a `diagrams_spec` entry — never writes the file itself | `docs/adr/NNNN-existing-stack.md`, `docs/design-system/README.md` (UI only), `diagrams_spec` (0 or 1 entries) |
-| 0c' | `designer`, only if 0c's hand-off carries a `diagrams_spec` | Draws `docs/architecture/overview.html` from that spec, per [diagram-style.md](../../../agents/references/shared/diagram-style.md) | `docs/architecture/overview.html` |
+| 0c' | `diagrammer`, only if 0c's hand-off carries a `diagrams_spec` | Draws `docs/architecture/overview.html` from that spec, per [diagram-style.md](../../../agents/references/shared/diagram-style.md) | `docs/architecture/overview.html` |
 | 0d | **Human gate** `pause:onboard-review` | `AskUserQuestion` with the baseline summary, the overview diagram link if 0c' drew one (published first, [diagram-publish.md](diagram-publish.md)), the ADR, the `[verify]` list, the infrastructure question (what `baseline.md` found under Runtime and deploy, then: "Infrastructure: is there somewhere to deploy? Options: existing (say what), none yet (decide later, the default), none yet (propose one now), or not needed (a library, local tool or client-only app)"; answering that there is none is fine and nothing is proposed), and the proposed agent-context change (see below). Approve / Edit / Reject | approved baseline |
 | 0e | Orchestrator | Seed `<brain>/project.md` (Lessons, Open issues) from the baseline's open issues; record the 0d infrastructure answer as `infra: …` in `project.md`; apply the approved agent-context change; commit the docs | `project.md`, `CLAUDE.md` / `AGENTS.md` |
 
-0b then 0c run in sequence (0c reads 0b's output), then 0c' if 0c spec'd a diagram. A Reject at 0d goes back to the owner of the point the user names — the facts owner (`architect`) for a wrong fact, `designer` for a layout-only complaint — under the normal fix-loop limits in [loops.md](loops.md).
+0b then 0c run in sequence (0c reads 0b's output), then 0c' if 0c spec'd a diagram. A Reject at 0d goes back to the owner of the point the user names — the facts owner (`architect`) for a wrong fact, `diagrammer` for a layout-only complaint — under the normal fix-loop limits in [loops.md](loops.md).
 
 ## baseline.md
 
@@ -31,6 +31,8 @@ Frontmatter: `commit` (HEAD sha it describes), `date`, `scan` (path). Sections, 
 - **Existing docs**: what is already in the repo and where
 - **Open issues**: things that look broken or risky, with evidence. These seed `project.md`
 - **`[verify]`**: every claim the agent could not confirm from code. The user checks these at 0d
+
+**Size and shape.** `baseline.md` is read by most agents on most runs (16 reads of a 21 KB file in one real project), so keep it an index: ≤ 120 lines, every section a short summary that links to `docs/architecture/baseline/<section>.md` when the detail passes ~25 lines (Conventions and Layout usually do). Start the file with a `## Read this first` block of ≤ 10 lines (stack, how to run tests, the three conventions most often broken) and a table `section → file`. An agent reads the first block, then only the section file its task needs, by heading with `Grep -n` and a `Read` with `offset`/`limit`; it never loads the whole folder.
 
 ## Agent context file (CLAUDE.md / AGENTS.md)
 
@@ -56,7 +58,7 @@ Do not restate baseline content in the block: it goes stale, the baseline carrie
 
 - Facts from files only. Unknown = `[verify]`, never a guess. No recommendations and no refactors: this is a record of what is, not a plan
 - `.env*` files are never opened. Env variable names come from code references or an example file the repo ships
-- Writes allowed, beyond the usual: researcher → `docs/architecture/baseline.md`; architect → `docs/adr/`, `docs/design-system/`; designer → `docs/architecture/overview.html`, only when 0c spec'd it (the repo had no architecture diagram, as defined in [diagrams.md](../../../agents/references/architect/diagrams.md)); orchestrator → the muffy block in `CLAUDE.md` / `AGENTS.md`, after 0d approval. Nothing else in the repo changes
+- Writes allowed, beyond the usual: researcher → `docs/architecture/baseline.md`; architect → `docs/adr/`, `docs/design-system/`; diagrammer → `docs/architecture/overview.html`, only when 0c spec'd it (the repo had no architecture diagram, as defined in [diagrams.md](../../../agents/references/architect/diagrams.md)); orchestrator → the muffy block in `CLAUDE.md` / `AGENTS.md`, after 0d approval. Nothing else in the repo changes
 - Existing `docs/adr/` records win: do not renumber, rewrite or contradict them. The new ADR is numbered after the latest and says "accepted: records the stack as found on `<date>`". If the repo already has ADRs covering the stack, link them instead of writing a duplicate
 - A design-system README lists tokens and components that exist in code; it invents none
 - Hand-off blocks use `"step": "0"` (see [handoff.schema.json](../schemas/handoff.schema.json))
