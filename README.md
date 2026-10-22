@@ -2,11 +2,11 @@
 
 # Muffy
 
-### One skill, ten subagents, one feature from research to production.
+### One skill, eleven subagents, one feature from research to production.
 
 **Describe a feature. The team researches, designs, builds, reviews, tests, and ships it, with a human approving the design before code starts and every production release.**
 
-[Quick start](#quick-start) · [How muffy works](#how-muffy-works) · [What each step produces](#what-each-step-produces) · [Example](#example) · [FAQ](#faq) · [Documentation](#documentation)
+[Quick start](#quick-start) · [Commands](#commands) · [How muffy works](#how-muffy-works) · [What each step produces](#what-each-step-produces) · [Example](#example) · [FAQ](#faq) · [Documentation](#documentation)
 
 <code>node install.mjs /path/to/your-repo --vault "/path/to/Obsidian Vault"</code>
 
@@ -16,7 +16,7 @@
 
 You have a feature to build and a Claude Code session. Ask the `muffy` skill to run it. The main session becomes the **Orchestrator** and starts specialist subagents in a fixed 12-step flow: research, product, design, architecture, devops, frontend, backend, review, QA, docs. Each step has an owner, its inputs, and a gate. Work moves as files in `.team/<task>/` plus a validated JSON hand-off, not as chat summaries.
 
-Small bugs and cosmetic fixes use a lighter [fix lane](#fix-lane) instead of the full flow; internal APIs, refactors and measured performance work use the [lite lane](#lite-lane).
+A free-text request is first routed to the smallest route that fits: a single step, the [fix lane](#fix-lane) for small bugs and cosmetic fixes, the [lite lane](#lite-lane) for internal APIs, refactors and measured performance work, or the full flow. A mode command (`/muffy fix`, `/muffy lite`, `/muffy feature` and the rest) skips the routing and goes straight to that route.
 
 The flow replaces ad-hoc multi-agent prompts. Unreviewed code and lost hand-offs stop reaching `main`; a repeated failure stops after three fix loops and goes to you.
 
@@ -89,9 +89,33 @@ Outside the team flow. The product manager, thinking like a solutions engineer, 
 
 The fix lane skips research, product, design and architecture. A dev agent first **diagnoses** (reproduces the problem, finds the cause, no code yet), then fixes it with a regression test in the same context. `code-reviewer`, `qa-tester`, staging and the Human gate still run. The cause may be unknown at the start; if the diagnosis finds the problem is in the contract, a dependency or the stack, or the fix touches more than 5 source files, the run is promoted to the full flow. Details: [fix-profile](skills/muffy/references/fix-profile.md).
 
+### Draw a diagram
+
+```text
+/muffy diagram architecture of the billing service
+```
+
+Outside the team flow. The Orchestrator sends the request to the agent that owns the facts for that diagram kind (architecture, deployment, state, ERD, flow, screen map, gantt, story map), and the `diagrammer` agent draws it and checks that it renders. PNG or SVG export only on request. Details: [diagram](skills/muffy/references/diagram.md).
+
 ### Update muffy
 
 Run the installer again with `--clean`, and restart Claude Code.
+
+## Commands
+
+| Command | Use it for |
+|---|---|
+| `/muffy <request>` | Free text: the Orchestrator picks the route and says it in one line before starting |
+| `/muffy feature <request>` | Force the full flow, no triage |
+| `/muffy fix <request>` | Small bug or cosmetic fix ([fix lane](#fix-lane)) |
+| `/muffy lite <request>` | Internal work with a known shape ([lite lane](#lite-lane)) |
+| `/muffy resume` | Continue an interrupted run from its checkpoint |
+| `/muffy analyze` | List unfinished work in git and trackers |
+| `/muffy onboard` | Record the baseline of an existing codebase |
+| `/muffy present <request>` | Client or end-user presentation |
+| `/muffy diagram <request>` | Standalone diagram |
+
+Single-step requests (research, plan, screens, API or schema, code or PR review, tests, docs, deploy or rollback) are also routed to the one agent that owns them. Details: [route](skills/muffy/references/route.md).
 
 ## How muffy works
 
@@ -214,7 +238,7 @@ Research, product, design, architecture, docs and step 8 are skipped. The cause 
 
 ### Feature command
 
-`/muffy feature <description>` forces the full flow: research through deploy, with no fix or lite triage and no route read. Use it when you already know the work is a feature. It skips only the choice of route; the intake question, `pause:scope`, review, QA and the Human gate still run. For a small bug `/muffy fix` costs far less, and the Orchestrator says so once before carrying on as asked.
+`/muffy feature <description>` forces the full flow: research through deploy, with no fix or lite triage and no route read (mode commands skip `route.md` entirely). Use it when you already know the work is a feature. It skips only the choice of route; the intake question, `pause:scope`, review, QA and the Human gate still run. For a small bug `/muffy fix` costs far less, and the Orchestrator says so once before carrying on as asked.
 
 ### Lite lane
 
@@ -343,6 +367,8 @@ The Orchestrator reads `.team/<task>/checkpoint.md` and the vault task note inst
 - [Hooks and guards](skills/muffy/references/hooks-enforcement.md): the rules a hook can enforce, including who may write `docs/strategy.md` and the architecture files.
 - [Diagram style](agents/references/shared/diagram-style.md): the HTML template, JSON schema and validator for architecture, database and flow diagrams.
 - [Platforms](skills/muffy/references/platforms.md): web, mobile (Flutter, React Native, Swift, Kotlin), desktop (Electron, Mac, Windows) and CLI or console apps. What changes per target, the toolchain the host needs, and what only you may do (sign, upload, publish).
+- [Route](skills/muffy/references/route.md) and [route examples](skills/muffy/references/route-examples.md): how a request picks its route.
+- [Diagram mode](skills/muffy/references/diagram.md): diagram kinds, owners and output paths.
 - [Fix profile](skills/muffy/references/fix-profile.md): the lane for small bugs and cosmetic fixes, with diagnose-first and promotion rules.
 - [Requirements interview](skills/muffy/references/requirements.md): how clarifying questions reach you.
 - [Onboard](skills/muffy/references/onboard.md): baseline, ADR, and `CLAUDE.md` / `AGENTS.md` for existing repos.
