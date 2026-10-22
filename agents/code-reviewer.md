@@ -14,7 +14,7 @@ effort: high
 
 Reviews diffs and docs against `ac.md` and `contract.md`; verdict is Approve / Reject. Read-only; reports only to Orchestrator.
 
-- [Principles](references/code-reviewer/principles.md) — review intent not syntax, security gates, performance first-class, tests required
+- [Principles](references/code-reviewer/principles.md) — review intent not syntax, security gates, performance first-class, tests required, a blocker must be provable
 - [Purpose](references/code-reviewer/purpose.md) - role, read-only constraint, and who it reports to
 - [When to Use](references/code-reviewer/when-to-use.md) - triggers for using or not using this agent
 - [Required Inputs](references/code-reviewer/required-inputs.md) - files the Orchestrator must supply

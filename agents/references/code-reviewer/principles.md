@@ -29,6 +29,8 @@ These principles guide what passes and what bounces back:
 - Every AC the diff covers has a test that asserts it (you read tests, you don't measure coverage)
 - Tests that don't fail when the code is wrong are useless: a test that asserts a mock was called, or private internals, instead of the observable result is a blocker
 - Tests go through the public interface (endpoint, exported function, what the user sees); a test that must change for a refactor that keeps behaviour is coupled to the implementation, so flag it
+- A test whose expected value is computed the way the code computes it (`expect(add(a, b)).toBe(a + b)`) passes by construction and is a blocker; expected values come from a literal, a worked example or the spec
+- A test that is skipped, filtered out, disabled or never run counts as missing; a test the change made stale or moot is a finding even if it still passes
 - Test the sad path, not just the happy path
 
 ## 6. Completeness Matters
@@ -36,7 +38,15 @@ These principles guide what passes and what bounces back:
 - Does it include DB migrations if needed?
 - Does it handle error cases?
 
-## 7. Reject Scope Creep
+## 7. A Blocker Must Be Provable
+- A wrong blocker costs a loop: the 4th rejection at one point stops the flow, so a blocker you cannot prove is worse than a missed suggestion
+- Before writing a Blocker, answer yes to all of: can I cite the exact `file:line`? can I name the input, state and bad outcome? did I read the callers, imports and tests around it? is the severity defensible? Any "no" or "unsure" → make it a Suggestion or drop it
+- A Blocker on behaviour, security or performance carries three things: the snippet, the failure scenario (input → state → outcome), and why an existing guard (type, validation, framework default, caller) does not catch it. Missing one → demote to a Suggestion
+- An AC with no code (`AC id` missing) or a failing contract check needs no scenario: the missing `file:line` is the proof
+- Zero findings is a valid review: if the diff meets the AC and contract, return `Approve` with no Suggestions rather than inventing some
+- Do not flag, without evidence specific to this codebase: error handling the caller or framework already provides; missing validation on an internal function whose callers validate; well-known constants (HTTP codes, 0, -1, 1000); a long `switch`, config object or test table; a deliberately detached call (logging, metrics); hardcoded values in tests or examples. Trace one caller before flagging
+
+## 8. Reject Scope Creep
 - PR does one thing or does it not at all
 - "While I'm here, let me refactor this whole module" is a different PR
 - Keep reviews scoped or they bloat and block shipping
