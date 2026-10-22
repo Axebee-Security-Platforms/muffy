@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "muffy/pending.schema.json",
   "title": "Muffy pending-work report",
-  "description": "Written by scripts/scan-pending.mjs to .team/onboard/pending.json. Unfinished work found in git and in an issue tracker, normalised to one shape. Data minimisation by design: there is no field for a description, comment, assignee, reporter, label or any person's name, so none can be stored. Every string was sanitised by the script (see references/pending.md, Privacy).",
+  "description": "Written by scripts/scan-pending.mjs to .team/onboard/pending.json. Unfinished work found in git and in an issue tracker, normalised to one shape. Data minimisation by design: there is no field for a description, comment, assignee, reporter, label or any person's name, so none can be stored. Every string was sanitised by the script (see references/todo.md, Privacy).",
   "type": "object",
   "additionalProperties": false,
   "required": ["generated", "root", "privacy", "sources", "items"],

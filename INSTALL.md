@@ -83,4 +83,4 @@ One-line edits with no behaviour risk, research-only or review-only requests. Sm
 
 ## Before installing: find unfinished work
 
-`/muffy pending` lists the tasks in `.team/` that are not done. See [pending.md](skills/muffy/references/pending.md). The installer still adds `.team/onboard/pending.json` to `.gitignore` for the parked `scan-pending.mjs` scan.
+`/muffy todo` lists the tasks in `.team/` that are not done. See [todo.md](skills/muffy/references/todo.md). The installer still adds `.team/onboard/pending.json` to `.gitignore` for the parked `scan-pending.mjs` scan.

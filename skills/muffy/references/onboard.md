@@ -2,7 +2,7 @@
 
 Run once per repo that already has a codebase, before the first feature: `/muffy onboard`. Task name is fixed: `onboard`. It records what the repo already is, so later steps reuse it instead of rediscovering it or guessing a stack.
 
-If `.team/` already holds tasks that are not done, run [pending.md](pending.md) first so they are resumed instead of surprising you.
+If `.team/` already holds tasks that are not done, run [todo.md](todo.md) first so they are resumed instead of surprising you.
 
 Not for a new, empty repo (nothing to record) or when `docs/architecture/baseline.md` exists and is fresh (`check-baseline.mjs` prints green; see [baseline-freshness.md](baseline-freshness.md)). Refresh = run it again; it rewrites the baseline and appends a new ADR only if the stack changed.
 

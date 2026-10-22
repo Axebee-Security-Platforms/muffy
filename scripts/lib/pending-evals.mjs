@@ -1,4 +1,4 @@
-// Offline checks for pending mode (skills/muffy/references/pending.md, scripts/scan-pending.mjs).
+// Offline checks for todo mode (skills/muffy/references/todo.md, scripts/scan-pending.mjs).
 // The point is privacy: planted secrets, personal data and prompt-injection text must never reach pending.json.
 import { mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';

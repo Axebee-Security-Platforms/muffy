@@ -46,10 +46,10 @@ The checkpoint and artifact size hooks are opt-in and added by hand; team-flow r
 ### Find unfinished tasks
 
 ```text
-/muffy pending
+/muffy todo
 ```
 
-Lists the tasks in `.team/` that are not done (checkpoint status is not `closed`), then asks which to continue with `/muffy resume`. Read-only. It does not look at git branches or trackers. Details: [pending](skills/muffy/references/pending.md).
+Lists the tasks in `.team/` that are not done (checkpoint status is not `closed`), then asks which to continue with `/muffy resume`. Read-only. It does not look at git branches or trackers. Details: [todo](skills/muffy/references/todo.md).
 
 ### Onboard an existing codebase (once)
 
@@ -104,7 +104,7 @@ Run the installer again with `--clean`, and restart Claude Code.
 | `/muffy fix <request>` | Small bug or cosmetic fix ([fix lane](#fix-lane)) |
 | `/muffy lite <request>` | Internal work with a known shape ([lite lane](#lite-lane)) |
 | `/muffy resume` | Continue an interrupted run from its checkpoint |
-| `/muffy pending` | List tasks in `.team/` that are not done |
+| `/muffy todo` | List tasks in `.team/` that are not done |
 | `/muffy onboard` | Record the baseline of an existing codebase |
 | `/muffy present <request>` | Client or end-user presentation |
 | `/muffy diagram <request>` | Standalone diagram |
