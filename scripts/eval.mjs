@@ -94,6 +94,10 @@ check('runtime pin: mismatch is detected', runtime(read('deploy.md')) !== runtim
   check('make-envelope: valid flags print the template with the hand-off path and shape', ok.status === 0 && ok.stdout.includes('handoff/4-backend-dev-r1.json') && ok.stdout.includes('Hand-off shape:') && ok.stdout.includes('1,200 characters'), ok.stderr);
   check('make-envelope: prompt stays lean (< 1.6 KB)', ok.stdout.length < 1600, String(ok.stdout.length));
   check('make-envelope: schema violation exits 1 and prints nothing to stdout', bad.status === 1 && bad.stdout === '');
+  const blockedEnv = mk(['--role', 'docs-writer', '--write', 'docs/architecture/baseline.md']);
+  const okEnv = mk(['--role', 'docs-writer', '--write', 'docs/api/x.md']);
+  check('make-envelope: a Write: path the write-scope guard blocks for the role exits 1 before any spawn', blockedEnv.status === 1 && blockedEnv.stdout === '' && blockedEnv.stderr.includes('only researcher may'), blockedEnv.stderr);
+  check('make-envelope: the prompt tells the role which shared files it may not write; the owner is not told', okEnv.status === 0 && okEnv.stdout.includes('Shared files you may not write') && okEnv.stdout.includes('docs/architecture/baseline.md') && !mk(['--role', 'researcher', '--write', 'docs/architecture/baseline.md']).stdout.split('\n').some((l) => l.startsWith('Shared files you may not write') && l.includes('docs/architecture/baseline.md')), okEnv.stdout);
   const noisy = join(tmpdir(), 'muffy-rq-noisy.js');
   writeFileSync(noisy, "for (let i = 0; i < 40; i++) console.log(i === 3 ? 'ERROR x' : 'l' + i); process.exit(4);");
   const q = spawnSync(process.execPath, [rel('skills/muffy/scripts/run-quiet.mjs'), '--tail', '2', '--out', join(tmpdir(), 'muffy-rq.log'), '--', process.execPath, noisy], { encoding: 'utf8' });
@@ -555,6 +559,12 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   const closed = checkpoint(d);
   writeFileSync(join(d, 'spawns.tsv'), `${['1', '2', '3'].map((s, i) => spawnLine(s, 'architect', i === 2 ? 'contract tok:n/a' : 'contract tok:4100')).join('\n')}\n`);
   check('check-checkpoint: tok:n/a on most spawns fails only once the task is closed', open.length === 0 && closed.some((e) => e.includes('2 of 3')) && checkpoint(d).length === 0, [...open, ...closed].join('; '));
+  writeFileSync(join(d, 'spawns.tsv'), `${[['3', 'architect', 'tok:238000'], ['3', 'architect', 'tok:245000'], ['3', 'architect', 'tok:245000'], ['3d', 'devops', 'tok:200000'], ['3', 'devops', 'tok:80000']].map(([s, a, n]) => spawnLine(s, a, `note ${n}`)).join('\n')}\n`);
+  const tokCumulative = checkpoint(d);
+  writeFileSync(join(d, 'spawns.tsv'), `${[['4', 'backend-dev', 'tok:281000'], ['4', 'backend-dev', 'tok:266000']].map(([s, a, n]) => spawnLine(s, a, `note ${n}`)).join('\n')}\n`);
+  const tokLower = checkpoint(d);
+  check('check-checkpoint: tok is cumulative per agent: equal or higher passes, lower for the same step and agent fails', tokCumulative.length === 0 && tokLower.some((e) => e.includes('cumulative per agent')), [...tokCumulative, ...tokLower].join('; '));
+  check('docs: the cumulative tok rule is in memory-model.md and closing.md', ['memory-model.md', 'closing.md'].every((f) => /cumulative per agent/.test(readFileSync(rel(`skills/muffy/references/${f}`), 'utf8'))));
   const pre = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/devops-preflight.mjs'), ...a], { cwd: tmp, encoding: 'utf8' });
   check('preflight: --toolchain node passes with no .nvmrc (a non-Node repo), a wrong version fails, an unknown name is a usage error', pre('--toolchain', 'node').status === 0 && pre('--toolchain', 'node=0.0.1').status === 1 && pre('--toolchain', 'toaster').status === 2 && pre().status === 1);
   rmSync(tmp, { recursive: true, force: true });

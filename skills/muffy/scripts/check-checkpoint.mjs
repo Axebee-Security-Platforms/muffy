@@ -82,6 +82,7 @@ export function checkTask(taskDir) {
   if (existsSync(spawnsPath)) {
     let spawns = 0;
     let unknown = 0;
+    const lastTok = new Map(); // tok is cumulative per agent: a later line of the same step and agent must not be lower
     readFileSync(spawnsPath, 'utf8').split('\n').forEach((line, i) => {
       if (!line.trim()) return;
       const cols = line.split('\t');
@@ -91,6 +92,12 @@ export function checkTask(taskDir) {
       if (!tok) return errors.push(`spawns.tsv line ${i + 1} note does not end with tok:<n> or tok:n/a`);
       spawns += 1;
       if (tok[1] === 'n/a') unknown += 1;
+      else {
+        const key = `${cols[0]}|${cols[1]}`;
+        const n = Number(tok[1]);
+        if (lastTok.has(key) && n < lastTok.get(key)) errors.push(`spawns.tsv line ${i + 1} tok:${n} is lower than the earlier ${cols[1]} step ${cols[0]} line (${lastTok.get(key)}); tok is cumulative per agent, copy the runtime count again`);
+        lastTok.set(key, Math.max(n, lastTok.get(key) ?? 0));
+      }
     });
     // n/a is only for a spawn the runtime gave no count for; a closed task where most are n/a was not copied
     if (/\bclosed\b/.test(status) && unknown * 2 > spawns) {

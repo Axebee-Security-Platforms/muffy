@@ -27,3 +27,5 @@
 - Every commit ends with the `Commit trailer` from your prompt envelope, verbatim
 - Guess or write elsewhere if the prompt has no `<brain>` path or the folder can't be found — say so in your final message so the Orchestrator asks the user
 - Second brain writes: only `<brain>/agents/backend-dev/<task>.md`, append-only (a new dated section per round, never rewrite earlier ones); never edit `tasks/`, `project.md` or other agents' folders
+
+- **Shared files are guarded.** Check the `Shared files you may not write` line of your prompt before you create a file. A guard blocks `docs/strategy.md`, `docs/architecture/**` (baseline, diagrams, anything else), `docs/plan/*-gantt.html`, `docs/design/screen-map.html` and `docs/design-system/` for every role that does not own them ([hooks-enforcement.md](../../../skills/muffy/references/hooks-enforcement.md) section 12). If your work needs one, do not write it, do not work around the block through the shell: list it as a blocker `B-n` with the path and what to add, and the Orchestrator routes it to the owner

@@ -14,12 +14,15 @@
 // A bare file name ending in .md/.json/.csv/.html in --read/--write is placed under --team-dir (default
 // .worktrees/feature-<task>/.team/<task>); anything with a slash is used as given. The hand-off file is added to Write
 // for every role except code-reviewer, which has no Write tool.
+// A Write: path the role may not write (guard-write-scope.mjs rules, shared in write-scope.mjs) is refused with exit 1, and a
+// "Shared files you may not write" line is added to the prompt.
 // Output: the prompt on stdout. The envelope is validated against schemas/prompt-envelope.schema.json first;
 // on error nothing is printed to stdout, the errors go to stderr, exit 1. Exit 2 = bad usage.
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from './schema.mjs';
+import { blockingRule, blockMessage, dontWriteLine } from './write-scope.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const BOOL = new Set(['announcement', 'pr-diagram', 'full-regression']);
@@ -59,6 +62,10 @@ const reviewerNoWrite = role === 'code-reviewer';
 const handoffPath = `${teamDir}/handoff/${step}-${role}-r${round}.json`;
 if (!reviewerNoWrite && !env.write.includes(handoffPath)) env.write.push(handoffPath);
 
+// Refuse a Write: path the guard would block, so the agent is never sent to a file it cannot write (hooks-enforcement.md section 12).
+const blockedWrites = env.write.map((p) => [p, blockingRule(role, p)]).filter(([, r]) => r).map(([p, r]) => `${p}: ${blockMessage(role, r)}`);
+if (blockedWrites.length) { console.error(`Write: not allowed for ${role}:\n- ${blockedWrites.join('\n- ')}`); process.exit(1); }
+
 const errs = validate(JSON.parse(readFileSync(join(here, '..', 'schemas', 'prompt-envelope.schema.json'), 'utf8')), env);
 if (errs.length) { console.error(`envelope invalid:\n- ${errs.join('\n- ')}`); process.exit(1); }
 
@@ -72,6 +79,8 @@ if (env.done_when) out.push(`Done when: ${env.done_when}`);
 out.push(header.join('  '));
 if (env.worktree) out.push(`Worktree: ${env.worktree}${env.branch ? ` · Branch: ${env.branch}` : ''}`);
 out.push(`Read: ${env.read.join(', ')}`, `Write: ${env.write.join(', ')}`, `Don't touch: ${env.dont_touch.join(', ') || 'nothing beyond Write'}`);
+const dontWrite = dontWriteLine(role);
+if (dontWrite && !reviewerNoWrite) out.push(dontWrite);
 if (env.announcement) out.push('Announcement: yes');
 if (env.pr_diagram) out.push('PR diagram: yes');
 if (env.human_approved) out.push(`Human approved: ${env.human_approved}`);

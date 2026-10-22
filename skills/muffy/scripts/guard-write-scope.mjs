@@ -11,18 +11,9 @@
 // Only subagent calls are guarded (the payload names the subagent in `agent_type`); a call with no `agent_type` is the
 // Orchestrator's own session or the user and is never blocked. Bash writes are not seen (known limit).
 import { readFileSync } from 'node:fs';
+import { blockingRule, roleOf, blockMessage } from './write-scope.mjs';
 
 const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
-const RULES = [
-  { re: /(^|\/)docs\/strategy\.md$/, owners: ['product-manager'], what: 'docs/strategy.md (the product-manager records all cost: send it the figures through the Orchestrator)' },
-  { re: /(^|\/)docs\/architecture\/baseline(\.md|\/[^/]+\.md)$/, owners: ['researcher'], what: 'docs/architecture/baseline.md or a section file docs/architecture/baseline/<section>.md (the researcher writes them in onboard mode)' },
-  { re: /(^|\/)docs\/architecture\/(overview|data-model|deployment)\.html$/, owners: ['diagrammer'], what: 'an architecture diagram (the architect specs the facts when a trigger fires; the diagrammer draws the file)' },
-  { re: /(^|\/)docs\/architecture\/(flows|states|changes|data-models)\/[^/]+\.html$/, owners: ['diagrammer'], what: 'a flow, state, change or per-feature ERD diagram (the architect specs the facts when a trigger fires; the diagrammer draws the file)' },
-  { re: /(^|\/)docs\/architecture\//, owners: [], what: 'a file under docs/architecture/ that no rule names' },
-  { re: /(^|\/)docs\/plan\/[^/]+-(gantt|story-map)\.html$/, owners: ['diagrammer'], what: 'a plan diagram (the product-manager specs the facts when the plan needs one; the diagrammer draws the file)' },
-  { re: /(^|\/)docs\/design\/screen-map\.html$/, owners: ['diagrammer'], what: 'the screen map (the designer specs it when the structure or navigation changes; the diagrammer draws the file)' },
-  { re: /(^|\/)docs\/design-system\//, owners: ['designer', 'architect'], what: 'the design system (the designer owns it; the architect records an existing one at onboard)' },
-];
 
 let input;
 try {
@@ -32,24 +23,11 @@ try {
 }
 
 if (!WRITE_TOOLS.has(input.tool_name ?? '')) process.exit(0);
-const role = String(input.agent_type ?? '').split(':').pop(); // "muffy:architect" or "architect"
+const role = roleOf(input.agent_type);
 if (!role) process.exit(0);
-// Rules are anchored at the project root, so packages/sdk/docs/architecture/README.md in a monorepo is not the shared docs folder. A path
-// outside the project root (or with no root to compare) falls back to matching anywhere in the path. Windows and macOS file systems
-// ignore case, so Docs/Strategy.md is the same file there.
-const fold = (p) => (process.platform === 'win32' || process.platform === 'darwin' ? p.toLowerCase() : p);
-const slash = (p) => p.replace(/\\/g, '/');
-const isAbsolute = (p) => /^([a-zA-Z]:)?\//.test(p);
-const raw = slash(String(input.tool_input?.file_path ?? input.tool_input?.notebook_path ?? ''));
-const root = slash(String(input.cwd ?? process.cwd())).replace(/\/+$/, '');
-const inRoot = isAbsolute(raw) ? fold(raw).startsWith(`${fold(root)}/`) : !raw.startsWith('../');
-const path = fold(inRoot ? (isAbsolute(raw) ? raw.slice(root.length + 1) : raw.replace(/^\.\//, '')) : raw);
-const anchored = (re) => (inRoot ? new RegExp(re.source.replace('(^|\\/)', '^')) : re);
-
-for (const rule of RULES) {
-  if (!anchored(rule.re).test(path)) continue;
-  if (rule.owners.includes(role)) process.exit(0);
-  console.error(`[muffy] blocked: ${role} may not write ${rule.what}${rule.owners.length ? `; only ${rule.owners.join(' or ')} may` : ''}. Report what you found in your hand-off and the Orchestrator routes it (references/hooks-enforcement.md §12).`);
+const rule = blockingRule(role, input.tool_input?.file_path ?? input.tool_input?.notebook_path ?? '', input.cwd ?? process.cwd());
+if (rule) {
+  console.error(blockMessage(role, rule));
   process.exit(2);
 }
 process.exit(0);
