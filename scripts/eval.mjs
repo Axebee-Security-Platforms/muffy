@@ -655,6 +655,15 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   rmSync(repo, { recursive: true, force: true });
 }
 
+/* 7e''. route.md is read for free text only; mode commands skip it */
+{
+  const skill = readFileSync(rel('skills/muffy/SKILL.md'), 'utf8');
+  const route = readFileSync(rel('skills/muffy/references/route.md'), 'utf8');
+  check('route-skip: SKILL.md says a mode command skips route.md, and route.md says the same', /Skip it when the request starts with a mode command/.test(skill) && /already routed: skip this file/.test(route));
+  check('route-skip: every mode command named in SKILL.md has a reference file', ['analyze', 'onboard', 'present', 'diagram', 'resume', 'fix-profile', 'lite-profile'].every((m) => existsSync(rel('skills/muffy/references', `${m}.md`))));
+  check('route-skip: route.md stays under 15 KB (worked examples live in route-examples.md)', Buffer.byteLength(route) < 15360, `${Buffer.byteLength(route)} bytes`);
+}
+
 /* 7f. learning a stack (references/stack-learning.md): stale notes, guard entries, project extensions */
 {
   const repo = mkdtempSync(join(tmpdir(), 'muffy-stack-'));

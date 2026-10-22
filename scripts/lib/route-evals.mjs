@@ -29,8 +29,9 @@ export function runRouteEvals({ check, root }) {
   check('route: a Thai prompt exists for at least half the scenarios', scenarios.filter((x) => /[฀-๿]/.test(x.request)).length * 2 >= scenarios.length);
 
   /* doc Examples ↔ scenarios */
-  const examples = tableRows(section('Examples'), /^\| Prompt /);
-  check('route-doc: Examples table found in route.md', examples.length >= 20, `rows=${examples.length}`);
+  const exDoc = readFileSync(rel('skills/muffy/references/route-examples.md'), 'utf8');
+  const examples = tableRows(exDoc, /^\| Prompt /);
+  check('route-doc: Examples table found in route-examples.md', examples.length >= 20, `rows=${examples.length}`);
   for (const [req, label] of examples) {
     const sc = scenarios.find((x) => x.request === unquote(req));
     check(`route-doc: "${unquote(req).slice(0, 40)}" has a scenario`, !!sc, 'add it to evals/route-scenarios.json');
@@ -50,7 +51,7 @@ export function runRouteEvals({ check, root }) {
   /* held-out live set: valid routes, and never copied into route.md (that would leak the answers) */
   const live = JSON.parse(readFileSync(rel('evals/route-live-scenarios.json'), 'utf8')).scenarios;
   check('route-live: every expected route is a known route', live.every((x) => ROUTES.includes(x.expect)), live.filter((x) => !ROUTES.includes(x.expect)).map((x) => x.id).join(', '));
-  check('route-live: no held-out prompt appears in route.md', live.every((x) => !doc.includes(x.prompt)), live.filter((x) => doc.includes(x.prompt)).map((x) => x.id).join(', '));
+  check('route-live: no held-out prompt appears in route.md or route-examples.md', live.every((x) => !doc.includes(x.prompt) && !exDoc.includes(x.prompt)), live.filter((x) => doc.includes(x.prompt) || exDoc.includes(x.prompt)).map((x) => x.id).join(', '));
   check('route-live: ids are unique', new Set(live.map((x) => x.id)).size === live.length);
   /* diagram kinds: the sim and diagram.md's Kinds table agree on each kind's not-designed route */
   const dia = readFileSync(rel('skills/muffy/references/diagram.md'), 'utf8');
