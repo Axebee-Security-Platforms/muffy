@@ -16,6 +16,9 @@ export function runReviewBenchEvals({ check, root }) {
   check(`${n}: case ids are unique`, new Set(ids).size === ids.length);
   check(`${n}: has defect and clean cases`, CASES.some((c) => c.kind === 'defect') && CASES.filter((c) => c.kind === 'clean').length >= 3);
 
+  const core = CASES.filter((c) => c.core);
+  check(`${n}: core cases are small and cover both kinds`, core.length <= 8 && core.some((c) => c.kind === 'clean') && core.filter((c) => c.kind === 'defect').length >= 3);
+  check(`${n}: core cases include a defect and its clean twin, and the rule cases`, ['tautological-test', 'skipped-test', 'swallowed-error', 'clean-error-paths', 'clean-decoys'].every((id) => core.some((c) => c.id === id)));
   for (const c of CASES) {
     let located = null;
     try { located = locateDefects(c); } catch (e) { check(`${n}: ${c.id} defects locate`, false, e.message); continue; }

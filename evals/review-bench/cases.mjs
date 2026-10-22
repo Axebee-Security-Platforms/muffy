@@ -2,6 +2,9 @@
 // Each case is a new-file diff (so line numbers are file line numbers) plus the AC and contract the
 // reviewer is given. A defect is located by `snippet` (a substring of exactly one added line); a defect
 // with no `snippet` is an omission (a missing AC) and is matched by keywords only.
+// `core` cases are the default run: the two rules added for tautological and skipped tests, one omission,
+// one security defect, a defect with its clean twin (swallowed-error / clean-error-paths) and the decoys case.
+// The rest are kept for `--all`.
 // Defects stay realistic and neutral: no comment in the code hints at the problem.
 
 const contract = (endpoints, budget = 'Budget: none. No new recurring cost') => `# Contract
@@ -17,6 +20,7 @@ export const CASES = [
   {
     id: 'missing-ac',
     kind: 'defect',
+    core: true,
     expect: 'Reject',
     ac: `# AC
 - AC-1 POST /notes with a title creates a note and returns 201 {id, title}
@@ -59,6 +63,7 @@ test('rejects an empty title', async () => {
   {
     id: 'sql-injection',
     kind: 'defect',
+    core: true,
     expect: 'Reject',
     ac: `# AC
 - AC-1 GET /users?name=<text> returns the users whose name equals the text as a JSON array
@@ -98,6 +103,7 @@ test('returns the users with that name', async () => {
   {
     id: 'swallowed-error',
     kind: 'defect',
+    core: true,
     expect: 'Reject',
     ac: `# AC
 - AC-1 capture(orderId) returns {ok: true, id} with the provider's capture id
@@ -131,6 +137,7 @@ test('returns the provider capture id', async () => {
   {
     id: 'tautological-test',
     kind: 'defect',
+    core: true,
     expect: 'Reject',
     ac: `# AC
 - AC-1 total(items) is the sum of price * qty over all items
@@ -157,6 +164,7 @@ test('totals the cart', () => {
   {
     id: 'skipped-test',
     kind: 'defect',
+    core: true,
     expect: 'Reject',
     ac: `# AC
 - AC-1 A login with the right password returns 200 and a token
@@ -398,6 +406,7 @@ test('rejects an empty name', async () => {
   {
     id: 'clean-decoys',
     kind: 'clean',
+    core: true,
     expect: 'Approve',
     ac: `# AC
 - AC-1 GET /reports/summary?kind=<kind> returns {kind, label, count} for a valid kind
@@ -462,6 +471,7 @@ test('rejects an unknown kind', async () => {
   {
     id: 'clean-error-paths',
     kind: 'clean',
+    core: true,
     expect: 'Approve',
     ac: `# AC
 - AC-1 capture(orderId) returns {ok: true, id} with the provider's capture id

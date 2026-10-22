@@ -1,5 +1,5 @@
 {
-  "about": "Gate for `node scripts/review-bench.mjs score <dir> --gate`. null = not gated. Limits are the first recorded run plus slack for sampling noise (one clean run in nine is 0.11; two misses in 27 defects is 0.07); tighten them as the reviewer and the cases improve, and re-record after changing the cases or the parser.",
+  "about": "Gate for `node scripts/review-bench.mjs score <dir> --gate`. null = not gated. Limits are the first recorded run plus slack for sampling noise (one clean run in nine is 0.11; two misses in 27 defects is 0.07); tighten them as the reviewer and the cases improve, and re-record after changing the cases or the parser. The limits were set from the full run (--all, 36 runs). The default core run has only 4 clean runs, where one false reject is 25%, so read a core-run gate failure as 'rerun', not as a regression.",
   "recorded": {
     "date": "2026-10-23",
     "model": "sonnet",

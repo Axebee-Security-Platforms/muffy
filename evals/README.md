@@ -39,11 +39,12 @@ Routing has a held-out live set, `route-live-scenarios.json`: prompts that are i
 
 ## Reviewer miss-rate bench (live, costs tokens)
 
-Measures what the code-reviewer misses and over-flags, so a rule change such as "unsure -> Suggestion" is judged on numbers. Nine cases seed one defect each (missing AC, SQL injection, swallowed error, tautological test, skipped test, undeclared cost, scope creep, N+1, missing auth); three clean cases (one with decoys that look like findings) must be approved. Each case is a new-file diff plus its AC and contract; no code comment hints at the defect.
+Measures what the code-reviewer misses and over-flags, so a rule change such as "unsure -> Suggestion" is judged on numbers. The default run uses the 7 `core` cases (the tautological and skipped-test rules, a missing AC, SQL injection, a swallowed error with its clean twin, and the decoys case) twice: 14 calls. `--all` adds the rest. All 12 cases are: nine that seed one defect each (missing AC, SQL injection, swallowed error, tautological test, skipped test, undeclared cost, scope creep, N+1, missing auth); three clean cases (one with decoys that look like findings) must be approved. Each case is a new-file diff plus its AC and contract; no code comment hints at the defect.
 
 ```bash
 node scripts/review-bench.mjs list
-node scripts/review-bench.mjs run --out .bench/r1 --runs 3 --yes      # without --yes it only prints the plan
+node scripts/review-bench.mjs run --out .bench/r1 --yes             # core cases x 2 runs = 14 calls; without --yes it only prints the plan
+node scripts/review-bench.mjs run --out .bench/all --all --runs 3 --yes   # every case x 3 runs = 36 calls
 node scripts/review-bench.mjs score .bench/r1 [--json] [--gate]
 ```
 

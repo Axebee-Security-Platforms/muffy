@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Reviewer miss-rate bench. Seeded defects + clean cases, scored on what the reviewer files as a Blocker.
 //   node scripts/review-bench.mjs list
-//   node scripts/review-bench.mjs run --out <dir> [--runs 3] [--model sonnet] [--effort high] [--case id] [--budget 1] [--yes]
+//   node scripts/review-bench.mjs run --out <dir> [--runs 2] [--all] [--model sonnet] [--effort high] [--case id] [--budget 1] [--yes]
 //   node scripts/review-bench.mjs score <dir> [--json] [--gate] [--baseline evals/review-bench/baseline.json]
 // `run` calls the model through `claude -p` and costs tokens: without --yes it only prints the plan.
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, readdirSync, existsSync } from 'node:fs';
@@ -36,9 +36,9 @@ const list = () => {
 const run = () => {
   const out = flag('out');
   if (!out || out === true) { console.error('run needs --out <dir>'); process.exit(2); }
-  const runs = Number(flag('runs', 1));
+  const runs = Number(flag('runs', 2));
   const only = flag('case');
-  const cases = CASES.filter((c) => !only || c.id === only);
+  const cases = CASES.filter((c) => (only ? c.id === only : flag('all') || c.core));
   const model = flag('model', 'sonnet');
   const effort = flag('effort', 'high');
   const budget = flag('budget', '1');
