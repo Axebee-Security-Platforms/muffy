@@ -7,6 +7,7 @@
 //   effort        optional; only low, medium or high
 //   links         every relative markdown link and `references/...` path resolves
 //   references    each agent has the 8 standard reference files, links all of them, orphans none
+//   final-cap     each agent states the final-message hard cap, the turn budget and not to Read handoff.schema.json
 //   lazy-load     each agent has a "Load on demand" section naming every reference file
 //   structure     reference files start with a heading; SKILL.md has the standard sections
 //   json          every .json parses; hand-off/escalation fixtures validate
@@ -72,6 +73,7 @@ for (const f of agentFiles) {
     }
   }
   for (const r of REF_FILES) if (!present.includes(r)) fail(file, 'references', `missing references/${role}/${r}.md`);
+  for (const needle of ['Hard cap:', 'Turn budget:', 'do not Read that file']) if (!txt.includes(needle)) fail(file, 'final-cap', `missing "${needle}"`);
   const loadSection = txt.split(/^## Load on demand/m)[1];
   if (loadSection === undefined) fail(file, 'lazy-load', 'missing "## Load on demand" section');
   for (const r of present) {

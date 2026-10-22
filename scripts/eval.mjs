@@ -87,6 +87,19 @@ const runtime = (t) => t.match(/^Runtime:\s*(.+?)(?:\s*\(|$)/m)?.[1];
 check('runtime pin: deploy.md == contract.md == qa-report.md', runtime(read('deploy.md')) === runtime(read('contract.md')) && runtime(read('contract.md')) === runtime(read('qa-report.md')));
 check('runtime pin: mismatch is detected', runtime(read('deploy.md')) !== runtime(read('contract.md').replace('Node 22.14', 'Node 20.1')));
 
+/* 2-pre. make-envelope.mjs builds a valid, lean prompt; run-quiet.mjs keeps output short */
+{
+  const mk = (extra) => spawnSync(process.execPath, [rel('skills/muffy/scripts/make-envelope.mjs'), '--role', 'backend-dev', '--step', '4', '--round', '1', '--task', 'login-flow', '--brain', '.team/brain', '--goal', 'Build login', '--read', 'ac.md,contract.md', '--write', 'src/auth/', ...extra], { encoding: 'utf8' });
+  const ok = mk([]), bad = mk(['--profile', 'nope']);
+  check('make-envelope: valid flags print the template with the hand-off path and shape', ok.status === 0 && ok.stdout.includes('handoff/4-backend-dev-r1.json') && ok.stdout.includes('Hand-off shape:') && ok.stdout.includes('1,200 characters'), ok.stderr);
+  check('make-envelope: prompt stays lean (< 1.6 KB)', ok.stdout.length < 1600, String(ok.stdout.length));
+  check('make-envelope: schema violation exits 1 and prints nothing to stdout', bad.status === 1 && bad.stdout === '');
+  const noisy = join(tmpdir(), 'muffy-rq-noisy.js');
+  writeFileSync(noisy, "for (let i = 0; i < 40; i++) console.log(i === 3 ? 'ERROR x' : 'l' + i); process.exit(4);");
+  const q = spawnSync(process.execPath, [rel('skills/muffy/scripts/run-quiet.mjs'), '--tail', '2', '--out', join(tmpdir(), 'muffy-rq.log'), '--', process.execPath, noisy], { encoding: 'utf8' });
+  check('run-quiet: keeps the exit code and prints a digest, not the output', q.status === 4 && q.stdout.split(/\r?\n/).length < 10 && q.stdout.includes('ERROR x') && q.stdout.includes('lines=40'), q.stdout);
+}
+
 /* 2a. prompt envelopes: schema-valid, and `read` covers every unconditional .team/<task>/ path in required-inputs.md */
 const envSchema = readJson(rel('skills/muffy/schemas/prompt-envelope.schema.json'));
 for (const f of readdirSync(rel('evals/fixtures/login-flow/prompts')).filter((n) => n.endsWith('.json'))) {

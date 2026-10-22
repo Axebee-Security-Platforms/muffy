@@ -101,7 +101,7 @@
       }
     },
     "brain_note": { "type": "string", "description": "Path of the <brain>/agents/<role>/<task>.md written; absent for code-reviewer (Orchestrator writes it)" },
-    "summary": { "type": "string", "minLength": 3, "maxLength": 600 }
+    "summary": { "type": "string", "minLength": 3, "maxLength": 300 }
   },
   "allOf": [
     { "if": { "properties": { "role": { "enum": ["code-reviewer"] } }, "required": ["role"] }, "then": { "required": ["verdict"], "properties": { "verdict": { "enum": ["Approve", "Reject"] } } } },

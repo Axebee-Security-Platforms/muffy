@@ -19,6 +19,10 @@ The repo wins over the vault: an ADR overrides a vault note.
 - No one edits another agent's folder or another task's note; corrections go in the current note, citing the old one
 - Readers: Orchestrator → `project.md` + current task note; researcher → `project.md` first, older notes only when `project.md` points to them; other agents → never the vault, only `brief.md`
 
+## Files in `.team/<task>/`
+
+`brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `design-review-<n>.md` (UX/UI review at 3c), `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/` (only when a main file passes 60 lines), `contract/` (always: `contract.md` is an index), `handoff/<step>-<role>-r<round>.json`, `spawns.tsv` (one line per fresh spawn), `fix.md` (fix lane, instead of `ac.md`/`contract.md`/`design.md`), `test-level` (L0–L4, Orchestrator-written), `full-regression.approved` (only while a user-approved full run is in progress), `canvas/`, `diagrams/`, `escalation-<n>.json` (only if a loop was cut off)
+
 ## Checkpoint
 
 `.team/<task>/checkpoint.md` is the Orchestrator's compressed memory of the run. It is **rewritten, never appended**, and stays ≤ 40 lines. Rewrite it after: setup, steps 3d / 6 (Approve) / 9, every fix round, every escalation answer, every named pause ([run-profile.md](run-profile.md#named-pauses)), and whenever the conversation has grown long (also before `/compact` and when resuming). Each named pause also updates the vault task note's status before the run waits, so the vault never lags a stop.

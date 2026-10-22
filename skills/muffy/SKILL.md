@@ -28,38 +28,33 @@ Orchestrate the subagents in `.claude/agents/` from research to deploy for one f
 
 ## Workflow
 
-Load lazily: open each reference only at the step that needs it, never all up front. Subagents do the same via the "Load on demand" table in their own definitions. The list below is the order of the references, not step numbers: "step N" always means a row of [steps.md](references/steps.md).
+Load lazily: open a reference only at the step that needs it; subagents do the same through the "Load on demand" table in their own definitions. This list is the order of the references, not step numbers: "step N" is a row of [steps.md](references/steps.md). If this file is already in the session (after a compact or a resume too), follow it from where you are; do not invoke `/muffy` again to reload it.
 
-Continuing earlier work (`/muffy resume`, "continue", ทำต่อ) skips Analyze, Onboard, Setup and Run profile: follow [references/resume.md](references/resume.md), which finds the task's `checkpoint.md` and picks up at its `next:`.
+Resume (`/muffy resume`, "continue", ทำต่อ) skips Analyze, Onboard, Setup and Run profile: [references/resume.md](references/resume.md).
 
-- **Route** — first, on every request: read the prompt's outcome and stop point, pick the entry (full flow, fix lane, a single agent, or a mode) and say it in one line before spawning: [references/route.md](references/route.md)
-- **Analyze** — repo with history, before onboard or the first feature (`/muffy analyze`): find unfinished work in git and in trackers (GitHub, GitLab, Jira, ClickUp, exports), read-only and privacy-minimised, user confirms what becomes a task: [references/analyze.md](references/analyze.md)
-- **Onboard** — existing codebase, first run only (`/muffy onboard`): baseline doc + ADR + human check: [references/onboard.md](references/onboard.md)
-- **Present** — on demand, outside the team flow (`/muffy present "<request>"`): the product-manager writes the content as a solutions engineer, the designer builds the deck, the requester reviews it: [references/present.md](references/present.md); missing documents are requested from their owners: [references/doc-request.md](references/doc-request.md)
-- **Diagram** — on demand, outside the team flow (`/muffy diagram "<request>"`, or any standalone "draw/create a diagram" request not tied to an in-progress contract or fix): route the facts to the agent that owns that kind's domain (architect, product-manager, or designer for a screen map), then always to `diagrammer` to draw — never draw it yourself: [references/diagram.md](references/diagram.md). A still image (PNG/SVG) only on the user's ask: [references/diagram-export.md](references/diagram-export.md)
-- **Setup** — create working folders and task note: [references/setup.md](references/setup.md)
-- **Run profile** — pick which steps to skip, never skip review/QA/staging/Human gate: [references/run-profile.md](references/run-profile.md). Small bug or cosmetic fix (`/muffy fix`, or a request that passes the triage): use the fix lane instead of Setup, Run profile and the full step list: [references/fix-profile.md](references/fix-profile.md). Internal API, refactor, measured performance or reversible DB change with nothing a user sees (`/muffy lite`, or a request that passes its triage): use the lite lane, architect straight to build: [references/lite-profile.md](references/lite-profile.md)
-- **Steps 0–12** — agent, input and output per step: [references/steps.md](references/steps.md)
-- **Platforms** — web, mobile, desktop or CLI: who builds it, what design, smoke and staging mean, which toolchain the host needs, what only the user may do (sign, upload, publish). Read when the contract's Stack line has a `Platform:` other than `web`, or the request names an app or a CLI: [references/platforms.md](references/platforms.md)
-- **Publishing diagrams** — step 3e: validate, publish each diagram as an Artifact and record it in the task note: [references/diagram-publish.md](references/diagram-publish.md)
-- **Learning a new stack** — the ladder for a framework or language with no practices file, the capped stack note, which roles read it, and `.team/stack-extensions.json`: [references/stack-learning.md](references/stack-learning.md)
-- **Baseline freshness** — green, yellow or red from `check-baseline.mjs`, run once at setup; the thresholds and what to ask on yellow or red (read only then): [references/baseline-freshness.md](references/baseline-freshness.md)
-- **ADR ownership** — product ADRs are the product-manager's, technical ADRs the architect's; only the owner supersedes; cross-boundary conflicts go to the user through the Orchestrator: [references/adr.md](references/adr.md)
-- **Budget** — who owns the ceiling, the `Budget:` verdict, `pause:budget`, the cost line at the Human gate and closing: [references/budget.md](references/budget.md)
-- **Design review** — step 3c, after 3b publishes the canvas: the Orchestrator's UX/UI review of the rendered canvas with the `impeccable` skill: [references/design-review.md](references/design-review.md)
-- **Requirements interview** (steps 1–2) — researcher/PM return `needs-input`; relay their questions to the user: [references/requirements.md](references/requirements.md)
-- **Loops** — read only when a reject/fail happens: fix loops (max 3), fallback ladder, escalation: [references/loops.md](references/loops.md)
-- **Token discipline** — read once at setup: prompt template, hand-off block, fix rounds, diffs: [references/token-discipline.md](references/token-discipline.md)
-- **Memory model** — read once at setup: repo vs `.team/` vs vault layout, `checkpoint.md`: [references/memory-model.md](references/memory-model.md)
-- **Test levels** — read before step 7 (and in the fix lane, before step 4): which tests run for which change, L0 cosmetic to L4 whole-system: [references/test-levels.md](references/test-levels.md)
-- **Closing** — step 12 only: final checks and message to the user: [references/closing.md](references/closing.md)
+- **Route** — first, on every request; say the entry in one line before spawning: [route.md](references/route.md)
+- **Analyze** (`/muffy analyze`) — unfinished work in git and trackers, read-only: [analyze.md](references/analyze.md)
+- **Onboard** (`/muffy onboard`) — existing codebase, first run: [onboard.md](references/onboard.md)
+- **Present** (`/muffy present`) — client deck outside the team flow: [present.md](references/present.md), missing documents: [doc-request.md](references/doc-request.md)
+- **Diagram** (`/muffy diagram`, or a standalone "draw a diagram") — route facts to the owning agent, then always `diagrammer`: [diagram.md](references/diagram.md); PNG/SVG only on request: [diagram-export.md](references/diagram-export.md)
+- **Setup** — folders and task note: [setup.md](references/setup.md)
+- **Run profile** — which steps to skip, never review/QA/staging/Human gate: [run-profile.md](references/run-profile.md). Small bug: fix lane [fix-profile.md](references/fix-profile.md) (`/muffy fix`). Internal API, refactor, measured perf, reversible migration: lite lane [lite-profile.md](references/lite-profile.md) (`/muffy lite`)
+- **Steps 0–12** — agent, input and output per step: [steps.md](references/steps.md)
+- **Platforms** — when the contract's `Platform:` is not `web`, or the request names an app or CLI: [platforms.md](references/platforms.md)
+- **Publishing diagrams** (3e): [diagram-publish.md](references/diagram-publish.md) · **Design review** (3c): [design-review.md](references/design-review.md)
+- **Requirements interview** (steps 1–2, `needs-input`): [requirements.md](references/requirements.md)
+- **Stack learning**: [stack-learning.md](references/stack-learning.md) · **Baseline freshness** (yellow/red only): [baseline-freshness.md](references/baseline-freshness.md) · **ADR ownership**: [adr.md](references/adr.md) · **Budget**: [budget.md](references/budget.md)
+- **Loops** — only when a reject/fail happens: [loops.md](references/loops.md)
+- **Token discipline** (prompt envelope script, report cap, quiet Bash, turn budget, compact points) and **Memory model** — each once at setup: [token-discipline.md](references/token-discipline.md), [memory-model.md](references/memory-model.md)
+- **Test levels** — before step 7 (fix lane: before step 4): [test-levels.md](references/test-levels.md)
+- **Closing** — step 12 only: [closing.md](references/closing.md)
 
 ## Output Format
 
-- `.team/<task>/`: `brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `design-review-<n>.md` (UX/UI review at 3c), `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/` (only when a main file passes 60 lines), `contract/` (always: `contract.md` is an index), `handoff/<step>-<role>-r<round>.json`, `spawns.tsv` (one line per fresh spawn), `fix.md` (fix lane, instead of `ac.md`/`contract.md`/`design.md`), `test-level` (L0–L4, Orchestrator-written), `full-regression.approved` (only while a user-approved full run is in progress), `canvas/`, `diagrams/`, `escalation-<n>.json` (only if a loop was cut off)
+- `.team/<task>/`: the hand-off files, `checkpoint.md`, `handoff/`, `spawns.tsv`, `rounds/`, `canvas/`, `diagrams/`; the full list and the split rules are in [memory-model.md](references/memory-model.md)
 - Repo: `docs/plan/<task>.md`, `docs/adr/NNNN-*.md`, `docs/design-system/` (if changed), merged `feature/<task>`
 - Vault: `tasks/<task>.md`, consolidated `project.md`
-- Final message to the user: see `references/closing.md` step 5
+- Final message to the user: [closing.md](references/closing.md) step 5
 
 ## Rules and Guardrails
 

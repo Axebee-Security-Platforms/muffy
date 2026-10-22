@@ -32,6 +32,8 @@ Frontmatter: `commit` (HEAD sha it describes), `date`, `scan` (path). Sections, 
 - **Open issues**: things that look broken or risky, with evidence. These seed `project.md`
 - **`[verify]`**: every claim the agent could not confirm from code. The user checks these at 0d
 
+**Size and shape.** `baseline.md` is read by most agents on most runs (16 reads of a 21 KB file in one real project), so keep it an index: ≤ 120 lines, every section a short summary that links to `docs/architecture/baseline/<section>.md` when the detail passes ~25 lines (Conventions and Layout usually do). Start the file with a `## Read this first` block of ≤ 10 lines (stack, how to run tests, the three conventions most often broken) and a table `section → file`. An agent reads the first block, then only the section file its task needs, by heading with `Grep -n` and a `Read` with `offset`/`limit`; it never loads the whole folder.
+
 ## Agent context file (CLAUDE.md / AGENTS.md)
 
 `install.mjs` never touches these files; onboard owns them. `scan.json` → `docs.claudeMd` / `docs.agentsMd` says which exist. Show the exact change at 0d and write it only after approval.
