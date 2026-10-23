@@ -2,11 +2,13 @@
 // PreToolUse guard on Agent|Task: no subagent starts before the human gates of its step are answered
 // (references/hooks-enforcement.md §14; gates in references/step-details.md 2b and 3c).
 // The Orchestrator's spawn carries the prompt envelope, whose first header is `Task: <task>` (make-envelope.mjs).
-// A spawn with no `Task:` header is not a muffy spawn and is never blocked.
+// Fails closed: a gated muffy role spawned without the header is checked against the task its prompt names
+// (`.worktrees/feature-<task>` or `.team/<task>`), and blocked when it names none while a run exists here.
+// A spawn of a role outside muffy, or in a repo with no checkpoint, is never blocked.
 // Hook JSON arrives on stdin. Exit 2 = block (stderr is shown to the Orchestrator), 0 = allow.
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { missingGates, PAUSE_OF } from './gate-rules.mjs';
+import { missingGates, gatesForSpawn, PAUSE_OF, MUFFY_ROLES } from './gate-rules.mjs';
 
 let input;
 try {
@@ -19,12 +21,28 @@ if (!['Agent', 'Task'].includes(input.tool_name ?? '')) process.exit(0);
 const spawn = input.tool_input ?? {};
 const role = String(spawn.subagent_type ?? '').split(':').pop();
 const prompt = String(spawn.prompt ?? '');
-const task = prompt.match(/^Task:[ \t]*(\S+)[ \t]*$/m)?.[1];
-if (!role || !task) process.exit(0);
+if (!role) process.exit(0);
 
 const cwd = input.cwd ?? process.cwd();
-const dir = [join(cwd, '.worktrees', `feature-${task}`, '.team', task), join(cwd, '.team', task)]
+const cpDir = (task) => [join(cwd, '.worktrees', `feature-${task}`, '.team', task), join(cwd, '.team', task)]
   .find((d) => existsSync(join(d, 'checkpoint.md')));
+const header = prompt.match(/^Task:[ \t]*(\S+)[ \t]*$/m)?.[1];
+
+let task = header;
+if (!task) {
+  // a role outside muffy, or one that runs before the gates, needs no task to be told apart
+  if (!MUFFY_ROLES.has(role) || !gatesForSpawn(role).length) process.exit(0);
+  const named = [...prompt.matchAll(/\.worktrees[\\/]feature-([\w.-]+)|\.team[\\/]([\w.-]+)/g)]
+    .map((m) => m[1] ?? m[2]).filter((t) => t !== 'brain');
+  task = named.find((t) => cpDir(t));
+  if (!task) {
+    if (!anyRun()) process.exit(0);
+    console.error(`[muffy] blocked: ${role} may not start: the prompt has no \`Task: <task>\` header and names no task with a checkpoint. Build the prompt with make-envelope.mjs, so the gates of its task can be checked (references/hooks-enforcement.md §14).`);
+    process.exit(2);
+  }
+}
+
+const dir = cpDir(task);
 const cp = dir ? readFileSync(join(dir, 'checkpoint.md'), 'utf8') : null;
 
 const missing = missingGates(cp, role, prompt);
@@ -36,3 +54,13 @@ const why = cp === null
   : `gate ${missing.join(', ')} not passed for "${task}"`;
 console.error(`[muffy] blocked: ${role} may not start: ${why}. Ask the user ${ask} first: save the pause with checkpoint.mjs pause, build the question with gate-summary.mjs, then record the answer with checkpoint.mjs gate (references/hooks-enforcement.md §14).`);
 process.exit(2);
+
+// a muffy run exists here when any task folder, in the repo or a feature worktree, has a checkpoint
+function anyRun() {
+  const has = (teamDir) => existsSync(teamDir) && readdirSync(teamDir, { withFileTypes: true })
+    .some((e) => e.isDirectory() && existsSync(join(teamDir, e.name, 'checkpoint.md')));
+  if (has(join(cwd, '.team'))) return true;
+  const wt = join(cwd, '.worktrees');
+  return existsSync(wt) && readdirSync(wt, { withFileTypes: true })
+    .some((e) => e.isDirectory() && e.name.startsWith('feature-') && has(join(wt, e.name, '.team')));
+}

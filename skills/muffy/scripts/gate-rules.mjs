@@ -8,6 +8,8 @@
 export const GATES = ['2b', '3c'];
 export const PAUSE_OF = { '2b': 'plan-review', '3c': 'design-review' };
 
+// the subagents muffy spawns (agents/*.md); guard-gates.mjs fails closed for these when a prompt has no Task header
+export const MUFFY_ROLES = new Set(['architect', 'backend-dev', 'code-reviewer', 'designer', 'devops', 'diagrammer', 'docs-writer', 'frontend-dev', 'product-manager', 'qa-tester', 'researcher']);
 // roles that run before any gate (steps 0-2)
 const BEFORE_GATES = new Set(['product-manager', 'researcher', 'presenter']);
 // roles that run only after the design gate (step 4 on, and the code review of step 6)

@@ -10,6 +10,9 @@
   - `check-all` has a `gates` check: a hand-off past an open gate is an error (feature lane only).
   - Rules live in `scripts/gate-rules.mjs`; offline checks in `scripts/lib/gate-evals.mjs`.
 - **Known limit:** no hook can tell the user's reply from one the Orchestrator types. The answer is a dated, auditable line in `## Status`.
+- **The gate guard fails closed.** A run built spawn prompts by hand, with no `Task:` header, so `guard-gates.mjs` let every spawn through and designer, architect and devops started before gate 2b was recorded. Now:
+  - A gated muffy role spawned without the header is matched to the task its prompt names (`.worktrees/feature-<task>` or `.team/<task>`) and checked as usual. It is blocked when the prompt names no task while any checkpoint exists in the repo. Roles outside muffy, and product-manager and researcher, are not affected.
+  - `checkpoint.mjs unpause` refuses to clear `pause:plan-review` or `pause:design-review` while the gate has no recorded answer, including after a rejection. `checkpoint.mjs gate` records the answer and clears the pause.
 
 ## v1.3.0 — 2026-10-22
 
