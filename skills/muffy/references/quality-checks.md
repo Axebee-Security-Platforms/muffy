@@ -3,7 +3,7 @@
 After every step:
 
 - The hand-off block exists and `validate-handoff.mjs` passes; `quality_checks.passed` is true. Otherwise follow the fallback ladder in [loops.md](loops.md) — don't proceed on prose alone
-- Traceability: `brief.md` requirement → `ac.md` AC → `contract.md` section → `qa-report.md` test (lite lane: no `brief.md`, it starts at `ac.md`); a gap → send back before moving on
+- Traceability: `brief.md` requirement → `ac.md` AC → `contract.md` section → `qa-report.md` test (lite lane: no `brief.md`, it starts at `ac.md`; fix lane: `fix.md` → `qa-report.md`); `check-artifacts.mjs` below checks every link of it, so read its output instead of the files. A gap → send back before moving on
 - The agent wrote `<brain>/agents/<role>/<task>.md`
 - The plan has ordered phases and every task has a priority
 - Test/QA runtime matches the `deploy.md` pin
@@ -13,7 +13,7 @@ After every step:
 - `checkpoint.md` was rewritten at the boundaries listed in [memory-model.md](memory-model.md#checkpoint)
 - `node .claude/skills/muffy/scripts/check-checkpoint.mjs .team/<task>` passes: checkpoint ≤ 40 lines (excluding `## Goal`), every `rounds/*.md` ≤ 100 lines, every `[label]` defined and every target file present
 - After step 5, only when the user asked for PR diagrams (step 5b): the PR diagram Artifact URL is recorded and `.team/<task>/diagrams/{fe,be}.graph.json` exist, or the hand-off says why the diagram was skipped ([steps.md](steps.md) step 5b)
-- `node .claude/skills/muffy/scripts/check-artifacts.mjs .team/<task>` passes: `ac.md` / `brief.md` / `contract.md` / `fix.md` ≤ 60 lines, part files ≤ 120, links resolve, every AC id is in `contract.md` or `contract/` ([memory-model.md](memory-model.md#splitting-large-artifacts))
+- `node .claude/skills/muffy/scripts/check-artifacts.mjs .team/<task>` passes: `ac.md` / `brief.md` / `contract.md` / `fix.md` ≤ 60 lines, part files ≤ 120, links resolve, every AC id is in `contract.md` or `contract/`, every brief must-not-miss requirement has an AC in `ac.md` `## Traceability`, and every AC has a test or `manual` in `qa-report.md` ([memory-model.md](memory-model.md#splitting-large-artifacts))
 
 Fix lane only: the 4a hand-off carries `diagnosis` with `status: known` before step 4 starts; `fix.md` has `## Cause` and `## Repro`; the regression test fails before the fix and passes after, or the AC is marked `manual` in `qa-report.md` ([fix-profile.md](fix-profile.md)).
 

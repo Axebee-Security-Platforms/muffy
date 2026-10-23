@@ -5,6 +5,8 @@
 //   ac.md, brief.md, contract.md, fix.md ≤ 60 lines; files in ac/, brief/, contract/ ≤ 120 lines;
 //   every [label] used (outside code fences and backticks) has one definition, every definition is used, targets exist;
 //   every AC id in ac.md appears in contract.md or a file under contract/ (when ac.md and contract.md exist);
+//   traceability: every brief.md must-not-miss requirement has an AC in ac.md ## Traceability, and every AC id in ac.md
+//   (fix lane: fix.md) has a test or `manual` in qa-report.md ## AC id -> test name, which lists no unknown AC;
 //   the Stack's `Platform:` is web|mobile|desktop|cli, and cli has contract/cli.md;
 //   contract/ownership.md: every row has one owner (FE, BE or devops) and no two owners' patterns overlap;
 //   deploy.md: ## Chosen infra, ## Practices and ## Risks exist, ## Infra options only when the checkpoint says `infra: propose`,
@@ -89,6 +91,47 @@ function checkDeploy(taskDir, errors) {
   }
 }
 
+const readIf = (p) => (existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);
+const norm = (s) => s.replace(/[*_`]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+const bullets = (text) => (text ?? '').split('\n').filter((l) => /^\s*[-*] /.test(l)).map((l) => norm(l.replace(/^\s*[-*] /, ''))).filter(Boolean);
+// first column of a markdown table, header and separator rows dropped
+const tableRows = (text) => (text ?? '').split('\n').filter((l) => /^\s*\|/.test(l) && !/^\s*\|\s*:?-{2,}/.test(l)).slice(1).map((l) => l.split('|').slice(1, -1).map((c) => c.trim()));
+
+// brief.md "## Must-not-miss requirements" → ac.md "## Traceability": every requirement names its AC (lite lane: no brief.md, skipped)
+function checkBriefToAc(taskDir, errors) {
+  const brief = readIf(join(taskDir, 'brief.md'));
+  const ac = readIf(join(taskDir, 'ac.md'));
+  if (brief === null || ac === null) return;
+  const reqs = bullets(section(brief, 'Must-not-miss requirements'));
+  if (!reqs.length) return;
+  const trace = section(ac, 'Traceability');
+  if (trace === null) { errors.push('ac.md has no ## Traceability table for the brief\'s must-not-miss requirements'); return; }
+  const mapped = new Map(tableRows(trace).map(([req, ids = '']) => [norm(req), ids.match(/AC-\d+/g) ?? []]));
+  for (const r of reqs) {
+    const ids = mapped.get(r) ?? [...mapped].find(([k]) => k.includes(r) || r.includes(k))?.[1];
+    if (!ids) errors.push(`traceability: brief requirement "${r}" has no row in ac.md ## Traceability`);
+    else if (!ids.length) errors.push(`traceability: brief requirement "${r}" maps to no AC id`);
+  }
+}
+
+// ac.md (or fix.md ## AC) → qa-report.md "## AC id -> test name": every AC has a test or is marked manual, and QA tests no unknown AC
+function checkAcToQa(taskDir, errors) {
+  const qa = readIf(join(taskDir, 'qa-report.md'));
+  if (qa === null) return;
+  const src = readIf(join(taskDir, 'ac.md')) ?? readIf(join(taskDir, 'fix.md'));
+  if (src === null) return;
+  const name = existsSync(join(taskDir, 'ac.md')) ? 'ac.md' : 'fix.md';
+  const ids = new Set(src.match(/\bAC-\d+\b/g) ?? []);
+  const table = section(qa, 'AC id (?:->|→) test name');
+  if (table === null) { errors.push('qa-report.md has no ## AC id -> test name table'); return; }
+  const rows = new Map(tableRows(table).map(([id, ...rest]) => [id.match(/AC-\d+/)?.[0], rest.join(' ').trim()]).filter(([id]) => id));
+  for (const id of ids) {
+    if (!rows.has(id)) errors.push(`traceability: ${id} from ${name} has no row in qa-report.md`);
+    else if (!rows.get(id)) errors.push(`traceability: ${id} has an empty test in qa-report.md (name the test or write manual)`);
+  }
+  for (const id of rows.keys()) if (!ids.has(id)) errors.push(`traceability: qa-report.md tests ${id}, which is not in ${name}`);
+}
+
 // scope: 'all' (the CLI) or the artifact a hook saw written: 'ac', 'brief', 'contract', 'fix' or 'deploy'. A hook checks only the
 // written artifact, so the architect writing contract.md never gets errors about devops' half-written deploy.md, or the reverse.
 export function checkTask(taskDir, scope = 'all') {
@@ -117,6 +160,8 @@ export function checkTask(taskDir, scope = 'all') {
       if (!new RegExp(`\\b${id}\\b`).test(contract)) errors.push(`contract: ${id} from ac.md is not mapped in contract.md or contract/`);
     }
   }
+  if (inScope('ac') || inScope('brief')) checkBriefToAc(taskDir, errors);
+  if (inScope('ac') || inScope('fix') || inScope('qa')) checkAcToQa(taskDir, errors);
   if (inScope('contract')) checkContract(taskDir, errors);
   if (inScope('deploy')) checkDeploy(taskDir, errors);
   return errors;
@@ -131,9 +176,9 @@ function fromHook() {
     process.exit(2);
   }
   const filePath = input?.tool_input?.file_path ?? '';
-  const m = filePath.match(/^(.*[\\/]\.team[\\/][^\\/]+)[\\/](ac\.md|brief\.md|contract\.md|fix\.md|deploy\.md|(ac|brief|contract)[\\/].+\.md)$/);
+  const m = filePath.match(/^(.*[\\/]\.team[\\/][^\\/]+)[\\/](ac\.md|brief\.md|contract\.md|fix\.md|deploy\.md|qa-report\.md|(ac|brief|contract)[\\/].+\.md)$/);
   if (!m) process.exit(0); // not a split artifact
-  return { taskDir: m[1], scope: m[2].split(/[\\/.]/)[0] };
+  return { taskDir: m[1], scope: m[2] === 'qa-report.md' ? 'qa' : m[2].split(/[\\/.]/)[0] };
 }
 
 if (process.argv[1]?.endsWith('check-artifacts.mjs')) {
