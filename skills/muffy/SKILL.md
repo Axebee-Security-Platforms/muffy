@@ -74,7 +74,7 @@ Critical rules — Orchestrator rules 1–4 plus the opt-in hooks: [references/h
 
 ## Quality Checks
 
-Verify after every step: [references/quality-checks.md](references/quality-checks.md)
+Verify after every step: run `node .claude/skills/muffy/scripts/check-all.mjs .team/<task> --step <s> --round <n>` and act on its `next=` line, then the judgment checks: [references/quality-checks.md](references/quality-checks.md)
 
 ---
 

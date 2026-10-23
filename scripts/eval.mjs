@@ -690,6 +690,40 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   rmSync(repo, { recursive: true, force: true });
 }
 
+/* 7c3. check-all: the scripted half of quality-checks.md in one call */
+{
+  const { checkAll } = await import('../skills/muffy/scripts/check-all.mjs');
+  const brainDir = rel('evals/fixtures/login-flow/.team/brain');
+  const tmp = mkdtempSync(join(tmpdir(), 'muffy-checkall-'));
+  const copy = () => { const d = join(mkdtempSync(join(tmp, 't-')), TASK); cpSync(fixtureDir, d, { recursive: true }); return d; };
+  const failing = (r) => r.results.filter(([, e]) => e.length).map(([n]) => n);
+  for (const [s, n] of [['4', 1], ['6', 1], ['7', 1]]) {
+    const r = checkAll(fixtureDir, { step: s, round: n, brain: brainDir });
+    check(`check-all: the login-flow fixture passes at step ${s}`, r.ok && r.next === 'proceed', `${r.next} ${JSON.stringify(r.results.filter(([, e]) => e.length))}`);
+  }
+  let d = copy();
+  check('check-all: a missing hand-off for the step fails', failing(checkAll(d, { step: '9', round: 1 })).includes('handoff'));
+  writeFileSync(join(d, 'handoff/6-code-reviewer-r2.json'), JSON.stringify({ role: 'code-reviewer', task: TASK, step: '6', round: 2, status: 'done', verdict: 'Reject', paths_written: [], blockers: [{ id: 'B-2', problem: 'no lockout reset', file: 'src/a.ts:3', owner: 'BE' }], quality_checks: { passed: true, failed: [] }, summary: 'reject: lockout reset missing' }));
+  let r = checkAll(d, { step: '6', round: 2 });
+  check('check-all: a Reject gives next=fix:<owner>, not proceed', r.next === 'fix:BE' && !r.ok, r.next);
+  d = copy(); writeFileSync(join(d, 'handoff/7-qa-tester-r1.json'), readFileSync(join(d, 'handoff/7-qa-tester-r1.json'), 'utf8').replace(/"quality_checks":\{[^}]*\}/, '"quality_checks":{"passed":false,"failed":["AC-3 not covered"]}').replace('"status":"done"', '"status":"not-ready"'));
+  r = checkAll(d, { step: '7', round: 1 });
+  check('check-all: quality_checks.passed false fails the handoff check and the loop retries', failing(r).includes('handoff') && r.next === 'retry:quality-check-failed', `${r.next} ${failing(r)}`);
+  d = copy(); writeFileSync(join(d, 'qa-report.md'), readFileSync(join(d, 'qa-report.md'), 'utf8').replace('Runtime: Node 22.14', 'Runtime: Node 20.11'));
+  r = checkAll(d, { step: '7', round: 1 });
+  check('check-all: a QA runtime that differs from the deploy.md pin fails', failing(r).includes('runtime') && r.next === 'send-back:runtime', `${r.next} ${failing(r)}`);
+  d = copy(); writeFileSync(join(d, 'checkpoint.md'), readFileSync(join(d, 'checkpoint.md'), 'utf8').replace('Gates 3c and 3d passed.', 'Waiting.'));
+  r = checkAll(d, { step: '4', round: 1 });
+  check('check-all: step 4 before gates 3c/3d passed is blocked', r.next === 'block:gate-not-passed', r.next);
+  check('check-all: a role with no brain note fails the brain check', failing(checkAll(fixtureDir, { step: '6', round: 1, brain: join(tmp, 'no-brain') })).includes('brain'));
+  const fd = join(mkdtempSync(join(tmp, 'f-')), 'fix-login-redirect'); cpSync(rel('evals/fixtures/fix-login-redirect/.team/fix-login-redirect'), fd, { recursive: true });
+  r = checkAll(fd, { step: '4', round: 1, profile: 'fix' });
+  check('check-all: the fix-lane fixture passes the fix-lane check at step 4', !failing(r).includes('fix lane'), JSON.stringify(r.results));
+  writeFileSync(join(fd, 'fix.md'), readFileSync(join(fd, 'fix.md'), 'utf8').replace(/## Repro\r?\n[^\n]*\n/, '## Repro\n\n'));
+  check('check-all: fix lane with an empty ## Repro fails', checkAll(fd, { step: '4', round: 1, profile: 'fix' }).results.find(([n]) => n === 'fix lane')[1].some((e) => e.includes('Repro')));
+  rmSync(tmp, { recursive: true, force: true });
+}
+
 /* 7d. baseline freshness (references/baseline-freshness.md) */
 {
   const repo = mkdtempSync(join(tmpdir(), 'muffy-baseline-'));

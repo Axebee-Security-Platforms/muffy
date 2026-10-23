@@ -57,7 +57,7 @@ export function simulate(scenario) {
   const streak = {}; // point -> { blocker id -> consecutive rejections it has been open }
   const vstreak = {}; // point -> { needs_validation id -> consecutive reviews it has been open }
   const retries = {}; // point -> invalid / not-ready retries used this round
-  const passed = new Set();
+  const passed = new Set(scenario.passed ?? []); // gates already passed outside the hand-offs (3c is a user approval, read from the checkpoint)
   const skipped = new Set(scenario.skip ?? []);
   let outcome = 'in-progress';
   let trigger = null;
