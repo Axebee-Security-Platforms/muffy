@@ -588,6 +588,21 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('check-artifacts: infra: propose needs ## Infra options; options without propose fail', checkTask(d).some((e) => e.includes('Infra options')) && (patch(d, 'checkpoint.md', (t) => t.replace('infra: propose', 'infra: later')), patch(d, 'deploy.md', (t) => `${t}\n## Infra options\nA or B\n`), checkTask(d).some((e) => e.includes('only for infra: propose'))));
   d = copy(); patch(d, 'deploy.md', (t) => t.replace('Gap: no restore drill for Postgres yet.', 'Nothing else.'));
   check('check-artifacts: a practice gap missing from ## Risks fails', checkTask(d).some((e) => e.includes('not listed under ## Risks')));
+  d = copy(); patch(d, 'ac.md', (t) => t.replace(/\| Works at phone width \| AC-3 \|\r?\n/, ''));
+  check('traceability: a brief requirement missing from ac.md ## Traceability fails', checkTask(d).some((e) => e.includes('"works at phone width" has no row')), checkTask(d).join('; '));
+  d = copy(); patch(d, 'ac.md', (t) => t.replace('| Rate limit login attempts | AC-2 |', '| Rate limit login attempts | TBD |'));
+  check('traceability: a brief requirement mapped to no AC id fails', checkTask(d).some((e) => e.includes('maps to no AC id')), checkTask(d).join('; '));
+  d = copy(); patch(d, 'qa-report.md', (t) => t.replace(/\| AC-3 \| login\.spec: phone width has no h-scroll \|\r?\n/, ''));
+  check('traceability: an AC with no qa-report row fails', checkTask(d).some((e) => e.includes('AC-3 from ac.md has no row in qa-report.md')), checkTask(d).join('; '));
+  patch(d, 'qa-report.md', (t) => t.replace('| AC-2 | login.spec: 6th attempt gets 429 |', '| AC-2 | manual |\n| AC-9 | ghost.spec |\n| AC-3 | |'));
+  check('traceability: manual passes; an unknown AC and an empty test fail', !checkTask(d).some((e) => e.includes('AC-2')) && checkTask(d).some((e) => e.includes('tests AC-9')) && checkTask(d).some((e) => e.includes('AC-3 has an empty test')), checkTask(d).join('; '));
+  d = copy(); rmSync(join(d, 'brief.md'));
+  check('traceability: lite lane (no brief.md) skips brief -> AC', !checkTask(d).some((e) => e.startsWith('traceability: brief')));
+  d = copy(); rmSync(join(d, 'ac.md')); writeFileSync(join(d, 'fix.md'), readFileSync(rel('evals/fixtures/fix-login-redirect/.team/fix-login-redirect/fix.md'), 'utf8'));
+  check('traceability: fix lane reads AC ids from fix.md', checkTask(d).some((e) => e.includes('qa-report.md tests AC-2, which is not in fix.md')), checkTask(d).join('; '));
+  const hd = join(tmp, 'repo', '.team', 'fix-x'); cpSync(d, hd, { recursive: true }); // the hook only acts on paths under .team/<task>/
+  const hook = (file) => spawnSync(process.execPath, [rel('skills/muffy/scripts/check-artifacts.mjs'), '--hook'], { input: JSON.stringify({ tool_input: { file_path: join(hd, file) } }), encoding: 'utf8' });
+  check('traceability: the PostToolUse hook checks qa-report.md when it is written', hook('qa-report.md').status === 2 && hook('qa-report.md').stderr.includes('traceability'));
   const { checkTask: checkpoint } = await import('../skills/muffy/scripts/check-checkpoint.mjs');
   check('check-checkpoint: the fixture passes', checkpoint(fixtureDir).length === 0, checkpoint(fixtureDir).join('; '));
   d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later', 'infra: maybe · diagrams: 2 published'));
