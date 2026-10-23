@@ -13,8 +13,6 @@ Runtime: Node 22.14 (matches deploy.md), Postgres 16. Existing codebase. [stack]
 ## Schemas / migrations
 `sessions` table, reversible migration 0003. [schemas]
 
-## Cost
-Budget: none. No new recurring cost
 
 ## File ownership
 FE: src/ui/Login.tsx. BE: src/auth/**. Devops: Dockerfile. [ownership]

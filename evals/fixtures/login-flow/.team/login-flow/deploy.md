@@ -9,9 +9,6 @@ No staging exists. Create near-production env with docker compose on the local m
 ## Chosen infra
 None yet: local near-production only (`infra: later`).
 
-## Infra cost
-No new recurring cost; local compose only.
-
 ## Practices
 - Everything as code: met (docker-compose.yml)
 - Backups with a tested restore: gap (no restore drill for Postgres yet)

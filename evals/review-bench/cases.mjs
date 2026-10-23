@@ -7,13 +7,11 @@
 // The rest are kept for `--all`.
 // Defects stay realistic and neutral: no comment in the code hints at the problem.
 
-const contract = (endpoints, budget = 'Budget: none. No new recurring cost') => `# Contract
+const contract = (endpoints) => `# Contract
 ## Endpoints
 ${endpoints}
 ## Errors
 400 invalid input, 404 unknown id, 409 conflict, 502 upstream failure
-## Cost
-${budget}
 `;
 
 export const CASES = [
@@ -200,43 +198,6 @@ it.skip('returns 429 on the 6th failed attempt', async () => {
 `,
     },
     defects: [{ id: 'skipped', file: 'src/auth/login.test.ts', snippet: `it.skip(`, keywords: ['skip'] }],
-  },
-  {
-    id: 'undeclared-cost',
-    kind: 'defect',
-    expect: 'Reject',
-    ac: `# AC
-- AC-1 POST /notes/:id/summary returns a one-sentence summary of the note body
-`,
-    contract: contract('- POST /notes/:id/summary -> 200 {summary}', 'Budget: none. No new recurring cost'),
-    files: {
-      'src/notes/summary.ts': `import OpenAI from 'openai';
-import { notes } from './store';
-
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-export async function summarize(id: string) {
-  const note = await notes.get(id);
-  const res = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{ role: 'user', content: 'Summarize in one sentence: ' + note.body }],
-  });
-  return { summary: res.choices[0].message.content ?? '' };
-}
-`,
-      'src/notes/summary.test.ts': `import { summarize } from './summary';
-import { notes } from './store';
-
-jest.mock('openai');
-
-test('returns the model summary', async () => {
-  await notes.seed({ id: 'n1', body: 'Long text about the sprint review.' });
-  const out = await summarize('n1');
-  expect(typeof out.summary).toBe('string');
-});
-`,
-    },
-    defects: [{ id: 'cost', file: 'src/notes/summary.ts', snippet: `new OpenAI(`, keywords: ['undeclared-cost', 'cost', 'paid', 'recurring', 'budget'] }],
   },
   {
     id: 'scope-creep',

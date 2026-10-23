@@ -1,7 +1,7 @@
 // Shared write-scope rules (references/hooks-enforcement.md §12). Used by guard-write-scope.mjs (the PreToolUse block) and
 // make-envelope.mjs (refuses a Write: path the role may not write, and prints the "Don't write" line), so the two cannot drift.
 export const RULES = [
-  { re: /(^|\/)docs\/strategy\.md$/, owners: ['product-manager'], what: 'docs/strategy.md (the product-manager records all cost: send it the figures through the Orchestrator)' },
+  { re: /(^|\/)docs\/strategy\.md$/, owners: ['product-manager'], what: 'docs/strategy.md (the product-manager writes it)' },
   { re: /(^|\/)docs\/architecture\/baseline(\.md|\/[^/]+\.md)$/, owners: ['researcher'], what: 'docs/architecture/baseline.md or a section file docs/architecture/baseline/<section>.md (the researcher writes them in onboard mode)' },
   { re: /(^|\/)docs\/architecture\/(overview|data-model|deployment)\.html$/, owners: ['diagrammer'], what: 'an architecture diagram (the architect specs the facts when a trigger fires; the diagrammer draws the file)' },
   { re: /(^|\/)docs\/architecture\/(flows|states|changes|data-models)\/[^/]+\.html$/, owners: ['diagrammer'], what: 'a flow, state, change or per-feature ERD diagram (the architect specs the facts when a trigger fires; the diagrammer draws the file)' },

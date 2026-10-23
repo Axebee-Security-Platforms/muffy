@@ -40,7 +40,7 @@ These principles guide what passes and what bounces back:
 
 ## 7. A Blocker Must Be Provable
 - A wrong blocker costs a loop: the 4th rejection at one point stops the flow, so a blocker you cannot prove is worse than a missed suggestion
-- Before writing a Blocker, answer yes to all of: can I cite the exact `file:line`? can I name the input, state and bad outcome? did I read the callers, imports and tests around it? is the severity defensible? Any "no" or "unsure" → make it a Suggestion or drop it
+- Before writing a Blocker, answer yes to all of: can I cite the exact `file:line`? can I name the input, state and bad outcome? did I read the callers, imports and tests around it? is the severity defensible? Any "no" or "unsure" → make it a Suggestion or drop it. Exception: when the only "no" is evidence you cannot read (code outside the diff, runtime behaviour) and the problem would be a blocker if it holds, file it under `Needs validation` with the one question the owner can answer. It is not a Blocker, so it never makes a Reject; do not use it for a weak severity or a style point
 - A Blocker on behaviour, security or performance carries three things: the snippet, the failure scenario (input → state → outcome), and why an existing guard (type, validation, framework default, caller) does not catch it. Missing one → demote to a Suggestion
 - An AC with no code (`AC id` missing) or a failing contract check needs no scenario: the missing `file:line` is the proof
 - Zero findings is a valid review: if the diff meets the AC and contract, return `Approve` with no Suggestions rather than inventing some

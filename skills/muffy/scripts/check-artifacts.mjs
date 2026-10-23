@@ -5,10 +5,9 @@
 //   ac.md, brief.md, contract.md, fix.md ≤ 60 lines; files in ac/, brief/, contract/ ≤ 120 lines;
 //   every [label] used (outside code fences and backticks) has one definition, every definition is used, targets exist;
 //   every AC id in ac.md appears in contract.md or a file under contract/ (when ac.md and contract.md exist);
-//   contract.md: the ## Cost summary starts with `Budget: none|within|over|unknown|unlimited` (over/unknown name a cheaper option);
 //   the Stack's `Platform:` is web|mobile|desktop|cli, and cli has contract/cli.md;
 //   contract/ownership.md: every row has one owner (FE, BE or devops) and no two owners' patterns overlap;
-//   deploy.md: ## Chosen infra, ## Infra cost, ## Practices and ## Risks exist, ## Infra options only when the checkpoint says `infra: propose`,
+//   deploy.md: ## Chosen infra, ## Practices and ## Risks exist, ## Infra options only when the checkpoint says `infra: propose`,
 //   and every `gap (<risk>)` under Practices appears under Risks.
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
@@ -53,7 +52,6 @@ function checkLinks(taskDir, file, errors) {
   }
 }
 
-const BUDGET = /^Budget:\s*(none|within|over|unknown|unlimited)\b/i;
 const PLATFORMS = new Set(['web', 'mobile', 'desktop', 'cli']);
 const section = (text, heading) => text.match(new RegExp(`^## ${heading}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'mi'))?.[1] ?? null;
 
@@ -61,14 +59,6 @@ function checkContract(taskDir, errors) {
   const contractPath = join(taskDir, 'contract.md');
   if (!existsSync(contractPath)) return;
   const contract = readFileSync(contractPath, 'utf8');
-  const cost = section(contract, 'Cost');
-  if (cost === null) errors.push('contract.md has no ## Cost section');
-  else {
-    const first = cost.split('\n').map((l) => l.replace(/^[-*]\s*/, '').trim()).find(Boolean) ?? '';
-    const m = first.match(BUDGET);
-    if (!m) errors.push('contract.md ## Cost must start with "Budget: none|within|over|unknown|unlimited"');
-    else if (/^(over|unknown)$/i.test(m[1]) && !/cheaper/i.test(first)) errors.push(`contract.md ## Cost says Budget: ${m[1].toLowerCase()} but names no cheaper option`);
-  }
   const contractDir = join(taskDir, 'contract');
   const ownershipPath = join(contractDir, 'ownership.md');
   if (existsSync(ownershipPath)) errors.push(...ownershipErrors(parseOwnership(readFileSync(ownershipPath, 'utf8'))));
@@ -84,7 +74,7 @@ function checkDeploy(taskDir, errors) {
   const deployPath = join(taskDir, 'deploy.md');
   if (!existsSync(deployPath)) return;
   const deploy = readFileSync(deployPath, 'utf8');
-  for (const h of ['Chosen infra', 'Infra cost', 'Practices', 'Risks']) if (section(deploy, h) === null) errors.push(`deploy.md has no ## ${h} section`);
+  for (const h of ['Chosen infra', 'Practices', 'Risks']) if (section(deploy, h) === null) errors.push(`deploy.md has no ## ${h} section`);
   const cpPath = join(taskDir, 'checkpoint.md');
   const cp = existsSync(cpPath) ? readFileSync(cpPath, 'utf8') : null;
   const infra = cp?.match(/\binfra:\s*([a-z-]+)/i)?.[1]?.toLowerCase();

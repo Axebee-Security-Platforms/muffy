@@ -39,7 +39,7 @@ Routing has a held-out live set, `route-live-scenarios.json`: prompts that are i
 
 ## Reviewer miss-rate bench (live, costs tokens)
 
-Measures what the code-reviewer misses and over-flags, so a rule change such as "unsure -> Suggestion" is judged on numbers. The default run uses the 7 `core` cases (the tautological and skipped-test rules, a missing AC, SQL injection, a swallowed error with its clean twin, and the decoys case) twice: 14 calls. `--all` adds the rest. All 12 cases are: nine that seed one defect each (missing AC, SQL injection, swallowed error, tautological test, skipped test, undeclared cost, scope creep, N+1, missing auth); three clean cases (one with decoys that look like findings) must be approved. Each case is a new-file diff plus its AC and contract; no code comment hints at the defect.
+Measures what the code-reviewer misses and over-flags, so a rule change such as "unsure -> Suggestion" is judged on numbers. The default run uses the 7 `core` cases (the tautological and skipped-test rules, a missing AC, SQL injection, a swallowed error with its clean twin, and the decoys case) twice: 14 calls. `--all` adds the rest. All 12 cases are: nine that seed one defect each (missing AC, SQL injection, swallowed error, tautological test, skipped test, scope creep, N+1, missing auth); three clean cases (one with decoys that look like findings) must be approved. Each case is a new-file diff plus its AC and contract; no code comment hints at the defect.
 
 ```bash
 node scripts/review-bench.mjs list

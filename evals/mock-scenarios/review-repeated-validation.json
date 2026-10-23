@@ -1,0 +1,57 @@
+{
+  "id": "review-repeated-validation",
+  "description": "A needs_validation id (V-1) open in 3 consecutive reviews escalates repeated-blocker even though no review rejects, so a problem cannot dodge the repeat check by moving from blocker to question",
+  "task": "login-flow",
+  "defaults": {
+    "role": "code-reviewer",
+    "task": "login-flow",
+    "step": "6",
+    "round": 1,
+    "status": "done",
+    "paths_written": [],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "verdict": "Approve",
+        "needs_validation": [
+          { "id": "V-1", "question": "Does AppError expose status and code?", "file": "src/payments/capture.ts:14", "owner": "BE" }
+        ],
+        "summary": "Approve round 1"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Approve",
+        "needs_validation": [
+          { "id": "V-1", "question": "Does AppError expose status and code?", "file": "src/payments/capture.ts:14", "owner": "BE" }
+        ],
+        "summary": "Approve round 2"
+      }
+    },
+    {
+      "handoff": {
+        "verdict": "Approve",
+        "needs_validation": [
+          { "id": "V-1", "question": "Does AppError expose status and code?", "file": "src/payments/capture.ts:14", "owner": "BE" }
+        ],
+        "summary": "Approve round 3"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "escalated",
+    "trigger": "repeated-blocker",
+    "actions": [
+      "accept",
+      "accept",
+      "escalate:repeated-blocker"
+    ],
+    "loops": {}
+  }
+}

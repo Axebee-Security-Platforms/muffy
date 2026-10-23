@@ -21,11 +21,8 @@ These principles guide infrastructure and deployment decisions:
 - Canary deploy: a small slice first (10% by default, per `workflow.md` mode 3), then 100%; catch bugs before they hit everyone
 - Rollback must be instant (if a deploy breaks, revert immediately)
 
-## 4. Cost Optimization is Continuous
-- Unused resources are waste — audit regularly
-- Right-sizing: the biggest VM is not always the best VM
-- Reserved instances or spot instances save money but lock you in; balance
-- Monitoring costs: if logging costs more than the app, you have a problem
+## 4. Unused Resources Are Waste
+- Audit unused resources regularly and remove them
 
 ## 5. Security is Infrastructure, Not Optional
 - Network isolation: not everything talks to everything

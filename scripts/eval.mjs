@@ -530,24 +530,18 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   const tmp = mkdtempSync(join(tmpdir(), 'muffy-checks-'));
   const copy = () => { const d = mkdtempSync(join(tmp, 't-')); cpSync(fixtureDir, d, { recursive: true }); return d; };
   const patch = (d, file, fn) => writeFileSync(join(d, file), fn(readFileSync(join(d, file), 'utf8')));
-  check('check-artifacts: the fixture passes the Budget, Platform and deploy.md checks', checkTask(fixtureDir).length === 0, checkTask(fixtureDir).join('; '));
-  let d = copy(); patch(d, 'contract.md', (t) => t.replace('Budget: none. ', ''));
-  check('check-artifacts: a Cost line without a Budget verdict fails', checkTask(d).some((e) => e.includes('Budget:')));
-  d = copy(); patch(d, 'contract.md', (t) => t.replace('Budget: none.', 'Budget: over, 300/mo vs ceiling 200.'));
-  check('check-artifacts: Budget over without a cheaper option fails, with one passes', checkTask(d).some((e) => e.includes('cheaper')) && checkTask((patch(d, 'contract.md', (t) => t.replace('vs ceiling 200.', 'vs ceiling 200; cheaper option: 150/mo.')), d)).length === 0);
-  d = copy(); patch(d, 'contract.md', (t) => t.replace('Existing codebase.', 'Existing codebase. Platform: cli.'));
+  check('check-artifacts: the fixture passes the Platform and deploy.md checks', checkTask(fixtureDir).length === 0, checkTask(fixtureDir).join('; '));
+  let d = copy(); patch(d, 'contract.md', (t) => t.replace('Existing codebase.', 'Existing codebase. Platform: cli.'));
   check('check-artifacts: Platform cli needs contract/cli.md; an unknown Platform fails', checkTask(d).some((e) => e.includes('cli.md')) && (patch(d, 'contract.md', (t) => t.replace('Platform: cli.', 'Platform: toaster.')), checkTask(d).some((e) => e.includes('toaster'))));
-  d = copy(); patch(d, 'deploy.md', (t) => t.replace('## Infra cost', '## Costs'));
-  check('check-artifacts: deploy.md missing ## Infra cost fails', checkTask(d).some((e) => e.includes('Infra cost')));
   d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later', 'infra: propose'));
   check('check-artifacts: infra: propose needs ## Infra options; options without propose fail', checkTask(d).some((e) => e.includes('Infra options')) && (patch(d, 'checkpoint.md', (t) => t.replace('infra: propose', 'infra: later')), patch(d, 'deploy.md', (t) => `${t}\n## Infra options\nA or B\n`), checkTask(d).some((e) => e.includes('only for infra: propose'))));
   d = copy(); patch(d, 'deploy.md', (t) => t.replace('Gap: no restore drill for Postgres yet.', 'Nothing else.'));
   check('check-artifacts: a practice gap missing from ## Risks fails', checkTask(d).some((e) => e.includes('not listed under ## Risks')));
   const { checkTask: checkpoint } = await import('../skills/muffy/scripts/check-checkpoint.mjs');
   check('check-checkpoint: the fixture passes', checkpoint(fixtureDir).length === 0, checkpoint(fixtureDir).join('; '));
-  d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later · budget: ok', 'infra: maybe · budget: fine · diagrams: 2 published'));
+  d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later', 'infra: maybe · diagrams: 2 published'));
   const bad = checkpoint(d);
-  check('check-checkpoint: unknown infra and budget values fail, a valid diagrams item passes', bad.some((e) => e.includes('infra: maybe')) && bad.some((e) => e.includes('budget: fine')) && !bad.some((e) => e.includes('diagrams')), bad.join('; '));
+  check('check-checkpoint: an unknown infra value fails, a valid diagrams item passes', bad.some((e) => e.includes('infra: maybe')) && !bad.some((e) => e.includes('diagrams')), bad.join('; '));
   const spawnLine = (step, agent, note) => [step, agent, 'sonnet', 'low', '1', 'pass', '0', note].join('\t');
   d = copy(); writeFileSync(join(d, 'spawns.tsv'), `${[spawnLine('1', 'researcher', 'L2 brief tok:95290'), spawnLine('2', 'product-manager', '22 AC tok:n/a')].join('\n')}\n`);
   const tokOk = checkpoint(d);
@@ -881,18 +875,9 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     rmSync(tmp, { recursive: true, force: true });
   }
 
-  // schemas and docs: PM cost envelopes, the documented no-cost line, step 3 order, the infra copy at setup
   {
-    const env = { goal: 'Record the cost of login-flow', task: 'login-flow', brain: 'B', mode: 'cost-record', read: ['.team/login-flow/contract.md'], write: ['docs/strategy.md'], dont_touch: [] };
-    check('envelope: product-manager cost-record and cost-reconcile modes are valid', validate(envSchema, env).length === 0 && validate(envSchema, { ...env, mode: 'cost-reconcile' }).length === 0 && validate(envSchema, { ...env, mode: 'cost-whatever' }).length > 0);
-    const arch = readFileSync(rel('agents/references/architect/workflow.md'), 'utf8');
-    const d = mkdtempSync(join(tmpdir(), 'muffy-review-cost-')); cpSync(fixtureDir, d, { recursive: true });
-    const noCost = arch.match(/one line, `([^`]+)`/)?.[1] ?? '';
-    writeFileSync(join(d, 'contract.md'), readFileSync(join(d, 'contract.md'), 'utf8').replace(/^Budget: none\. No new recurring cost$/m, noCost));
-    check('docs: the architect\'s documented no-cost line passes check-artifacts', noCost.startsWith('Budget: none') && checkTask(d).length === 0, `${noCost} → ${checkTask(d).join('; ')}`);
-    rmSync(d, { recursive: true, force: true });
     const row3 = readFileSync(rel('skills/muffy/references/steps.md'), 'utf8').split('\n').find((l) => l.startsWith('| 3 |')) ?? '';
-    check('docs: step 3 aligns the contract with deploy.md before the Budget verdict is read, and records the chosen infra', row3.indexOf('aligns the contract') > -1 && row3.indexOf('aligns the contract') < row3.indexOf('`pause:budget`') && row3.includes('infra: existing: <chosen>'));
+    check('docs: step 3 aligns the contract with deploy.md and records the chosen infra', row3.indexOf('aligns the contract') > -1 && row3.includes('infra: existing: <chosen>'));
     check('docs: setup copies a recorded infra: answer into every task checkpoint', readFileSync(rel('skills/muffy/references/setup.md'), 'utf8').includes('still copy that `infra:` line'));
     check('docs: the designer defaults a missing Platform to web instead of asking every time', readFileSync(rel('agents/references/designer/workflow.md'), 'utf8').includes('none named → `web`'));
   }

@@ -52,6 +52,8 @@ export function runReviewBenchEvals({ check, root }) {
   check(`${n}: parser joins wrapped lines and stops at Second brain`, wrapped.blockers.length === 1 && /concatenation/.test(wrapped.blockers[0]));
   const nested = parseReview('**Verdict: Reject**\n\n### Blockers\n- **B-1** `src/a.ts:4` injectable (AC-1, BE)\n  - Snippet: `x`\n  - Scenario:\n    - Input: y\n  - Fix: z\n- **B-2** `src/b.ts:9` no auth (AC-2, BE)\n\n### Suggestions\n- rename\n');
   check(`${n}: parser keeps sub-bullets inside their finding`, nested.blockers.length === 2 && /Scenario/.test(nested.blockers[0]) && nested.suggestions.length === 1);
+  const labelled = parseReview('**Verdict: Reject**\n\n### Blockers\n\n**B-1** `a.ts:4` N+1 (AC-1, BE)\n- **Scenario:** N orders run N queries\n- **Fix:** batch them\n\n**B-2** `b.ts:9` no auth (AC-2, BE)\n\n### Suggestions\n- **Note:** tidy\n');
+  check(`${n}: parser keeps unindented bold-label bullets inside their blocker`, labelled.blockers.length === 2 && /Fix:/.test(labelled.blockers[0]) && labelled.suggestions.length === 1);
   const closed = parseReview('**Verdict:** Approve\n\n**Blockers:** none.\n\nAC → code:\n- AC-1: `a.ts:9` ok\n- AC-2: `a.ts:13` ok\n\n**Suggestions**\n- tidy\n');
   check(`${n}: "Blockers: none." closes the section and later bullets are not findings`, closed.blockers.length === 0 && closed.suggestions.length === 1);
   const ended = parseReview('**Verdict: Reject**\n\n### Blockers\n- **B-1** `a.ts:4` bad (AC-1, BE)\n\n**AC → code**\n- AC-1 → `a.ts:4`\n\n### AC coverage\n- AC-2: ok\n\n### Suggestions\n- tidy\n');

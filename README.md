@@ -196,7 +196,7 @@ Every agent ends with a JSON block checked against `handoff.schema.json`; an inv
 | 0 | `researcher`, `architect` (existing repos, once) | `docs/architecture/baseline.md`, `docs/adr/NNNN-existing-stack.md` |
 | 1 | `researcher` | `brief.md` at the research level the feature needs |
 | 2 | `product-manager` | `ac.md`, `docs/plan/<task>.md` (phases with value/cost/risk, P0/P1/P2), ADRs, `docs/strategy.md` (first feature only) |
-| 3 | `designer` ∥ `architect` ∥ `devops` | `design.md`, `contract.md` (index + parts, with Cost), `deploy.md` |
+| 3 | `designer` ∥ `architect` ∥ `devops` | `design.md`, `contract.md` (index + parts), `deploy.md` |
 | 3b | Orchestrator | Design canvas published on Claude Design; URL saved in `design.md`, `checkpoint.md`, and the vault task note |
 | 3c / 3d | Design gate (checklist, then **you approve the design**), `devops` smoke build (only on stack change) | Pass or send back. Blocks code until both pass |
 | 4 | `frontend-dev` ∥ `backend-dev` | `fe/<task>` and `be/<task>` branches in separate worktrees |
@@ -241,7 +241,7 @@ Research, product, design, architecture, docs and step 8 are skipped. The cause 
 | Step | Owner | What happens |
 |---|---|---|
 | Setup-lite | Orchestrator | Writes `ac.md` (kind, owner, AC); one confirmation at `pause:scope` |
-| 3 | `architect` (+ `devops` for a migration) | Contract and cost verdict; `pause:budget` still applies |
+| 3 | `architect` (+ `devops` for a migration) | Contract |
 | 4–7 | devs, `code-reviewer`, `qa-tester` | As in the full flow; QA at L2 (L3 for an internal API with new AC) |
 | 9, 10, 11 | `devops`, Human gate | Staging, your approval, production |
 
@@ -265,7 +265,7 @@ You approve the design before any code is written; only the Human gate approves 
 
 | Where | What |
 |---|---|
-| `docs/` in the repo | Plan, ADRs, project strategy and budget, design system, architecture baseline |
+| `docs/` in the repo | Plan, ADRs, project strategy, design system, architecture baseline |
 | `.team/<task>/` | Working files, hand-offs, rounds, and `checkpoint.md` for resuming a run |
 | Obsidian vault (`SECOND_BRAIN_VAULT`) | `tasks/<task>.md` and the consolidated `project.md` |
 
@@ -276,10 +276,10 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 | Agent | Role |
 |---|---|
 | `researcher` | Brief, evidence, onboard baseline; asks clarifying questions |
-| `product-manager` | Acceptance criteria, plan, strategy score, project goal and budget; the only writer of cost records (`docs/strategy.md`); in `/muffy present`, the content of decks for clients and end-users, as a solutions engineer |
+| `product-manager` | Acceptance criteria, plan, strategy score, project goal and success metric; the only writer of `docs/strategy.md`; in `/muffy present`, the content of decks for clients and end-users, as a solutions engineer |
 | `designer` | Canvas, `design.md`, the project design system, and the look of `/muffy present` decks |
 | `diagrammer` | Draws every diagram (architecture, deployment, state, ERD, flow, screen map, gantt, story map) from facts the other roles decided, checks it renders, and keeps the words plain for readers who are not engineers |
-| `architect` | API contract, ADRs, stack decisions, build vs buy (recommends third-party providers; web access only to check a provider's facts), cost delta |
+| `architect` | API contract, ADRs, stack decisions, build vs buy (recommends third-party providers; web access only to check a provider's facts) |
 | `devops` | Deploy plan, smoke build, staging, production rollout |
 | `frontend-dev` | UI implementation on `fe/<task>` (web, mobile and desktop apps) |
 | `backend-dev` | API and data implementation on `be/<task>`; also CLI and console apps |

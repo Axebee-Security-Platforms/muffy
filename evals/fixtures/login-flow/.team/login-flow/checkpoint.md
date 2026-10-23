@@ -8,7 +8,7 @@ Add email + password login with rate limiting (request, verbatim): "Let users si
 Full run; nothing skipped.
 
 ## Status
-Step 6 approved. Gates 3c and 3d passed. infra: later · budget: ok
+Step 6 approved. Gates 3c and 3d passed. infra: later
 
 ## Decisions in force
 ADR 0001 session cookie + Postgres 16. Runtime: Node 22.14 (deploy.md).

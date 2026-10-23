@@ -26,6 +26,7 @@ export function simulate(scenario) {
   const actions = [];
   const loops = {}; // point -> rejections so far
   const streak = {}; // point -> { blocker id -> consecutive rejections it has been open }
+  const vstreak = {}; // point -> { needs_validation id -> consecutive reviews it has been open }
   const retries = {}; // point -> invalid / not-ready retries used this round
   const passed = new Set();
   const skipped = new Set(scenario.skip ?? []);
@@ -115,6 +116,17 @@ export function simulate(scenario) {
         trigger = files > FIX_MAX_FILES ? 'too-many-files' : 'architect-blocker';
         break;
       }
+    }
+
+    // 2c. a reviewer's needs_validation item (V-n) open in REPEAT_LIMIT consecutive reviews, Approve or Reject, escalates like a repeated blocker
+    const vOpen = new Map((h.needs_validation ?? []).map((v) => [v.id, v]));
+    const vStreaks = (vstreak[point] ??= {});
+    for (const id of Object.keys(vStreaks)) if (!vOpen.has(id)) delete vStreaks[id];
+    for (const id of vOpen.keys()) vStreaks[id] = (vStreaks[id] ?? 0) + 1;
+    const vRepeated = [...vOpen.values()].filter((v) => vStreaks[v.id] >= REPEAT_LIMIT);
+    if (vRepeated.length) {
+      escalate(point, 'repeated-blocker', vRepeated.map((v) => ({ id: v.id, problem: v.question })), vRepeated[0].owner);
+      continue;
     }
 
     // 3. verdict handling

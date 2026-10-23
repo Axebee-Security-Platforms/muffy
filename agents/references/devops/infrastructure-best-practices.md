@@ -14,7 +14,7 @@ In `deploy.md` `## Practices` list each one that applies as `met`, `planned (<wh
 - **Logs and basic monitoring:** structured logs shipped off the host, plus the golden signals (latency, errors, traffic, saturation) and an alert on the ones users feel
 - **Backups with a tested restore:** data you cannot lose is backed up on a schedule, kept off the failure domain, and a restore has been tried at least once; state the RPO and RTO you are aiming for
 - **Environments:** staging mirrors production in shape (same runtime, same dependency types, same deploy path) even if smaller
-- **Cost controls:** resources sized to measured need, an alert or cap, and temporary environments that expire (see [infrastructure-options.md](infrastructure-options.md))
+- **Resource hygiene:** resources sized to measured need, and temporary environments that expire (see [infrastructure-options.md](infrastructure-options.md))
 
 ### Production (before the production deploy)
 - **Availability:** no single point of failure for what the uptime target requires (redundant instances across failure domains, replicated or managed datastore, load balancing); autoscaling has a floor and a ceiling; capacity has headroom for the expected peak
@@ -37,7 +37,7 @@ In `deploy.md` `## Practices` list each one that applies as `met`, `planned (<wh
 - **Platform:** pick one virtualization or orchestration layer and operate it as code (IaC and configuration management); no hand-built snowflake servers
 - **Backups:** follow 3-2-1 (three copies, two media, one off site), with the off-site copy out of the same building and the same power; test restores
 - **Physical and access security:** controlled physical access, hardened management interfaces, disk encryption where the data needs it
-- **People:** who is on call, who has remote hands or on-site access, and how long a hardware fault takes to fix; this is part of the cost
+- **People:** who is on call, who has remote hands or on-site access, and how long a hardware fault takes to fix
 - **Hybrid links:** the link to a cloud or another site is redundant, encrypted, and sized and priced for the data that crosses it
 
 ### Checking them

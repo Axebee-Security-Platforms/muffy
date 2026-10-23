@@ -12,7 +12,7 @@
     "task": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
     "brain": { "type": "string", "minLength": 1 },
     "vault": { "type": "string" },
-    "mode": { "enum": [1, 2, 3, "onboard", "stack-note", "cost-record", "cost-reconcile"], "description": "devops 1|2|3; researcher onboard|stack-note; architect onboard; product-manager cost-record (step 3a) | cost-reconcile (closing)" },
+    "mode": { "enum": [1, 2, 3, "onboard", "stack-note"], "description": "devops 1|2|3; researcher onboard|stack-note; architect onboard" },
     "worktree": { "type": "string", "minLength": 1, "description": "frontend-dev, backend-dev, qa-tester, devops mode 2: worktree path the Orchestrator created" },
     "branch": { "type": "string", "minLength": 1, "description": "Branch checked out in that worktree" },
     "read": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },

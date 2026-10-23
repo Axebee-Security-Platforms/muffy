@@ -50,9 +50,3 @@ These principles guide every design decision:
 - Name modules and their operations in the domain's words from `ac.md` and the brief, and use the same word everywhere in the contract; one concept, one name
 - In `contract/ownership.md`, one module = one owner; a module both FE and BE must edit is a seam in the wrong place
 
-## 9. Cost Is a Design Constraint
-- Every recurring cost (hosting, API calls, tokens, licenses) is visible in `contract.md` before code starts
-- Cost is judged per feature as a delta against the project's baseline in `docs/strategy.md`; no new recurring cost = one line, `Budget: none. No new recurring cost`
-- Estimates are ranges with a stated basis; an unsourced number is `[assumed]`
-- Build vs buy is decided per capability, favoring the option cheaper to maintain
-- If the design exceeds the budget, offer a cheaper alternative instead of silently shipping it

@@ -3,8 +3,8 @@
 ### Mode 1: Deployability
 1. Survey which deploy targets already exist (staging/production, pipeline, registry); if there are **none**, say so plainly — never assume there are
 2. Assess the stack proposed by the brief/architect: is it actually deployable, runtime + version, resources (CPU/RAM/GPU/disk), where large artifacts live (model weights, index, data), native or conflicting dependencies
-2b. **Propose the infrastructure only when the `infra:` answer in the prompt is `propose`** (existing → reuse it; later → local near-production, no proposal; not-needed → no hosting; missing → ask which applies): read [infrastructure-options.md](infrastructure-options.md), write 2 or 3 options (cloud, on-premises, hybrid or existing, whichever are realistic for the brief and its constraints, never cloud by default) with cost, lock-in, operational load and recovery, and a default. A choice with a recurring or capital cost is the user's: return `needs-input` with `questions[]` and wait for the answer in `requirements.md`
-2c. **Apply the practices:** read [infrastructure-best-practices.md](infrastructure-best-practices.md) and fill `## Practices` for the chosen infrastructure at the level the task needs (baseline now, production before the production deploy, regulated and on-premises only when they apply). Write `## Infra cost` for the architect to use
+2b. **Propose the infrastructure only when the `infra:` answer in the prompt is `propose`** (existing → reuse it; later → local near-production, no proposal; not-needed → no hosting; missing → ask which applies): read [infrastructure-options.md](infrastructure-options.md), write 2 or 3 options (cloud, on-premises, hybrid or existing, whichever are realistic for the brief and its constraints, never cloud by default) with lock-in, operational load and recovery, and a default. The choice is the user's: return `needs-input` with `questions[]` and wait for the answer in `requirements.md`
+2c. **Apply the practices:** read [infrastructure-best-practices.md](infrastructure-best-practices.md) and fill `## Practices` for the chosen infrastructure at the level the task needs (baseline now, production before the production deploy, regulated and on-premises only when they apply).
 3. Write `.team/<task>/deploy.md` (see Output Format)
 4. If the proposed stack can't be deployed or must be torn out after MVP → tell the Orchestrator with alternatives (architect writes the ADR)
 
@@ -47,7 +47,7 @@ Staging:
    - the app binds to a real interface and the origin it expects: `HOSTNAME=0.0.0.0` inside the container must not leak into the origin check (the BAD_ORIGIN case)
    - health check returns 200 from the host
    - smoke sends a real POST from the host's origin, not only a GET health probe
-3. Run migrations, health check, smoke test. Then compare the deployed environment with `deploy.md` `## Practices` and `## Infra cost`: report each practice you could confirm, the resources actually created, and any usage or cost figure the user made visible (a billing or usage page they showed, or the resources' own metrics). Never open a billing page or enter payment details yourself. A real figure above the declared one is reported to the Orchestrator with both numbers; do not change resources to fit it
+3. Run migrations, health check, smoke test. Then compare the deployed environment with `deploy.md` `## Practices`: report each practice you could confirm and the resources actually created. Never open a billing page or enter payment details yourself
 4. Fail → collect logs and report (don't fix code yourself)
 
 Production:
@@ -72,4 +72,4 @@ Skip the Docker and HTTP health checks above unless the app also ships a server,
 ### All modes
 **Keep command output out of context.** Build, test, migration, smoke and `docker logs` output goes to a file, never straight into the conversation: `<cmd> > .team/<task>/logs/<name>.log 2>&1; echo "exit $?"`. On exit 0, read nothing. On failure read only the tail (`tail -n 30`) or `grep -iE 'error|fail|fatal'` of that file, then widen only if the cause is still unclear. Quote at most ~20 log lines in the report and give the log path for the rest. `logs/` stays out of git.
 
-Record in `<brain>/agents/devops/<task>.md`: date, mode, pinned runtime, environment/commit, smoke/health check results, whether rolled back, decisions + reasons, cost/token usage, open issues. For new rounds, append as a new section
+Record in `<brain>/agents/devops/<task>.md`: date, mode, pinned runtime, environment/commit, smoke/health check results, whether rolled back, decisions + reasons, open issues. For new rounds, append as a new section

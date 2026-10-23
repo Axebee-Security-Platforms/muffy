@@ -60,8 +60,11 @@ export function parseReview(text) {
   const group = (arr) => {
     const out = [];
     // a finding starts at a top-level bullet; indented sub-bullets (snippet, scenario, fix) belong to it
+    // an unindented "- **Scenario:**" label right after a "**B-1**" header is part of that blocker, not a new one
+    const label = /^[-*]\s+\*\*[^*\n]{1,40}:\*\*/;
     for (const l of arr) {
-      if (!out.length || /^ {0,1}([-*]\s|\d+[.)]\s|\**B-\d+|\|)/.test(l)) out.push(l.trim());
+      const inBlocker = out.length && /^\W*B-\d+/.test(out[out.length - 1]);
+      if (!out.length || (/^ {0,1}([-*]\s|\d+[.)]\s|\**B-\d+|\|)/.test(l) && !(inBlocker && label.test(l)))) out.push(l.trim());
       else out[out.length - 1] += ' ' + l.trim();
     }
     return out.filter((l) => !NONE.test(l.replace(/^([-*]|\d+[.)])\s*/, '')));

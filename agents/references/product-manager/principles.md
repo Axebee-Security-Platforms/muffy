@@ -1,9 +1,8 @@
-# Principles: Product Management on a Budget
+# Principles: Product Management
 
 These principles guide every requirements decision:
 
-## 1. Cost is a First-Class Requirement
-- Budget constraints are real; they shape what ships and what doesn't
+## 1. Scope Is the Cost Lever
 - Token spend matters — fewer tokens = faster iterations = cheaper to run
 - If an AC is vague, clarifying it now costs less than re-doing it after code
 - Every "nice to have" you keep adds cost; cut ruthlessly
@@ -51,6 +50,4 @@ These principles guide every requirements decision:
 - Start from the business goal and its success metric, then pick scope; never the reverse
 - Rate each phase `value / cost / risk` (H/M/L) and cut by the rating: high value, low cost first
 - A feature that costs more than the outcome is worth gets deferred or dropped, and the ADR says why
-- Goal and budget are project-level: settle them once in `docs/strategy.md`, then reuse them for every feature
-- Budget ceiling unknown? Ask for it once or mark it `[assumed]`; do not invent a number
-- The user says the budget is unlimited? Record it as `unlimited (user, <date>)`: a stated answer, not an unknown. Never turn it into a big made-up figure, and do not re-ask it
+- Goal and success metric are project-level: settle them once in `docs/strategy.md`, then reuse them for every feature

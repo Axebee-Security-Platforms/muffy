@@ -14,7 +14,7 @@ Changes since v1.2.0.
 - **Diagram kinds:** state, deployment, gantt and story-map (product-manager). Optional patterns: queue-bottleneck, lifecycle, trust-boundary, delta, db-schema.
 - **Diagram import/export:** import Mermaid, draw.io and Excalidraw as a muffy draft (reads gantt and journey); export any kind as PNG or native SVG.
 - **Diagram checks:** readability checks, either/or branches in flow, render check at every delivery gate, standalone diagram mode.
-- **Platforms and infra:** non-web platforms, budget control, providers, infra and stack learning.
+- **Platforms and infra:** non-web platforms, providers, infra and stack learning.
 - **Brain:** falls back to `.team/brain` when no vault is set; closing can append an optional daily-note link to the vault.
 - **Agents:** `display_name` in agent frontmatter (devops is "Cay"); source file size cap for FE/BE agents with a language-neutral split rule.
 - **Guards:**

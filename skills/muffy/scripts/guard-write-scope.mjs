@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // PreToolUse guard (Write|Edit): who may write which shared repo files (references/hooks-enforcement.md §12).
-//   docs/strategy.md                         product-manager only (every cost record lives there)
+//   docs/strategy.md                         product-manager only
 //   docs/architecture/baseline.md and docs/architecture/baseline/*.md   researcher only (the index and its section files)
 //   docs/architecture/{overview,data-model,deployment}.html, docs/architecture/flows/*.html, docs/architecture/states/*.html, docs/architecture/changes/*.html and docs/architecture/data-models/*.html   diagrammer only (facts spec'd by architect)
 //   any other file under docs/architecture/ no subagent

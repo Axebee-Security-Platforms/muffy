@@ -9,7 +9,6 @@ Give `file:line` for every finding; a finding is a **Blocker** when it makes beh
 - **UI:** matches the canvas on Claude Design (URL in design.md); styles use tokens from `docs/design-system/tokens.css` with no raw hex/px in component styles, and components match their spec in `docs/design-system/README.md` (a one-off restyled copy of an existing component = Suggestion, an undocumented new color/component = Blocker); AI tropes (gradient wash, emoji as icons, glass, Inter/Roboto/Arial fonts, cards with a colored left border); on-screen text embellished beyond design.md; lorem or invented numbers/reviews; semantic HTML/a11y
 - **Docs and reports:** filler or marketing words, empty sections, repeating the AC wholesale, claims of "passing/done" not backed by the diff or run results (Blocker)
 
-- **Undeclared recurring cost is a Blocker.** If the diff adds a paid API or service call, a paid SDK or plan, a new hosted service or a licence that `contract/cost.md` / `contract/stack.md` does not declare, raise `undeclared-cost: <name>` with owner `Architect`. A free dependency, or one already declared, is not
 
 ### Don't
 - Edit any file

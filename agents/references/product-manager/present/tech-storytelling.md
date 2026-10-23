@@ -26,7 +26,7 @@ Every technical point is two halves, and the second half is the one on the slide
 - Show the options the ADR considered, what each costs and risks, and why the chosen one won: a `comparison` slide with the recommended option marked. The audience trusts a choice more when it sees what was given up
 - Build vs buy: take it from the ADR and the `## Build vs buy log` in `docs/strategy.md`. You report the decision; the architect made it
 - Quick wins vs later work: from the plan's phases and priorities (P0/P1/P2). Technical debt only where an ADR or the plan names it, in plain words ("a faster start now, a cleanup planned in phase 3")
-- Cost and capacity figures (cloud cost at a given number of users, infrastructure sizing) come from the architect's cost delta, devops' deploy plan or `## Cost baseline`. Never estimate one; if the deck needs it and no source has it, it is a blocker for `Architect` or `Devops`
+- Capacity figures (infrastructure sizing) come from devops' deploy plan. Never estimate one; if the deck needs it and no source has it, it is a blocker for `Architect` or `Devops`. Cost figures come only from the requester or a document they supply
 
 ## 4. The technical questions executives ask
 
@@ -37,7 +37,7 @@ Prepare each that fits the audience as an objection: answered on a slide or in `
 | "What happens if it goes down? Do we lose data?" | ADR on hosting and data; deploy plan (rollback, backups), if confirmed as a source |
 | "How many users can it handle?" | ADR or contract non-functional requirements; a load test in the QA report, if one exists and is confirmed |
 | "Is it secure? Who can see our data?" | ADRs on authentication, access and data separation |
-| "When will it be ready, and what does it cost?" | the plan's phases; `## Cost baseline` in `docs/strategy.md` |
+| "When will it be ready, and what does it cost?" | the plan's phases; a cost figure only if the requester supplied it |
 | "Can it connect to our systems?" | ADRs on integrations; the architecture overview |
 | "Are we locked in to a vendor?" | the build-vs-buy log and the ADR that chose the provider |
 | "What if we need to change it later?" | the ADR's consequences section; later phases in the plan |

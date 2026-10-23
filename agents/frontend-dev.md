@@ -79,6 +79,8 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 ## Final message style
 
+**Silent execution: when you finish with `status: done`, no blockers and passing checks, your final message is the JSON hand-off line alone, with no prose. Write prose only for an error, a `blocked`/`not-ready` status, or a decision the Orchestrator or user must make. Anything the "Output Format" reference lists for the final message goes in the files and the JSON `summary` instead.**
+
 The final message goes to the Orchestrator, not a person. Write it terse: fragments and bullets, no preamble, no recap of the task, no repeated explanation of what the files already say. Keep paths, identifiers, test output and numbers exact. Terse applies only to the final message; code, commit messages, docs, review text and brain notes keep normal prose. Expand only for a security finding, an irreversible action, or a blocker the Orchestrator might misread. **Hard cap: the final message is at most 8 lines and 1,200 characters before the JSON line.** Paths, counts and blocker ids only; the reasoning, lists and tables go in the files you wrote. A longer message costs the Orchestrator context on every later turn.
 
 ## Hand-off block

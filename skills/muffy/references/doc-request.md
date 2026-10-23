@@ -6,7 +6,7 @@ When the product-manager, writing a deck in present mode, can't build it because
 
 | Missing | Owner (`blockers[].owner`) | Agent | Document |
 |---|---|---|---|
-| Problem, value, goals, scope, phased plan, what it costs | `PM` | product-manager | `docs/strategy.md`, plan |
+| Problem, value, goals, scope, phased plan | `PM` | product-manager | `docs/strategy.md`, plan |
 | How the system works, its parts, technical decisions | `Architect` | architect | an ADR, `docs/architecture/overview.html` |
 | What the product is, how to use it, how to start, the commands or features (README level) | `Docs` | docs-writer | `README.md`, `docs/` |
 | Evidence about users, the market, the current situation | `Researcher` | researcher | a research brief |

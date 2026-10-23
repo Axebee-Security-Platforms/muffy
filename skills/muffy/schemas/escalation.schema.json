@@ -21,7 +21,7 @@
         "additionalProperties": false,
         "required": ["id", "problem", "rounds_open"],
         "properties": {
-          "id": { "type": "string", "pattern": "^B-[0-9]+$" },
+          "id": { "type": "string", "pattern": "^[BV]-[0-9]+$" },
           "problem": { "type": "string", "minLength": 3 },
           "file": { "type": "string" },
           "rounds_open": { "type": "integer", "minimum": 1 }

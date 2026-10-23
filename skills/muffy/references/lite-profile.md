@@ -63,17 +63,16 @@ Profile: lite    Kind: internal-api | refactor | perf | db    Owner: FE | BE | b
 
 | # | Agent | Notes |
 |---|---|---|
-| 3 | `architect`, plus `devops` mode 1 in the same message only when the change has a migration or the repo has no `deploy.md` | `Read:` `ac.md` (no `brief.md`, no `design.md`). Contract as usual: index + part files, `## Cost` with its `Budget:` verdict, diagrams only if a trigger fires. Devops mode 1 makes sure step 9 applies the migration |
-| 3a | `product-manager` cost-record | Only per [budget.md](budget.md): skipped on `Budget: none` with no new build/buy choice. `pause:budget` applies unchanged |
+| 3 | `architect`, plus `devops` mode 1 in the same message only when the change has a migration or the repo has no `deploy.md` | `Read:` `ac.md` (no `brief.md`, no `design.md`). Contract as usual: index + part files, diagrams only if a trigger fires. Devops mode 1 makes sure step 9 applies the migration |
 | 3d | `devops` mode 2 | Only if a smoke trigger is true ([run-profile.md](run-profile.md)). Commit the planning files and cut worktrees for the owners named in `ac.md` exactly as [setup.md](setup.md) step 7 says (from `ops/<task>` after 3d, or from `feature/<task>` when 3d is skipped) |
 | 4, 5 | `frontend-dev` ∥ `backend-dev`, then Orchestrator merge | As in the full flow. Perf: the dev records the before and after numbers with the AC's command in the hand-off summary |
 | 6 | `code-reviewer` | Never skipped, never downgraded |
 | 7 | `qa-tester` | Level from [test-levels.md](test-levels.md): **L2** for refactor, perf and db (refactor: the named tests pass before and after; db: the migration runs up and down), **L3** for internal-api with new AC. No `docs-writer`, no step 8 |
 | 9 | `devops` mode 3 | Staging against `deploy.md` (the one devops wrote at step 3, or the newest `.team/*/deploy.md`); a migration is applied there before the smoke |
-| 10, 11 | Human gate, devops production | Unchanged. The question includes the cost line and, for perf, the before and after numbers |
+| 10, 11 | Human gate, devops production | Unchanged. For perf, the question includes the before and after numbers |
 | 12 | Orchestrator | [closing.md](closing.md) in full, `## Usage` from `spawns.tsv` |
 
-Skipped: 1 (`researcher`), 2 (`product-manager`, except a cost-record at 3a), `designer`, 3b, 3c, 8. Never skipped: 3, 6, 7, 9, 10.
+Skipped: 1 (`researcher`), 2 (`product-manager`), `designer`, 3b, 3c, 8. Never skipped: 3, 6, 7, 9, 10.
 
 ## Promote to the full flow
 

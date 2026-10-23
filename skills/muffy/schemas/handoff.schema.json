@@ -37,6 +37,21 @@
         }
       }
     },
+    "needs_validation": {
+      "type": "array",
+      "description": "code-reviewer only: suspected problems the reviewer could not prove from the diff. Not blockers: they never make a Reject and never count toward the loop limit",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question", "owner"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^V-[0-9]+$", "description": "Stable across rounds, like a blocker id" },
+          "question": { "type": "string", "minLength": 3, "maxLength": 300, "description": "The one thing the owner must confirm or show for this to be closed or promoted to a blocker" },
+          "file": { "type": "string", "pattern": "^[^\\s:]+(:[0-9]+)?$" },
+          "owner": { "enum": ["FE", "BE", "Docs", "Devops", "Architect", "Designer", "PM", "Researcher"] }
+        }
+      }
+    },
     "quality_checks": {
       "type": "object",
       "additionalProperties": false,

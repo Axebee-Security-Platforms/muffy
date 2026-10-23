@@ -91,7 +91,7 @@ if (env.commit_trailer) out.push(`Commit trailer: ${env.commit_trailer}`);
 out.push(
   reviewerNoWrite
     ? 'Final message: the review (blockers first, one-line verdict, ≤ 120 lines), then the one-line JSON hand-off block. Do not Read handoff.schema.json; the shape is below.'
-    : 'Final message: ≤ 8 lines and ≤ 1,200 characters (verdict/status, paths written, blockers `B-n`); details belong in the files. Then the one-line JSON hand-off block. Do not Read handoff.schema.json; copy this shape and run validate-handoff.mjs on the file.',
+    : 'Final message (silent execution): on success (`status: done`, no blockers, checks passed) output ONLY the one-line JSON hand-off block, no prose; results, paths and details go in the JSON (`summary` ≤ 1 line) and the files. Prose (≤ 8 lines, ≤ 1,200 characters) only on an error, `blocked`/`not-ready`, or a decision the Orchestrator or user must make, with blockers `B-n`. Then the one-line JSON hand-off block. Do not Read handoff.schema.json; copy this shape and run validate-handoff.mjs on the file.',
   `Hand-off shape: ${example}`
 );
 process.stdout.write(out.join('\n') + '\n');

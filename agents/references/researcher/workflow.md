@@ -13,7 +13,7 @@
 
    Don't read the whole vault. If there is nothing yet, state "no existing knowledge"
 1. Read the relevant existing codebase (auth, mailer, config, patterns in use) before searching externally
-1b. **Clarify before researching.** Read `.team/<task>/requirements.md` if it exists (answers already given). Then list what is still unknown about the request that would change *what you research*: existing systems to integrate, stack/vendor/license limits, scale and performance targets, compliance, budget, deadline, prior attempts, what "better" means. Answerable from the brain, code or `baseline.md` → answer it yourself, don't ask. Otherwise:
+1b. **Clarify before researching.** Read `.team/<task>/requirements.md` if it exists (answers already given). Then list what is still unknown about the request that would change *what you research*: existing systems to integrate, stack/vendor/license limits, scale and performance targets, compliance, deadline, prior attempts, what "better" means. Answerable from the brain, code or `baseline.md` → answer it yourself, don't ask. Otherwise:
    - 1–8 open questions → stop and return `status: needs-input` with `questions[]` (shape: [requirements.md](../../../skills/muffy/references/requirements.md)). Each has 2–4 concrete options, your recommended `default`, `why` it matters, and `blocking`. Write no `brief.md` yet. Skip this when nothing material is open
    - Only non-blocking gaps → proceed on the defaults, list them in `assumptions` and mark them `[assumed]` in the brief
    - Never ask about product decisions (who the users are, MVP cut, priorities): put them in the brief as open questions for the PM
