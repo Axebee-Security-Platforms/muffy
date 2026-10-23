@@ -2,6 +2,7 @@
 // The scripted half of references/quality-checks.md in one call, after any step. Runs, in order:
 //   handoff     every hand-off of this step and round validates and reports quality_checks.passed
 //   loop        next-action.mjs over all hand-offs of the task: what to do now (accept, fix:<owner>, retry, escalate, promote)
+//   gates       no hand-off past an open human gate (2b, 3c; gate-rules.mjs), feature lane only
 //   checkpoint  check-checkpoint.mjs
 //   artifacts   check-artifacts.mjs (sizes, links, traceability brief → AC → contract → qa-report)
 //   brain       each role of this step wrote <brain>/agents/<role>/<task>.md          (with --brain)
@@ -25,6 +26,7 @@ import { checkTask as checkCheckpoint } from './check-checkpoint.mjs';
 import { checkTask as checkArtifacts } from './check-artifacts.mjs';
 import { classify, laneVerdict, smokeOnRecord } from './diff-signals.mjs';
 import { parseOwnership } from './ownership.mjs';
+import { gateErrors } from './gate-rules.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4', '5', '5b', '6', '7', '8', '9', '10', '11', '12'];
@@ -66,6 +68,12 @@ export function checkAll(taskDir, { step, round, profile, skip = [], brain, base
   const loop = simulate({ task, profile, skip: skips, passed, events: upTo.map((h) => ({ handoff: h.data, step: h.step, role: h.role })) });
   const next = loop.outcome === 'invalid-profile' ? 'fix-run-profile' : loop.actions.at(-1) ?? 'none';
   add('loop', [...loop.violations, ...(['escalated', 'blocked', 'invalid-profile', 'promoted'].includes(loop.outcome) ? [`${next}${loop.trigger ? ` (${loop.trigger})` : ''}`] : [])]);
+
+  // human gates (step-details 2b, 3c): a hand-off past an open gate is an error; fix and lite have no gates
+  add('gates', gateErrors(readIf(join(taskDir, 'checkpoint.md')), upTo.map((h) => h.step), {
+    designExists: existsSync(join(taskDir, 'design.md')),
+    lane: profile === 'fix' || profile === 'lite' ? profile : undefined,
+  }));
 
   add('checkpoint', checkCheckpoint(taskDir));
   add('artifacts', checkArtifacts(taskDir));

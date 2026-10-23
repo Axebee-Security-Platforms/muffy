@@ -9,6 +9,7 @@ Full run; nothing skipped.
 
 ## Status
 Step 6 approved. Gates 3c and 3d passed. infra: later
+- gate 2b passed · user: "approve" · 2026-10-20
 
 ## Decisions in force
 ADR 0001 session cookie + Postgres 16. Runtime: Node 22.14 (deploy.md).

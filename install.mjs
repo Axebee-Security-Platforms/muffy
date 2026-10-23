@@ -6,7 +6,7 @@
 // --clean removes the previous install first, including agent files that a newer version dropped.
 // Creates .claude/settings.local.json only when missing, and adds ignore lines to .gitignore.
 // --scan runs the repo scanner after install and writes .team/onboard/scan.json (input for /muffy onboard).
-// Hooks are not added by default. --with-guard merges the env, Bash allowlist, full-regression, test-level and write-scope guards into hooks.PreToolUse.
+// Hooks are not added by default. --with-guard merges the env, Bash allowlist, full-regression, test-level, write-scope, git and gate guards into hooks.PreToolUse.
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync, statSync } from 'node:fs';
 import { join, dirname, resolve, relative } from 'node:path';
@@ -50,7 +50,7 @@ if (flag('--help') || positional.length === 0) {
 usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean] [--with-guard] [--scan]
 
   --vault       path to the Obsidian vault (written to .claude/settings.local.json)
-  --with-guard  merge the guards (guard-env.mjs, guard-bash-allowlist.mjs, guard-full-regression.mjs, guard-test-level.mjs, guard-write-scope.mjs, guard-git.mjs) into hooks.PreToolUse of .claude/settings.local.json
+  --with-guard  merge the guards (guard-env.mjs, guard-bash-allowlist.mjs, guard-full-regression.mjs, guard-test-level.mjs, guard-write-scope.mjs, guard-git.mjs, guard-gates.mjs) into hooks.PreToolUse of .claude/settings.local.json
                 never overwrites other keys; skipped with a message if PreToolUse already exists
   --scan        scan the target repo and write .team/onboard/scan.json, the input for /muffy onboard
   --dry-run     print what would change (incl. the hook JSON to merge), write nothing
@@ -136,6 +136,7 @@ const guards = [
   { script: 'guard-test-level.mjs', matcher: 'Bash|PowerShell|Write|Edit' },
   { script: 'guard-write-scope.mjs', matcher: 'Write|Edit|MultiEdit|NotebookEdit' },
   { script: 'guard-git.mjs', matcher: 'Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit' },
+  { script: 'guard-gates.mjs', matcher: 'Agent|Task' },
 ].map((g) => ({ ...g, entry: { matcher: g.matcher, hooks: [{ type: 'command', command: `node .claude/skills/muffy/scripts/${g.script}` }] } }));
 const guardEntries = guards.map((g) => g.entry);
 let settingsChanged = false;

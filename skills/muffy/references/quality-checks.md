@@ -24,7 +24,7 @@ It prints `next=<action>` and one `ok`/`FAIL` line per check. Act on `next=` and
 ## 2. Judge these yourself
 
 - The plan has ordered phases and every task has a priority
-- Gate 2b was answered by the user at `pause:plan-review` before step 3, and 3c at `pause:design-review` before step 4, with the UX/UI review run or recorded as skipped (unless the run profile skipped the step, recorded with the reason). Write `Gates 3c and 3d passed` in `## Status` only after that, since the loop check reads it
+- Gate 2b was answered by the user at `pause:plan-review` before step 3, and 3c at `pause:design-review` before step 4, with the UX/UI review run or recorded as skipped (unless the run profile skipped the step, recorded with the reason). Record each answer with `checkpoint.mjs gate <dir> 2b|3c approve --by "<reply>"` only after that (it refuses without the pause and a ready summary); `check-all` reads the line, and `guard-gates.mjs` reads it before every spawn
 - Step 3e, when a diagram file was written or changed: `check-diagram.mjs` and `check-diagram-render.mjs` passed (a render SKIP is recorded as `render: not checked`), and it is published and listed in `<brain>/tasks/<task>.md` → `## Diagrams` (and `project.md`), or the note says why not ([diagram-publish.md](diagram-publish.md))
 - Step 5b, only when the user asked for PR diagrams: the Artifact URL is recorded and `.team/<task>/diagrams/{fe,be}.graph.json` exist, or the hand-off says why the diagram was skipped ([steps.md](steps.md))
 - `checkpoint.md` was rewritten at the boundaries in [memory-model.md](memory-model.md#checkpoint) (`checkpoint.mjs round` does the fix-round part)

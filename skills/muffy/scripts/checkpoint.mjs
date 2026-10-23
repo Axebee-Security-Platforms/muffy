@@ -5,6 +5,8 @@
 //   pause  set `paused at pause:<id> · resume when <condition>` in ## Status (only the pauses in run-profile.md)
 //   unpause  remove that line when the pause is answered
 //   spawn  append one spawns.tsv line, verdict read from the hand-off when one is given
+//   gate   the user's answer at a human gate (2b, 3c): approve (needs the pause saved and the gate summary ready),
+//          reject (keeps the pause), skip (needs --reason). Writes `gate <id> passed|not passed|skipped` to ## Status
 // Every command runs check-checkpoint.mjs afterwards and fails with its errors.
 //
 // Usage:
@@ -13,12 +15,17 @@
 //   node checkpoint.mjs unpause <.team/<task>>
 //   node checkpoint.mjs spawn  <.team/<task>> --step 4 --role backend-dev --model sonnet --effort medium --round 1
 //                              [--handoff <file> | --verdict pass|fail|blocked] [--reruns 0] [--note "<≤8 words>"] [--tok <n>]
+//   node checkpoint.mjs gate   <.team/<task>> 2b|3c approve --by "<the user's reply>"
+//   node checkpoint.mjs gate   <.team/<task>> 2b|3c reject  --by "<the user's reply>"
+//   node checkpoint.mjs gate   <.team/<task>> 2b|3c skip    --reason "<why no gate>"
 // Prints one verdict line. Exit 0 = written and checked, 1 = written but check-checkpoint failed, 2 = usage or input error.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkTask } from './check-checkpoint.mjs';
 import { LOOP_LIMIT } from './next-action.mjs';
+import { GATES, PAUSE_OF, laneOf, gateState } from './gate-rules.mjs';
+import { gate2b, gate3c } from './gate-summary.mjs';
 
 export const PAUSES = ['scope', 'staging-credentials', 'onboard-review', 'todo-review', 'plan-review', 'design-review', 'full-regression', 'human-gate'];
 const REJECTING = new Set(['Reject', 'Fail']);
@@ -149,6 +156,46 @@ export function logSpawn(taskDir, o) {
   return line.replace(/\t/g, ' · ');
 }
 
+// The user's answer at a human gate. `approve` needs the pause saved first (the question was asked) and a ready
+// gate summary; `reject` keeps the pause; `skip` needs a reason and is refused where the gate cannot be skipped.
+export function recordGate(taskDir, gate, action, { by, reason } = {}) {
+  if (!GATES.includes(gate)) throw new Error(`gate: ${gate} is not a gate (${GATES.join(', ')})`);
+  if (!['approve', 'reject', 'skip'].includes(action)) throw new Error('gate: action is approve, reject or skip');
+  const cpPath = join(taskDir, 'checkpoint.md');
+  if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
+  const text = readFileSync(cpPath, 'utf8');
+  const lane = laneOf(text);
+  const pause = `paused at pause:${PAUSE_OF[gate]}`;
+  const paused = (parse(text).sections.find((s) => s.name === 'Status')?.body ?? []).some((l) => l.includes(pause));
+  const date = new Date().toISOString().slice(0, 10);
+  const cp = parse(text);
+  const status = body(cp, 'Status');
+  let line;
+
+  if (action === 'skip') {
+    if (!reason?.trim()) throw new Error('gate skip: --reason is required');
+    if (gate === '2b' && lane === 'feature') throw new Error('gate 2b cannot be skipped in the feature lane (only fix and lite skip it)');
+    if (gate === '3c' && existsSync(join(taskDir, 'design.md'))) throw new Error('gate 3c cannot be skipped: design.md exists, so a designer ran');
+    line = `gate ${gate} skipped · ${reason.trim()}`;
+  } else {
+    if (!paused) throw new Error(`gate ${gate}: save the pause first (checkpoint.mjs pause <dir> ${PAUSE_OF[gate]} --until "the user answers"), so the question is on record`);
+    if (!by?.trim()) throw new Error('gate: --by is required, the user\'s reply in their own words');
+    if (action === 'approve') {
+      const summary = gate === '2b' ? gate2b(taskDir) : gate3c(taskDir);
+      if (summary.notReady.length) throw new Error(`gate ${gate} not ready: ${summary.notReady.join('; ')}`);
+      line = `gate ${gate} passed · user: "${by.trim()}" · ${date}`;
+    } else {
+      line = `gate ${gate} not passed · user: "${by.trim()}" · ${date}`;
+    }
+  }
+
+  // an answer clears the pause that asked; a rejection keeps it open until the revision is answered
+  const kept = status.filter((l) => !(action !== 'reject' && l.includes(pause)));
+  replaceBody(cp, 'Status', [...kept, line]);
+  writeFileSync(cpPath, render(cp));
+  return `${line} (gate state now ${gateState(render(cp), gate)})`;
+}
+
 /* ---------- CLI ---------- */
 
 function opts(argv) {
@@ -165,13 +212,14 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const [cmd, ...rest] = process.argv.slice(2);
   const { o, pos } = opts(rest);
   const taskDir = pos[0];
-  if (!['round', 'pause', 'unpause', 'spawn'].includes(cmd) || !taskDir) {
-    console.error('usage: checkpoint.mjs round|pause|unpause|spawn <.team/<task>> ... (see the header of this file)');
+  if (!['round', 'pause', 'unpause', 'spawn', 'gate'].includes(cmd) || !taskDir) {
+    console.error('usage: checkpoint.mjs round|pause|unpause|spawn|gate <.team/<task>> ... (see the header of this file)');
     process.exit(2);
   }
   let said;
   try {
-    if (cmd === 'round') {
+    if (cmd === 'gate') said = recordGate(taskDir, pos[1], pos[2], { by: o.by, reason: o.reason });
+    else if (cmd === 'round') {
       if (!o.step || !o.round || !o.handoff || !o.summary) throw new Error('round: --step, --round, --handoff and --summary are required');
       const r = recordRound(taskDir, { step: o.step, round: o.round, handoff: o.handoff, summary: o.summary, notes: o.notes });
       said = `round ${r.label} recorded · counter ${r.counter} · open blockers ${r.open}`;
