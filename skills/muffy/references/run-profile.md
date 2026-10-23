@@ -20,7 +20,7 @@ Effort follows the signals in [token-discipline.md](token-discipline.md), not th
 
 ## Named pauses
 
-A pause stops the flow on purpose. It has an id, a resume condition, and one line in checkpoint `## Status`: `paused at pause:<id> · resume when <condition>`, written by `node .claude/skills/muffy/scripts/checkpoint.mjs pause .team/<task> <id> --until "<condition>"` (it refuses an id not in this table) and removed by `node .claude/skills/muffy/scripts/checkpoint.mjs unpause .team/<task>` when the pause is answered. Only these exist:
+A pause stops the flow on purpose. It has an id, a resume condition, and one line in checkpoint `## Status`: `paused at pause:<id> · resume when <condition>`, written by `node .claude/skills/muffy/scripts/checkpoint.mjs pause .team/<task> <id> --until "<condition>"` (it refuses an id not in this table) and removed by `node .claude/skills/muffy/scripts/checkpoint.mjs unpause .team/<task>` when the pause is answered (pause:plan-review and pause:design-review are cleared by `checkpoint.mjs gate`, and `unpause` refuses them while the gate is open). Only these exist:
 
 | Pause | Where | Stop until |
 |---|---|---|

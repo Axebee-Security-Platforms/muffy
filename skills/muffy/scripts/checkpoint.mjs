@@ -3,7 +3,8 @@
 //   round  write rounds/<step>-r<n>.md once, then in checkpoint.md: Updated line, ## Loop counters, ## Open blockers
 //          (rounds open carried over by blocker id), one ## History line and its [label] definition
 //   pause  set `paused at pause:<id> · resume when <condition>` in ## Status (only the pauses in run-profile.md)
-//   unpause  remove that line when the pause is answered
+//   unpause  remove that line when the pause is answered (refused for plan-review and design-review while
+//          their gate is open: `gate` records the answer and clears those)
 //   spawn  append one spawns.tsv line, verdict read from the hand-off when one is given
 //   gate   the user's answer at a human gate (2b, 3c): approve (needs the pause saved and the gate summary ready),
 //          reject (keeps the pause), skip (needs --reason). Writes `gate <id> passed|not passed|skipped` to ## Status
@@ -129,7 +130,22 @@ export function setPause(taskDir, id, until) {
   if (!until?.trim()) throw new Error('--until needs the resume condition');
   return editStatus(taskDir, `paused at pause:${id} · resume when ${until.trim()}`);
 }
-export const clearPause = (taskDir) => editStatus(taskDir, null);
+// A gate's pause (plan-review, design-review) is cleared only by `gate`, which records the user's answer.
+// Unpausing it bare would let the run go on with the gate still open, so it is refused while the gate is open.
+export function clearPause(taskDir) {
+  const cpPath = join(taskDir, 'checkpoint.md');
+  if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
+  const text = readFileSync(cpPath, 'utf8');
+  const status = parse(text).sections.find((s) => s.name === 'Status')?.body ?? [];
+  if (laneOf(text) === 'feature') {
+    for (const gate of GATES) {
+      if (status.some((l) => l.includes(`paused at pause:${PAUSE_OF[gate]}`)) && gateState(text, gate) === 'open') {
+        throw new Error(`unpause: pause:${PAUSE_OF[gate]} waits on gate ${gate}, which has no recorded answer. Record it with checkpoint.mjs gate <dir> ${gate} approve|reject --by "<the user's reply>" (approve clears the pause)`);
+      }
+    }
+  }
+  return editStatus(taskDir, null);
+}
 
 function editStatus(taskDir, pausedLine) {
   const cpPath = join(taskDir, 'checkpoint.md');

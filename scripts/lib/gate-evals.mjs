@@ -1,13 +1,14 @@
 // Offline checks for the human gates (skills/muffy/references/step-details.md 2b and 3c, hooks-enforcement.md §14):
 //   - the rule set: which spawn needs which gate, what counts as answered, what a hand-off past an open gate is
 //   - checkpoint.mjs gate: approval needs the pause saved, a skip of 3c is refused once design.md exists
-//   - guard-gates.mjs: blocks the spawn before its gate, lets the rest through
+//   - checkpoint.mjs unpause: refused for a gate's pause while the gate has no answer
+//   - guard-gates.mjs: blocks the spawn before its gate, lets the rest through, fails closed without a Task header
 import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { gateState, gatesForSpawn, missingGates, gateErrors } from '../../skills/muffy/scripts/gate-rules.mjs';
-import { recordGate } from '../../skills/muffy/scripts/checkpoint.mjs';
+import { recordGate, clearPause } from '../../skills/muffy/scripts/checkpoint.mjs';
 
 const CP = (status, profile = 'Full flow, feature lane.') =>
   `# Checkpoint: t\n\nUpdated: step 3\n\n## Goal\n\nx\n\n## Run profile\n\n${profile}\n\n## Status\n\n${status}\n`;
@@ -76,6 +77,30 @@ export function runGateEvals({ check, root }) {
     try { recordGate(dir, '2b', 'skip', { reason: 'no plan' }); } catch (e) { refused = e.message; }
     check('gate skip 2b: refused in the feature lane', /cannot be skipped in the feature lane/.test(refused), refused);
 
+    // checkpoint.mjs unpause: a gate's pause is cleared by recording the answer, not bare
+    write(CP('- paused at pause:plan-review · resume when the user answers'));
+    refused = '';
+    try { clearPause(dir); } catch (e) { refused = e.message; }
+    check('unpause: refused for plan-review while 2b has no answer', /no recorded answer/.test(refused) && read().includes('paused at pause:plan-review'), refused);
+
+    write(CP('- gate 2b passed · user: "ok"\n- paused at pause:design-review · resume when the user answers'));
+    refused = '';
+    try { clearPause(dir); } catch (e) { refused = e.message; }
+    check('unpause: refused for design-review while 3c has no answer', /gate 3c/.test(refused), refused);
+
+    write(CP('- gate 2b not passed · user: "change it"\n- paused at pause:plan-review · resume when the revision is answered'));
+    refused = '';
+    try { clearPause(dir); } catch (e) { refused = e.message; }
+    check('unpause: refused after a rejection, until the revision is answered', /no recorded answer/.test(refused), refused);
+
+    write(CP('- paused at pause:full-regression · resume when the user approves'));
+    clearPause(dir);
+    check('unpause: other pauses clear as before', !read().includes('paused at'));
+
+    write(CP('- paused at pause:plan-review · resume when the user answers', 'Fix lane.'));
+    clearPause(dir);
+    check('unpause: fix lane has no gates, so plan-review clears', !read().includes('paused at'));
+
     // guard-gates.mjs: stdin is the PreToolUse payload of an Agent call
     const guard = rel('skills', 'muffy', 'scripts', 'guard-gates.mjs');
     const spawn = (role, prompt, cwd = tmp) => spawnSync(process.execPath, [guard], {
@@ -86,10 +111,16 @@ export function runGateEvals({ check, root }) {
     const hdr = 'Task: t\nBrain: .team/brain\n';
     check('guard: frontend-dev blocked before any gate', spawn('frontend-dev', `${hdr}go`).status === 2);
     check('guard: product-manager never blocked', spawn('product-manager', `${hdr}go`).status === 0);
-    check('guard: a prompt with no Task header is not a muffy spawn', spawn('frontend-dev', 'go').status === 0);
+    check('guard: no Task header, gated muffy role, a run exists: blocked', spawn('frontend-dev', 'go').status === 2);
+    check('guard: no Task header, the task is read from a .team path in the prompt', spawn('designer', 'Read: .team/t/ac.md').status === 2);
+    check('guard: no Task header, the task is read from a feature worktree path', spawn('designer', 'Worktree: E:\\r\\.worktrees\\feature-t').status === 2);
+    check('guard: no Task header, product-manager never blocked', spawn('product-manager', 'go').status === 0);
+    check('guard: no Task header, a role outside muffy is not checked', spawn('general-purpose', 'go').status === 0);
+    check('guard: no Task header, no run in this repo: allowed', spawn('frontend-dev', 'go', join(tmp, 'elsewhere')).status === 0);
     check('guard: missing checkpoint blocks a gated role', spawn('designer', hdr, join(tmp, 'elsewhere')).status === 2);
     write(CP('- gate 2b passed · user: "ok" · 2026-10-23'));
     check('guard: designer allowed once 2b passed', spawn('designer', `${hdr}go`).status === 0);
+    check('guard: no Task header, designer allowed once 2b passed for the task its prompt names', spawn('designer', 'Read: .team/t/ac.md').status === 0);
     check('guard: frontend-dev still blocked until 3c', spawn('frontend-dev', `${hdr}go`).status === 2);
     write(CP('- gate 2b passed · user: "ok"\n- gate 3c passed · user: "ok"'));
     check('guard: frontend-dev allowed once 3c passed', spawn('frontend-dev', `${hdr}go`).status === 0);
