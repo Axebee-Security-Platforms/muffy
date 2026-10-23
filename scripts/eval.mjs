@@ -605,6 +605,32 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('traceability: the PostToolUse hook checks qa-report.md when it is written', hook('qa-report.md').status === 2 && hook('qa-report.md').stderr.includes('traceability'));
   const { checkTask: checkpoint } = await import('../skills/muffy/scripts/check-checkpoint.mjs');
   check('check-checkpoint: the fixture passes', checkpoint(fixtureDir).length === 0, checkpoint(fixtureDir).join('; '));
+  {
+    const { recordRound, setPause, clearPause, logSpawn } = await import('../skills/muffy/scripts/checkpoint.mjs');
+    const cpd = copy();
+    const ho = (round, verdict, blockers) => { const p = join(cpd, 'handoff', `6-code-reviewer-r${round}.json`); writeFileSync(p, JSON.stringify({ role: 'code-reviewer', task: TASK, step: '6', round, status: 'done', verdict, paths_written: [], blockers, quality_checks: { passed: true, failed: [] }, summary: 'x' })); return p; };
+    const b2 = [{ id: 'B-2', problem: 'no lockout reset', file: 'src/auth/login.ts:50', owner: 'BE' }];
+    const cpText = () => readFileSync(join(cpd, 'checkpoint.md'), 'utf8');
+    recordRound(cpd, { step: '6', round: 3, handoff: ho(3, 'Reject', b2), summary: 'rejected B-2' });
+    check('checkpoint.mjs round: a Reject bumps the loop counter and lists the blocker', /6:code-reviewer 2\/3/.test(cpText()) && /B-2 · src\/auth\/login\.ts:50 · BE · rounds open 1/.test(cpText()), cpText());
+    check('checkpoint.mjs round: writes the round file once, with a History line and its label', existsSync(join(cpd, 'rounds/6-r3.md')) && /- step 6 r3: rejected B-2 \[6-r3\]/.test(cpText()) && /^\[6-r3\]: rounds\/6-r3\.md/m.test(cpText()));
+    let again = false; try { recordRound(cpd, { step: '6', round: 3, handoff: ho(3, 'Reject', b2), summary: 'again' }); } catch { again = true; }
+    check('checkpoint.mjs round: refuses to rewrite an existing round file', again);
+    recordRound(cpd, { step: '6', round: 4, handoff: ho(4, 'Reject', b2), summary: 'B-2 again' });
+    check('checkpoint.mjs round: the same blocker id carries its rounds-open count', /B-2 .* rounds open 2/.test(cpText()) && /6:code-reviewer 3\/3/.test(cpText()), cpText());
+    recordRound(cpd, { step: '6', round: 5, handoff: ho(5, 'Approve', []), summary: 'approved' });
+    check('checkpoint.mjs round: an Approve keeps the counter and clears open blockers', /6:code-reviewer 3\/3/.test(cpText()) && /## Open blockers\r?\nNone\./.test(cpText()), cpText());
+    check('checkpoint.mjs round: the result passes check-checkpoint', checkpoint(cpd).length === 0, checkpoint(cpd).join('; '));
+    setPause(cpd, 'plan-review', 'the user approves'); setPause(cpd, 'human-gate', 'Approve or Reject');
+    check('checkpoint.mjs pause: one paused line, replaced by the next pause', (cpText().match(/paused at pause:/g) ?? []).length === 1 && cpText().includes('paused at pause:human-gate · resume when Approve or Reject'));
+    let unnamed = false; try { setPause(cpd, 'coffee', 'x'); } catch { unnamed = true; }
+    clearPause(cpd);
+    check('checkpoint.mjs pause: an unnamed pause is refused; unpause removes the line', unnamed && !cpText().includes('paused at'));
+    logSpawn(cpd, { step: '6', role: 'code-reviewer', model: 'sonnet', effort: 'high', round: 5, handoff: join(cpd, 'handoff/6-code-reviewer-r5.json'), note: 'final pass on the rate limit fix and more words here', tok: 1200 });
+    logSpawn(cpd, { step: '6', role: 'code-reviewer', model: 'sonnet', effort: 'high', round: 4, handoff: join(cpd, 'handoff/6-code-reviewer-r4.json'), tok: 3400 });
+    const spawnLines = readFileSync(join(cpd, 'spawns.tsv'), 'utf8').trim().split('\n').map((l) => l.split('\t'));
+    check('checkpoint.mjs spawn: 8 columns, verdict from the hand-off, note capped at 8 words, check passes', spawnLines.every((c) => c.length === 8) && spawnLines[0][5] === 'pass' && spawnLines[1][5] === 'fail' && spawnLines[0][7].split(' ').length === 9 && checkpoint(cpd).length === 0, JSON.stringify(spawnLines) + checkpoint(cpd).join('; '));
+  }
   d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later', 'infra: maybe · diagrams: 2 published'));
   const bad = checkpoint(d);
   check('check-checkpoint: an unknown infra value fails, a valid diagrams item passes', bad.some((e) => e.includes('infra: maybe')) && !bad.some((e) => e.includes('diagrams')), bad.join('; '));
