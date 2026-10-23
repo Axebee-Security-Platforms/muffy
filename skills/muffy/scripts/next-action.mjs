@@ -219,6 +219,78 @@ export function chooseEffort({ role, mode = 'production', signals = {} }) {
   return { effort, base, reason: net === 0 ? 'default' : net > 0 ? 'raised' : 'lowered' };
 }
 
+/* ---------- model and effort for one spawn, read from the task's files (token-discipline.md) ---------- */
+
+export const MODELS = ['haiku', 'sonnet']; // never opus or fable
+export const ROLE_OWNER = { 'frontend-dev': 'FE', 'backend-dev': 'BE', 'docs-writer': 'Docs', devops: 'Devops', architect: 'Architect', designer: 'Designer', 'product-manager': 'PM', researcher: 'Researcher' };
+export const HIGH_IMPACT = /\b(auth\w*|login|password|oauth|jwt|payments?|billing|stripe|migrations?|secrets?|api[ _-]?keys?|credentials?)\b/i;
+const defaultModel = (role) =>
+  readFileSync(join(here, '..', '..', '..', 'agents', `${role}.md`), 'utf8').match(/^model:\s*(\S+)/m)?.[1];
+const readIf = (p) => { try { return readFileSync(p, 'utf8'); } catch { return ''; } };
+const section = (md, name) => md.replace(/\r\n/g, '\n').split(/^## /m).find((s) => s.startsWith(`${name}\n`))?.slice(name.length + 1) ?? '';
+
+// Reads only files the run already keeps; every signal can be forced with `force` (true/false) when the files say too little.
+//   teamDir  .team/<task> (in the feature worktree)   brain  <brain> folder (for project.md ## Lessons)
+//   flags    { rerunOnly, minimalResearch, lineKnown } — the haiku cases that no file records
+export function spawnProfile({ role, step, round = 1, teamDir, brain, mode = 'production', flags = {}, force = {} }) {
+  const contract = [readIf(join(teamDir, 'contract.md')), ...listMd(join(teamDir, 'contract'))].join('\n');
+  const ac = readIf(join(teamDir, 'ac.md')) + readIf(join(teamDir, 'requirements.md'));
+  const checkpoint = readIf(join(teamDir, 'checkpoint.md'));
+  const owner = ROLE_OWNER[role];
+
+  // stalled: the open blocker id that the most ## History lines name
+  const open = [...section(checkpoint, 'Open blockers').matchAll(/\b([BV]-\d+)\b/g)].map((m) => m[1]);
+  const history = section(checkpoint, 'History').split('\n');
+  const stalledRounds = Math.max(0, ...open.map((id) => history.filter((l) => new RegExp(`\\b${id}\\b`).test(l)).length));
+
+  // exact fix: round 2+, and every blocker the latest review/QA/staging hand-off gives this role names file:line
+  let exactFix = false;
+  if (Number(round) > 1 && owner) {
+    const latest = listJson(join(teamDir, 'handoff'))
+      .filter((h) => ['6', '7', '8', '9'].includes(String(h.step)) && Array.isArray(h.blockers))
+      .sort((a, b) => (a.round ?? 0) - (b.round ?? 0) || Number(a.step) - Number(b.step)).at(-1);
+    const mine = latest?.blockers.filter((b) => b.owner === owner) ?? [];
+    exactFix = mine.length > 0 && mine.every((b) => /:\d+/.test(b.file ?? '') && (b.problem ?? '').trim().length > 0);
+  }
+  if (role === 'qa-tester' && flags.rerunOnly) exactFix = true;
+
+  const signals = {
+    highImpact: force.highImpact ?? HIGH_IMPACT.test(contract),
+    assumedAc: force.assumedAc ?? /\[assumed\]/i.test(ac),
+    exactFix: force.exactFix ?? exactFix,
+    stalledRounds: force.stalledRounds ?? stalledRounds,
+  };
+  const { effort, base, reason } = chooseEffort({ role, mode, signals });
+
+  // model: the frontmatter default, moved down to haiku only in the listed cases, and never if project.md records haiku failing for this role
+  const baseModel = defaultModel(role);
+  const fe_be = role === 'frontend-dev' || role === 'backend-dev';
+  const haikuCase =
+    (fe_be && signals.exactFix && Number(round) > 1) ? 'exact fix round'
+    : (fe_be && String(step) === '4a' && flags.lineKnown) ? 'diagnose with file and line known'
+    : (role === 'qa-tester' && flags.rerunOnly) ? 're-running existing tests'
+    : (role === 'researcher' && flags.minimalResearch) ? 'codebase-only research'
+    : null;
+  const lessons = brain ? section(readIf(join(brain, 'project.md')), 'Lessons') : '';
+  const haikuFailed = lessons.split('\n').some((l) => l.includes(role) && /haiku/i.test(l) && /fail|rerun|re-run|retry|wrong|miss/i.test(l));
+  const protectedRole = mode === 'production' && PROTECTED_ROLES.includes(role);
+  let model = MODELS.includes(baseModel) ? baseModel : 'sonnet';
+  let modelReason = 'default';
+  if (haikuCase && !protectedRole) {
+    if (haikuFailed) modelReason = `kept ${model}: project.md Lessons records haiku failing for ${role}`;
+    else { model = 'haiku'; modelReason = haikuCase; }
+  }
+
+  const used = Object.entries(signals).filter(([k, v]) => (k === 'stalledRounds' ? v >= STALLED_AFTER : v)).map(([k, v]) => (k === 'stalledRounds' ? `stalled ${v}` : k));
+  const runProfileLine = reason === 'default' && modelReason === 'default' ? null : `${step}:${role} r${round} · effort ${effort} (${reason}${used.length ? `: ${used.join(', ')}` : ''}) · model ${model}${modelReason === 'default' ? '' : ` (${modelReason})`}`;
+  return { model, effort, base: { model: baseModel, effort: base }, signals, reason, modelReason, runProfileLine };
+}
+
+function listMd(dir) { try { return readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => readIf(join(dir, f))); } catch { return []; } }
+function listJson(dir) {
+  try { return readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => { try { return JSON.parse(readIf(join(dir, f))); } catch { return null; } }).filter(Boolean); } catch { return []; }
+}
+
 /* ---------- fix and lite triage (fix-profile.md, lite-profile.md) ---------- */
 
 // A request is a fix only if every condition holds; otherwise it runs the full flow.

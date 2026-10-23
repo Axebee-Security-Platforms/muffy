@@ -18,14 +18,19 @@
 // "Shared files you may not write" line is added to the prompt.
 // Output: the prompt on stdout. The envelope is validated against schemas/prompt-envelope.schema.json first;
 // on error nothing is printed to stdout, the errors go to stderr, exit 1. Exit 2 = bad usage.
+// stderr then carries `Spawn: model=<m> effort=<e>` for the Agent call, read from the task's files (contract, ac.md,
+// checkpoint, hand-offs, <brain>/project.md Lessons), and a `Run profile line:` to copy into checkpoint when it is not
+// the default. --run-mode production|prototype, --rerun-only (qa), --minimal-research (researcher), --line-known (4a)
+// cover the cases no file records; --force highImpact=false,stalledRounds=0 overrides a signal the files got wrong.
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from './schema.mjs';
 import { blockingRule, blockMessage, dontWriteLine } from './write-scope.mjs';
+import { spawnProfile } from './next-action.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const BOOL = new Set(['announcement', 'pr-diagram', 'full-regression']);
+const BOOL = new Set(['announcement', 'pr-diagram', 'full-regression', 'rerun-only', 'minimal-research', 'line-known']);
 const args = {};
 const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) {
@@ -95,3 +100,19 @@ out.push(
   `Hand-off shape: ${example}`
 );
 process.stdout.write(out.join('\n') + '\n');
+
+// The Agent call's model and effort, from the task's files (next-action.mjs spawnProfile). stderr, so stdout stays the prompt.
+try {
+  const force = Object.fromEntries(String(args.force ?? '').split(',').filter(Boolean).map((kv) => {
+    const [k, v] = kv.split('=');
+    return [k, v === 'true' ? true : v === 'false' ? false : Number(v)];
+  }));
+  const p = spawnProfile({
+    role, step, round, teamDir: args['team-dir'] ?? teamDir, brain: env.brain, mode: args['run-mode'] ?? 'production', force,
+    flags: { rerunOnly: !!args['rerun-only'], minimalResearch: !!args['minimal-research'], lineKnown: !!args['line-known'] },
+  });
+  console.error(`Spawn: model=${p.model} effort=${p.effort}`);
+  if (p.runProfileLine) console.error(`Run profile line: ${p.runProfileLine}`);
+} catch (e) {
+  console.error(`Spawn: frontmatter defaults (could not read signals: ${e.message})`);
+}

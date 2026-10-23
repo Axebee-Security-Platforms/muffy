@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../skills/muffy/scripts/schema.mjs';
-import { simulate, chooseEffort, defaultEffort, PROTECTED_ROLES, STALLED_AFTER, smokeRequired, SMOKE_TRIGGERS } from '../skills/muffy/scripts/next-action.mjs';
+import { simulate, chooseEffort, spawnProfile, MODELS, LEVELS, LOOP_LIMIT, REPEAT_LIMIT, FIX_MAX_FILES, LITE_MAX_FILES, NEVER_SKIP, LANE_SKIPS, defaultEffort, PROTECTED_ROLES, STALLED_AFTER, smokeRequired, SMOKE_TRIGGERS } from '../skills/muffy/scripts/next-action.mjs';
 import { runFixLaneEvals } from './lib/fix-lane-evals.mjs';
 import { runOwnershipEvals } from './lib/ownership-evals.mjs';
 import { runLiteLaneEvals } from './lib/lite-lane-evals.mjs';
@@ -207,6 +207,59 @@ check('effort-doc: every protected role defaults to high, so never-lower is mean
 check('effort-doc: stall threshold in doc matches STALLED_AFTER', tierDoc.includes(`≥ ${STALLED_AFTER} consecutive rejections`));
 for (const sig of ['High impact', 'Assumed requirements', 'Stalled', 'Exact fix']) check(`effort-doc: signal table has "${sig}"`, new RegExp(`^\\s*\\| ${sig}`, 'm').test(tierDoc));
 check('effort-doc: scenarios cover every role', roles.every((r) => scenarios.some((s) => s.role === r)), `uncovered: ${roles.filter((r) => !scenarios.some((s) => s.role === r))}`);
+
+/* 4c. spawn profile: model and effort read from a task's files (make-envelope.mjs prints them) */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'muffy-spawn-'));
+  const mk = (name, files) => {
+    const dir = join(tmp, name);
+    for (const [p, body] of Object.entries(files)) { mkdirSync(dirname(join(dir, p)), { recursive: true }); writeFileSync(join(dir, p), typeof body === 'string' ? body : JSON.stringify(body)); }
+    return dir;
+  };
+  const plain = { 'contract.md': '# Contract\nGET /reports returns rows.\n', 'ac.md': '- AC-1 rows show\n' };
+  const reject = (blockers) => ({ 'handoff/6-code-reviewer-r1.json': { role: 'code-reviewer', step: '6', round: 1, verdict: 'Reject', blockers } });
+  const exact = reject([{ id: 'B-1', problem: 'off by one', file: 'src/a.ts:12', owner: 'BE' }]);
+  const sp = (dir, role, round = 1, extra = {}) => spawnProfile({ role, step: '4', round, teamDir: dir, brain: join(dir, 'brain'), ...extra });
+  const cases = [
+    ['auth in contract -> high, overrides', sp(fixtureDir, 'backend-dev'), { effort: 'high', model: 'sonnet' }],
+    ['plain task -> role defaults', sp(mk('plain', plain), 'backend-dev'), { effort: 'medium', model: 'sonnet' }],
+    ['[assumed] AC -> raised', sp(mk('assumed', { ...plain, 'ac.md': '- AC-1 [assumed] export\n' }), 'backend-dev'), { effort: 'high' }],
+    ['exact-fix round -> haiku, lowered', sp(mk('exact', { ...plain, ...exact }), 'backend-dev', 2), { effort: 'low', model: 'haiku' }],
+    ['exact fix is round 2+ only', sp(mk('exact1', { ...plain, ...exact }), 'backend-dev', 1), { effort: 'medium', model: 'sonnet' }],
+    ['blocker without a line is not exact', sp(mk('vague', { ...plain, ...reject([{ id: 'B-1', problem: 'slow', file: 'src/a.ts', owner: 'BE' }]) }), 'backend-dev', 2), { effort: 'medium', model: 'sonnet' }],
+    ['Lessons record haiku failing -> keep sonnet', sp(mk('lesson', { ...plain, ...exact, 'brain/project.md': '## Lessons\n- backend-dev on haiku failed the fix twice\n' }), 'backend-dev', 2), { model: 'sonnet' }],
+    ['stalled blocker -> raised', sp(mk('stalled', { ...plain, 'checkpoint.md': '## Open blockers\n- B-3 open\n\n## History\n- r1 rejected B-3\n- r2 rejected B-3\n' }), 'backend-dev', 3), { effort: 'high' }],
+    ['protected role never lowered or moved to haiku', sp(mk('arch', { ...plain, ...reject([{ id: 'B-1', problem: 'x', file: 'contract.md:3', owner: 'Architect' }]) }), 'architect', 2), { effort: 'high', model: 'sonnet' }],
+    ['--force overrides a signal the files got wrong', sp(fixtureDir, 'backend-dev', 1, { force: { highImpact: false } }), { effort: 'medium' }],
+    ['qa re-run only -> haiku', spawnProfile({ role: 'qa-tester', step: '7', round: 2, teamDir: mk('qa', plain), flags: { rerunOnly: true } }), { model: 'haiku', effort: 'low' }],
+  ];
+  for (const [name, out, want] of cases) {
+    check(`spawn-profile: ${name}`, Object.entries(want).every(([k, v]) => out[k] === v), `got model=${out.model} effort=${out.effort} (${out.reason}; ${out.modelReason})`);
+    check(`spawn-profile: ${name} stays within ${MODELS.join('/')}`, MODELS.includes(out.model) && LEVELS.includes(out.effort));
+  }
+  const env = spawnSync(process.execPath, [rel('skills/muffy/scripts/make-envelope.mjs'), '--role', 'backend-dev', '--step', '4', '--round', '2', '--task', 'x', '--brain', join(tmp, 'exact', 'brain'), '--team-dir', join(tmp, 'exact'), '--goal', 'Fix it', '--read', 'ac.md', '--write', 'src/a.ts'], { encoding: 'utf8' });
+  check('spawn-profile: make-envelope prints the spawn line on stderr and keeps stdout the prompt', env.status === 0 && env.stderr.includes('Spawn: model=haiku effort=low') && env.stderr.includes('Run profile line:') && !env.stdout.includes('Spawn:'), env.stderr);
+  rmSync(tmp, { recursive: true, force: true });
+}
+
+/* 4d. constants vs docs: a number changed on one side only is caught here */
+{
+  const doc = (f) => readFileSync(rel('skills/muffy/references', f), 'utf8').replace(/\r\n/g, '\n');
+  const loopsDoc = doc('loops.md'), fixDoc = doc('fix-profile.md'), liteDoc = doc('lite-profile.md'), runDoc = doc('run-profile.md'), tokDoc = doc('token-discipline.md');
+  check('drift: loops.md states LOOP_LIMIT fix loops per point', loopsDoc.includes(`${LOOP_LIMIT} fix loops are allowed per point`));
+  check('drift: loops.md states the 4th rejection stops the flow', loopsDoc.includes(`**${['', '', '', '', '4th', '5th', '6th'][LOOP_LIMIT + 1]} rejection stops the flow**`));
+  check('drift: loops.md states REPEAT_LIMIT consecutive rejects', loopsDoc.includes(`open in ${REPEAT_LIMIT} consecutive rejects`));
+  check('drift: fix-profile.md states FIX_MAX_FILES', fixDoc.includes(`≤ ${FIX_MAX_FILES} source files`));
+  check('drift: lite-profile.md states LITE_MAX_FILES', liteDoc.includes(`≤ ${LITE_MAX_FILES} source files`));
+  const neverSkip = runDoc.match(/Never skip: ([^.]+)\./)?.[1] ?? '';
+  check('drift: run-profile.md never-skip list matches NEVER_SKIP', JSON.stringify([...neverSkip.matchAll(/\((\d+)\)/g)].map((m) => m[1])) === JSON.stringify(NEVER_SKIP), neverSkip);
+  const laneSkips = (re) => (runDoc.match(re)?.[1] ?? '').split(/, | and /).map((s) => s.trim());
+  const noGate = (l) => l.filter((s) => s !== '2b'); // 2b runs only when step 2 ran, so the doc leaves it out
+  check('drift: run-profile.md fix-lane skips match LANE_SKIPS.fix', JSON.stringify(laneSkips(/fix lane .*?which skips (.+?), adds/)) === JSON.stringify(noGate(LANE_SKIPS.fix)));
+  check('drift: run-profile.md lite-lane skips match LANE_SKIPS.lite', JSON.stringify(laneSkips(/lite lane .*?which skips (.+?) and starts/)) === JSON.stringify(noGate(LANE_SKIPS.lite)));
+  check('drift: token-discipline.md allows exactly MODELS', tokDoc.includes(`only \`${MODELS[0]}\` and \`${MODELS[1]}\` are allowed`));
+  check('drift: negative control, a changed number is caught', !fixDoc.includes(`≤ ${FIX_MAX_FILES + 1} source files`));
+}
 
 /* 5. smoke triggers (references/run-profile.md "Smoke triggers") */
 for (const sc of readJson(rel('evals/smoke-scenarios.json'))) {
