@@ -15,6 +15,7 @@ import { runFixLaneEvals } from './lib/fix-lane-evals.mjs';
 import { runOwnershipEvals } from './lib/ownership-evals.mjs';
 import { runLiteLaneEvals } from './lib/lite-lane-evals.mjs';
 import { runPendingEvals } from './lib/pending-evals.mjs';
+import { runGateEvals } from './lib/gate-evals.mjs';
 import { runRouteEvals } from './lib/route-evals.mjs';
 import { runReviewBenchEvals } from './lib/review-bench-evals.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
@@ -1103,6 +1104,9 @@ runReviewBenchEvals({ check, root });
 
 /* 9. todo mode (references/todo.md): pending-work scan, privacy filters */
 runPendingEvals({ check, root });
+
+/* 10. human gates (step-details 2b, 3c; hooks-enforcement §14): spawn rules, recorded answers, guard-gates */
+runGateEvals({ check, root });
 
 console.log(`eval: ${pass} passed, ${failures.length} failed`);
 if (failures.length) { console.error(failures.map((x) => `  FAIL ${x}`).join('\n')); process.exit(1); }

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **Human gates are enforced, not only written.** Step 2b (`pause:plan-review`) and step 3c (`pause:design-review`) were prose: a run could spawn designer, frontend-dev and backend-dev with no answer on record, and merge after a rejected review. Now:
+  - `guard-gates.mjs` (PreToolUse on `Agent|Task`, installed by `--with-guard`) blocks a spawn until its gate is recorded as passed or skipped. Spawns are matched to a task by the `Task:` header of the prompt envelope.
+  - `checkpoint.mjs gate <dir> 2b|3c approve|reject|skip` is the only writer of the gate lines in `## Status`. Approval needs the pause saved first and a ready `gate-summary.mjs` body; skipping 3c is refused once `design.md` exists.
+  - `check-all` has a `gates` check: a hand-off past an open gate is an error (feature lane only).
+  - Rules live in `scripts/gate-rules.mjs`; offline checks in `scripts/lib/gate-evals.mjs`.
+- **Known limit:** no hook can tell the user's reply from one the Orchestrator types. The answer is a dated, auditable line in `## Status`.
+
 ## v1.3.0 — 2026-10-22
 
 Changes since v1.2.0.

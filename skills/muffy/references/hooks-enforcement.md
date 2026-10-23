@@ -105,4 +105,14 @@ Installed with the other guards by `install.mjs --with-guard`.
 ]
 ```
 
+## 14. Human gates before a spawn
+**Rule:** no subagent starts while a human gate of its step is open. In the feature lane every spawn past product-manager and researcher needs `gate 2b` (pause:plan-review). backend-dev, frontend-dev, code-reviewer, qa-tester, docs-writer and devops in mode 2 also need `gate 3c` (pause:design-review). `passed` and `skipped` both count as answered; `not passed` and `rejected` do not. The answer is recorded by `checkpoint.mjs gate` (the only writer of those lines), which refuses approval without the saved pause and a ready `gate-summary.mjs` body, and refuses a skip of 3c once `design.md` exists. A spawn is matched to its task by the `Task:` header of the prompt envelope. Hand-offs past an open gate fail `check-all` (`gates` check).
+- **Known limits:** `checkpoint.mjs gate --by` records the user's words as the Orchestrator passes them on. No hook can tell a user's reply from one the Orchestrator writes itself; the hook makes the answer an explicit, dated line in `## Status` that the user can audit. A spawn with no `Task:` header is not checked.
+Enforced by [scripts/guard-gates.mjs](../scripts/guard-gates.mjs) (exit 2 = block); rules in [scripts/gate-rules.mjs](../scripts/gate-rules.mjs). Installed with the other guards by `install.mjs --with-guard`.
+```json
+"PreToolUse": [
+  { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-gates.mjs" } ] }
+]
+```
+
 Every rule here is **non-negotiable**. Hooks 7 and 8 are opt-in; without a hook, its rule still applies as text.
