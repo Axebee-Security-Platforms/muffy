@@ -724,6 +724,39 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   rmSync(tmp, { recursive: true, force: true });
 }
 
+/* 7c4. gate-summary: the human-gate question body from the task's files (steps.md 2b, 3c, 10) */
+{
+  const { gate2b, gate3c, gate10 } = await import('../skills/muffy/scripts/gate-summary.mjs');
+  const tmp = mkdtempSync(join(tmpdir(), 'muffy-gate-'));
+  const copy = () => { const d = join(mkdtempSync(join(tmp, 't-')), TASK); cpSync(fixtureDir, d, { recursive: true }); return d; };
+  const text = (r) => r.lines.join('\n');
+  const plan = join(tmp, 'plan.md');
+  writeFileSync(plan, '# Plan\n\n## Phase 1: login\n- P0 endpoint (AC-1)\n- P0 limiter (AC-2)\n- P1 phone layout (AC-3)\n\n## Phase 2: backlog\n- P2 SSO\n');
+  let r = gate2b(fixtureDir, { plan });
+  check('gate 2b: lists stories, every AC, out of scope and phases with P0/P1/P2 counts; ready', r.notReady.length === 0 && /AC-1 .*AC-2 .*AC-3/s.test(text(r)) && text(r).includes('Password reset, SSO') && text(r).includes('Phase 1: login · P0 2 · P1 1 · P2 0') && text(r).includes('Phase 2: backlog · P0 0 · P1 0 · P2 1'), text(r) + r.notReady);
+  check('gate 2b: no plan file is not ready', gate2b(fixtureDir).notReady.some((x) => x.includes('plan')));
+  let d = copy(); writeFileSync(join(d, 'ac.md'), readFileSync(join(d, 'ac.md'), 'utf8').replace(/\| Works at phone width \| AC-3 \|\r?\n/, '').replace('Then they land on /dashboard.', 'Then they land on /dashboard. [assumed] dashboard exists'));
+  r = gate2b(d, { plan });
+  check('gate 2b: every [assumed] item is shown and a brief → AC gap makes it not ready', text(r).includes('Assumed (1)') && text(r).includes('dashboard exists') && r.notReady.some((x) => x.includes('without an AC')), text(r) + r.notReady);
+  r = gate3c(fixtureDir);
+  check('gate 3c: canvas URL and every AC → artboard; ready', r.notReady.length === 0 && text(r).includes('https://claude.ai/design/login-flow-canvas') && text(r).includes('AC-3 → login-phone'), text(r));
+  d = copy(); writeFileSync(join(d, 'design.md'), readFileSync(join(d, 'design.md'), 'utf8').replace(/\| AC-3 \| login-phone \|\r?\n/, '') + '\n- [verify] contrast of error text in dark mode\n');
+  writeFileSync(join(d, 'design-review-1.md'), '| id | artboard | problem | severity | fix |\n|---|---|---|---|---|\n| UX-1 | login-default | focus ring missing | medium | add ring |\n');
+  r = gate3c(d);
+  check('gate 3c: a missing artboard is flagged; medium findings and [verify] items are listed', text(r).includes('AC-3 → MISSING') && r.notReady.some((x) => x.includes('AC-3')) && text(r).includes('UX-1') && text(r).includes('contrast of error text') && !r.notReady.some((x) => x.includes('high')), text(r) + r.notReady);
+  writeFileSync(join(d, 'design-review-2.md'), '| id | artboard | problem | severity | fix |\n|---|---|---|---|---|\n| UX-2 | login-phone | breaks at 320px | high | stack fields |\n');
+  check('gate 3c: a high finding in the latest review makes it not ready', gate3c(d).notReady.some((x) => x.includes('1 high UX finding')));
+  d = copy();
+  check('gate 10: no step-9 hand-off is not ready', gate10(d).notReady.some((x) => x.includes('staging')));
+  writeFileSync(join(d, 'handoff/9-devops-r1.json'), JSON.stringify({ role: 'devops', task: TASK, step: '9', round: 1, status: 'done', paths_written: [], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'staging healthy, smoke 5/5' }));
+  writeFileSync(join(d, 'handoff/6-code-reviewer-r2.json'), JSON.stringify({ role: 'code-reviewer', task: TASK, step: '6', round: 2, status: 'done', verdict: 'Approve', blockers: [], needs_validation: [{ id: 'V-1', question: 'is 5 attempts per minute the right limit?', owner: 'PM' }], quality_checks: { passed: true, failed: [] }, summary: 'ok' }));
+  r = gate10(d);
+  check('gate 10: QA, staging, migrations, rollback and open V- questions are shown; ready', r.notReady.length === 0 && text(r).includes('Pass 3/3') && text(r).includes('smoke 5/5') && text(r).includes('0003 adds sessions table') && text(r).includes('V-1 is 5 attempts'), text(r) + r.notReady);
+  writeFileSync(join(d, 'qa-report.md'), readFileSync(join(d, 'qa-report.md'), 'utf8').replace(/## Bugs\r?\nNone\./, '## Bugs\n- BUG-1 AC-2 returns 500 not 429'));
+  check('gate 10: open bugs make it not ready', gate10(d).notReady.some((x) => x.includes('open bugs')));
+  rmSync(tmp, { recursive: true, force: true });
+}
+
 /* 7d. baseline freshness (references/baseline-freshness.md) */
 {
   const repo = mkdtempSync(join(tmpdir(), 'muffy-baseline-'));
