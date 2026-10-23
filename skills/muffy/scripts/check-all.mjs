@@ -1,0 +1,128 @@
+#!/usr/bin/env node
+// The scripted half of references/quality-checks.md in one call, after any step. Runs, in order:
+//   handoff     every hand-off of this step and round validates and reports quality_checks.passed
+//   loop        next-action.mjs over all hand-offs of the task: what to do now (accept, fix:<owner>, retry, escalate, promote)
+//   checkpoint  check-checkpoint.mjs
+//   artifacts   check-artifacts.mjs (sizes, links, traceability brief → AC → contract → qa-report)
+//   brain       each role of this step wrote <brain>/agents/<role>/<task>.md          (with --brain)
+//   runtime     the runtime in qa-report.md matches the deploy.md pin                  (when both exist)
+//   fix lane    from step 4 on: the 4a diagnosis is `known`, fix.md has ## Cause and ## Repro   (--profile fix)
+//   diff        diff-signals.mjs: the 3d decision, and from step 4 on the lane scope     (with --base)
+// The judgment half of quality-checks.md (plan phases, what the brain note says, gates the user answered) stays with you.
+//
+// Usage: node check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite] [--skip 3d,8] [--brain <dir>]
+//                           [--base <ref> [--head <ref>] [--cwd <repo>]]
+// Hand-offs are ordered by round, then step order (steps.md), so a fix round (4 r2) comes after the review that sent it (6 r1).
+// Prints `next=<action>` first, then one `ok`/`FAIL` line per check and the failing lines.
+// Exit 0 = every check passed and the loop says proceed, 1 = something to act on, 2 = usage error.
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { join, basename, dirname, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { validate } from './schema.mjs';
+import { simulate, GATED_STEPS, LANE_SKIPS } from './next-action.mjs';
+import { checkTask as checkCheckpoint } from './check-checkpoint.mjs';
+import { checkTask as checkArtifacts } from './check-artifacts.mjs';
+import { classify, laneVerdict, smokeOnRecord } from './diff-signals.mjs';
+import { parseOwnership } from './ownership.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
+export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4', '5', '5b', '6', '7', '8', '9', '10', '11', '12'];
+const readIf = (p) => (existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);
+const section = (md, name) => md?.match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] ?? null;
+const version = (text) => text?.match(/\bRuntime:\s*[A-Za-z.]*\s*v?(\d+(?:\.\d+)*)/)?.[1];
+
+function handoffs(taskDir) {
+  const dir = join(taskDir, 'handoff');
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => {
+    const m = f.match(/^([0-9]+[a-z]?)-(.+)-r(\d+)\.json$/);
+    let data = null;
+    try { data = JSON.parse(readFileSync(join(dir, f), 'utf8')); } catch { /* reported by the handoff check */ }
+    return m && STEP_ORDER.includes(m[1]) ? { file: f, step: m[1], role: m[2], round: Number(m[3]), data } : null;
+  }).filter(Boolean).sort((a, b) => a.round - b.round || STEP_ORDER.indexOf(a.step) - STEP_ORDER.indexOf(b.step));
+}
+
+export function checkAll(taskDir, { step, round, profile, skip = [], brain, base, head = 'HEAD', cwd } = {}) {
+  const task = basename(resolve(taskDir));
+  const results = []; // [name, errors[]]
+  const add = (name, errors) => results.push([name, errors]);
+  const all = handoffs(taskDir);
+  const mine = all.filter((h) => h.step === String(step) && h.round === Number(round));
+  const schema = JSON.parse(readFileSync(join(here, '..', 'schemas', 'handoff.schema.json'), 'utf8'));
+
+  add('handoff', mine.length ? mine.flatMap((h) => {
+    if (!h.data) return [`${h.file}: not valid JSON`];
+    const errs = validate(schema, h.data).map((e) => `${h.file}: ${e}`);
+    if (!errs.length && !h.data.quality_checks.passed) errs.push(`${h.file}: quality_checks.passed is false (${h.data.quality_checks.failed.join(', ') || 'no items named'})`);
+    return errs;
+  }) : [`no hand-off for step ${step} round ${round} in handoff/ (code-reviewer: save the block from its message)`]);
+
+  // loop: gates the user answered are in the checkpoint, not in a hand-off
+  const status = section(readIf(join(taskDir, 'checkpoint.md')), 'Status') ?? '';
+  const passed = GATED_STEPS.filter((g) => new RegExp(`\\b${g}\\b[^\\n]*\\bpassed\\b`, 'i').test(status));
+  const skips = [...(LANE_SKIPS[profile] ?? []), ...skip];
+  const upTo = all.filter((h) => h.round < Number(round) || (h.round === Number(round) && STEP_ORDER.indexOf(h.step) <= STEP_ORDER.indexOf(String(step))));
+  const loop = simulate({ task, profile, skip: skips, passed, events: upTo.map((h) => ({ handoff: h.data, step: h.step, role: h.role })) });
+  const next = loop.outcome === 'invalid-profile' ? 'fix-run-profile' : loop.actions.at(-1) ?? 'none';
+  add('loop', [...loop.violations, ...(['escalated', 'blocked', 'invalid-profile', 'promoted'].includes(loop.outcome) ? [`${next}${loop.trigger ? ` (${loop.trigger})` : ''}`] : [])]);
+
+  add('checkpoint', checkCheckpoint(taskDir));
+  add('artifacts', checkArtifacts(taskDir));
+
+  if (brain) add('brain', [...new Set(mine.map((h) => h.role))].filter((r) => !existsSync(join(brain, 'agents', r, `${task}.md`))).map((r) => `missing ${brain}/agents/${r}/${task}.md`));
+
+  const qa = readIf(join(taskDir, 'qa-report.md'));
+  const pin = version(readIf(join(taskDir, 'deploy.md')));
+  if (qa && pin) { const ran = version(qa); add('runtime', ran === pin ? [] : [`qa-report.md ran ${ran ?? 'no Runtime: line'}, deploy.md pins ${pin}`]); }
+
+  if (profile === 'fix' && STEP_ORDER.indexOf(String(step)) >= STEP_ORDER.indexOf('4')) {
+    const errs = [];
+    const diag = all.filter((h) => h.step === '4a').at(-1)?.data?.diagnosis?.status;
+    if (diag !== 'known') errs.push(`4a diagnosis is ${diag ?? 'missing'}, need known before step 4`);
+    const fix = readIf(join(taskDir, 'fix.md'));
+    for (const s of ['Cause', 'Repro']) if (!section(fix, s)?.trim()) errs.push(`fix.md ## ${s} is missing or empty`);
+    add('fix lane', errs);
+  }
+
+  if (base) {
+    let files = null;
+    try { files = execFileSync('git', ['-c', 'core.quotePath=false', 'diff', '--name-only', `${base}...${head}`], { cwd: cwd ?? process.cwd(), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).split('\n').filter(Boolean); }
+    catch (e) { add('diff', [`git diff ${base}...${head} failed: ${String(e.stderr ?? e.message).trim()}`]); }
+    if (files) {
+      const own = readIf(join(taskDir, 'contract', 'ownership.md'));
+      const c = classify(files, { ownershipRows: own ? parseOwnership(own) : [], smokeOnRecord: smokeOnRecord(brain), stagingNone: /\bstaging:\s*none\b/i.test(status + (readIf(join(taskDir, 'deploy.md')) ?? '')) });
+      const errs = [];
+      if (c.smoke.required && skips.includes('3d') && profile !== 'fix') errs.push(`3d is skipped but a smoke trigger is true: ${c.smoke.reasons.join(', ')}`);
+      if (profile && STEP_ORDER.indexOf(String(step)) >= STEP_ORDER.indexOf('4')) errs.push(...laneVerdict(c, profile).reasons.map((r) => `promote:full-flow: ${r}`));
+      add('diff', errs);
+    }
+  }
+
+  // what to do now: any loop verdict but accept wins (fix, retry, ask, escalate, block), then a lane promotion, then any failed check
+  const failed = results.filter(([, e]) => e.length);
+  const promote = results.some(([n, e]) => n === 'diff' && e.some((x) => x.startsWith('promote:')));
+  const action = next !== 'accept' ? next
+    : promote ? 'promote:full-flow'
+    : failed.length ? `send-back:${failed.map(([n]) => n).join(',')}`
+    : next === 'accept' ? 'proceed' : next;
+  return { next: action, results, ok: !failed.length && action === 'proceed' };
+}
+
+if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
+  const argv = process.argv.slice(2);
+  const o = {};
+  const pos = [];
+  for (let i = 0; i < argv.length; i++) argv[i].startsWith('--') ? (o[argv[i].slice(2)] = argv[++i]) : pos.push(argv[i]);
+  if (!pos[0] || !o.step || !o.round) {
+    console.error('usage: check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite] [--skip a,b] [--brain <dir>] [--base <ref> [--head <ref>] [--cwd <repo>]]');
+    process.exit(2);
+  }
+  const r = checkAll(pos[0], { step: o.step, round: o.round, profile: o.profile, skip: (o.skip ?? '').split(',').filter(Boolean), brain: o.brain, base: o.base, head: o.head, cwd: o.cwd });
+  console.log(`next=${r.next}`);
+  for (const [name, errs] of r.results) {
+    console.log(`${errs.length ? 'FAIL' : 'ok  '} ${name}`);
+    for (const e of errs) console.log(`  - ${e}`);
+  }
+  process.exit(r.ok ? 0 : 1);
+}
