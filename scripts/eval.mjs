@@ -10,15 +10,13 @@ import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../skills/muffy/scripts/schema.mjs';
-import { simulate } from './lib/loop-sim.mjs';
+import { simulate, chooseEffort, defaultEffort, PROTECTED_ROLES, STALLED_AFTER, smokeRequired, SMOKE_TRIGGERS } from '../skills/muffy/scripts/next-action.mjs';
 import { runFixLaneEvals } from './lib/fix-lane-evals.mjs';
 import { runOwnershipEvals } from './lib/ownership-evals.mjs';
 import { runLiteLaneEvals } from './lib/lite-lane-evals.mjs';
 import { runPendingEvals } from './lib/pending-evals.mjs';
 import { runRouteEvals } from './lib/route-evals.mjs';
 import { runReviewBenchEvals } from './lib/review-bench-evals.mjs';
-import { chooseEffort, defaultEffort, PROTECTED_ROLES, STALLED_AFTER } from './lib/effort-sim.mjs';
-import { smokeRequired, SMOKE_TRIGGERS } from './lib/smoke-sim.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -188,7 +186,7 @@ for (const sc of readJson(rel('evals/effort-scenarios.json'))) {
   check(`effort:${sc.id}`, out.effort === sc.expect, `expected ${sc.expect}, got ${out.effort} (${out.reason})`);
 }
 
-/* 4b. effort docs vs code: the doc's defaults, protected roles and stall threshold must match agents/*.md and effort-sim.mjs */
+/* 4b. effort docs vs code: the doc's defaults, protected roles and stall threshold must match agents/*.md and skills/muffy/scripts/next-action.mjs */
 const tierDoc = readFileSync(rel('skills/muffy/references/token-discipline.md'), 'utf8');
 const docLines = tierDoc.split(/\r?\n/);
 const lineWith = (re) => docLines.find((l) => re.test(l)) ?? '';

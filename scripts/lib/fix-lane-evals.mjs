@@ -1,13 +1,13 @@
 // Offline checks for the fix lane (skills/muffy/references/fix-profile.md):
-//   - triage examples: the doc table, evals/triage-scenarios.json and triage-sim.mjs agree
+//   - triage examples: the doc table, evals/triage-scenarios.json and triage() in skills/muffy/scripts/next-action.mjs agree
 //   - golden fix.md and its 4a / 4 hand-offs satisfy the lane's invariants
 //   - the diagnosis block in the hand-off schema rejects what it should
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validate } from '../../skills/muffy/scripts/schema.mjs';
 import { checkTask } from '../../skills/muffy/scripts/check-artifacts.mjs';
-import { FIX_MAX_FILES } from './loop-sim.mjs';
-import { triage } from './triage-sim.mjs';
+import { FIX_MAX_FILES } from '../../skills/muffy/scripts/next-action.mjs';
+import { triage } from '../../skills/muffy/scripts/next-action.mjs';
 
 const unquote = (req) => req.replace(/^"|"$/g, '').replace(/"\s*\/\s*"/g, ' / ');
 

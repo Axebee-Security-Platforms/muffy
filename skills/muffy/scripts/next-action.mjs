@@ -1,0 +1,348 @@
+#!/usr/bin/env node
+// The Orchestrator's deterministic rules in one place: loop budget and fallback ladder (references/loops.md),
+// effort tiers (references/token-discipline.md), smoke triggers (references/run-profile.md), fix and lite triage
+// (references/fix-profile.md, lite-profile.md). The offline evals import these exports, so a rule changed here
+// is a rule changed for both the running skill and `npm test`. Change the doc in the same commit.
+//
+// Usage:
+//   node next-action.mjs loop <handoff.json | handoff dir>... [--profile fix] [--skip 3d,8] [--smoke <signal,...>] [--task <task>] [--escalation-out <file>]
+//        hand-offs in the order they came back; a directory is read in file-time order
+//   node next-action.mjs effort --role <role> [--mode production|prototype] [--high-impact] [--assumed] [--exact-fix] [--stalled <n>]
+//   node next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke] [--staging-none]
+//   node next-action.mjs triage fix|lite '<signals json>'
+// Prints one verdict line (`next=<action> ...`), then detail lines. Exit 0 = proceed, 1 = escalate / blocked / invalid, 2 = usage error.
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join, resolve } from 'node:path';
+import { validate } from './schema.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const schema = (kind) => JSON.parse(readFileSync(join(here, '..', 'schemas', `${kind}.schema.json`), 'utf8'));
+const handoffSchema = schema('handoff');
+const escalationSchema = schema('escalation');
+
+/* ---------- smoke triggers (run-profile.md) ---------- */
+
+// 3d (devops mode 2) runs only if one trigger is true.
+export const SMOKE_TRIGGERS = {
+  runtime_or_dependency_changed: 'contract adds or bumps a runtime, lockfile dependency, native/binary package or datastore',
+  devops_files_changed: 'devops-owned files change (Dockerfile, base image, .nvmrc, compose)',
+  no_passing_smoke_on_record: 'no passing smoke recorded for this stack (first feature, onboarding, last smoke failed)',
+  staging_none: 'staging: none (no safety net at step 9)',
+};
+
+export function smokeRequired(signals = {}) {
+  const reasons = Object.keys(SMOKE_TRIGGERS).filter((k) => signals[k] === true);
+  return { required: reasons.length > 0, reasons };
+}
+
+/* ---------- loop budget and fallback ladder (loops.md) ---------- */
+
+export const LOOP_LIMIT = 3; // fix loops allowed per loop point; the 4th rejection escalates
+export const REPEAT_LIMIT = 3; // same blocker id open in this many consecutive rejections = fix is not converging
+export const GATED_STEPS = ['3c', '3d']; // must pass before step 4; 3c passes only after the user approves the design (pause:design-review)
+export const NEVER_SKIP = ['6', '7', '9', '10'];
+export const FIX_NEVER_SKIP = ['4a']; // fix lane (references/fix-profile.md): diagnose before any code
+export const FIX_MAX_FILES = 5; // source files (tests and .team/ excluded) before a fix is promoted to the full flow
+export const LITE_MAX_FILES = 15; // same count for the lite lane (references/lite-profile.md)
+const isSource = (p) => !/(^|[\\/])\.team[\\/]/.test(p) && !/(^|[\\/])(tests?|__tests__)[\\/]|\.(test|spec)\.[a-z]+$/i.test(p);
+
+const REJECTING = new Set(['Reject', 'Fail']);
+
+// scenario: { task, profile, skip, smoke_signals, events: [{ handoff, step?, role? }] }
+// Returns every action the Orchestrator must take, in order; the last one is what to do now.
+export function simulate(scenario) {
+  const actions = [];
+  const loops = {}; // point -> rejections so far
+  const streak = {}; // point -> { blocker id -> consecutive rejections it has been open }
+  const vstreak = {}; // point -> { needs_validation id -> consecutive reviews it has been open }
+  const retries = {}; // point -> invalid / not-ready retries used this round
+  const passed = new Set();
+  const skipped = new Set(scenario.skip ?? []);
+  let outcome = 'in-progress';
+  let trigger = null;
+  let escalation = null;
+  const fix = scenario.profile === 'fix';
+
+  const violations = NEVER_SKIP.filter((s) => skipped.has(s)).map((s) => `never-skip step ${s} was skipped`);
+  if (fix) violations.push(...FIX_NEVER_SKIP.filter((s) => skipped.has(s)).map((s) => `fix lane: step ${s} was skipped`));
+  if (skipped.has('3d')) {
+    const { required, reasons } = smokeRequired(scenario.smoke_signals);
+    if (required) violations.push(`3d skipped although a smoke trigger is true: ${reasons.join(', ')}`);
+  }
+  if (violations.length) return { actions, loops, outcome: 'invalid-profile', trigger: null, violations, escalation };
+
+  const escalate = (point, why, blockers, owner) => {
+    outcome = 'escalated';
+    trigger = why;
+    escalation = {
+      task: scenario.task ?? 'mock-task',
+      step: point.split(':')[0],
+      trigger: why,
+      loops_used: Math.max(1, loops[point] ?? 1),
+      loop_limit: LOOP_LIMIT,
+      owner: owner ?? 'unknown',
+      open_blockers: (blockers.length ? blockers : [{ id: 'B-0', problem: 'unspecified' }]).map((b) => ({ id: b.id, problem: b.problem, rounds_open: Math.max(1, loops[point] ?? 1) })),
+      attempts: [`${loops[point] ?? 0} rejected round(s); see handoff/ files`],
+      options: ['extend-loops', 'change-approach', 'reduce-scope', 'abort-task'],
+    };
+    actions.push(`escalate:${why}`);
+  };
+
+  for (const ev of scenario.events) {
+    if (outcome === 'escalated') break;
+    const h = ev.handoff;
+    const point = `${h?.step ?? ev.step ?? '?'}:${h?.role ?? ev.role ?? '?'}`;
+
+    if (GATED_STEPS.length && String(h?.step ?? ev.step).match(/^4/) && GATED_STEPS.some((g) => !passed.has(g) && !skipped.has(g))) {
+      actions.push('block:gate-not-passed');
+      outcome = 'blocked';
+      break;
+    }
+
+    if (fix && String(h?.step ?? ev.step) === '4' && !passed.has('4a')) {
+      actions.push('block:no-diagnosis');
+      outcome = 'blocked';
+      break;
+    }
+
+    // 1. structure: invalid hand-off -> one retry with the error list, then escalate
+    const errs = h ? validate(handoffSchema, h) : ['no handoff block in final message'];
+    if (errs.length) {
+      retries[point] = (retries[point] ?? 0) + 1;
+      if (retries[point] === 1) { actions.push('retry:invalid-handoff'); continue; }
+      escalate(point, 'invalid-handoff', [], h?.role);
+      continue;
+    }
+
+    // 2. self-reported quality failure: one retry, then escalate
+    if (!h.quality_checks.passed) {
+      retries[point] = (retries[point] ?? 0) + 1;
+      if (retries[point] === 1) { actions.push('retry:quality-check-failed'); continue; }
+      escalate(point, 'quality-check-failed-twice', h.blockers, h.role);
+      continue;
+    }
+    retries[point] = 0;
+
+    // 2b. fix lane: route on the diagnosis (fix-profile.md)
+    if (h.diagnosis?.status === 'needs-full-flow') {
+      actions.push('promote:full-flow');
+      outcome = 'promoted';
+      trigger = 'needs-full-flow';
+      break;
+    }
+    if (h.diagnosis?.status === 'unknown') {
+      loops[point] = (loops[point] ?? 0) + 1;
+      if (loops[point] >= 2) escalate(point, 'loop-limit', h.blockers, h.role);
+      else actions.push('ask:more-evidence');
+      continue;
+    }
+    if (fix && String(h.step) === '4') {
+      const files = h.paths_written.filter(isSource).length;
+      if (files > FIX_MAX_FILES || h.blockers.some((b) => b.owner === 'Architect')) {
+        actions.push('promote:full-flow');
+        outcome = 'promoted';
+        trigger = files > FIX_MAX_FILES ? 'too-many-files' : 'architect-blocker';
+        break;
+      }
+    }
+
+    // 2c. a reviewer's needs_validation item (V-n) open in REPEAT_LIMIT consecutive reviews, Approve or Reject, escalates like a repeated blocker
+    const vOpen = new Map((h.needs_validation ?? []).map((v) => [v.id, v]));
+    const vStreaks = (vstreak[point] ??= {});
+    for (const id of Object.keys(vStreaks)) if (!vOpen.has(id)) delete vStreaks[id];
+    for (const id of vOpen.keys()) vStreaks[id] = (vStreaks[id] ?? 0) + 1;
+    const vRepeated = [...vOpen.values()].filter((v) => vStreaks[v.id] >= REPEAT_LIMIT);
+    if (vRepeated.length) {
+      escalate(point, 'repeated-blocker', vRepeated.map((v) => ({ id: v.id, problem: v.question })), vRepeated[0].owner);
+      continue;
+    }
+
+    // 3. verdict handling
+    if (REJECTING.has(h.verdict)) {
+      loops[point] = (loops[point] ?? 0) + 1;
+      const ids = new Set(h.blockers.map((b) => b.id));
+      const streaks = (streak[point] ??= {});
+      for (const id of Object.keys(streaks)) if (!ids.has(id)) delete streaks[id];
+      for (const id of ids) streaks[id] = (streaks[id] ?? 0) + 1;
+      const repeated = [...ids].filter((id) => streaks[id] >= REPEAT_LIMIT);
+      if (repeated.length) {
+        escalate(point, 'repeated-blocker', h.blockers.filter((b) => repeated.includes(b.id)), h.blockers[0].owner);
+      } else if (loops[point] > LOOP_LIMIT) {
+        escalate(point, 'loop-limit', h.blockers, h.blockers[0].owner);
+      } else {
+        actions.push(`fix:${[...new Set(h.blockers.map((b) => b.owner))].sort().join('+')}`);
+      }
+      continue;
+    }
+
+    passed.add(h.step);
+    actions.push('accept');
+  }
+
+  if (outcome === 'in-progress') outcome = 'completed';
+  if (escalation) {
+    const e = validate(escalationSchema, escalation);
+    if (e.length) violations.push(...e.map((x) => `escalation report invalid: ${x}`));
+  }
+  return { actions, loops, outcome, trigger, violations, escalation };
+}
+
+/* ---------- effort tiers (token-discipline.md) ---------- */
+
+export const LEVELS = ['low', 'medium', 'high'];
+export const PROTECTED_ROLES = ['code-reviewer', 'architect', 'devops']; // never below their default in production mode
+export const STALLED_AFTER = 2; // same blocker id open in this many consecutive rejections counts as stalled
+
+// Agent definitions sit at <root>/agents/ in this repo and at .claude/agents/ once installed: three levels up either way.
+export const defaultEffort = (role) =>
+  readFileSync(join(here, '..', '..', '..', 'agents', `${role}.md`), 'utf8').match(/^effort:\s*(\S+)/m)?.[1];
+
+// signals: { highImpact, assumedAc, exactFix, stalledRounds }  (all optional)
+//   highImpact    contract.md touches auth, payments, data migrations or secrets
+//   assumedAc     ac.md / requirements.md carries [assumed] items
+//   exactFix      every open bug names file + line + expected fix (read from handoff blockers)
+//   stalledRounds consecutive rejections the same blocker id has been open (checkpoint ## Open blockers)
+export function chooseEffort({ role, mode = 'production', signals = {} }) {
+  const base = defaultEffort(role);
+  const idx = LEVELS.indexOf(base);
+  if (idx < 0) throw new Error(`no valid effort in agents/${role}.md`);
+  const protectedRole = mode === 'production' && PROTECTED_ROLES.includes(role);
+
+  if (signals.highImpact) return { effort: 'high', base, reason: 'high-impact' };
+
+  const up = (signals.assumedAc ? 1 : 0) + ((signals.stalledRounds ?? 0) >= STALLED_AFTER ? 1 : 0);
+  const down = signals.exactFix ? 1 : 0;
+  let net = Math.max(-1, Math.min(1, up - down)); // net move is at most one level
+  if (protectedRole && net < 0) net = 0;
+  const effort = LEVELS[Math.max(0, Math.min(LEVELS.length - 1, idx + net))];
+  return { effort, base, reason: net === 0 ? 'default' : net > 0 ? 'raised' : 'lowered' };
+}
+
+/* ---------- fix and lite triage (fix-profile.md, lite-profile.md) ---------- */
+
+// A request is a fix only if every condition holds; otherwise it runs the full flow.
+export function triage(s = {}) {
+  const reasons = [];
+  if (s.trivial_one_line === true) return { lane: 'none', reasons: ['trivial one-line edit with no behaviour risk: main session'] };
+  if (s.has_symptom !== true || (s.has_location !== true && s.has_repro !== true)) return { lane: 'ask', reasons: ['no symptom, or no location and no repro: ask before triage'] };
+  if (s.changes_contract === true) reasons.push('changes API shape, schema, auth, a dependency, the stack or devops-owned files');
+  if (s.adds_new_ui === true) reasons.push('adds a new screen, flow or component');
+  if ((s.expected_source_files ?? 1) > FIX_MAX_FILES) reasons.push(`expected to touch more than ${FIX_MAX_FILES} source files`);
+  return reasons.length ? { lane: 'full', reasons } : { lane: 'fix', reasons: [] };
+}
+
+// Internal work that is not a bug fix.
+export function triageLite(s = {}) {
+  if (s.has_goal !== true || s.has_area !== true) return { lane: 'ask', reasons: ['no goal or no named area: ask before triage'] };
+  if (s.kind === 'perf' && s.has_measurement !== true) return { lane: 'ask', reasons: ['performance work with no measured before-number: ask first'] };
+  const reasons = [];
+  if (s.user_visible === true) reasons.push('changes what a user sees or does');
+  if (s.outside_consumers === true) reasons.push('changes an API with consumers outside this repo');
+  if (s.adds_dependency === true) reasons.push('adds a dependency, provider, runtime or stack change, or touches devops-owned files');
+  if (s.changes_auth === true) reasons.push('changes auth, permissions or personal data');
+  if (s.irreversible_migration === true) reasons.push('a migration that drops data or has no down path');
+  if ((s.expected_source_files ?? 1) > LITE_MAX_FILES) reasons.push(`expected to touch more than ${LITE_MAX_FILES} source files`);
+  return reasons.length ? { lane: 'full', reasons } : { lane: 'lite', reasons: [] };
+}
+
+/* ---------- CLI ---------- */
+
+const SMOKE_FLAGS = {
+  '--runtime-changed': 'runtime_or_dependency_changed',
+  '--devops-files-changed': 'devops_files_changed',
+  '--no-passing-smoke': 'no_passing_smoke_on_record',
+  '--staging-none': 'staging_none',
+};
+
+function usage(msg) {
+  if (msg) console.error(msg);
+  console.error('usage: next-action.mjs loop <handoff...> | effort --role <role> | smoke [flags] | triage fix|lite <json>');
+  process.exit(2);
+}
+
+// Steps a lane skips by definition (run-profile.md first paragraph); --skip adds the run's own skips on top.
+export const LANE_SKIPS = { fix: ['1', '2', '2b', '3', '3b', '3c', '3d', '8'], lite: ['1', '2', '2b', '3b', '3c', '8'] };
+
+const opt = (args, name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
+
+function handoffFiles(paths) {
+  const files = [];
+  for (const p of paths) {
+    if (statSync(p).isDirectory()) {
+      files.push(...readdirSync(p).filter((f) => f.endsWith('.json')).map((f) => join(p, f)).sort((a, b) => statSync(a).mtimeMs - statSync(b).mtimeMs));
+    } else files.push(p);
+  }
+  return files;
+}
+
+function runLoop(args) {
+  const valued = new Set(['--profile', '--skip', '--smoke', '--task', '--escalation-out']);
+  const paths = args.filter((a, i) => !a.startsWith('--') && !valued.has(args[i - 1]));
+  if (!paths.length) usage('loop: give at least one hand-off file or directory');
+  const events = handoffFiles(paths).map((f) => {
+    try { return { handoff: JSON.parse(readFileSync(f, 'utf8')), file: f }; } catch { return { handoff: null, file: f }; }
+  });
+  const smoke = Object.fromEntries((opt(args, '--smoke') ?? '').split(',').filter(Boolean).map((k) => [k, true]));
+  const profile = opt(args, '--profile');
+  const out = simulate({
+    task: opt(args, '--task'),
+    profile,
+    skip: [...(LANE_SKIPS[profile] ?? []), ...(opt(args, '--skip') ?? '').split(',').filter(Boolean)],
+    smoke_signals: smoke,
+    events,
+  });
+  const next = out.violations.length && out.outcome === 'invalid-profile' ? 'fix-run-profile' : out.actions.at(-1) ?? 'none';
+  console.log(`next=${next} outcome=${out.outcome}${out.trigger ? ` trigger=${out.trigger}` : ''} handoffs=${events.length}`);
+  const counters = Object.entries(out.loops).map(([p, n]) => `${p}=${n}/${LOOP_LIMIT}`);
+  if (counters.length) console.log(`loop counters: ${counters.join(' ')}`);
+  for (const v of out.violations) console.log(`violation: ${v}`);
+  const escOut = opt(args, '--escalation-out');
+  if (out.escalation && escOut) {
+    writeFileSync(resolve(escOut), JSON.stringify(out.escalation, null, 2) + '\n');
+    console.log(`escalation draft: ${escOut} (add the recommendation and attempts, then validate)`);
+  }
+  return ['escalated', 'blocked', 'invalid-profile'].includes(out.outcome) ? 1 : 0;
+}
+
+function runEffort(args) {
+  const role = opt(args, '--role');
+  if (!role) usage('effort: --role is required');
+  const out = chooseEffort({
+    role,
+    mode: opt(args, '--mode') ?? 'production',
+    signals: {
+      highImpact: args.includes('--high-impact'),
+      assumedAc: args.includes('--assumed'),
+      exactFix: args.includes('--exact-fix'),
+      stalledRounds: Number(opt(args, '--stalled') ?? 0),
+    },
+  });
+  console.log(`next=effort:${out.effort} base=${out.base} reason=${out.reason}`);
+  return 0;
+}
+
+function runSmoke(args) {
+  const signals = Object.fromEntries(Object.entries(SMOKE_FLAGS).map(([f, k]) => [k, args.includes(f)]));
+  const out = smokeRequired(signals);
+  console.log(out.required ? `next=run-3d reasons=${out.reasons.join(',')}` : 'next=skip-3d reason=no-trigger (record "3d skipped: no trigger" in tasks/<task>.md)');
+  return 0;
+}
+
+function runTriage(args) {
+  const [lane, json] = args;
+  if (!['fix', 'lite'].includes(lane) || !json) usage('triage: fix|lite and a signals JSON object');
+  let s;
+  try { s = JSON.parse(json); } catch (e) { usage(`triage: bad JSON: ${e.message}`); }
+  const out = lane === 'fix' ? triage(s) : triageLite(s);
+  console.log(`next=lane:${out.lane}`);
+  for (const r of out.reasons) console.log(`reason: ${r}`);
+  return 0;
+}
+
+if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
+  const [cmd, ...args] = process.argv.slice(2);
+  const run = { loop: runLoop, effort: runEffort, smoke: runSmoke, triage: runTriage }[cmd];
+  if (!run) usage(cmd ? `unknown command: ${cmd}` : undefined);
+  try { process.exit(run(args)); } catch (e) { console.error(`next-action: ${e.message}`); process.exit(2); }
+}
