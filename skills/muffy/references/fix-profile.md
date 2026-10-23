@@ -88,7 +88,7 @@ Read the `diagnosis` object in the 4a hand-off and route on it:
 | `unknown` | Relay `reason` to the user via `AskUserQuestion` (more info, a log, a repro). Send the answer to the same agent for **one** more diagnose round. A second `unknown` at the same point → escalate `loop-limit` ([loops.md](loops.md)) |
 | `needs-full-flow` | **Promote**: the cause is in the contract, a dependency, the stack or a design decision. Stop the lane, keep `fix.md` as the brief, rename the profile in `checkpoint.md`, and start the full flow at step 2 (PM) with `fix.md` + the diagnosis as input |
 
-**Promote** also when step 4 reports more than 5 source files changed, or a blocker owned by `Architect`. Record the reason in `checkpoint.md` and the vault task note.
+**Promote** also when step 4 changed more than 5 source files, or reports a blocker owned by `Architect`. Count from the diff, not from the agent's `paths_written`: `node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --profile fix` exits 1 with `next=promote:full-flow` and one `reason:` line per broken limit (file count, dependency, devops-owned files, auth files, schema or migration). Record the reason in `checkpoint.md` and the vault task note.
 
 ## Model and effort
 

@@ -83,7 +83,7 @@ The lane signals a promote through a blocker owned by an agent this lane skips, 
 | Step 3 or 4 hand-off `status: blocked` with a blocker `owner: Researcher` | the change needs a new dependency, provider or stack fact | step 1 |
 | a blocker `owner: PM` | the change is visible to users or outside callers, or touches auth, permissions or personal data | step 2 |
 | a blocker `owner: Designer` | the change needs a new or changed screen, flow or component | step 2 (then 3 with the designer) |
-| Step 4 reports more than 15 source files changed | the work outgrew the lane | step 2 |
+| Step 4 changed more than 15 source files, a dependency, devops-owned files or auth files (`node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --profile lite` exits 1) | the work outgrew the lane | step 2 |
 
 The owner alone does not promote. Read the blocker's `problem` and promote only when it names a failed triage condition (a visible change, an outside consumer, auth or personal data, a new dependency or stack fact, a new screen, flow or component). In this lane the Orchestrator wrote `ac.md`, so a `PM` blocker that only asks what an AC means is a clarification: ask the user one `AskUserQuestion`, update `ac.md`, and send the answer back to the same agent.
 

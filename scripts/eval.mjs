@@ -657,6 +657,39 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   rmSync(tmp, { recursive: true, force: true });
 }
 
+/* 7c2. diff-signals: smoke triggers and lane scope from the real diff (run-profile.md, fix-profile.md, lite-profile.md) */
+{
+  const { classify, laneVerdict } = await import('../skills/muffy/scripts/diff-signals.mjs');
+  const { parseOwnership } = await import('../skills/muffy/scripts/ownership.mjs');
+  const c = (files, o) => classify(files, o);
+  check('diff-signals: UI and logic only, smoke on record -> skip 3d', !c(['src/ui/Login.tsx', 'src/api/login.ts']).smoke.required);
+  check('diff-signals: a lockfile or manifest -> runtime_or_dependency_changed', c(['package-lock.json']).smoke.reasons.includes('runtime_or_dependency_changed') && c(['apps/web/package.json']).smoke.required);
+  check('diff-signals: Dockerfile, compose, .nvmrc -> devops_files_changed', ['Dockerfile', 'docker/Dockerfile.api', 'compose.yaml', '.nvmrc'].every((f) => c([f]).smoke.reasons.includes('devops_files_changed')));
+  check('diff-signals: a devops row in ownership.md counts as devops-owned', c(['infra/main.tf'], { ownershipRows: parseOwnership('| Pattern | Owner |\n|---|---|\n| infra/** | devops |\n') }).devops.length === 1);
+  check('diff-signals: no passing smoke on record, or staging none -> run 3d', c(['src/a.ts'], { smokeOnRecord: false }).smoke.required && c(['src/a.ts'], { stagingNone: true }).smoke.reasons.includes('staging_none'));
+  const five = ['a', 'b', 'c', 'd', 'e'].map((x) => `src/${x}.ts`);
+  check('diff-signals: fix lane keeps 5 source files; tests and .team/ do not count', !laneVerdict(c([...five, 'test/a.test.ts', 'src/b.spec.ts', '.team/t/fix.md']), 'fix').promote);
+  check('diff-signals: fix lane promotes the 6th source file', laneVerdict(c([...five, 'src/f.ts']), 'fix').promote);
+  check('diff-signals: fix promotes on a migration, lite keeps a migration', laneVerdict(c(['db/migrations/0002_add.sql']), 'fix').promote && !laneVerdict(c(['db/migrations/0002_add.sql']), 'lite').promote);
+  check('diff-signals: both lanes promote on auth files, a dependency or devops files', ['fix', 'lite'].every((l) => laneVerdict(c(['src/auth/session.ts']), l).promote && laneVerdict(c(['yarn.lock']), l).promote && laneVerdict(c(['Dockerfile']), l).promote));
+  check('diff-signals: lite lane allows 15 source files, not 16', !laneVerdict(c(Array.from({ length: 15 }, (_, i) => `src/m${i}.ts`)), 'lite').promote && laneVerdict(c(Array.from({ length: 16 }, (_, i) => `src/m${i}.ts`)), 'lite').promote);
+
+  const repo = mkdtempSync(join(tmpdir(), 'muffy-diffsig-'));
+  const git = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
+  const put = (file, text) => { mkdirSync(dirname(join(repo, file)), { recursive: true }); writeFileSync(join(repo, file), text); };
+  git('init', '-q', '-b', 'main'); git('config', 'user.email', 't@t.t'); git('config', 'user.name', 't'); git('config', 'core.autocrlf', 'false');
+  put('src/a.ts', 'a\n'); put('brain/agents/devops/t.md', '- 2026-10-01 smoke: passed on Node 22\n'); git('add', '-A'); git('commit', '-qm', 'init');
+  git('checkout', '-q', '-b', 'fix/t'); put('src/a.ts', 'b\n'); put('test/a.test.ts', 't\n'); git('add', '-A'); git('commit', '-qm', 'fix');
+  const run = (...a) => spawnSync(process.execPath, [rel('skills/muffy/scripts/diff-signals.mjs'), 'main', 'fix/t', '--cwd', repo, '--brain', join(repo, 'brain'), ...a], { encoding: 'utf8' });
+  const small = run('--profile', 'fix');
+  check('diff-signals CLI: a 1-file fix with smoke on record skips 3d and stays in the lane', small.status === 0 && small.stdout.includes('next=skip-3d') && small.stdout.includes('next=stay:fix') && small.stdout.includes('files: 1 source / 2 changed'), small.stdout + small.stderr);
+  put('package.json', '{}\n'); for (const x of ['b', 'c', 'd', 'e', 'f']) put(`src/${x}.ts`, 'x\n'); git('add', '-A'); git('commit', '-qm', 'grow');
+  const big = run('--profile', 'fix');
+  check('diff-signals CLI: a grown fix runs 3d and promotes, exit 1', big.status === 1 && big.stdout.includes('next=run-3d') && big.stdout.includes('next=promote:full-flow') && big.stdout.includes('dependency change: package.json'), big.stdout + big.stderr);
+  check('diff-signals CLI: an unknown base is a git error, exit 2', spawnSync(process.execPath, [rel('skills/muffy/scripts/diff-signals.mjs'), 'nope', '--cwd', repo], { encoding: 'utf8' }).status === 2);
+  rmSync(repo, { recursive: true, force: true });
+}
+
 /* 7d. baseline freshness (references/baseline-freshness.md) */
 {
   const repo = mkdtempSync(join(tmpdir(), 'muffy-baseline-'));
