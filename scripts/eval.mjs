@@ -24,6 +24,8 @@ const rel = (...p) => join(root, ...p);
 const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
 const handoffSchema = readJson(rel('skills/muffy/schemas/handoff.schema.json'));
 const update = process.argv.includes('--update-rubric');
+// the long step rows live in step-details.md, one `## Step <id>` section each
+const stepDetail = (id) => readFileSync(rel('skills/muffy/references/step-details.md'), 'utf8').replace(/\r\n/g, '\n').split(/^## Step /m).find((x) => x.startsWith(`${id}\n`)) ?? '';
 
 let pass = 0;
 const failures = [];
@@ -724,6 +726,21 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   rmSync(tmp, { recursive: true, force: true });
 }
 
+/* 7c5. docs stay slim and keep pointing at the scripts that replaced their prose */
+{
+  const mdFiles = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? mdFiles(join(d, e.name)) : e.name.endsWith('.md') ? [join(d, e.name)] : []));
+  const docs = [...mdFiles(rel('skills')), ...mdFiles(rel('agents'))].map((p) => readFileSync(p, 'utf8')).join('\n');
+  const scriptsDir = rel('skills/muffy/scripts');
+  const clis = readdirSync(scriptsDir).filter((f) => f.endsWith('.mjs') && readFileSync(join(scriptsDir, f), 'utf8').startsWith('#!'));
+  const unnamed = clis.filter((f) => !docs.includes(f));
+  check('docs: every runnable script in skills/muffy/scripts is named in a reference or agent doc', unnamed.length === 0, unnamed.join(', '));
+  const rows = readFileSync(rel('skills/muffy/references/steps.md'), 'utf8').split(/\r?\n/).filter((l) => /^\| [0-9a-z]+ \|/.test(l));
+  const long = rows.filter((l) => l.length > 450).map((l) => `${l.split(' | ')[0]} (${l.length})`);
+  check('docs: every steps.md row stays ≤ 450 chars; the long form goes to step-details.md', long.length === 0, long.join(', '));
+  const linked = rows.filter((l) => l.includes('step-details.md#step-')).map((l) => l.match(/#step-([0-9a-z]+)/)[1]);
+  check('docs: every step-details.md link in steps.md has its ## Step section', linked.length > 0 && linked.every((id) => stepDetail(id).length > 0), linked.filter((id) => !stepDetail(id)).join(', '));
+}
+
 /* 7c4. gate-summary: the human-gate question body from the task's files (steps.md 2b, 3c, 10) */
 {
   const { gate2b, gate3c, gate10 } = await import('../skills/muffy/scripts/gate-summary.mjs');
@@ -905,13 +922,13 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     check('requirements: a done hand-off\'s non-blocking questions go to the next human gate without resuming the agent', R('skills/muffy/references/requirements.md').includes('Do not resume the agent for them: add them to the next human question (`pause:design-review`'));
     const review = R('skills/muffy/references/design-review.md');
     check('design-review: the 3c question links the screen map and carries the intake question', review.includes('docs/design/screen-map.html') && review.includes('non-blocking intake question'));
-    const row3e = R('skills/muffy/references/steps.md').split('\n').find((l) => l.startsWith('| 3e |')) ?? '';
+    const row3e = stepDetail('3e');
     check('steps: 3e has the diagrammer draw the architect\'s, the product-manager\'s and the designer\'s screen-map specs', row3e.includes('`diagrammer`') && row3e.includes("designer's screen-map spec"));
     const waits = intake.split(/\r?\n/).filter((l) => /^- \*\*(New project|Platform not named|The UI stack changes|A provider with its own UI|Monorepo with several apps)/.test(l));
     check('designer: the design system waits for the contract in exactly five named cases', /### When the design system waits for the contract/.test(intake) && waits.length === 5, waits.join(' | '));
     check('designer: while it waits, step 3 is wireframes with a marker line and no design-system file, and the intake question still rides on done', intake.includes('`Design system: after contract (<which condition>)` as the first line of `design.md`') && intake.includes('write no `docs/design-system/` file') && intake.includes('still return `done` with the intake question'));
     check('designer: the align round must clear the marker (quality check), and the starter otherwise still runs in parallel', R('agents/references/designer/quality-checks.md').includes('No `Design system: after contract` line is left in `design.md`') && intake.includes('do not wait for its Stack (a mismatch is fixed'));
-    const row3b = R('skills/muffy/references/steps.md').split('\n').find((l) => l.startsWith('| 3b |')) ?? '';
+    const row3b = stepDetail('3b');
     check('steps: 3b skips the first publish of wireframes and publishes once after the align round', row3b.includes('skip the first publish') && row3b.indexOf('skip the first publish') > row3b.indexOf('designer aligns fields'));
     const gd = (c) => spawnSync(process.execPath, [rel('skills/muffy/scripts/guard-bash-allowlist.mjs')], { input: JSON.stringify({ tool_name: 'Bash', agent_type: 'diagrammer', cwd: process.cwd(), tool_input: { command: c } }), encoding: 'utf8' }).status;
     check('diagrammer: the Bash guardrail names the diagram checks, and the guard allows exactly those', R('agents/references/diagrammer/rules-and-guardrails.md').includes('`check-diagram.mjs`, `check-diagram-render.mjs`, `diagram-import.mjs` (never with `--html`)') && ['node .claude/skills/muffy/scripts/check-diagram.mjs docs/design/screen-map.html', 'node .claude/skills/muffy/scripts/check-diagram-render.mjs docs/design/screen-map.html', 'node .claude/skills/muffy/scripts/diagram-import.mjs a.mmd --json'].every((c) => gd(c) === 0) && ['node .claude/skills/muffy/scripts/diagram-import.mjs a.mmd --html out.html', 'node .claude/skills/muffy/scripts/check-diagram.mjs a.html; rm -rf .', 'npm test', 'git commit -m x'].every((c) => gd(c) === 2));
@@ -1068,7 +1085,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   }
 
   {
-    const row3 = readFileSync(rel('skills/muffy/references/steps.md'), 'utf8').split('\n').find((l) => l.startsWith('| 3 |')) ?? '';
+    const row3 = stepDetail('3');
     check('docs: step 3 aligns the contract with deploy.md and records the chosen infra', row3.indexOf('aligns the contract') > -1 && row3.includes('infra: existing: <chosen>'));
     check('docs: setup copies a recorded infra: answer into every task checkpoint', readFileSync(rel('skills/muffy/references/setup.md'), 'utf8').includes('still copy that `infra:` line'));
     check('docs: the designer defaults a missing Platform to web instead of asking every time', readFileSync(rel('agents/references/designer/workflow.md'), 'utf8').includes('none named → `web`'));
