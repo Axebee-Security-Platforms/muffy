@@ -61,7 +61,7 @@
   | Stalled: the same blocker id open in ≥ 2 consecutive rejections | `checkpoint.md` `## Open blockers` | +1 level |
   | Exact fix: every open bug names file + line + expected fix (also re-running existing tests) | hand-off `blockers[]` | −1 level |
 
-  Combine: start at the role default, add the effects, cap the net move at one level either way, stay within `low`–`high`. The same rules are checked offline by `npm test`
+  Combine: start at the role default, add the effects, cap the net move at one level either way, stay within `low`–`high`. The same rules are checked offline by `npm test`. Compute it: `node .claude/skills/muffy/scripts/next-action.mjs effort --role <role> [--mode prototype] [--high-impact] [--assumed] [--exact-fix] [--stalled <n>]` prints `next=effort:<level>`
   - **Never lower** the effort of `code-reviewer`, `architect` or `devops` in production mode, same reason as model
   - A `SendMessage` fix round keeps the agent's current effort; to change it, spawn fresh and point it at `checkpoint.md`
   - Record the signals used and the resulting effort in checkpoint `## Run profile` (one line); skip the line when the default applies

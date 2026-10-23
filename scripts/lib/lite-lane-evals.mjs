@@ -6,8 +6,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validate } from '../../skills/muffy/scripts/schema.mjs';
-import { LITE_MAX_FILES, NEVER_SKIP } from './loop-sim.mjs';
-import { triageLite } from './triage-sim.mjs';
+import { LITE_MAX_FILES, NEVER_SKIP } from '../../skills/muffy/scripts/next-action.mjs';
+import { triageLite } from '../../skills/muffy/scripts/next-action.mjs';
 
 const unquote = (req) => req.replace(/^"|"$/g, '');
 

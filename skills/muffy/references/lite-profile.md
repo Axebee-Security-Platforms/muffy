@@ -16,7 +16,7 @@ A request is **lite** only if all hold; otherwise run the full flow:
 6. Schema changes only through a reversible migration. Dropping data, or a migration with no down path, runs the full flow
 7. Expected to touch ≤ 15 source files (tests and `.team/` excluded)
 
-If the goal or the area is missing, or performance work has no before-number, ask **one** `AskUserQuestion` for what is missing, then triage on the answer. If a condition fails, say which in one line and run the full flow.
+If the goal or the area is missing, or performance work has no before-number, ask **one** `AskUserQuestion` for what is missing, then triage on the answer. Read the signals from the request, then let `node .claude/skills/muffy/scripts/next-action.mjs triage lite '<json>'` decide (keys: `has_goal`, `has_area`, `kind` (`perf`), `has_measurement`, `user_visible`, `outside_consumers`, `adds_dependency`, `changes_auth`, `irreversible_migration`, `expected_source_files`). If a condition fails, say which in one line and run the full flow.
 
 ### Examples
 

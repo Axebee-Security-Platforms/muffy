@@ -2,7 +2,7 @@
 // Signals are what the Orchestrator reads from the prompt; reading them is the model's job, this file checks
 // that the order and the route table agree. If you change the order there, change it here and in
 // evals/route-scenarios.json.
-import { triage, triageLite } from './triage-sim.mjs';
+import { triage, triageLite } from '../../skills/muffy/scripts/next-action.mjs';
 
 export const MODES = ['todo', 'onboard', 'present', 'diagram'];
 // Routes whose outcome is not a code change (decision order steps 4 and 5).
