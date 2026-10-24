@@ -5,10 +5,11 @@
 // Fails closed: a gated muffy role spawned without the header is checked against the task its prompt names
 // (`.worktrees/feature-<task>` or `.team/<task>`), and blocked when it names none while a run exists here.
 // A spawn of a role outside muffy, or in a repo with no checkpoint, is never blocked.
+// Fix lane: a frontend-dev / backend-dev step-4 spawn is also blocked until the auditor's `confirm` (or the accepted risk) is on record.
 // Hook JSON arrives on stdin. Exit 2 = block (stderr is shown to the Orchestrator), 0 = allow.
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { missingGates, gatesForSpawn, PAUSE_OF, MUFFY_ROLES } from './gate-rules.mjs';
+import { missingGates, gatesForSpawn, auditMissing, PAUSE_OF, MUFFY_ROLES } from './gate-rules.mjs';
 
 let input;
 try {
@@ -44,6 +45,18 @@ if (!task) {
 
 const dir = cpDir(task);
 const cp = dir ? readFileSync(join(dir, 'checkpoint.md'), 'utf8') : null;
+
+const handoffs = [];
+if (dir && existsSync(join(dir, 'handoff'))) {
+  for (const f of readdirSync(join(dir, 'handoff')).filter((n) => /^4b-.*\.json$/.test(n))) {
+    try { handoffs.push(JSON.parse(readFileSync(join(dir, 'handoff', f), 'utf8'))); } catch { /* an unreadable hand-off is no confirm */ }
+  }
+}
+const noAudit = auditMissing(cp, role, prompt, handoffs);
+if (noAudit) {
+  console.error(`[muffy] blocked: ${role} may not start step 4 for "${task}": ${noAudit} (references/fix-profile.md, hooks-enforcement.md §14).`);
+  process.exit(2);
+}
 
 const missing = missingGates(cp, role, prompt);
 if (!missing.length) process.exit(0);

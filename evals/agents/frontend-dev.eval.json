@@ -40,18 +40,14 @@
       ]
     },
     {
-      "id": "fix-4a-no-code",
-      "input": "Profile: fix. Read: .team/fix-x/fix.md. Step 4a. Symptom: submit button is the wrong colour in dark mode.",
+      "id": "test-first-state",
+      "input": "Step 4. design.md has a cooldown state after 3 failed logins.",
       "must": [
-        "reproduces or inspects the problem before concluding",
-        "writes ## Cause and ## Repro in fix.md",
-        "hand-off has step 4a, ac_ids_done [] and a diagnosis object",
-        "changes no source file"
+        "writes a test of what the user sees for the cooldown state before building it",
+        "mocks the network only at the contract endpoint, in tests"
       ],
       "must_not": [
-        "edits source files in step 4a",
-        "asks for ac.md, contract.md or design.md",
-        "adds a new component or hard-coded colour"
+        "asserts on component state or class names"
       ]
     },
     {
@@ -68,14 +64,16 @@
       ]
     },
     {
-      "id": "test-first-state",
-      "input": "Step 4. design.md has a cooldown state after 3 failed logins.",
+      "id": "fix-step4-reads-hand-offs",
+      "input": "Profile: fix, step 4. Read: .team/fix-x/fix.md, handoff/4a-debugger-r1.json, handoff/4b-auditor-r1.json. Submit button is the wrong colour in dark mode.",
       "must": [
-        "writes a test of what the user sees for the cooldown state before building it",
-        "mocks the network only at the contract endpoint, in tests"
+        "changes only diagnosis.files plus tests or the visual check named in the AC",
+        "uses existing design-system tokens"
       ],
       "must_not": [
-        "asserts on component state or class names"
+        "re-diagnoses from scratch",
+        "asks for ac.md, contract.md or design.md",
+        "uses SendMessage"
       ]
     }
   ]

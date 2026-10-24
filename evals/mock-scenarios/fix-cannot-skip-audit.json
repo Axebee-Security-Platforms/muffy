@@ -1,0 +1,34 @@
+{
+  "id": "fix-cannot-skip-audit",
+  "description": "Fix lane that skips 4b is rejected",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "8",
+    "4b"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [],
+  "expect": {
+    "outcome": "invalid-profile",
+    "actions": []
+  }
+}

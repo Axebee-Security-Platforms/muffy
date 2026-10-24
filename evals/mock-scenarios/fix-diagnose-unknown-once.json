@@ -28,9 +28,8 @@
   "events": [
     {
       "handoff": {
-        "role": "backend-dev",
+        "role": "debugger",
         "step": "4a",
-        "ac_ids_done": [],
         "summary": "diagnosed",
         "diagnosis": {
           "status": "unknown",
@@ -41,9 +40,8 @@
     },
     {
       "handoff": {
-        "role": "backend-dev",
+        "role": "debugger",
         "step": "4a",
-        "ac_ids_done": [],
         "summary": "diagnosed",
         "diagnosis": {
           "status": "known",
@@ -52,9 +50,24 @@
           "files": [
             "src/auth/redirect.ts"
           ],
-          "repro": "test/auth/redirect.test.ts fails"
+          "repro": "test/auth/redirect.test.ts fails",
+          "severity": "medium",
+          "owner": "BE"
         },
         "round": 2
+      }
+    },
+    {
+      "handoff": {
+        "role": "auditor",
+        "step": "4b",
+        "round": 1,
+        "summary": "cause confirmed",
+        "audit": {
+          "verdict": "confirm",
+          "evidence_level": "medium",
+          "repro_rerun": "red"
+        }
       }
     },
     {
@@ -95,6 +108,7 @@
     "outcome": "completed",
     "actions": [
       "ask:more-evidence",
+      "accept",
       "accept",
       "accept",
       "accept",

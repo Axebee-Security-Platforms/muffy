@@ -1,0 +1,110 @@
+{
+  "id": "fix-audit-reject-twice-escalates",
+  "description": "A second reject after the user gave more information escalates loop-limit",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "8"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "round": 1,
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "redirect reads stale returnTo from session",
+          "files": [
+            "src/auth/redirect.ts"
+          ],
+          "repro": "test/auth/redirect.test.ts fails",
+          "severity": "medium",
+          "owner": "BE"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "auditor",
+        "step": "4b",
+        "round": 1,
+        "summary": "audit reject",
+        "audit": {
+          "verdict": "reject",
+          "evidence_level": "none",
+          "repro_rerun": "green",
+          "reason": "no repro"
+        }
+      }
+    },
+    {
+      "answer": "more-info"
+    },
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "round": 2,
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "redirect reads stale returnTo from session",
+          "files": [
+            "src/auth/redirect.ts"
+          ],
+          "repro": "test/auth/redirect.test.ts fails",
+          "severity": "medium",
+          "owner": "BE"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "auditor",
+        "step": "4b",
+        "round": 2,
+        "summary": "audit reject",
+        "audit": {
+          "verdict": "reject",
+          "evidence_level": "none",
+          "repro_rerun": "green",
+          "reason": "still no repro"
+        }
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "escalated",
+    "actions": [
+      "accept",
+      "ask:reject-options",
+      "rediagnose:debugger",
+      "accept",
+      "escalate:loop-limit"
+    ],
+    "trigger": "loop-limit"
+  }
+}

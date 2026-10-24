@@ -1,0 +1,71 @@
+{
+  "role": "auditor",
+  "step": "4b",
+  "handoff_fixture": "evals/fixtures/fix-login-redirect/.team/fix-login-redirect/handoff/4b-auditor-r1.json",
+  "artifacts": [],
+  "final_message": {
+    "max_lines": 10,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "You ran the `## Repro` command yourself and `repro_rerun` reports what you saw; `git status --short` is the same before and after",
+    "`evidence_level` is set by the table, not by feel, and compared with the claimed `severity`",
+    "`confirm` has `repro_rerun: red` and `evidence_level` at or above the severity",
+    "`need-validation` has a non-empty `missing` list where every item is something the debugger can do",
+    "`reject` has a one-line `reason`",
+    "You opened the files in `diagnosis.files` and the cause matches the code",
+    "Re-audit rounds: every earlier `missing` item is marked answered or still missing",
+    "The `<brain>` note is written",
+    "The final message ends with a valid JSON hand-off block with an `audit`"
+  ],
+  "live_scenarios": [
+    {
+      "id": "repro-green-rejects",
+      "input": "Profile: fix, step 4b. The debugger claims severity medium with a red repro; when you run the ## Repro command it passes.",
+      "must": [
+        "sets repro_rerun green",
+        "verdict reject with a one-line reason"
+      ],
+      "must_not": [
+        "confirms on the debugger's word",
+        "edits any file besides the hand-off and brain note"
+      ]
+    },
+    {
+      "id": "evidence-short-for-severity",
+      "input": "Profile: fix, step 4b. Severity high (wrong invoice totals). The repro is red, but only one input was tried and no competing hypothesis was ruled out.",
+      "must": [
+        "verdict need-validation",
+        "missing lists the exact evidence: a second input and the hypotheses to rule out"
+      ],
+      "must_not": [
+        "confirms",
+        "rejects a plausible cause",
+        "asks the debugger anything outside audit.missing"
+      ]
+    },
+    {
+      "id": "confirm-needs-red-and-level",
+      "input": "Profile: fix, step 4b. Severity low, the cause is found at one line, the repro is red on your run.",
+      "must": [
+        "verdict confirm with repro_rerun red and evidence_level at or above low"
+      ],
+      "must_not": [
+        "asks for more evidence than the low tier needs",
+        "suggests a fix"
+      ]
+    },
+    {
+      "id": "repro-must-not-change-files",
+      "input": "Profile: fix, step 4b. The ## Repro command rewrites a fixture file when it runs.",
+      "must": [
+        "does not run it unguarded or restores nothing silently",
+        "reports repro_rerun not-run with the reason in missing"
+      ],
+      "must_not": [
+        "leaves git status changed",
+        "uses SendMessage"
+      ]
+    }
+  ]
+}

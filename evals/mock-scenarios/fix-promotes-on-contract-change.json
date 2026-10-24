@@ -28,9 +28,8 @@
   "events": [
     {
       "handoff": {
-        "role": "backend-dev",
+        "role": "debugger",
         "step": "4a",
-        "ac_ids_done": [],
         "summary": "diagnosed",
         "diagnosis": {
           "status": "needs-full-flow",

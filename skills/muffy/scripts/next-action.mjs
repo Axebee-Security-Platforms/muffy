@@ -42,7 +42,10 @@ export const LOOP_LIMIT = 3; // fix loops allowed per loop point; the 4th reject
 export const REPEAT_LIMIT = 3; // same blocker id open in this many consecutive rejections = fix is not converging
 export const GATED_STEPS = ['3c', '3d']; // must pass before step 4; 3c passes only after the user approves the design (pause:design-review)
 export const NEVER_SKIP = ['6', '7', '9', '10'];
-export const FIX_NEVER_SKIP = ['4a']; // fix lane (references/fix-profile.md): diagnose before any code
+export const FIX_NEVER_SKIP = ['4a', '4b']; // fix lane (references/fix-profile.md): diagnose, then audit the cause, before any code
+export const SEVERITIES = ['low', 'medium', 'high', 'critical']; // impact of the bug; the auditor's evidence bar rises with it (agents/references/auditor/rules-and-guardrails.md)
+export const EVIDENCE_LEVELS = ['none', ...SEVERITIES]; // the highest severity tier whose minimum evidence a diagnosis meets
+export const AUDIT_ROUNDS = 1; // need-validation rounds allowed before the auditor's verdict counts as reject
 export const FIX_MAX_FILES = 5; // source files (tests and .team/ excluded) before a fix is promoted to the full flow
 export const LITE_MAX_FILES = 15; // same count for the lite lane (references/lite-profile.md)
 const isSource = (p) => !/(^|[\\/])\.team[\\/]/.test(p) && !/(^|[\\/])(tests?|__tests__)[\\/]|\.(test|spec)\.[a-z]+$/i.test(p);
@@ -56,6 +59,11 @@ export function simulate(scenario) {
   const loops = {}; // point -> rejections so far
   const streak = {}; // point -> { blocker id -> consecutive rejections it has been open }
   const vstreak = {}; // point -> { needs_validation id -> consecutive reviews it has been open }
+  const audits = {}; // point -> need-validation rounds used (fix lane step 4b)
+  let diagSeverity = null; // severity of the latest known diagnosis
+  let pendingAsk = false; // a reject is waiting for the user's answer
+  let moreInfoUsed = false; // the user already gave more information once
+  let auditRetries = 0; // confirms sent back for evidence below the severity (not reset by the generic retry counter)
   const retries = {}; // point -> invalid / not-ready retries used this round
   const passed = new Set(scenario.passed ?? []); // gates already passed outside the hand-offs (3c is a user approval, read from the checkpoint)
   const skipped = new Set(scenario.skip ?? []);
@@ -91,6 +99,24 @@ export function simulate(scenario) {
 
   for (const ev of scenario.events) {
     if (outcome === 'escalated') break;
+    if (ev.answer) {
+      // the user's answer to an audit reject (fix-profile.md): more-info | accept-risk | cancel
+      if (!pendingAsk) { actions.push('ignore:answer-without-question'); continue; }
+      pendingAsk = false;
+      if (ev.answer === 'more-info') {
+        moreInfoUsed = true;
+        audits['4b:auditor'] = 0;
+        actions.push('rediagnose:debugger');
+      } else if (ev.answer === 'accept-risk') {
+        passed.add('4b');
+        actions.push('proceed:risk-accepted');
+      } else {
+        outcome = 'cancelled';
+        actions.push('close:cancelled');
+        break;
+      }
+      continue;
+    }
     const h = ev.handoff;
     const point = `${h?.step ?? ev.step ?? '?'}:${h?.role ?? ev.role ?? '?'}`;
 
@@ -102,6 +128,11 @@ export function simulate(scenario) {
 
     if (fix && String(h?.step ?? ev.step) === '4' && !passed.has('4a')) {
       actions.push('block:no-diagnosis');
+      outcome = 'blocked';
+      break;
+    }
+    if (fix && String(h?.step ?? ev.step) === '4' && !passed.has('4b')) {
+      actions.push('block:no-audit');
       outcome = 'blocked';
       break;
     }
@@ -124,6 +155,26 @@ export function simulate(scenario) {
     }
     retries[point] = 0;
 
+    // 2a. fix lane: the auditor's verdict on the diagnosis (fix-profile.md). Silent: the debugger only ever sees `missing` through the hand-off file
+    if (h.audit) {
+      const { verdict, evidence_level: level } = h.audit;
+      if (verdict === 'confirm' && diagSeverity && EVIDENCE_LEVELS.indexOf(level) < EVIDENCE_LEVELS.indexOf(diagSeverity)) {
+        auditRetries += 1;
+        if (auditRetries === 1) { actions.push('retry:audit-below-severity'); continue; }
+        escalate(point, 'invalid-handoff', [], h.role);
+        continue;
+      }
+      auditRetries = 0;
+      if (verdict === 'confirm') { passed.add('4b'); actions.push('accept'); continue; }
+      if (verdict === 'need-validation') audits[point] = (audits[point] ?? 0) + 1;
+      const unresolved = verdict === 'reject' || audits[point] > AUDIT_ROUNDS;
+      if (!unresolved) { actions.push('revalidate:debugger'); continue; }
+      if (moreInfoUsed) { loops[point] = (loops[point] ?? 0) + 1; escalate(point, 'loop-limit', [], h.role); continue; }
+      pendingAsk = true;
+      actions.push('ask:reject-options');
+      continue;
+    }
+
     // 2b. fix lane: route on the diagnosis (fix-profile.md)
     if (h.diagnosis?.status === 'needs-full-flow') {
       actions.push('promote:full-flow');
@@ -137,6 +188,7 @@ export function simulate(scenario) {
       else actions.push('ask:more-evidence');
       continue;
     }
+    if (h.diagnosis?.status === 'known') diagSeverity = h.diagnosis.severity ?? null;
     if (fix && String(h.step) === '4') {
       const files = h.paths_written.filter(isSource).length;
       if (files > FIX_MAX_FILES || h.blockers.some((b) => b.owner === 'Architect')) {
@@ -191,7 +243,7 @@ export function simulate(scenario) {
 /* ---------- effort tiers (token-discipline.md) ---------- */
 
 export const LEVELS = ['low', 'medium', 'high'];
-export const PROTECTED_ROLES = ['code-reviewer', 'architect', 'devops']; // never below their default in production mode
+export const PROTECTED_ROLES = ['code-reviewer', 'architect', 'devops', 'auditor']; // never below their default in production mode
 export const STALLED_AFTER = 2; // same blocker id open in this many consecutive rejections counts as stalled
 
 // Agent definitions sit at <root>/agents/ in this repo and at .claude/agents/ once installed: three levels up either way.
@@ -221,7 +273,8 @@ export function chooseEffort({ role, mode = 'production', signals = {} }) {
 
 /* ---------- model and effort for one spawn, read from the task's files (token-discipline.md) ---------- */
 
-export const MODELS = ['haiku', 'sonnet']; // never opus or fable
+export const MODELS = ['haiku', 'sonnet']; // never opus or fable ...
+export const OPUS_ROLES = ['auditor']; // ... except the auditor, which runs on a different model from the debugger it audits (token-discipline.md)
 export const ROLE_OWNER = { 'frontend-dev': 'FE', 'backend-dev': 'BE', 'docs-writer': 'Docs', devops: 'Devops', architect: 'Architect', designer: 'Designer', 'product-manager': 'PM', researcher: 'Researcher' };
 export const HIGH_IMPACT = /\b(auth\w*|login|password|oauth|jwt|payments?|billing|stripe|migrations?|secrets?|api[ _-]?keys?|credentials?)\b/i;
 const defaultModel = (role) =>
@@ -265,16 +318,17 @@ export function spawnProfile({ role, step, round = 1, teamDir, brain, mode = 'pr
   // model: the frontmatter default, moved down to haiku only in the listed cases, and never if project.md records haiku failing for this role
   const baseModel = defaultModel(role);
   const fe_be = role === 'frontend-dev' || role === 'backend-dev';
+  const debugger4a = role === 'debugger';
   const haikuCase =
     (fe_be && signals.exactFix && Number(round) > 1) ? 'exact fix round'
-    : (fe_be && String(step) === '4a' && flags.lineKnown) ? 'diagnose with file and line known'
+    : (debugger4a && String(step) === '4a' && flags.lineKnown) ? 'diagnose with file and line known'
     : (role === 'qa-tester' && flags.rerunOnly) ? 're-running existing tests'
     : (role === 'researcher' && flags.minimalResearch) ? 'codebase-only research'
     : null;
   const lessons = brain ? section(readIf(join(brain, 'project.md')), 'Lessons') : '';
   const haikuFailed = lessons.split('\n').some((l) => l.includes(role) && /haiku/i.test(l) && /fail|rerun|re-run|retry|wrong|miss/i.test(l));
   const protectedRole = mode === 'production' && PROTECTED_ROLES.includes(role);
-  let model = MODELS.includes(baseModel) ? baseModel : 'sonnet';
+  let model = MODELS.includes(baseModel) || (OPUS_ROLES.includes(role) && baseModel === 'opus') ? baseModel : 'sonnet';
   let modelReason = 'default';
   if (haikuCase && !protectedRole) {
     if (haikuFailed) modelReason = `kept ${model}: project.md Lessons records haiku failing for ${role}`;

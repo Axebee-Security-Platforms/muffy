@@ -9,7 +9,7 @@ export const GATES = ['2b', '3c'];
 export const PAUSE_OF = { '2b': 'plan-review', '3c': 'design-review' };
 
 // the subagents muffy spawns (agents/*.md); guard-gates.mjs fails closed for these when a prompt has no Task header
-export const MUFFY_ROLES = new Set(['architect', 'backend-dev', 'code-reviewer', 'designer', 'devops', 'diagrammer', 'docs-writer', 'frontend-dev', 'product-manager', 'qa-tester', 'researcher']);
+export const MUFFY_ROLES = new Set(['architect', 'auditor', 'backend-dev', 'code-reviewer', 'debugger', 'designer', 'devops', 'diagrammer', 'docs-writer', 'frontend-dev', 'product-manager', 'qa-tester', 'researcher']);
 // roles that run before any gate (steps 0-2)
 const BEFORE_GATES = new Set(['product-manager', 'researcher', 'presenter']);
 // roles that run only after the design gate (step 4 on, and the code review of step 6)
@@ -50,6 +50,19 @@ export function gatesForSpawn(role, prompt = '', lane = 'feature') {
   const needs = ['2b'];
   if (AFTER_DESIGN.has(role) || (role === 'devops' && /\bmode\s*2\b/i.test(prompt))) needs.push('3c');
   return needs;
+}
+
+// fix lane: step 4 (a dev's fix) needs the auditor's `confirm` at 4b, or the user's accepted risk recorded in ## Status.
+// The step comes from the hand-off path in the prompt's Write: line (make-envelope.mjs adds handoff/<step>-<role>-r<round>.json).
+// `handoffs` is the task's hand-offs as parsed JSON, in any order; returns the reason a spawn is refused, or null.
+const DEV_STEP4 = /handoff[\\/]4-(?:frontend|backend)-dev-r\d+\.json/;
+export function auditMissing(cpText, role, prompt = '', handoffs = []) {
+  if (!['frontend-dev', 'backend-dev'].includes(role) || !DEV_STEP4.test(prompt)) return null;
+  if (cpText === null || laneOf(cpText) !== 'fix') return null;
+  if (/\baudit 4b\b[^\n]*\brisk accepted\b/i.test(section(cpText, 'Status') ?? '')) return null;
+  const latest = handoffs.filter((h) => h?.step === '4b').sort((a, b) => (a.round ?? 0) - (b.round ?? 0)).at(-1);
+  if (latest?.audit?.verdict === 'confirm') return null;
+  return `the fix lane needs the auditor's \`confirm\` at step 4b before step 4 (latest audit: ${latest?.audit?.verdict ?? 'none'}); on a reject the user may accept the risk, recorded as \`audit 4b: risk accepted\` in checkpoint ## Status`;
 }
 
 // gates still open for this spawn; a null checkpoint means setup has not written one, so every gate is open

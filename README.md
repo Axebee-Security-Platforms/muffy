@@ -2,7 +2,7 @@
 
 # Muffy
 
-### One skill, eleven subagents, one feature from research to production.
+### One skill, thirteen subagents, one feature from research to production.
 
 **Describe a feature. The team researches, designs, builds, reviews, tests, and ships it, with a human approving the design before code starts and every production release.**
 
@@ -81,7 +81,7 @@ Outside the team flow. The product manager, thinking like a solutions engineer, 
 /muffy fix login redirects to the old page after password reset
 ```
 
-The fix lane skips research, product, design and architecture. A dev agent first **diagnoses** (reproduces the problem, finds the cause, no code yet), then fixes it with a regression test in the same context. `code-reviewer`, `qa-tester`, staging and the Human gate still run. The cause may be unknown at the start; if the diagnosis finds the problem is in the contract, a dependency or the stack, or the fix touches more than 5 source files, the run is promoted to the full flow. Details: [fix-profile](skills/muffy/references/fix-profile.md).
+The fix lane skips research, product, design and architecture. A `debugger` first **diagnoses** (reproduces the problem, finds the cause, rates its severity, no code), an independent `auditor` on a different model **checks the evidence** against that severity, and only then does a dev agent fix it with a regression test. The agents never talk to each other: they pass hand-off JSON. `code-reviewer`, `qa-tester`, staging and the Human gate still run. The cause may be unknown at the start; if the diagnosis finds the problem is in the contract, a dependency or the stack, or the fix touches more than 5 source files, the run is promoted to the full flow. Details: [fix-profile](skills/muffy/references/fix-profile.md).
 
 ### Draw a diagram
 
@@ -223,8 +223,9 @@ The Orchestrator skips steps the feature does not need (no UI change skips desig
 | Step | Owner | What happens |
 |---|---|---|
 | Setup-lite | Orchestrator | Writes `fix.md` (symptom, cause, repro, AC); one confirmation at `pause:scope` |
-| 4a | `frontend-dev` / `backend-dev` | Diagnose, no code: reproduce, find the cause, record it in `fix.md` and a `diagnosis` hand-off |
-| 4 | same agent | Fix plus a regression test that fails before and passes after |
+| 4a | `debugger` | Diagnose, no code: reproduce, find the cause, rate the severity (`low` to `critical`), name the owner (FE, BE or both); records it in `fix.md` and a `diagnosis` hand-off |
+| 4b | `auditor` | Re-runs the repro once and grades the evidence against the severity: `confirm`, `need-validation` (back to the debugger once, through the hand-off file) or `reject` (you choose: more information, accept the risk, cancel) |
+| 4 | `frontend-dev` / `backend-dev` | Fix plus a regression test that fails before and passes after |
 | 6, 7 | `code-reviewer`, `qa-tester` | Review and QA against `fix.md`; a cosmetic AC with no automated check is marked `manual` |
 | 9, 10, 11 | `devops`, Human gate | Staging, your approval, production, as in the full flow |
 
@@ -283,6 +284,8 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 | `devops` | Deploy plan, smoke build, staging, production rollout |
 | `frontend-dev` | UI implementation on `fe/<task>` (web, mobile and desktop apps) |
 | `backend-dev` | API and data implementation on `be/<task>`; also CLI and console apps |
+| `debugger` | Fix lane only: finds the cause of a bug, rates its severity, names the owner; no code |
+| `auditor` | Fix lane only, runs on a different model (`opus`): re-runs the repro and checks the evidence against the severity before any fix is written; `confirm`, `need-validation` or `reject` |
 | `code-reviewer` | Read-only review of code and docs |
 | `qa-tester` | Tests against acceptance criteria |
 | `docs-writer` | Docs and release notes (optional announcement) |

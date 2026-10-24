@@ -3,11 +3,12 @@
 //   - checkpoint.mjs gate: approval needs the pause saved, a skip of 3c is refused once design.md exists
 //   - checkpoint.mjs unpause: refused for a gate's pause while the gate has no answer
 //   - guard-gates.mjs: blocks the spawn before its gate, lets the rest through, fails closed without a Task header
+//   - fix lane: a dev's step-4 spawn is blocked until the auditor's `confirm` or the user's accepted risk (auditMissing, guard-gates.mjs)
 import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { gateState, gatesForSpawn, missingGates, gateErrors } from '../../skills/muffy/scripts/gate-rules.mjs';
+import { gateState, gatesForSpawn, missingGates, gateErrors, auditMissing } from '../../skills/muffy/scripts/gate-rules.mjs';
 import { recordGate, clearPause } from '../../skills/muffy/scripts/checkpoint.mjs';
 
 const CP = (status, profile = 'Full flow, feature lane.') =>
@@ -38,6 +39,18 @@ export function runGateEvals({ check, root }) {
   check('gates: hand-off at step 4 with 3c open is an error', gateErrors(CP('- gate 2b passed · user: "ok"'), ['3', '4']).length === 1);
   check('gates: skipped 3c with design.md present is an error', gateErrors(CP('- gate 2b passed · user: "ok"\n- gate 3c skipped · no UI'), ['4'], { designExists: true }).length === 1);
   check('gates: fix lane is never gated post-hoc', gateErrors(open, ['4'], { lane: 'fix' }).length === 0);
+
+  /* fix lane: no step 4 before the audit confirms */
+  const FIXCP = (status) => CP(status, 'fix lane: skipped 1, 2, 3, 3b, 3c, 3d, 8');
+  const step4 = 'Task: t\nWrite: .worktrees/feature-t/.team/t/handoff/4-backend-dev-r1.json\n';
+  const audit = (verdict, round = 1) => ({ step: '4b', round, audit: { verdict } });
+  check('audit gate: a dev step-4 spawn with no audit is refused', auditMissing(FIXCP('- stage: fix'), 'backend-dev', step4, []) !== null);
+  check('audit gate: a confirm lets step 4 start', auditMissing(FIXCP('- stage: fix'), 'backend-dev', step4, [audit('confirm')]) === null);
+  check('audit gate: need-validation and reject do not', auditMissing(FIXCP('- stage: fix'), 'backend-dev', step4, [audit('need-validation')]) !== null && auditMissing(FIXCP('- stage: fix'), 'frontend-dev', step4.replace('backend', 'frontend'), [audit('reject')]) !== null);
+  check('audit gate: the latest round decides', auditMissing(FIXCP('- stage: fix'), 'backend-dev', step4, [audit('confirm', 1), audit('reject', 2)]) !== null && auditMissing(FIXCP('- stage: fix'), 'backend-dev', step4, [audit('reject', 1), audit('confirm', 2)]) === null);
+  check('audit gate: the accepted risk in ## Status lets step 4 start after a reject', auditMissing(FIXCP('- audit 4b: risk accepted · user: "go ahead"'), 'backend-dev', step4, [audit('reject')]) === null);
+  check('audit gate: the debugger, the auditor and a step-6 spawn are not held', auditMissing(FIXCP('- stage: fix'), 'debugger', 'Write: handoff/4a-debugger-r1.json', []) === null && auditMissing(FIXCP('- stage: fix'), 'auditor', 'Write: handoff/4b-auditor-r1.json', []) === null && auditMissing(FIXCP('- stage: fix'), 'code-reviewer', 'Write: handoff/6-code-reviewer-r1.json', []) === null);
+  check('audit gate: the feature lane is not held by it', auditMissing(CP('- gate 2b passed'), 'backend-dev', step4, []) === null);
 
   /* checkpoint.mjs gate */
   const tmp = mkdtempSync(join(tmpdir(), 'muffy-gates-'));
@@ -124,6 +137,24 @@ export function runGateEvals({ check, root }) {
     check('guard: frontend-dev still blocked until 3c', spawn('frontend-dev', `${hdr}go`).status === 2);
     write(CP('- gate 2b passed · user: "ok"\n- gate 3c passed · user: "ok"'));
     check('guard: frontend-dev allowed once 3c passed', spawn('frontend-dev', `${hdr}go`).status === 0);
+
+    // fix lane: the debugger and the auditor are muffy roles, ungated; a dev step-4 spawn waits for the audit
+    const fixHandoff = join(dir, 'handoff');
+    mkdirSync(fixHandoff, { recursive: true });
+    write(FIXCP('- stage: fix'));
+    const devPrompt = `${hdr}Write: .worktrees/feature-t/.team/t/handoff/4-backend-dev-r1.json\n`;
+    check('guard: fix lane, debugger spawn with the Task header is allowed', spawn('debugger', `${hdr}go`).status === 0);
+    check('guard: fix lane, auditor spawn with the Task header is allowed', spawn('auditor', `${hdr}go`).status === 0);
+    check('guard: fix lane, debugger and auditor spawns without a Task header fail closed like every muffy role', spawn('debugger', 'go').status === 2 && spawn('auditor', 'go').status === 2);
+    check('guard: fix lane, backend-dev step 4 is blocked before the audit', spawn('backend-dev', devPrompt).status === 2);
+    writeFileSync(join(fixHandoff, '4b-auditor-r1.json'), JSON.stringify({ step: '4b', round: 1, audit: { verdict: 'reject' } }));
+    check('guard: fix lane, backend-dev step 4 is blocked after a reject', spawn('backend-dev', devPrompt).status === 2);
+    write(FIXCP('- audit 4b: risk accepted · user: "go ahead"'));
+    check('guard: fix lane, backend-dev step 4 is allowed once the user accepted the risk', spawn('backend-dev', devPrompt).status === 0);
+    write(FIXCP('- stage: fix'));
+    writeFileSync(join(fixHandoff, '4b-auditor-r2.json'), JSON.stringify({ step: '4b', round: 2, audit: { verdict: 'confirm' } }));
+    check('guard: fix lane, backend-dev step 4 is allowed after a confirm', spawn('backend-dev', devPrompt).status === 0);
+    check('guard: fix lane, a step-6 spawn is not held by the audit', spawn('code-reviewer', `${hdr}Write: .worktrees/feature-t/.team/t/handoff/6-code-reviewer-r1.json\n`).status === 0);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

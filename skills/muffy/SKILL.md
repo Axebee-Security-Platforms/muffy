@@ -64,7 +64,7 @@ Critical rules — Orchestrator rules 1–4 plus the opt-in hooks: [references/h
 - An agent's hand-off carries `deferred_writes` (the harness refused its document write): you write those files from its `<<<FILE>>>` blocks, then validate ([token-discipline.md](references/token-discipline.md))
 - A loop point that is rejected 4 times, or keeps the same blocker id open for 3 consecutive rejects, stops and asks the user: [references/loops.md](references/loops.md)
 - Only the Orchestrator merges branches and saves reviews as `review-<n>.md`
-- Run only the phases the plan marks for this run. In the fix lane, step 4a (diagnose) is never skipped, and a fix that outgrows the lane is promoted to the full flow, never patched on
+- Run only the phases the plan marks for this run. In the fix lane, steps 4a (diagnose) and 4b (audit the cause) are never skipped, and the lane is silent (hand-off JSON between agents, no `SendMessage`), and a fix that outgrows the lane is promoted to the full flow, never patched on
 - FE/BE report a temporary stack → stop, send to architect (+ ADR) before coding continues
 - An agent writes outside its vault folder → revert it and resend its rule; an agent can't find `<brain>` → `AskUserQuestion`
 - Never deploy to production without passing the Human gate

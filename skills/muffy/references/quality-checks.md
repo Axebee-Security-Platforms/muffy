@@ -16,7 +16,7 @@ It prints `next=<action>` and one `ok`/`FAIL` line per check. Act on `next=` and
 - **artifacts**: `check-artifacts.mjs`. Sizes, links, and traceability `brief.md` → `ac.md` → `contract.md` → `qa-report.md` (lite lane starts at `ac.md`; fix lane: `fix.md` → `qa-report.md`) ([memory-model.md](memory-model.md#splitting-large-artifacts))
 - **brain**: each role of the step wrote `<brain>/agents/<role>/<task>.md`
 - **runtime**: the `Runtime:` in `qa-report.md` matches the `deploy.md` pin
-- **fix lane** (from step 4): the 4a diagnosis is `known`; `fix.md` has `## Cause` and `## Repro` ([fix-profile.md](fix-profile.md))
+- **fix lane** (from step 4): the 4a diagnosis is `known` (with `severity` and `owner`) and the 4b audit is `confirm` (or `audit 4b: risk accepted` is in checkpoint `## Status`); `fix.md` has `## Cause` and `## Repro` ([fix-profile.md](fix-profile.md))
 - **diff** (with `--base`): a skipped 3d while a smoke trigger is true, and from step 4 a change that outgrew its lane (`next=promote:full-flow`) ([diff-signals.mjs](../scripts/diff-signals.mjs))
 
 `next=proceed` and exit 0 means every scripted check passed. `next=send-back:<checks>` → send the `FAIL` lines to the owner before moving on.
