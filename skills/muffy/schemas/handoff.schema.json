@@ -15,6 +15,7 @@
     "status": { "enum": ["done", "blocked", "needs-input", "not-ready"] },
     "verdict": { "enum": ["Approve", "Reject", "Pass", "Fail"] },
     "paths_written": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "deferred_writes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Paths whose content the agent returned as <<<FILE path>>> blocks in its final message because the harness refused its write; the Orchestrator writes them (agents/references/shared/deferred-writes.md). Each is also in paths_written" },
     "ac_ids_done": { "type": "array", "items": { "type": "string", "pattern": "^AC-[0-9]+$" } },
     "tests": {
       "type": "object",

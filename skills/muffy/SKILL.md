@@ -61,6 +61,7 @@ Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup
 Critical rules — Orchestrator rules 1–4 plus the opt-in hooks: [references/hooks-enforcement.md](references/hooks-enforcement.md)
 
 - Every agent ends with a JSON hand-off block; validate it ([schemas/](schemas/handoff.schema.json), `scripts/validate-handoff.mjs`) before acting on it; invalid twice → escalate, never guess
+- An agent's hand-off carries `deferred_writes` (the harness refused its document write): you write those files from its `<<<FILE>>>` blocks, then validate ([token-discipline.md](references/token-discipline.md))
 - A loop point that is rejected 4 times, or keeps the same blocker id open for 3 consecutive rejects, stops and asks the user: [references/loops.md](references/loops.md)
 - Only the Orchestrator merges branches and saves reviews as `review-<n>.md`
 - Run only the phases the plan marks for this run. In the fix lane, step 4a (diagnose) is never skipped, and a fix that outgrows the lane is promoted to the full flow, never patched on
