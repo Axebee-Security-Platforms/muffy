@@ -16,7 +16,8 @@
 //   node checkpoint.mjs unpause <.team/<task>>
 //   node checkpoint.mjs spawn  <.team/<task>> --step 4 --role backend-dev --model sonnet --effort medium --round 1
 //                              [--handoff <file> | --verdict pass|fail|blocked] [--reruns 0] [--note "<≤8 words>"] [--tok <n>]
-//   node checkpoint.mjs gate   <.team/<task>> 2b|3c approve --by "<the user's reply>"
+//   node checkpoint.mjs gate   <.team/<task>> 2b approve --plan docs/plan/<task>.md --by "<the user's reply>"
+//   node checkpoint.mjs gate   <.team/<task>> 3c approve --by "<the user's reply>"
 //   node checkpoint.mjs gate   <.team/<task>> 2b|3c reject  --by "<the user's reply>"
 //   node checkpoint.mjs gate   <.team/<task>> 2b|3c skip    --reason "<why no gate>"
 // Prints one verdict line. Exit 0 = written and checked, 1 = written but check-checkpoint failed, 2 = usage or input error.
@@ -174,7 +175,7 @@ export function logSpawn(taskDir, o) {
 
 // The user's answer at a human gate. `approve` needs the pause saved first (the question was asked) and a ready
 // gate summary; `reject` keeps the pause; `skip` needs a reason and is refused where the gate cannot be skipped.
-export function recordGate(taskDir, gate, action, { by, reason } = {}) {
+export function recordGate(taskDir, gate, action, { by, reason, plan } = {}) {
   if (!GATES.includes(gate)) throw new Error(`gate: ${gate} is not a gate (${GATES.join(', ')})`);
   if (!['approve', 'reject', 'skip'].includes(action)) throw new Error('gate: action is approve, reject or skip');
   const cpPath = join(taskDir, 'checkpoint.md');
@@ -197,7 +198,7 @@ export function recordGate(taskDir, gate, action, { by, reason } = {}) {
     if (!paused) throw new Error(`gate ${gate}: save the pause first (checkpoint.mjs pause <dir> ${PAUSE_OF[gate]} --until "the user answers"), so the question is on record`);
     if (!by?.trim()) throw new Error('gate: --by is required, the user\'s reply in their own words');
     if (action === 'approve') {
-      const summary = gate === '2b' ? gate2b(taskDir) : gate3c(taskDir);
+      const summary = gate === '2b' ? gate2b(taskDir, { plan }) : gate3c(taskDir);
       if (summary.notReady.length) throw new Error(`gate ${gate} not ready: ${summary.notReady.join('; ')}`);
       line = `gate ${gate} passed · user: "${by.trim()}" · ${date}`;
     } else {
@@ -234,7 +235,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   }
   let said;
   try {
-    if (cmd === 'gate') said = recordGate(taskDir, pos[1], pos[2], { by: o.by, reason: o.reason });
+    if (cmd === 'gate') said = recordGate(taskDir, pos[1], pos[2], { by: o.by, reason: o.reason, plan: typeof o.plan === 'string' ? o.plan : undefined });
     else if (cmd === 'round') {
       if (!o.step || !o.round || !o.handoff || !o.summary) throw new Error('round: --step, --round, --handoff and --summary are required');
       const r = recordRound(taskDir, { step: o.step, round: o.round, handoff: o.handoff, summary: o.summary, notes: o.notes });
