@@ -1,1 +1,25 @@
-{"role":"designer","task":"login-flow","step":"3","round":1,"status":"done","paths_written":[".team/login-flow/design.md","docs/design-system/tokens.css"],"blockers":[],"quality_checks":{"passed":true,"failed":[]},"brain_note":"<brain>/agents/designer/login-flow.md","summary":"designer done"}
+{
+  "role": "designer",
+  "task": "login-flow",
+  "step": "3",
+  "round": 1,
+  "status": "done",
+  "paths_written": [
+    ".team/login-flow/design.md",
+    "docs/design-system/tokens.css"
+  ],
+  "blockers": [],
+  "quality_checks": {
+    "passed": true,
+    "failed": []
+  },
+  "brain_note": "<brain>/agents/designer/login-flow.md",
+  "summary": "designer done",
+  "decisions": [
+    {
+      "id": "D-1",
+      "decision": "Followed the contract and AC as written",
+      "why": "No alternative was needed; the contract names the approach"
+    }
+  ]
+}

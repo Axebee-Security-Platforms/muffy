@@ -140,6 +140,21 @@
         }
       }
     },
+    "decisions": {
+      "type": "array",
+      "maxItems": 12,
+      "description": "The choices this round made and why, so a fresh spawn in a later round (silent flows: design-review send-back, loop retries, fix rounds, step-7 docs round 2, stack-learning) reads the reasoning from the file instead of from a continued chat. Required on a done/blocked hand-off of designer, architect, product-manager, frontend-dev, backend-dev, devops and docs-writer outside present mode",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "decision", "why"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^D-[0-9]+$", "description": "Stable across rounds, like a blocker id; a later round that changes a choice re-lists it under the same id" },
+          "decision": { "type": "string", "minLength": 3, "maxLength": 200 },
+          "why": { "type": "string", "minLength": 3, "maxLength": 300, "description": "The reason, including the alternative that was rejected when one was considered" }
+        }
+      }
+    },
     "brain_note": { "type": "string", "description": "Path of the <brain>/agents/<role>/<task>.md written; absent for code-reviewer (Orchestrator writes it)" },
     "summary": { "type": "string", "minLength": 3, "maxLength": 300 }
   },
@@ -165,6 +180,7 @@
     { "if": { "properties": { "questions": { "minItems": 1 } }, "required": ["questions"] }, "then": { "properties": { "role": { "enum": ["researcher", "product-manager", "architect", "devops", "designer", "docs-writer"] } } } },
     { "if": { "properties": { "verdict": { "enum": ["Reject", "Fail"] } }, "required": ["verdict"] }, "then": { "properties": { "blockers": { "minItems": 1 } } } },
     { "if": { "properties": { "quality_checks": { "properties": { "passed": { "enum": [false] } }, "required": ["passed"] } }, "required": ["quality_checks"] }, "then": { "properties": { "status": { "enum": ["not-ready", "blocked", "needs-input"] }, "quality_checks": { "properties": { "failed": { "minItems": 1 } } } } } },
-    { "if": { "properties": { "diagrams_spec": { "minItems": 1 } }, "required": ["diagrams_spec"] }, "then": { "properties": { "role": { "enum": ["architect", "product-manager", "designer"] } } } }
+    { "if": { "properties": { "diagrams_spec": { "minItems": 1 } }, "required": ["diagrams_spec"] }, "then": { "properties": { "role": { "enum": ["architect", "product-manager", "designer"] } } } },
+    { "if": { "properties": { "role": { "enum": ["designer", "architect", "product-manager", "frontend-dev", "backend-dev", "devops", "docs-writer"] }, "step": { "pattern": "^[0-9]" }, "status": { "enum": ["done", "blocked"] } }, "required": ["role", "step", "status"] }, "then": { "required": ["decisions"], "properties": { "decisions": { "minItems": 1 } } } }
   ]
 }

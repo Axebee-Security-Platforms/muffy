@@ -1,1 +1,24 @@
-{"role":"architect","task":"login-flow","step":"3","round":1,"status":"done","paths_written":[".team/login-flow/contract.md"],"blockers":[],"quality_checks":{"passed":true,"failed":[]},"brain_note":"<brain>/agents/architect/login-flow.md","summary":"architect done"}
+{
+  "role": "architect",
+  "task": "login-flow",
+  "step": "3",
+  "round": 1,
+  "status": "done",
+  "paths_written": [
+    ".team/login-flow/contract.md"
+  ],
+  "blockers": [],
+  "quality_checks": {
+    "passed": true,
+    "failed": []
+  },
+  "brain_note": "<brain>/agents/architect/login-flow.md",
+  "summary": "architect done",
+  "decisions": [
+    {
+      "id": "D-1",
+      "decision": "Followed the contract and AC as written",
+      "why": "No alternative was needed; the contract names the approach"
+    }
+  ]
+}

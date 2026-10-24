@@ -96,6 +96,14 @@ check('runtime pin: mismatch is detected', runtime(read('deploy.md')) !== runtim
   check('make-envelope: valid flags print the template with the hand-off path and shape', ok.status === 0 && ok.stdout.includes('handoff/4-backend-dev-r1.json') && ok.stdout.includes('Hand-off shape:') && ok.stdout.includes('1,200 characters'), ok.stderr);
   check('make-envelope: prompt stays lean (< 1.6 KB)', ok.stdout.length < 1600, String(ok.stdout.length));
   check('make-envelope: schema violation exits 1 and prints nothing to stdout', bad.status === 1 && bad.stdout === '');
+  // cache-stable prefix: lines before Final message: do not change with the round or the goal; per-spawn lines come after; Hand-off shape: is last
+  const lines = (r) => r.stdout.split(/\r?\n/);
+  const r1 = lines(mk(['--goal', 'Build login'])), r2 = lines(mk(['--round', '2', '--goal', 'Fix B-1 from review-1.md']));
+  const at = (ls, p) => ls.findIndex((l) => l.startsWith(p));
+  const head = (ls) => ls.slice(0, at(ls, 'Final message') + 1);
+  check('make-envelope: the prefix up to Final message: is identical for round 1 and round 2 (cacheable)', at(r1, 'Final message') > 0 && JSON.stringify(head(r1)) === JSON.stringify(head(r2)), head(r1).join('|'));
+  check('make-envelope: Goal/Read/Write follow Final message and Hand-off shape is last', at(r1, 'Goal:') > at(r1, 'Final message') && at(r1, 'Read:') > at(r1, 'Goal:') && at(r1, 'Write:') > at(r1, 'Read:') && at(r1, 'Hand-off shape:') === r1.filter(Boolean).length - 1, r1.join('|'));
+  check('make-envelope: a role that must record decisions gets decisions in its hand-off shape and a Final message line; a code-reviewer does not', r1.some((l) => l.includes('"decisions"')) && r1.some((l) => l.includes('Record each choice')) && !mk(['--role', 'code-reviewer', '--step', '6']).stdout.includes('decisions'));
   const blockedEnv = mk(['--role', 'docs-writer', '--write', 'docs/architecture/baseline.md']);
   const okEnv = mk(['--role', 'docs-writer', '--write', 'docs/api/x.md']);
   check('make-envelope: a Write: path the write-scope guard blocks for the role exits 1 before any spawn', blockedEnv.status === 1 && blockedEnv.stdout === '' && blockedEnv.stderr.includes('only researcher may'), blockedEnv.stderr);
@@ -910,7 +918,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
 {
   // the intake never stops the run: the designer finishes on the starter and returns done with one non-blocking question
   const intakeQ = { id: 'Q-1', question: 'Do you have a brand or a reference for how it should look?', why: 'Sets the colors, type and tone of every screen; can be changed later', options: ['not yet, choose a sensible starter style for me', 'yes, I will share it', 'I want to pick a personality', 'make it resemble a product I will describe'], default: 'not yet, choose a sensible starter style for me', blocking: false };
-  const handoff = { role: 'designer', task: 't', step: '3', round: 1, status: 'done', paths_written: ['docs/design-system/tokens.css', 'docs/design-system/README.md'], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'design on the starter style; asks for a brand', questions: [intakeQ] };
+  const handoff = { role: 'designer', task: 't', step: '3', round: 1, status: 'done', decisions: [{ id: 'D-1', decision: 'Starter style', why: 'No brand given' }], paths_written: ['docs/design-system/tokens.css', 'docs/design-system/README.md'], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'design on the starter style; asks for a brand', questions: [intakeQ] };
   const handoffSchema = JSON.parse(readFileSync(rel('skills/muffy/schemas/handoff.schema.json'), 'utf8'));
   check('schema: the designer may carry the intake question on a done hand-off; a frontend-dev may not', validate(handoffSchema, handoff).length === 0 && validate(handoffSchema, { ...handoff, role: 'frontend-dev' }).length > 0, validate(handoffSchema, handoff).join('; '));
   check('schema: a question on a done, blocked or not-ready hand-off must be blocking: false; needs-input may block', ['done', 'blocked', 'not-ready'].every((status) => validate(handoffSchema, { ...handoff, status, blockers: status === 'done' ? [] : handoff.blockers, questions: [{ ...intakeQ, blocking: true }] }).length > 0) && validate(handoffSchema, { ...handoff, status: 'needs-input', questions: [{ ...intakeQ, blocking: true }] }).length === 0);

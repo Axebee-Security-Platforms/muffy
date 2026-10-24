@@ -5,6 +5,7 @@
 //   frontmatter   agents/*.md and skills/*/SKILL.md have name/description (+ tools/model for agents); SKILL description ≤ 1024 chars
 //   model         only haiku or sonnet; opus only for the auditor (token-discipline.md forbids it elsewhere, and fable)
 //   silent        debugger and auditor never use SendMessage (no tool, and the agent file says so only as a prohibition)
+//   silent-flows  design-review.md and stack-learning.md never mention SendMessage (those flows re-spawn with the hand-off in Read:); loops.md and token-discipline.md link spawn-prompt.md
 //   effort        optional; only low, medium or high
 //   links         every relative markdown link and `references/...` path resolves
 //   references    each agent has the 8 standard reference files, links all of them, orphans none
@@ -97,6 +98,16 @@ if (existsSync(sharedDir)) {
     if (!/^#{1,2} \S/.test(readFileSync(f, 'utf8'))) fail(f, 'structure', 'must start with a # / ## heading');
     if (!linkers.some((p) => readFileSync(p, 'utf8').includes(`shared/${n}`))) fail(f, 'references', 'not linked from any agent or skill file (orphan)');
   }
+}
+
+/* silent flows (references/spawn-prompt.md): fresh spawn + hand-off files, no SendMessage */
+for (const n of ['design-review.md', 'stack-learning.md']) {
+  const file = join(root, 'skills/muffy/references', n);
+  if (existsSync(file) && /SendMessage/.test(readFileSync(file, 'utf8'))) fail(file, 'silent-flows', 'this flow is silent: re-spawn with the earlier hand-off in Read:, never SendMessage (spawn-prompt.md)');
+}
+for (const n of ['loops.md', 'token-discipline.md']) {
+  const file = join(root, 'skills/muffy/references', n);
+  if (existsSync(file) && !readFileSync(file, 'utf8').includes('spawn-prompt.md')) fail(file, 'silent-flows', 'must link spawn-prompt.md (the cache-stable prompt order and the silent flows)');
 }
 
 /* skills */

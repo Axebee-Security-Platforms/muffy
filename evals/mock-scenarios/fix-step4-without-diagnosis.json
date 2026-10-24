@@ -36,7 +36,14 @@
         "paths_written": [
           "src/a.ts"
         ],
-        "summary": "fixed"
+        "summary": "fixed",
+        "decisions": [
+          {
+            "id": "D-1",
+            "decision": "Followed the contract and AC as written",
+            "why": "No alternative was needed; the contract names the approach"
+          }
+        ]
       }
     }
   ],

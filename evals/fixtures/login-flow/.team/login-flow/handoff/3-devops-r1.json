@@ -1,1 +1,25 @@
-{"role":"devops","task":"login-flow","step":"3","round":1,"status":"done","paths_written":[".team/login-flow/deploy.md"],"blockers":[],"quality_checks":{"passed":true,"failed":[]},"brain_note":"<brain>/agents/devops/login-flow.md","summary":"devops done","mode":1}
+{
+  "role": "devops",
+  "task": "login-flow",
+  "step": "3",
+  "round": 1,
+  "status": "done",
+  "paths_written": [
+    ".team/login-flow/deploy.md"
+  ],
+  "blockers": [],
+  "quality_checks": {
+    "passed": true,
+    "failed": []
+  },
+  "brain_note": "<brain>/agents/devops/login-flow.md",
+  "summary": "devops done",
+  "mode": 1,
+  "decisions": [
+    {
+      "id": "D-1",
+      "decision": "Followed the contract and AC as written",
+      "why": "No alternative was needed; the contract names the approach"
+    }
+  ]
+}

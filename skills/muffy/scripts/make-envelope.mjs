@@ -74,31 +74,37 @@ if (blockedWrites.length) { console.error(`Write: not allowed for ${role}:\n- ${
 const errs = validate(JSON.parse(readFileSync(join(here, '..', 'schemas', 'prompt-envelope.schema.json'), 'utf8')), env);
 if (errs.length) { console.error(`envelope invalid:\n- ${errs.join('\n- ')}`); process.exit(1); }
 
-const example = JSON.stringify({ role, task: env.task, step: String(step), round: Number(round), status: 'done', paths_written: ['<path>'], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'one line' });
+// Cache-stable order (references/spawn-prompt.md): everything that is the same for every spawn of this role in this task comes
+// first, everything that changes per step or round (goal, paths, round, hand-off shape) comes last, so the prompt prefix is reusable.
+const DECISION_ROLES = ['designer', 'architect', 'product-manager', 'frontend-dev', 'backend-dev', 'devops', 'docs-writer'];
+const withDecisions = DECISION_ROLES.includes(role) && /^[0-9]/.test(String(step));
+const example = JSON.stringify({ role, task: env.task, step: String(step), round: Number(round), status: 'done', paths_written: ['<path>'], ...(withDecisions ? { decisions: [{ id: 'D-1', decision: '<choice made>', why: '<reason, and the alternative rejected>' }] } : {}), blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'one line' });
 const header = [`Task: ${env.task}`, `Brain: ${env.brain}`];
 if (env.vault) header.push(`Vault: ${env.vault}`);
 if (env.mode !== undefined) header.push(`Mode: ${env.mode}`);
 if (env.profile) header.push(`Profile: ${env.profile}`);
-const out = [`Goal: ${env.goal}`];
-if (env.done_when) out.push(`Done when: ${env.done_when}`);
-out.push(header.join('  '));
+const out = [header.join('  ')];
 if (env.worktree) out.push(`Worktree: ${env.worktree}${env.branch ? ` · Branch: ${env.branch}` : ''}`);
-out.push(`Read: ${env.read.join(', ')}`, `Write: ${env.write.join(', ')}`, `Don't touch: ${env.dont_touch.join(', ') || 'nothing beyond Write'}`);
+out.push(`Don't touch: ${env.dont_touch.join(', ') || 'nothing beyond Write'}`);
 const dontWrite = dontWriteLine(role);
 if (dontWrite && !reviewerNoWrite) out.push(dontWrite);
+if (env.commit_trailer) out.push(`Commit trailer: ${env.commit_trailer}`);
+out.push(
+  reviewerNoWrite
+    ? 'Final message: the review (blockers first, one-line verdict, ≤ 120 lines), then the one-line JSON hand-off block. Do not Read handoff.schema.json; the shape is below.'
+    : 'Final message (silent execution): on success (`status: done`, no blockers, checks passed) output ONLY the one-line JSON hand-off block, no prose; results, paths and details go in the JSON (`summary` ≤ 1 line) and the files. Prose (≤ 8 lines, ≤ 1,200 characters) only on an error, `blocked`/`not-ready`, or a decision the Orchestrator or user must make, with blockers `B-n`. Then the one-line JSON hand-off block. Do not Read handoff.schema.json; copy this shape and run validate-handoff.mjs on the file.' + (withDecisions ? ' Record each choice you made and why in `decisions` (D-n, stable across rounds): a later round is a fresh spawn that reads it from the file.' : '')
+);
+// --- per-spawn part below this line ---
+out.push(`Goal: ${env.goal}`);
+if (env.done_when) out.push(`Done when: ${env.done_when}`);
+out.push(`Read: ${env.read.join(', ')}`, `Write: ${env.write.join(', ')}`);
 if (env.announcement) out.push('Announcement: yes');
 if (env.pr_diagram) out.push('PR diagram: yes');
 if (env.human_approved) out.push(`Human approved: ${env.human_approved}`);
 if (env.test_level) out.push(`Test level: ${env.test_level}`);
 if (env.full_regression) out.push('Full regression: approved');
 if (env.checkpoint) out.push(`Checkpoint: ${env.checkpoint} — read only ## Goal and ## Open blockers`);
-if (env.commit_trailer) out.push(`Commit trailer: ${env.commit_trailer}`);
-out.push(
-  reviewerNoWrite
-    ? 'Final message: the review (blockers first, one-line verdict, ≤ 120 lines), then the one-line JSON hand-off block. Do not Read handoff.schema.json; the shape is below.'
-    : 'Final message (silent execution): on success (`status: done`, no blockers, checks passed) output ONLY the one-line JSON hand-off block, no prose; results, paths and details go in the JSON (`summary` ≤ 1 line) and the files. Prose (≤ 8 lines, ≤ 1,200 characters) only on an error, `blocked`/`not-ready`, or a decision the Orchestrator or user must make, with blockers `B-n`. Then the one-line JSON hand-off block. Do not Read handoff.schema.json; copy this shape and run validate-handoff.mjs on the file.',
-  `Hand-off shape: ${example}`
-);
+out.push(`Hand-off shape: ${example}`);
 process.stdout.write(out.join('\n') + '\n');
 
 // The Agent call's model and effort, from the task's files (next-action.mjs spawnProfile). stderr, so stdout stays the prompt.

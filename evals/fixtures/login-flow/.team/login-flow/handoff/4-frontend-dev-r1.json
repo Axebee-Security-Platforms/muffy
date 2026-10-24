@@ -1,1 +1,28 @@
-{"role":"frontend-dev","task":"login-flow","step":"4","round":1,"status":"done","paths_written":["src/ui/Login.tsx"],"blockers":[],"quality_checks":{"passed":true,"failed":[]},"brain_note":"<brain>/agents/frontend-dev/login-flow.md","summary":"frontend-dev done","ac_ids_done":["AC-1","AC-3"]}
+{
+  "role": "frontend-dev",
+  "task": "login-flow",
+  "step": "4",
+  "round": 1,
+  "status": "done",
+  "paths_written": [
+    "src/ui/Login.tsx"
+  ],
+  "blockers": [],
+  "quality_checks": {
+    "passed": true,
+    "failed": []
+  },
+  "brain_note": "<brain>/agents/frontend-dev/login-flow.md",
+  "summary": "frontend-dev done",
+  "ac_ids_done": [
+    "AC-1",
+    "AC-3"
+  ],
+  "decisions": [
+    {
+      "id": "D-1",
+      "decision": "Followed the contract and AC as written",
+      "why": "No alternative was needed; the contract names the approach"
+    }
+  ]
+}

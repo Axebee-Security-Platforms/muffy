@@ -1,0 +1,45 @@
+{
+  "id": "silent-handoff-missing-decisions-then-valid",
+  "description": "A designer hand-off without decisions[] is invalid: one fresh respawn with the error lines, then accepted (silent flow, reasoning lives in the file)",
+  "task": "login-flow",
+  "defaults": {
+    "role": "designer",
+    "task": "login-flow",
+    "step": "3",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "design.md"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    },
+    "summary": "screens designed"
+  },
+  "events": [
+    {
+      "handoff": {},
+      "note": "decisions missing"
+    },
+    {
+      "handoff": {
+        "decisions": [
+          {
+            "id": "D-1",
+            "decision": "Single-column login at phone width",
+            "why": "Two-column was rejected: it breaks AC-2 at 375px"
+          }
+        ]
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "retry:invalid-handoff",
+      "accept"
+    ]
+  }
+}

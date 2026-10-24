@@ -1,1 +1,24 @@
-{"role":"docs-writer","task":"login-flow","step":"7","round":1,"status":"done","paths_written":[".team/login-flow/release-notes.md"],"blockers":[],"quality_checks":{"passed":true,"failed":[]},"brain_note":"<brain>/agents/docs-writer/login-flow.md","summary":"docs-writer done"}
+{
+  "role": "docs-writer",
+  "task": "login-flow",
+  "step": "7",
+  "round": 1,
+  "status": "done",
+  "paths_written": [
+    ".team/login-flow/release-notes.md"
+  ],
+  "blockers": [],
+  "quality_checks": {
+    "passed": true,
+    "failed": []
+  },
+  "brain_note": "<brain>/agents/docs-writer/login-flow.md",
+  "summary": "docs-writer done",
+  "decisions": [
+    {
+      "id": "D-1",
+      "decision": "Followed the contract and AC as written",
+      "why": "No alternative was needed; the contract names the approach"
+    }
+  ]
+}

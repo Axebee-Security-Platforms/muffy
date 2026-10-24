@@ -9,7 +9,7 @@
 - **Plan review: changes requested (2b)** → reasons to `product-manager` → revised `ac.md` + plan → ask the user again. Step 3 stays blocked. Counts at loop point `2b:product-manager`
 - **Human reject** → reasons to the relevant agents → redo review + QA
 - **Production health fail** → devops rolls back; report to the user before anything else
-- **Diagnose unknown (4a, fix lane)** → ask the user for more evidence → one more diagnose round with a fresh `debugger` spawn (the fix lane is silent: no `SendMessage`); a second `unknown` escalates `loop-limit`. A `needs-full-flow` diagnosis is not a loop: promote to the full flow ([fix-profile.md](fix-profile.md))
+- **Diagnose unknown (4a, fix lane)** → ask the user for more evidence → one more diagnose round with a fresh `debugger` spawn (every flow listed in [spawn-prompt.md](spawn-prompt.md) is silent); a second `unknown` escalates `loop-limit`. A `needs-full-flow` diagnosis is not a loop: promote to the full flow ([fix-profile.md](fix-profile.md))
 - **Audit need-validation (4b, fix lane)** → the auditor's `audit.missing` goes to a fresh `debugger` spawn through the hand-off file → the `auditor` checks again. One round; an unresolved second `need-validation` counts as `reject` → the user chooses more information / accept the risk / cancel. A `reject` after the user gave more information escalates `loop-limit`. Counts at loop point `4b:auditor`
 - More than 3 loops at one point → stop and ask the user (see Fallback ladder)
 
@@ -27,14 +27,16 @@
 
 Apply in order. Each rung applies to one loop point; the validator is `node .claude/skills/muffy/scripts/validate-handoff.mjs <file>`.
 
-1. **Invalid or missing hand-off block** (validator fails, or no JSON block) → `SendMessage` the same agent with the validator's error lines, once. Invalid again → escalate `invalid-handoff`. *Fix lane (silent):* never `SendMessage`; spawn the same role fresh once, with the validator's error lines and the path of its invalid hand-off in the prompt
-2. **Agent reports `quality_checks.passed: false`** → `SendMessage` the failed items back, once. Fails again → escalate `quality-check-failed-twice`. *Fix lane (silent):* a fresh spawn of the role with the failed items and its hand-off path instead. The same applies to `retry:audit-below-severity` (a `confirm` whose `evidence_level` is below the severity): a fresh `auditor` spawn that is told the claimed severity and its own previous hand-off path
+1. **Invalid or missing hand-off block** (validator fails, or no JSON block) → spawn the same role fresh once, with the validator's error lines and the path of its invalid hand-off in the prompt (rebuilt with `make-envelope.mjs`, so the prefix stays cacheable: [spawn-prompt.md](spawn-prompt.md)). Invalid again → escalate `invalid-handoff`
+2. **Agent reports `quality_checks.passed: false`** → a fresh spawn of the role with its hand-off path in `Read:` (the failed items are in that file), once. Fails again → escalate `quality-check-failed-twice`. The same applies to `retry:audit-below-severity` (a `confirm` whose `evidence_level` is below the severity): a fresh `auditor` spawn that is told the claimed severity and its own previous hand-off path
 3. **Same blocker id open in 3 consecutive rejects** (the owner has already failed two fix attempts at it) → escalate `repeated-blocker` right away instead of spending the 4th-rejection budget. One failed fix is normal and not an escalation. Default recommendation: `change-approach` (often the contract or AC is wrong → architect/PM decides)
 4. **Fourth rejection at a point** → escalate `loop-limit`
-5. **Agent unreachable** (`SendMessage` fails, agent gone; in the fix lane a spawn that returned no result) → spawn once fresh with `Checkpoint:` + the path of its last hand-off. Fails again → escalate `agent-unavailable`
+5. **Agent unreachable** (a spawn that returned no result; for requirements, present and diagram rounds also a `SendMessage` that fails because the agent is gone) → spawn once fresh with `Checkpoint:` + the path of its last hand-off. Fails again → escalate `agent-unavailable`
 6. **Human gate rejected** (step 10, `pause:plan-review` or `pause:design-review`) twice for the same reason → escalate `human-reject-limit`
 
 A reject that is not repeated and is under the limit is handled by the loop bullets above, not by this ladder.
+
+Every re-spawn above is silent: the new spawn gets the previous hand-off in `Read:` and takes the reasoning from its `decisions[]`, so each round leaves a validated file. Only requirements, present and diagram rounds still continue an agent ([spawn-prompt.md](spawn-prompt.md)).
 
 ## Escalation
 

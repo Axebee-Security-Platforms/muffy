@@ -2,18 +2,50 @@
   "id": "smoke-skipped-no-trigger",
   "description": "Existing stack, feature only adds routes, staging exists: 3d skipped, backend proceeds",
   "task": "login-flow",
-  "skip": ["3b", "3c", "3d"],
-  "smoke_signals": { "staging_none": false },
+  "skip": [
+    "3b",
+    "3c",
+    "3d"
+  ],
+  "smoke_signals": {
+    "staging_none": false
+  },
   "defaults": {
     "task": "login-flow",
     "round": 1,
     "status": "done",
-    "paths_written": ["x"],
+    "paths_written": [
+      "x"
+    ],
     "blockers": [],
-    "quality_checks": { "passed": true, "failed": [] }
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
   },
   "events": [
-    { "handoff": { "role": "backend-dev", "step": "4", "ac_ids_done": ["AC-1"], "summary": "built api" } }
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "summary": "built api",
+        "decisions": [
+          {
+            "id": "D-1",
+            "decision": "Followed the contract and AC as written",
+            "why": "No alternative was needed; the contract names the approach"
+          }
+        ]
+      }
+    }
   ],
-  "expect": { "outcome": "completed", "actions": ["accept"] }
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "accept"
+    ]
+  }
 }

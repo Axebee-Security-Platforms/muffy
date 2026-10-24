@@ -22,6 +22,7 @@ try {
       [/\$\.step: expected string/, 'hint: "step" is a string, e.g. "4" or "4a", not a number'],
       [/\$\.status: must be one of/, 'hint: "status" is done | blocked | needs-input | not-ready (not "ready")'],
       [/\$\.blockers: expected array/, 'hint: "blockers" is an array of {id, problem, owner}; use [] when none'],
+      [/\$: missing required "decisions"/, 'hint: "decisions" is [{id:"D-1",decision,why}], at least one: each choice this round made and why, so the next fresh spawn can read it'],
       [/\$\.blockers\[\d+\]\.owner: must be one of/, 'hint: blocker "owner" is FE | BE | Docs | Devops | Architect | Designer | PM | Researcher'],
     ];
     const extra = hints.filter(([re]) => errs.some((e) => re.test(e))).map(([, h]) => h);

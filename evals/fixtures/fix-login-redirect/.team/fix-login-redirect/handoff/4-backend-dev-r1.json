@@ -1,1 +1,27 @@
-{"role":"backend-dev","task":"fix-login-redirect","step":"4","round":1,"status":"done","paths_written":["src/auth/reset.ts","test/auth/redirect.test.ts"],"ac_ids_done":["AC-1"],"blockers":[],"quality_checks":{"passed":true,"failed":[]},"summary":"fixed: clear returnTo on reset, regression test added"}
+{
+  "role": "backend-dev",
+  "task": "fix-login-redirect",
+  "step": "4",
+  "round": 1,
+  "status": "done",
+  "paths_written": [
+    "src/auth/reset.ts",
+    "test/auth/redirect.test.ts"
+  ],
+  "ac_ids_done": [
+    "AC-1"
+  ],
+  "blockers": [],
+  "quality_checks": {
+    "passed": true,
+    "failed": []
+  },
+  "summary": "fixed: clear returnTo on reset, regression test added",
+  "decisions": [
+    {
+      "id": "D-1",
+      "decision": "Followed the contract and AC as written",
+      "why": "No alternative was needed; the contract names the approach"
+    }
+  ]
+}

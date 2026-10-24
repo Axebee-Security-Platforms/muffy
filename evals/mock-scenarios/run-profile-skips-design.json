@@ -26,7 +26,14 @@
         "mode": 2,
         "step": "3d",
         "summary": "smoke pass",
-        "verdict": "Pass"
+        "verdict": "Pass",
+        "decisions": [
+          {
+            "id": "D-1",
+            "decision": "Followed the contract and AC as written",
+            "why": "No alternative was needed; the contract names the approach"
+          }
+        ]
       }
     },
     {
@@ -36,7 +43,14 @@
         "ac_ids_done": [
           "AC-1"
         ],
-        "summary": "built api"
+        "summary": "built api",
+        "decisions": [
+          {
+            "id": "D-1",
+            "decision": "Followed the contract and AC as written",
+            "why": "No alternative was needed; the contract names the approach"
+          }
+        ]
       }
     }
   ],

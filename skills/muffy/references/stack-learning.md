@@ -4,11 +4,11 @@ The coding-practices files cover some frameworks and languages. For any other, t
 
 ## When an agent returns `stack-unknown`
 A `blocked` hand-off with a blocker `owner: Researcher`, problem `stack-unknown: <framework> <version>`:
-- `docs/stacks/<framework>.md` already exists and is not stale → `SendMessage` the agent to read it; no spawn
+- `docs/stacks/<framework>.md` already exists and is not stale → no researcher spawn: respawn the blocked role (round + 1) with the note in `Read:`
 - Otherwise spawn `researcher` once with `Mode: stack-note`, the framework and version, at `model: "haiku"`, effort `low` ([token-discipline.md](token-discipline.md)). It is capped at L1, official docs only, 5 fetches and a ≤ 40-line note
 
 ## The Orchestrator, after each note
-- Resume the blocked agent with `SendMessage`
+- Respawn the blocked role (round + 1) with `docs/stacks/<framework>.md` and its previous hand-off in `Read:` ([spawn-prompt.md](spawn-prompt.md))
 - Run `node .claude/skills/muffy/scripts/check-stack-notes.mjs --guard-entries` and merge the printed regex strings into `.team/regression-commands.json` (an array; keep what is there, add what is missing). This is how the full-regression guard ([hooks-enforcement.md](hooks-enforcement.md) §10) learns a runner it did not know. A runner with no `Whole-suite:` line stays unguarded: say so in the closing report
 - Never run this as a normal research round, at L2 or L3, or more than once per framework and major version
 
