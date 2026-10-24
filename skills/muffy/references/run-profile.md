@@ -1,6 +1,6 @@
 # Run profile — skip what the feature doesn't need
 
-A small bug or cosmetic fix does not use the table below: it runs the fix lane ([fix-profile.md](fix-profile.md)), which skips 1, 2, 3, 3b, 3c, 3d and 8, adds step 4a (diagnose), and still never skips 6, 7, 9 and 10. If the fix grows past the lane's limits it is promoted to the full flow. Internal work with a known shape (internal API, refactor, measured performance, reversible DB change) runs the lite lane ([lite-profile.md](lite-profile.md)), which skips 1, 2, 3b, 3c and 8 and starts at the architect.
+A small bug or cosmetic fix does not use the table below: it runs the fix lane ([fix-profile.md](fix-profile.md)), which skips 1, 2, 3, 3b, 3c, 3d and 8, adds steps 4a (diagnose) and 4b (audit the cause), and still never skips 6, 7, 9 and 10. If the fix grows past the lane's limits it is promoted to the full flow. Internal work with a known shape (internal API, refactor, measured performance, reversible DB change) runs the lite lane ([lite-profile.md](lite-profile.md)), which skips 1, 2, 3b, 3c and 8 and starts at the architect.
 
 | Condition | Skip |
 |---|---|

@@ -8,6 +8,6 @@ Use this agent when:
 Do not use this agent when:
 
 - The facts are not decided yet (the owner specs first: `architect`, `product-manager` or `designer`)
-- It is the fix lane's `flow.html` (the diagnosing dev draws that itself, per its fix profile)
+- It is the fix lane's `flow.html` (the debugger draws that itself, per its workflow)
 - It is a deck (`designer`'s present mode draws its own slides)
 - The task is a screen design, canvas or design system (use `designer`)

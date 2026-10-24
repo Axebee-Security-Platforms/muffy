@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": ["role", "task", "step", "round", "status", "paths_written", "blockers", "quality_checks", "summary"],
   "properties": {
-    "role": { "enum": ["researcher", "product-manager", "designer", "architect", "devops", "frontend-dev", "backend-dev", "code-reviewer", "qa-tester", "docs-writer", "diagrammer"] },
+    "role": { "enum": ["researcher", "product-manager", "designer", "architect", "devops", "frontend-dev", "backend-dev", "code-reviewer", "qa-tester", "docs-writer", "diagrammer", "debugger", "auditor"] },
     "task": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
     "step": { "type": "string", "pattern": "^((0|[1-9]|1[0-2])[a-d]?|present)$" },
     "mode": { "enum": [1, 2, 3], "description": "devops only" },
@@ -90,14 +90,38 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["status", "confidence"],
-      "description": "frontend-dev / backend-dev step 4a only (fix lane): result of the diagnose round",
+      "description": "debugger step 4a only (fix lane): result of the diagnose round",
       "properties": {
         "status": { "enum": ["known", "unknown", "needs-full-flow"] },
         "confidence": { "enum": ["low", "medium", "high"] },
         "cause": { "type": "string", "minLength": 3, "maxLength": 300 },
         "files": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "repro": { "type": "string", "minLength": 3, "maxLength": 200, "description": "Failing test, command, URL + viewport or log line that shows the problem" },
-        "reason": { "type": "string", "minLength": 3, "maxLength": 300, "description": "Why the cause is unknown, or why the fix needs the full flow" }
+        "reason": { "type": "string", "minLength": 3, "maxLength": 300, "description": "Why the cause is unknown, or why the fix needs the full flow" },
+        "severity": { "enum": ["low", "medium", "high", "critical"], "description": "Impact of the bug (not the effort to fix it); sets the evidence the auditor requires (references/fix-profile.md)" },
+        "owner": { "enum": ["FE", "BE", "both"], "description": "Who fixes it at step 4; the Orchestrator spawns that dev" },
+        "owner_files": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "owner both only: the diagnosed files each dev may change (a subset of files)",
+          "properties": {
+            "FE": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "BE": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
+        }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "evidence_level", "repro_rerun"],
+      "description": "auditor step 4b only (fix lane): verdict on the debugger's cause",
+      "properties": {
+        "verdict": { "enum": ["confirm", "need-validation", "reject"] },
+        "evidence_level": { "enum": ["none", "low", "medium", "high", "critical"], "description": "The highest severity tier whose minimum evidence the diagnosis meets" },
+        "repro_rerun": { "enum": ["red", "green", "flaky", "not-run"], "description": "Result of the auditor running the diagnosis repro once" },
+        "missing": { "type": "array", "items": { "type": "string", "minLength": 3, "maxLength": 300 }, "description": "need-validation: the evidence the debugger must add, one item each" },
+        "reason": { "type": "string", "minLength": 3, "maxLength": 300, "description": "reject: why the cause does not hold" }
       }
     },
     "diagrams_spec": {
@@ -124,10 +148,18 @@
     { "if": { "properties": { "role": { "enum": ["qa-tester"] } }, "required": ["role"] }, "then": { "required": ["verdict", "tests"], "properties": { "verdict": { "enum": ["Pass", "Fail"] } } } },
     { "if": { "properties": { "role": { "enum": ["devops"] } }, "required": ["role"] }, "then": { "required": ["mode"] } },
     { "if": { "properties": { "role": { "enum": ["frontend-dev", "backend-dev"] } }, "required": ["role"] }, "then": { "required": ["ac_ids_done"] } },
-    { "if": { "properties": { "step": { "enum": ["4a"] } }, "required": ["step"] }, "then": { "required": ["diagnosis"], "properties": { "role": { "enum": ["frontend-dev", "backend-dev"] } } } },
-    { "if": { "properties": { "diagnosis": { "properties": { "status": { "enum": ["known"] } }, "required": ["status"] } }, "required": ["diagnosis"] }, "then": { "properties": { "diagnosis": { "required": ["cause", "files", "repro"], "properties": { "confidence": { "enum": ["medium", "high"] }, "files": { "minItems": 1 } } } } } },
+    { "if": { "properties": { "step": { "enum": ["4a"] } }, "required": ["step"] }, "then": { "required": ["diagnosis"], "properties": { "role": { "enum": ["debugger"] } } } },
+    { "if": { "properties": { "step": { "enum": ["4b"] } }, "required": ["step"] }, "then": { "required": ["audit"], "properties": { "role": { "enum": ["auditor"] } } } },
+    { "if": { "properties": { "role": { "enum": ["debugger"] } }, "required": ["role"] }, "then": { "properties": { "step": { "enum": ["4a"] } } } },
+    { "if": { "properties": { "role": { "enum": ["auditor"] } }, "required": ["role"] }, "then": { "properties": { "step": { "enum": ["4b"] } } } },
+    { "if": { "properties": { "audit": { "type": "object" } }, "required": ["audit"] }, "then": { "properties": { "step": { "enum": ["4b"] } } } },
+    { "if": { "properties": { "audit": { "properties": { "verdict": { "enum": ["confirm"] } }, "required": ["verdict"] } }, "required": ["audit"] }, "then": { "properties": { "audit": { "properties": { "repro_rerun": { "enum": ["red"] }, "evidence_level": { "enum": ["low", "medium", "high", "critical"] } } } } } },
+    { "if": { "properties": { "audit": { "properties": { "verdict": { "enum": ["need-validation"] } }, "required": ["verdict"] } }, "required": ["audit"] }, "then": { "properties": { "audit": { "required": ["missing"], "properties": { "missing": { "minItems": 1 } } } } } },
+    { "if": { "properties": { "audit": { "properties": { "verdict": { "enum": ["reject"] } }, "required": ["verdict"] } }, "required": ["audit"] }, "then": { "properties": { "audit": { "required": ["reason"] } } } },
+    { "if": { "properties": { "diagnosis": { "properties": { "status": { "enum": ["known"] } }, "required": ["status"] } }, "required": ["diagnosis"] }, "then": { "properties": { "diagnosis": { "required": ["cause", "files", "repro", "severity", "owner"], "properties": { "confidence": { "enum": ["medium", "high"] }, "files": { "minItems": 1 } } } } } },
     { "if": { "properties": { "diagnosis": { "properties": { "status": { "enum": ["unknown", "needs-full-flow"] } }, "required": ["status"] } }, "required": ["diagnosis"] }, "then": { "properties": { "diagnosis": { "required": ["reason"] } } } },
     { "if": { "properties": { "diagnosis": { "type": "object" } }, "required": ["diagnosis"] }, "then": { "properties": { "step": { "enum": ["4a"] } } } },
+    { "if": { "properties": { "diagnosis": { "properties": { "owner": { "enum": ["both"] } }, "required": ["owner"] } }, "required": ["diagnosis"] }, "then": { "properties": { "diagnosis": { "required": ["owner_files"], "properties": { "owner_files": { "required": ["FE", "BE"], "properties": { "FE": { "minItems": 1 }, "BE": { "minItems": 1 } } } } } } } },
     { "if": { "properties": { "status": { "enum": ["needs-input"] } }, "required": ["status"] }, "then": { "required": ["questions"], "properties": { "questions": { "minItems": 1 } } } },
     { "if": { "properties": { "status": { "enum": ["done", "blocked", "not-ready"] } }, "required": ["status", "questions"] }, "then": { "properties": { "questions": { "items": { "properties": { "blocking": { "enum": [false] } } } } } } },
     { "if": { "properties": { "questions": { "minItems": 1 } }, "required": ["questions"] }, "then": { "properties": { "role": { "enum": ["researcher", "product-manager", "architect", "devops", "designer", "docs-writer"] } } } },

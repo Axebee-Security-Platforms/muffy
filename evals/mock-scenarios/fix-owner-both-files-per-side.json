@@ -1,0 +1,92 @@
+{
+  "id": "fix-owner-both-files-per-side",
+  "description": "owner both: the diagnosis names files per side; the audit confirms and both devs fix",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "8"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "round": 1,
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "redirect reads stale returnTo from session",
+          "files": [
+            "src/auth/redirect.ts",
+            "web/login.tsx"
+          ],
+          "repro": "test/auth/redirect.test.ts fails",
+          "severity": "medium",
+          "owner": "both",
+          "owner_files": {
+            "BE": [
+              "src/auth/redirect.ts"
+            ],
+            "FE": [
+              "web/login.tsx"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "auditor",
+        "step": "4b",
+        "round": 1,
+        "summary": "confirmed",
+        "audit": {
+          "verdict": "confirm",
+          "evidence_level": "medium",
+          "repro_rerun": "red"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "paths_written": [
+          "src/auth/redirect.ts"
+        ],
+        "summary": "fixed"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "accept",
+      "accept",
+      "accept"
+    ]
+  }
+}

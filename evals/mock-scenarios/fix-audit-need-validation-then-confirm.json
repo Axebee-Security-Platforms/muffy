@@ -1,0 +1,129 @@
+{
+  "id": "fix-audit-need-validation-then-confirm",
+  "description": "Auditor asks for more evidence once through the hand-off file; the second diagnosis is confirmed",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "8"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "round": 1,
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "redirect reads stale returnTo from session",
+          "files": [
+            "src/auth/redirect.ts"
+          ],
+          "repro": "test/auth/redirect.test.ts fails",
+          "severity": "medium",
+          "owner": "BE"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "auditor",
+        "step": "4b",
+        "round": 1,
+        "summary": "audit need-validation",
+        "audit": {
+          "verdict": "need-validation",
+          "evidence_level": "medium",
+          "repro_rerun": "red",
+          "missing": [
+            "run the repro on a second user without a returnTo"
+          ]
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "round": 2,
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "redirect reads stale returnTo from session",
+          "files": [
+            "src/auth/redirect.ts"
+          ],
+          "repro": "test/auth/redirect.test.ts fails",
+          "severity": "medium",
+          "owner": "BE"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "auditor",
+        "step": "4b",
+        "round": 2,
+        "summary": "audit confirm",
+        "audit": {
+          "verdict": "confirm",
+          "evidence_level": "medium",
+          "repro_rerun": "red"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "paths_written": [
+          "src/auth/redirect.ts"
+        ],
+        "summary": "fixed"
+      }
+    },
+    {
+      "handoff": {
+        "role": "code-reviewer",
+        "step": "6",
+        "verdict": "Approve",
+        "summary": "all good"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "accept",
+      "revalidate:debugger",
+      "accept",
+      "accept",
+      "accept",
+      "accept"
+    ]
+  }
+}

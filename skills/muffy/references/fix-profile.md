@@ -43,7 +43,7 @@ When the request is borderline (for example a bug plus "while you are there, als
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
    - **Staging** (only when `project.md` / the last checkpoint never recorded `staging:`)
 3. Create the feature worktree from `<base>`, which holds the team folder: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/fix.md` there (≤ 60 lines, below). The Orchestrator writes it from the same reads; no agent is spawned for it
-4. Commit `fix.md` to `feature/<task>` (never to `<base>`), then cut one worktree per owner from that commit: `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> feature/<task>`. qa gets one at step 7 as usual
+4. Commit `fix.md` to `feature/<task>` (never to `<base>`). The `debugger` (4a) and `auditor` (4b) work in the feature worktree and write nothing outside `.team/<task>/`. The dev worktrees are cut at step 4, after the audit, from the feature commit that holds the confirmed `## Cause`: `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> feature/<task>`, one per owner the debugger named. qa gets one at step 7 as usual
 5. Write `checkpoint.md` in the feature worktree with `## Run profile` = `fix: skipped 1, 2, 3, 3b, 3c, 3d, 8`
 
 ## `fix.md`
@@ -53,13 +53,15 @@ When the request is borderline (for example a bug plus "while you are there, als
 Kind: bug | cosmetic    Owner: FE | BE | both
 ## Goal       verbatim request
 ## Symptom    what happens, where, what is expected
-## Cause      filled by step 4a: one line + confidence (blank before); links `flow.html` if a flow diagram was needed
+## Cause      filled by step 4a: one line + confidence + severity + owner (blank before); links `flow.html` if a flow diagram was needed
 ## Repro      test name, command, URL + viewport, or log line; blank if unknown
+## Evidence   filled by step 4a: the probes run and what each showed, the hypotheses dropped
+## Audit      only when the user accepted the risk after an audit reject: `cause not audited, risk accepted by the user`
 ## AC         one row per fix: AC-<n> | observable result | regression test or visual check
 ## Out of scope
 ```
 
-Optional `.team/<task>/flow.html` (published and recorded at step 3e right after 4a, [diagram-publish.md](diagram-publish.md)): one flow diagram ([diagram-style.md](../../../agents/references/shared/diagram-style.md)) the diagnosing dev draws only when the cause cannot be found without understanding a multi-participant flow. It is read by the reviewer and stays in the task folder.
+Optional `.team/<task>/flow.html` (published and recorded at step 3e right after 4a, [diagram-publish.md](diagram-publish.md)): one flow diagram ([diagram-style.md](../../../agents/references/shared/diagram-style.md)) the diagnosing dev draws only when the cause cannot be found without understanding a multi-participant flow. It is read by the auditor and the reviewer and stays in the task folder.
 
 AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA report work unchanged.
 
@@ -67,8 +69,9 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 
 | # | Agent | Notes |
 |---|---|---|
-| 4a | `frontend-dev` / `backend-dev` (FE ∥ BE if both) | **Diagnose, no code yet.** Reproduce with a tight, shrunk repro, trace the failing path, test 2 or 3 falsifiable hypotheses against a second piece of evidence, write `## Cause` and `## Repro` in `fix.md`. Hand-off carries `diagnosis` ([schema](../schemas/handoff.schema.json)) |
-| 4 | same agent, via `SendMessage` | Fix + regression test that fails before and passes after. Cosmetic: the AC's visual check. Same context, so the code read in 4a is not read again |
+| 4a | `debugger` (one agent for FE and BE) | **Diagnose, no code.** Reproduce with a tight, shrunk repro, trace the failing path, test 2 or 3 falsifiable hypotheses against a second piece of evidence, rate the **severity**, name the **owner** (`FE`, `BE` or `both`), write `## Cause`, `## Repro` and `## Evidence` in `fix.md`. Hand-off carries `diagnosis` with `files`, and `owner_files` per side when the owner is `both` ([schema](../schemas/handoff.schema.json)) |
+| 4b | `auditor` (`opus`, a different model from the debugger) | **Audit the cause, no code.** Runs the `## Repro` once, grades `## Evidence` against the severity table below, opens the diagnosed files. Hand-off carries `audit`: `confirm`, `need-validation` or `reject`. Runs only on a `known` diagnosis. **Blocks step 4** |
+| 4 | `frontend-dev` / `backend-dev` per the debugger's `owner` (FE ∥ BE if both), a fresh spawn | Fix + regression test that fails before and passes after. Cosmetic: the AC's visual check. Cold start: the prompt's `Read:` lists `fix.md` and the debugger's and auditor's hand-offs, so the dev reads only `diagnosis.files` plus tests |
 | 5 | Orchestrator | Merge into `feature/<task>` with `--no-ff`, as usual |
 | 6 | `code-reviewer` | Diff + `fix.md` (including Cause and Repro). Never skipped, never downgraded |
 | 7 | `qa-tester` | `fix.md` AC replace `ac.md` and `design.md`. Level L0, L1 or L2 from [test-levels.md](test-levels.md); qa-tester runs exactly what that row allows (L0 build + lint, L1 the regression test + unit tests of the touched files, L2 also one boundary integration test), by path; never the whole suite ([hooks-enforcement.md](hooks-enforcement.md) §10). Cosmetic AC with no automated check, and an AC the dev says no seam can reach, are marked `manual` in `qa-report.md` and shown at the Human gate. No docs-writer, no step 8 |
@@ -76,7 +79,22 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 | 10, 11 | Human gate, devops production | Unchanged. One question: qa-report, staging result, the diff summary |
 | 12 | Orchestrator | [closing.md](closing.md) steps 2–6 in full, not abbreviated: `## Usage` from `spawns.tsv`, Lessons tally (step 4 marks the checkpoint `closed`, so a resume skips it); skip step 1 unless a decision or stack learning came out of the fix |
 
-Never skipped: 4a, 6, 7, 9, 10. A fix with no diagnosis hand-off cannot start step 4.
+Never skipped: 4a, 4b, 6, 7, 9, 10. A fix with no diagnosis hand-off, or no `confirm` from the auditor (or the user's accepted risk, below), cannot start step 4.
+
+**The lane is silent.** No fix-lane agent talks to another and none is continued with `SendMessage`. The debugger, the auditor and the devs exchange only hand-off JSON: the Orchestrator validates each file in `handoff/` and puts its path in the next spawn's `Read:` line. Every round, including a re-diagnose, is a fresh spawn.
+
+## Severity and the evidence it needs
+
+Severity is the **impact of the bug**, not the effort to fix it. The debugger sets it; the auditor holds the evidence to it. When unsure between two tiers, take the higher one.
+
+| Severity | Meaning | Minimum evidence |
+|---|---|---|
+| `low` | Cosmetic or minor, has a workaround | The cause found from the code or a log at one point |
+| `medium` | Feature wrong, no data lost | A repro that is red, plus a second piece of evidence |
+| `high` | Wrong data, money, permissions, or many users blocked | A repro that is red every run, plus competing hypotheses ruled out with evidence |
+| `critical` | Data loss or leak, production down | As `high`, plus why it started (`git log -p` or the change that introduced it) |
+
+The auditor's `evidence_level` is the highest tier whose minimum the diagnosis meets (`none` if not even `low`). A `confirm` needs `repro_rerun: red` and `evidence_level` at or above `severity`; `next-action.mjs` sends a `confirm` below the severity back once, then escalates `invalid-handoff`. The same table is kept in the debugger's and the auditor's `rules-and-guardrails.md`; `npm test` fails if the three drift.
 
 ## Diagnose budget and outcomes
 
@@ -84,16 +102,28 @@ Read the `diagnosis` object in the 4a hand-off and route on it:
 
 | `diagnosis.status` | Action |
 |---|---|
-| `known` (confidence medium or high, with `cause`, `files`, `repro`) | `SendMessage` the same agent to go on to step 4 |
-| `unknown` | Relay `reason` to the user via `AskUserQuestion` (more info, a log, a repro). Send the answer to the same agent for **one** more diagnose round. A second `unknown` at the same point → escalate `loop-limit` ([loops.md](loops.md)) |
+| `known` (confidence medium or high, with `cause`, `files`, `repro`, `severity`, `owner`; `owner_files` per side when `owner` is `both`) | Spawn the `auditor` (step 4b). Never go straight to step 4 |
+| `unknown` | Relay `reason` to the user via `AskUserQuestion` (more info, a log, a repro). Write the answer to `.team/<task>/evidence-r<n>.md` and spawn the `debugger` fresh with that path in `Read:` for **one** more diagnose round, pointing at its previous hand-off. A second `unknown` at the same point → escalate `loop-limit` ([loops.md](loops.md)) |
 | `needs-full-flow` | **Promote**: the cause is in the contract, a dependency, the stack or a design decision. Stop the lane, keep `fix.md` as the brief, rename the profile in `checkpoint.md`, and start the full flow at step 2 (PM) with `fix.md` + the diagnosis as input |
+
+### Audit outcomes (4b)
+
+Read the `audit` object in the 4b hand-off and route on it:
+
+| `audit.verdict` | Action |
+|---|---|
+| `confirm` | Spawn the dev(s) the diagnosis names (`owner`) for step 4, with the debugger's and the auditor's hand-off paths in `Read:` |
+| `need-validation` | Spawn the `debugger` fresh with the auditor's hand-off path (`audit.missing` lists the evidence to add), then the `auditor` again. **One round only**; the files are the whole conversation |
+| `reject` | The cause does not hold. A `need-validation` that is still unresolved after its one round counts as `reject`. The Orchestrator asks the user (`AskUserQuestion`, one question, three options): **more information** (the user's answer goes in `.team/<task>/evidence-r<n>.md`; one more `debugger` round, then the `auditor`; a second `reject` after this escalates `loop-limit`), **accept the risk** (go to step 4, record `audit 4b: risk accepted` in checkpoint `## Status` and a `## Audit` section (`cause not audited, risk accepted by the user`) in `fix.md`; the reviewer is told) or **cancel** (close per [closing.md](closing.md) with status `aborted`) |
+
+`node .claude/skills/muffy/scripts/next-action.mjs loop <hand-offs…> --profile fix` computes this: `accept`, `revalidate:debugger`, `ask:reject-options`, `rediagnose:debugger`, `proceed:risk-accepted` or `escalate:loop-limit`. A user answer is an event `{ "answer": "more-info" | "accept-risk" | "cancel" }` in a scenario.
 
 **Promote** also when step 4 changed more than 5 source files, or reports a blocker owned by `Architect`. Count from the diff, not from the agent's `paths_written`: `node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --profile fix` exits 1 with `next=promote:full-flow` and one `reason:` line per broken limit (file count, dependency, devops-owned files, auth files, schema or migration). Record the reason in `checkpoint.md` and the vault task note.
 
 ## Model and effort
 
-Spawn 4a with `model: haiku` only when the symptom already names the file and line. Otherwise keep the agent default (`sonnet`). Never downgrade `code-reviewer` or `devops`. QA re-running existing tests only may use `haiku`, as in [token-discipline.md](token-discipline.md).
+Spawn the `debugger` (4a) with `model: haiku` only when the symptom already names the file and line. Otherwise keep the agent default (`sonnet`, effort `high`). The `auditor` (4b) always runs on its default, `opus`, so it stays a different model from the debugger; never downgrade it, `code-reviewer` or `devops`. QA re-running existing tests only may use `haiku`, as in [token-discipline.md](token-discipline.md).
 
 ## Prompt differences
 
-Add `Profile: fix` to the prompt envelope. `Read:` lists `.team/<task>/fix.md` instead of `ac.md`, `contract.md`, `brief.md` and `design.md`; those files do not exist in this lane. Agents read their `fix-profile.md` reference at start.
+Add `Profile: fix` to the prompt envelope. `Read:` lists `.team/<task>/fix.md` instead of `ac.md`, `contract.md`, `brief.md` and `design.md`; those files do not exist in this lane. `frontend-dev`, `backend-dev` and `code-reviewer` read their `fix-profile.md` reference at start; the `debugger` and `auditor` are fix-lane-only and have no profile file. Steps 4 and 6 add the debugger's and the auditor's hand-off paths to `Read:`.

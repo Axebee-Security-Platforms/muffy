@@ -30,9 +30,9 @@ The long form of the rows in [steps.md](steps.md) that need more than one line. 
 
 **Agent:** Orchestrator, **only if a diagram file was written or changed**
 
-**Input:** the diagram `.html` paths in `paths_written` (`diagrammer` drew it from facts spec'd by architect at step 3 or onboard 0c, by the designer's screen-map spec at step 3 or by the product-manager at step 1, each relayed in one `diagrammer` spawn after 3b; fix-lane 4a is the exception — the diagnosing dev draws `flow.html` itself)
+**Input:** the diagram `.html` paths in `paths_written` (`diagrammer` drew it from facts spec'd by architect at step 3 or onboard 0c, by the designer's screen-map spec at step 3 or by the product-manager at step 1, each relayed in one `diagrammer` spawn after 3b; fix-lane 4a is the exception — the `debugger` draws `flow.html` itself)
 
-**Output:** Runs right after 3b (before 3c), after onboard 0c (before 0d) or after 4a. First spawn `diagrammer` once, fresh at effort `medium`, with every `diagrams_spec` of the round (none in the fix lane: the dev drew `flow.html`); its hand-off lists the files. Then validate with `check-diagram.mjs` then `check-diagram-render.mjs`, publish each file as its own Artifact (republish keeps the URL from `project.md` → `## Diagrams`), then **record it right away** in `<brain>/tasks/<task>.md` → `## Diagrams`, `project.md` → `## Diagrams` and `checkpoint.md` `## Status` (`diagrams: <n> published`). Never block: invalid or unpublishable → record why and continue. Details: [diagram-publish.md](diagram-publish.md)
+**Output:** Runs right after 3b (before 3c), after onboard 0c (before 0d) or after 4a. First spawn `diagrammer` once, fresh at effort `medium`, with every `diagrams_spec` of the round (none in the fix lane: the debugger drew `flow.html`); its hand-off lists the files. Then validate with `check-diagram.mjs` then `check-diagram-render.mjs`, publish each file as its own Artifact (republish keeps the URL from `project.md` → `## Diagrams`), then **record it right away** in `<brain>/tasks/<task>.md` → `## Diagrams`, `project.md` → `## Diagrams` and `checkpoint.md` `## Status` (`diagrams: <n> published`). Never block: invalid or unpublishable → record why and continue. Details: [diagram-publish.md](diagram-publish.md)
 
 ## Step 3c
 

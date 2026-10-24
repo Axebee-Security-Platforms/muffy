@@ -33,7 +33,7 @@ The task's own artifacts are the source. Do not start this mode's procedure; giv
 | architect's kinds | the task's `architect` | its `contract.md` | Before step 3: add `Diagram requested: <kind> <subject>` to the architect's step-3 prompt, so it specs it even when no trigger in its `diagrams.md` fires. After step 3: `SendMessage` it (spawn fresh if gone) with `Diagram facts: <request>` and `round` + 1 |
 | `gantt`, `story-map` | the task's `product-manager` | `docs/plan/<task>.md`, `ac.md` | Before step 2: add the request to its step-2 prompt. After: `SendMessage` it the same way |
 | `screenmap` | the task's `designer` specs it; `diagrammer` draws it | the task's canvas and the existing screens | At step 3 or later, as a request in the designer's prompt or a `SendMessage`; its `diagrams_spec` goes to `diagrammer` |
-| `flow` in the fix lane | the diagnosing dev | its own trace | Only per [fix-profile.md](fix-profile.md) (`flow.html` at 4a); anything else waits for the fix to close or becomes a separate request |
+| `flow` in the fix lane | the `debugger` | its own trace | Only per [fix-profile.md](fix-profile.md) (`flow.html` at 4a); anything else waits for the fix to close or becomes a separate request |
 
 A kind whose owner the task's lane skips (a `gantt` in a lite task, a `screenmap` in a fix or lite task) is not added to the task: run it as this mode's procedure once the subject exists, or tell the requester why not. Every added diagram is published and recorded by step 3e ([diagram-publish.md](diagram-publish.md)); the task's checkpoint gets one line under `## Status` (`diagrams: <n> published`); no loop counter moves and the run's next step is unchanged.
 

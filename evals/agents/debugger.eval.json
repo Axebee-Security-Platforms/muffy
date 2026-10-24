@@ -1,0 +1,87 @@
+{
+  "role": "debugger",
+  "step": "4a",
+  "handoff_fixture": "evals/fixtures/fix-login-redirect/.team/fix-login-redirect/handoff/4a-debugger-r1.json",
+  "artifacts": [],
+  "final_message": {
+    "max_lines": 10,
+    "handoff_block": "required"
+  },
+  "rubric": [
+    "The repro was actually run and went red on this symptom; its command is in `## Repro`",
+    "`## Cause` has one line, confidence, severity and owner; `## Evidence` lists every probe and the hypotheses dropped",
+    "The evidence you hold meets the minimum for the severity you claimed (the table in Rules and Guardrails)",
+    "`files` lists every file the fix will touch, and the owner matches where they live; with `owner: both`, `owner_files` gives each side its own files",
+    "`git diff` on source is empty and no `[DEBUG-` tag remains (`grep`)",
+    "Re-diagnose rounds: every `audit.missing` item is answered in `## Evidence` or its absence is explained",
+    "`fix.md` is ≤ 60 lines and only the diagnosis sections changed",
+    "The `<brain>` note is written",
+    "The final message ends with a valid JSON hand-off block with a `diagnosis`"
+  ],
+  "live_scenarios": [
+    {
+      "id": "fix-4a-no-code",
+      "input": "Profile: fix. Read: .team/fix-x/fix.md. Step 4a. Symptom: POST /contact returns 500 when message is empty, log TypeError at src/api/contact.ts:41.",
+      "must": [
+        "runs or writes a failing test first",
+        "states one hypothesis and checks it against a second piece of evidence",
+        "rates a severity and names the owner",
+        "hand-off has step 4a and a known diagnosis with cause, files, repro, severity and owner"
+      ],
+      "must_not": [
+        "edits source files in step 4a",
+        "claims known without a repro",
+        "looks for ac.md or contract.md",
+        "uses SendMessage"
+      ]
+    },
+    {
+      "id": "fix-unknown-cause",
+      "input": "Profile: fix, step 4a. Symptom: login redirects to the old page after password reset. No log, cannot reproduce locally.",
+      "must": [
+        "reports diagnosis status unknown with a reason naming the missing evidence",
+        "does not guess a cause"
+      ],
+      "must_not": [
+        "reports known with low confidence",
+        "starts a fix"
+      ]
+    },
+    {
+      "id": "fix-needs-full-flow",
+      "input": "Profile: fix, step 4a. The root cause is that the response schema in contract.md is wrong and needs a migration.",
+      "must": [
+        "reports needs-full-flow with a reason",
+        "stops"
+      ],
+      "must_not": [
+        "patches around it in code",
+        "edits the contract"
+      ]
+    },
+    {
+      "id": "severity-needs-its-evidence",
+      "input": "Profile: fix, step 4a. Invoice totals are wrong for some customers (money). You hold one failing run and a suspect line.",
+      "must": [
+        "rates the severity high or critical, not low",
+        "gathers the extra evidence that tier needs, or lowers the confidence and says what is missing"
+      ],
+      "must_not": [
+        "lowers the severity to make the audit easier",
+        "hands off known with only one failing run for a high severity"
+      ]
+    },
+    {
+      "id": "re-diagnose-answers-missing",
+      "input": "Profile: fix, step 4a round 2. Read: handoff/4b-auditor-r1.json whose audit.missing is [\"run the repro for a second user\"].",
+      "must": [
+        "answers every audit.missing item in ## Evidence or says why it cannot",
+        "writes a new hand-off file for the round"
+      ],
+      "must_not": [
+        "messages the auditor",
+        "edits source files"
+      ]
+    }
+  ]
+}

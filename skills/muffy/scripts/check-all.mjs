@@ -29,7 +29,7 @@ import { parseOwnership } from './ownership.mjs';
 import { gateErrors } from './gate-rules.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4', '5', '5b', '6', '7', '8', '9', '10', '11', '12'];
+export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4b', '4', '5', '5b', '6', '7', '8', '9', '10', '11', '12'];
 const readIf = (p) => (existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);
 const section = (md, name) => md?.match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] ?? null;
 const version = (text) => text?.match(/\bRuntime:\s*[A-Za-z.]*\s*v?(\d+(?:\.\d+)*)/)?.[1];
@@ -63,6 +63,9 @@ export function checkAll(taskDir, { step, round, profile, skip = [], brain, base
   // loop: gates the user answered are in the checkpoint, not in a hand-off
   const status = section(readIf(join(taskDir, 'checkpoint.md')), 'Status') ?? '';
   const passed = GATED_STEPS.filter((g) => new RegExp(`\\b${g}\\b[^\\n]*\\bpassed\\b`, 'i').test(status));
+  // after an audit reject the user may accept the risk; the Orchestrator records `audit 4b: risk accepted` in ## Status
+  const riskAccepted = /\baudit 4b\b[^\n]*\brisk accepted\b/i.test(status);
+  if (riskAccepted) passed.push('4b');
   const skips = [...(LANE_SKIPS[profile] ?? []), ...skip];
   const upTo = all.filter((h) => h.round < Number(round) || (h.round === Number(round) && STEP_ORDER.indexOf(h.step) <= STEP_ORDER.indexOf(String(step))));
   const loop = simulate({ task, profile, skip: skips, passed, events: upTo.map((h) => ({ handoff: h.data, step: h.step, role: h.role })) });
@@ -88,6 +91,8 @@ export function checkAll(taskDir, { step, round, profile, skip = [], brain, base
     const errs = [];
     const diag = all.filter((h) => h.step === '4a').at(-1)?.data?.diagnosis?.status;
     if (diag !== 'known') errs.push(`4a diagnosis is ${diag ?? 'missing'}, need known before step 4`);
+    const verdict = all.filter((h) => h.step === '4b').at(-1)?.data?.audit?.verdict;
+    if (verdict !== 'confirm' && !riskAccepted) errs.push(`4b audit is ${verdict ?? 'missing'}, need confirm (or the user's accepted risk in checkpoint ## Status) before step 4`);
     const fix = readIf(join(taskDir, 'fix.md'));
     for (const s of ['Cause', 'Repro']) if (!section(fix, s)?.trim()) errs.push(`fix.md ## ${s} is missing or empty`);
     add('fix lane', errs);

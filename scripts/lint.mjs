@@ -3,7 +3,8 @@
 //   node scripts/lint.mjs
 // Rules (each failure prints file + rule):
 //   frontmatter   agents/*.md and skills/*/SKILL.md have name/description (+ tools/model for agents); SKILL description ≤ 1024 chars
-//   model         only haiku or sonnet (token-discipline.md forbids opus/fable)
+//   model         only haiku or sonnet; opus only for the auditor (token-discipline.md forbids it elsewhere, and fable)
+//   silent        debugger and auditor never use SendMessage (no tool, and the agent file says so only as a prohibition)
 //   effort        optional; only low, medium or high
 //   links         every relative markdown link and `references/...` path resolves
 //   references    each agent has the 8 standard reference files, links all of them, orphans none
@@ -56,7 +57,8 @@ for (const f of agentFiles) {
   if (!fm) { fail(file, 'frontmatter', 'missing YAML frontmatter'); continue; }
   for (const k of ['name', 'description', 'tools', 'model']) if (!fm[k]) fail(file, 'frontmatter', `missing "${k}"`);
   if (fm.name && fm.name !== role) fail(file, 'frontmatter', `name "${fm.name}" != filename "${role}"`);
-  if (fm.model && !['haiku', 'sonnet'].includes(fm.model)) fail(file, 'model', `"${fm.model}" not allowed (haiku|sonnet only)`);
+  if (fm.model && !(role === 'auditor' ? ['opus'] : ['haiku', 'sonnet']).includes(fm.model)) fail(file, 'model', `"${fm.model}" not allowed (haiku|sonnet only; the auditor is opus)`);
+  if ((role === 'debugger' || role === 'auditor') && /SendMessage/.test(`${fm.tools} ${fm.description}`)) fail(file, 'silent', `${role} must not list or use SendMessage (the fix lane is silent: hand-off JSON only)`);
   if (fm.effort && !['low', 'medium', 'high'].includes(fm.effort)) fail(file, 'effort', `"${fm.effort}" not allowed (low|medium|high only)`);
   if (!new RegExp(`^# ${role.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join('[ -]')}`, 'mi').test(txt)) fail(file, 'structure', 'H1 should be the agent name');
 

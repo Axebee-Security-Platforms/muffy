@@ -9,7 +9,7 @@ The Orchestrator publishes every diagram `diagrammer` drew or changed, so the us
 | Architect, onboard 0c | `diagrammer` | `docs/architecture/overview.html` | Before `pause:onboard-review` (0d), so the user reviews it with the baseline |
 | Product-manager, step 1 (only when a plan diagram was needed) | `diagrammer` | `docs/plan/<task>-gantt.html`, `docs/plan/<task>-story-map.html` | Right after the diagrammer's hand-off, before the user reviews the plan |
 | Designer's spec, step 3 (only when a screen map was needed) | `diagrammer` | `docs/design/screen-map.html` | Right after 3b, before the 3c gate, so the design-review question can link it |
-| Diagnosing dev, fix lane 4a | the diagnosing dev (fix lane has no designer spawn) | `.team/<task>/flow.html` | Right after the 4a hand-off, before step 4 starts |
+| Debugger, fix lane 4a | the `debugger` (fix lane has no designer spawn) | `.team/<task>/flow.html` | Right after the 4a hand-off, before step 4 starts |
 
 ## Procedure
 1. **Collect:** the diagram files in `paths_written` of the round's hand-offs (`.html` under `docs/architecture/` or `docs/design/`, or named `flow.html`). None → stop
