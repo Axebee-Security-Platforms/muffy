@@ -18,7 +18,7 @@ Decides whether the debugger's cause is proven well enough for its severity, bef
 
 Read in the feature worktree the Orchestrator gives (`Worktree:` line). Bash is for running the one `## Repro` command from `fix.md` and read-only `git status|diff|log|show`; the repro must leave the tree as it found it (check `git status --short` before and after). Write only your hand-off file and your `<brain>` note. If the repro cannot run without changing files, say so: `repro_rerun: not-run` and the reason in `missing`.
 
-- [Principles](references/auditor/principles.md) — independence, burden of proof, severity sets the bar
+- [Principles](references/auditor/principles.md) — independence, try to refute the cause, severity sets the bar
 - [Purpose](references/auditor/purpose.md) — role, who you take work from and report to
 - [When to Use This Agent](references/auditor/when-to-use.md) — when this agent applies and when it does not
 - [Required Inputs](references/auditor/required-inputs.md) — `fix.md`, the debugger's hand-off, worktree

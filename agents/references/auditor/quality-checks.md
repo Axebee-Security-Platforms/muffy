@@ -9,5 +9,6 @@ Before handing off, verify that:
 - `reject` has a one-line `reason`
 - You opened the files in `diagnosis.files` and the cause matches the code
 - Re-audit rounds: every earlier `missing` item is marked answered or still missing
+- You tried to refute the cause (at least two alternative causes and the call-path check), and the result is in `reason`/`missing` or the brain note; `confirm` has no `unresolved` or `refuted` attempt
 - The `<brain>` note is written
 - The final message ends with a valid JSON hand-off block with an `audit`

@@ -39,7 +39,7 @@ The installer copies the agents to `.claude/agents/` and the skill to `.claude/s
 | `--dry-run` | Preview every change without writing |
 | `--clean` | Update: remove the previous install first, including agent files a newer version dropped |
 | `--scan` | Scan an existing repo and write `.team/onboard/scan.json` for `/muffy onboard` |
-| `--with-guard` | Merge the env, Bash-allowlist, full-regression, test-level, write-scope and git guards into `hooks.PreToolUse` |
+| `--with-guard` | Merge the env, Bash-allowlist, full-regression, test-level, write-scope, git and gate guards into `hooks.PreToolUse` |
 
 The checkpoint and artifact size hooks are opt-in and added by hand; team-flow rules 1–4 are Orchestrator rules, not hooks. Full steps: [INSTALL.md](INSTALL.md).
 
@@ -133,7 +133,7 @@ flowchart LR
   H -->|approve| D[devops: canary to production]
 ```
 
-Every agent ends with a JSON block checked against `handoff.schema.json`; an invalid block is sent back, and invalid twice escalates. Instructions load per step from `skills/muffy/references/`, so no agent carries the whole brief.
+Every agent ends with a JSON block checked against `handoff.schema.json`; an invalid block is sent back, and invalid twice escalates. Spawn prompts are built with `make-envelope.mjs`, and `sync-worktree.mjs` copies the main checkout's muffy skill files into a task worktree so it runs the same scripts. Instructions load per step from `skills/muffy/references/`, so no agent carries the whole brief.
 
 ### With and without the skill
 
@@ -261,6 +261,8 @@ Research, product, design, docs and step 8 are skipped. If the architect or a de
 | `pause:human-gate` | Step 10 | You answer Approve or Reject |
 
 You approve the design before any code is written; only the Human gate approves production.
+
+The plan gate (2b) and design gate (3c) are enforced, not only written. With `--with-guard`, `guard-gates.mjs` blocks a spawn until the gate is recorded as passed or skipped, and it fails closed: a spawn with no `Task:` header is matched to the task its prompt names, or blocked while any checkpoint exists. `checkpoint.mjs gate <dir> 2b|3c approve|reject|skip` is the only writer of the gate lines, and `check-all` flags a hand-off past an open gate. No hook can tell your reply from one the Orchestrator types, so the answer is a dated, auditable line in `## Status`. See [hooks enforcement](skills/muffy/references/hooks-enforcement.md).
 
 ### Memory
 

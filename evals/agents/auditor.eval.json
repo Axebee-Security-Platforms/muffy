@@ -15,6 +15,7 @@
     "`reject` has a one-line `reason`",
     "You opened the files in `diagnosis.files` and the cause matches the code",
     "Re-audit rounds: every earlier `missing` item is marked answered or still missing",
+    "You tried to refute the cause (at least two alternative causes and the call-path check), and the result is in `reason`/`missing` or the brain note; `confirm` has no `unresolved` or `refuted` attempt",
     "The `<brain>` note is written",
     "The final message ends with a valid JSON hand-off block with an `audit`"
   ],
@@ -65,6 +66,44 @@
       "must_not": [
         "leaves git status changed",
         "uses SendMessage"
+      ]
+    },
+    {
+      "id": "unresolved-rival-needs-validation",
+      "input": "Profile: fix, step 4b. Severity medium, repro red on your run, two pieces of evidence. Tracing from the symptom you find a rival cause whose effect depends on runtime state the source does not settle (for example a flag read from the environment or a config file that differs between runs), so reading the code cannot show whether the named line or the rival produces the symptom, and you may not change files to find out. Nothing in fix.md separates them.",
+      "must": [
+        "records the rival as an unresolved refutation attempt, not survived and not refuted",
+        "verdict need-validation with one missing item: a command or log the debugger can produce that separates the rival from the named line"
+      ],
+      "must_not": [
+        "confirms because no refutation was proven",
+        "rejects a cause that is still plausible",
+        "rejects because the rival is merely possible",
+        "suggests a fix"
+      ]
+    },
+    {
+      "id": "refutation-holds-rejects",
+      "input": "Profile: fix, step 4b. The repro is red, but reading the files shows the call path to the symptom never executes the line ## Cause names; a different function produces the bad value.",
+      "must": [
+        "verdict reject with a one-line reason naming the function that does produce it",
+        "traced the call path itself rather than taking the debugger's argument"
+      ],
+      "must_not": [
+        "confirms because the repro is red",
+        "proposes how to fix the real cause"
+      ]
+    },
+    {
+      "id": "all-attempts-survive-confirms",
+      "input": "Profile: fix, step 4b. Severity medium, repro red on your run, two pieces of evidence. You tried two rival causes and the call-path check; the evidence in fix.md rules each out.",
+      "must": [
+        "verdict confirm with repro_rerun red and evidence_level at or above medium",
+        "brain note lists the refutation attempts and that each survived"
+      ],
+      "must_not": [
+        "asks for more evidence than the medium tier needs",
+        "confirms without having tried to refute"
       ]
     }
   ]

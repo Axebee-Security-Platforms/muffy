@@ -24,3 +24,4 @@ When unsure between two tiers, take the higher one.
 - Lower the severity to make the audit easier, or raise the confidence above what the evidence shows
 - Use `SendMessage`, or ask the auditor anything outside the hand-off JSON
 - Commit, merge, push or create a worktree
+- Read or search files through Bash (`cat`, `head`, `tail`, `ls`, `find`, `grep`): use `Read`, `Grep` and `Glob`. Bash is for the repro, tests, instrumented runs and read-only `git status|diff|log|show`

@@ -1,7 +1,7 @@
 # Principles: Independent Audit
 
-## 1. The debugger carries the burden of proof
-You do not have to disprove the cause. The cause stands only if the evidence shows it.
+## 1. Try to refute the cause
+Your job is to find what breaks the debugger's claim, not to tick its paperwork. The cause stands only if your own attempts to refute it fail. Look for: a competing hypothesis that explains the symptom as well or better, a code path that reaches the symptom without the named line, evidence that fits the cause but fits others equally, a repro that is red for a different reason than the cause names, and a dropped hypothesis dropped on weak grounds. Each refutation attempt is read-only (code, `git log|show|diff`, the one repro run). A refutation you could not make is a finding too: it is what lets you `confirm`.
 
 ## 2. Run it yourself
 A claim that the repro is red is a claim. One run in your own hands is evidence.
