@@ -3,7 +3,13 @@
 ### Mode 1: Deployability
 1. Survey which deploy targets already exist (staging/production, pipeline, registry); if there are **none**, say so plainly — never assume there are
 2. Assess the stack proposed by the brief/architect: is it actually deployable, runtime + version, resources (CPU/RAM/GPU/disk), where large artifacts live (model weights, index, data), native or conflicting dependencies
-2b. **Propose the infrastructure only when the `infra:` answer in the prompt is `propose`** (existing → reuse it; later → local near-production, no proposal; not-needed → no hosting; missing → ask which applies): read [infrastructure-options.md](infrastructure-options.md), write 2 or 3 options (cloud, on-premises, hybrid or existing, whichever are realistic for the brief and its constraints, never cloud by default) with lock-in, operational load and recovery, and a default. The choice is the user's: return `needs-input` with `questions[]` and wait for the answer in `requirements.md`
+2b. **Propose the infrastructure only when the `infra:` answer in the prompt is `propose`.** Other answers:
+   - existing → reuse it
+   - later → local near-production, no proposal
+   - not-needed → no hosting
+   - missing → ask which applies
+
+   When proposing, read [infrastructure-options.md](infrastructure-options.md) and write 2 or 3 options. Pick whichever of cloud, on-premises, hybrid or existing are realistic for the brief and its constraints; never default to cloud. For each option give lock-in, operational load and recovery, then name a default. The choice is the user's: return `needs-input` with `questions[]` and wait for the answer in `requirements.md`
 2c. **Apply the practices:** read [infrastructure-best-practices.md](infrastructure-best-practices.md) and fill `## Practices` for the chosen infrastructure at the level the task needs (baseline now, production before the production deploy, regulated and on-premises only when they apply).
 3. Write `.team/<task>/deploy.md` (see Output Format)
 4. If the proposed stack can't be deployed or must be torn out after MVP → tell the Orchestrator with alternatives (architect writes the ADR)
@@ -67,7 +73,15 @@ Modes 1 to 3 keep their purpose; the evidence changes. The toolchain check comes
 | Mac / Windows / Electron | App builds and starts, main window opens, exits cleanly | Unsigned installer or app bundle produced by CI, run by the user |
 | `cli` | Binary builds; `--help` and one core command exit 0 | The release binary run against a smoke command on a clean directory (no repo files) |
 
-Skip the Docker and HTTP health checks above unless the app also ships a server, and skip the `devops-preflight.mjs` Node/`.nvmrc` check unless the project is Node-based (no `.nvmrc` is normal for Flutter, Swift, Kotlin and .NET; run `node .claude/skills/muffy/scripts/devops-preflight.mjs --toolchain <name>[=<version from contract.md>]` for each tool the target needs: names are `flutter`, `dart`, `xcodebuild`, `swift`, `dotnet`, `java`, `gradle`, `android-sdk`, `cargo`, `go`, `python`, `docker`, `node`. A FAIL prints `toolchain-missing: <name> on <os>`: report it as the blocker, never as a pass). Write the chosen evidence per step in `deploy.md`. Signing, notarization, store upload and package publishing are the user's: prepare the artifact and a checklist, do not run them.
+What to skip:
+- Skip the Docker and HTTP health checks above unless the app also ships a server.
+- Skip the `devops-preflight.mjs` Node/`.nvmrc` check unless the project is Node-based. A missing `.nvmrc` is normal for Flutter, Swift, Kotlin and .NET.
+
+What to run instead: for each tool the target needs, run `node .claude/skills/muffy/scripts/devops-preflight.mjs --toolchain <name>[=<version from contract.md>]`.
+- Valid names: `flutter`, `dart`, `xcodebuild`, `swift`, `dotnet`, `java`, `gradle`, `android-sdk`, `cargo`, `go`, `python`, `docker`, `node`.
+- A FAIL prints `toolchain-missing: <name> on <os>`. Report it as the blocker, never as a pass.
+
+Write the chosen evidence for each step in `deploy.md`. Signing, notarization, store upload and package publishing are the user's: prepare the artifact and a checklist, do not run them.
 
 ### All modes
 **Keep command output out of context.** Build, test, migration, smoke and `docker logs` output goes to a file, never straight into the conversation: `<cmd> > .team/<task>/logs/<name>.log 2>&1; echo "exit $?"`. On exit 0, read nothing. On failure read only the tail (`tail -n 30`) or `grep -iE 'error|fail|fatal'` of that file, then widen only if the cause is still unclear. Quote at most ~20 log lines in the report and give the log path for the rest. `logs/` stays out of git.

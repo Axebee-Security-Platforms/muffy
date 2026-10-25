@@ -1,9 +1,28 @@
 ## Workflow
 
-1. Read `fix.md` and the debugger's hand-off. Note the claimed `severity`, `confidence`, `files` and the `## Repro` command
-2. `git status --short` in the worktree, run the `## Repro` command once, `git status --short` again. Record `repro_rerun`: `red` (fails for the symptom's reason), `green` (does not fail), `flaky` (run it once more only if the first result looks unstable), `not-run` (it cannot run without changing files, or the environment is missing something)
-3. Grade the evidence in `## Evidence` against the table in Rules and Guardrails and find the highest tier whose minimum it meets: `evidence_level`
-4. Check the cause, not just the paperwork: open the files named in `files` and confirm the line the cause names does what `## Cause` says; confirm the dropped hypotheses were dropped for a stated reason
-5. Try to refute the cause (read-only), before reading the debugger's argument for it: from the symptom alone, list at least two other plausible causes, trace the call path to the symptom and check whether it can occur without the named line, and ask whether each piece of `## Evidence` would look the same if the cause were wrong. Where `git log|show` can test a claim (when it started, what changed), use it. Note each attempt and its result: `refuted` (the cause fails), `unresolved` (evidence cannot separate it from the cause) or `survived`
-6. Decide the verdict by the rules in Rules and Guardrails: `confirm`, `need-validation` or `reject`. A refutation that holds → `reject`; an `unresolved` one → `need-validation` with the exact check that would settle it in `missing`
-7. Record in `<brain>/agents/auditor/<task>.md` ≤ 5 lines (the only file you write besides the hand-off): verdict, evidence level vs severity, refutations tried and their results, what was missing
+1. Read `fix.md` and the debugger's hand-off. Note the claimed `severity`, `confidence`, `files` and the `## Repro` command.
+2. Re-run the repro once, and check that it changes no files:
+   - Run `git status --short` in the worktree, run the `## Repro` command once, then run `git status --short` again.
+   - Record `repro_rerun` as one of:
+     - `red`: fails for the symptom's reason
+     - `green`: does not fail
+     - `flaky`: run it once more only if the first result looks unstable
+     - `not-run`: it cannot run without changing files, or the environment is missing something
+3. Grade the evidence in `## Evidence` against the table in Rules and Guardrails. Find the highest tier whose minimum it meets: that is `evidence_level`.
+4. Check the cause, not just the paperwork:
+   - Open the files named in `files` and confirm the line the cause names does what `## Cause` says.
+   - Confirm the dropped hypotheses were dropped for a stated reason.
+5. Try to refute the cause (read-only) **before** reading the debugger's argument for it:
+   - From the symptom alone, list at least two other plausible causes.
+   - Trace the call path to the symptom and check whether it can occur without the named line.
+   - Ask whether each piece of `## Evidence` would look the same if the cause were wrong.
+   - Where `git log|show` can test a claim (when it started, what changed), use it.
+   - Note each attempt and its result: `refuted` (the cause fails), `unresolved` (evidence cannot separate it from the cause) or `survived`.
+6. Decide the verdict by the rules in Rules and Guardrails: `confirm`, `need-validation` or `reject`.
+   - A refutation that holds → `reject`.
+   - An `unresolved` one → `need-validation`, with the exact check that would settle it in `missing`.
+7. Record in `<brain>/agents/auditor/<task>.md` (≤ 5 lines; it is the only file you write besides the hand-off):
+   - verdict
+   - evidence level vs severity
+   - refutations tried and their results
+   - what was missing
