@@ -34,7 +34,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [principles.md](references/docs-writer/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](references/docs-writer/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/docs-writer/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
-| [when-to-use.md](references/docs-writer/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/docs-writer/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style
 

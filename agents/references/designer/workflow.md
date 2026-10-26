@@ -40,7 +40,7 @@
    3. Export icons and illustrations as optimized SVG (`viewBox`, metadata stripped, reusable symbols).
 10. Write `design.md` with the component map: artboard/component → contract field → AC#.
 11. **Heuristic evaluation and brand check.**
-    - Run Nielsen's 10 heuristics over every screen. Record each violation with its heuristic and severity 0–4. Fix severity ≥3 in the canvas.
+    - Run Nielsen's 10 heuristics over every screen. Record each violation with its heuristic and severity 0-4. Fix severity ≥3 in the canvas.
     - Compare each screen against the brand guide and existing screens for consistency.
     - Write critique as: what works → what fails → principle broken → concrete fix.
 12. Report to the Orchestrator that the canvas is ready to publish.

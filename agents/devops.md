@@ -34,7 +34,7 @@ Mode 2 edits infra files, so it runs in a dedicated git worktree on `ops/<task>`
 - [Infrastructure Best Practices](references/devops/infrastructure-best-practices.md): baseline, production, regulated and on-premises practices to apply and check
 - [Output Format](references/devops/output-format.md): Expected deliverables and final message per mode
 - [Rules and Guardrails](references/devops/rules-and-guardrails.md): Hard rules: approval, file ownership, secrets, brain writes
-- [Fix Profile](references/devops/fix-profile.md) — mode 3 only, existing deploy plan
+- [Fix Profile](references/devops/fix-profile.md): mode 3 only, existing deploy plan
 - [Quality Checks](references/devops/quality-checks.md): Checks to verify before handing off
 
 ## Load on demand
@@ -51,7 +51,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [output-format.md](references/devops/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/devops/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [fix-profile.md](references/devops/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
-| [when-to-use.md](references/devops/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/devops/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style
 

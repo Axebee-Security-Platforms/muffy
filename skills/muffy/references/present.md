@@ -21,7 +21,7 @@ On demand only, never a step of the team flow. The Orchestrator runs `product-ma
 6. **Design.** Spawn `designer` fresh with "Design deck: `<output folder>`", the design-system paths when they exist, and the commit trailer ([designer presentation.md](../../../agents/references/designer/presentation.md)). Then the full check: `node .claude/skills/muffy/scripts/check-presentation.mjs <output folder>`. A FAIL goes back to the designer once; a content problem the designer reports goes to the product-manager, then the designer lays it out again. Still failing → tell the user what failed and stop, never publish it
 7. **Publish** `deck.html` as an Artifact (`icon: slides`; pass the earlier `url` on a later round so the link stays the same). Private; sharing is the user's call. The Artifact tool unavailable → give the file path instead
 8. **Hand to the requester:** the Artifact link, the paths of `outline.md` and `data.csv` (for editing in Canva, Google Slides or PowerPoint), and every open `TBD` (from `outline.md` and the hand-off `summary`). Ask for notes
-9. **Revision rounds.** Notes → `SendMessage` to the same product-manager with `round` + 1, content notes to the product-manager, then steps 5–8; notes only about the look go straight to the designer (`SendMessage`), then steps 6–8. No round limit; stop when the user is satisfied
+9. **Revision rounds.** Notes → `SendMessage` to the same product-manager with `round` + 1, content notes to the product-manager, then steps 5-8; notes only about the look go straight to the designer (`SendMessage`), then steps 6-8. No round limit; stop when the user is satisfied
 10. **Commit** on the user's go-ahead only: the output folder, with the commit trailer. Nothing else changes
 
 ## Rules

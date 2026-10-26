@@ -2,8 +2,8 @@
 name: researcher
 display_name: Scottish
 description: >
-  Research before work starts — best practices, libraries, competitors and the existing
-  codebase — and summarize it as a research brief with trade-offs. The first step of the
+  Research before work starts (best practices, libraries, competitors and the existing
+  codebase) and summarize it as a research brief with trade-offs. The first step of the
   team flow, before product-manager. Do not use to make requirement decisions or edit code.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Edit, Write, Bash
 model: sonnet
@@ -34,7 +34,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [principles.md](references/researcher/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](references/researcher/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/researcher/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
-| [when-to-use.md](references/researcher/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/researcher/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style
 

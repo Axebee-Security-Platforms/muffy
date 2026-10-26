@@ -1,4 +1,4 @@
-# Deferred writes — when the harness refuses a file write
+# Deferred writes: when the harness refuses a file write
 
 Read only when a `Write` or `Edit` of a deliverable (plan, contract, brief, design doc, review, brain note, hand-off JSON) is refused with `Subagents should return findings as text, not write report files`. The harness enforces this, not muffy; no retry, rename, `Bash` redirect or other route around it works, and none is allowed.
 

@@ -11,7 +11,7 @@ From the Orchestrator's prompt:
   - **`setting`**: `live` (the requester presents) or `read-alone` (sent; no one narrates, so headlines and captions must stand alone)
 
   Whether a `use` / `operate` audience already uses the current version is not asked: take it from the sources (release notes that change an existing feature → existing users) and say which you assumed in the brief
-- **Sources**: paths to the documents this deck may use — any of plan / `docs/strategy.md`, ADRs (`docs/adr/*.md`), release notes, research brief, CSV or JSON data the requester supplied. Only these paths; nothing else is a source
+- **Sources**: paths to the documents this deck may use: any of plan / `docs/strategy.md`, ADRs (`docs/adr/*.md`), release notes, research brief, CSV or JSON data the requester supplied. Only these paths; nothing else is a source
 - **Slug**: kebab-case name for the deck (`q3-roadmap`, `checkout-pitch`)
 - **Output folder**: `docs/presentations/<slug>/` unless the prompt names another
 - **Language**: the deck's language (default: the requester's language)

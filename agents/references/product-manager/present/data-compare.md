@@ -10,7 +10,7 @@ Read this only when the deck compares numbers.
 | How do groups differ across several measures? | `grouped-bar` |
 | How did it change over time? | `line` |
 | What changed between two points (before → after, plan → actual)? | `before-after` |
-| What share of a whole? | `bar` sorted, labelled with % — no pie charts |
+| What share of a whole? | `bar` sorted, labelled with %, no pie charts |
 
 ## Shape
 
@@ -45,7 +45,7 @@ When the headline points at one bar, point or category, mark it as the chart's `
 
 - Compare like with like: same unit, same period length, same definition. If the sources differ, say so in `notes` and in a footnote, or don't compare
 - Values are absolute amounts ≥ 0, so a chart can start at zero; never pass a trimmed range that makes a gap look bigger
-- No forecasts, targets or "projected" values unless a source states them — and label them as such
+- No forecasts, targets or "projected" values unless a source states them, and label them as such
 - Use every relevant data point, not the ones that flatter the story
 - The headline states what the data shows, no more. "Fell 40%" is fine; "Users love it" from a ticket count is not
 - Data the requester supplied counts as a source; cite its file path. Numbers typed in the request itself: cite `request`

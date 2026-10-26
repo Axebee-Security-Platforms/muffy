@@ -1,4 +1,4 @@
-# Platforms — web, mobile, desktop, CLI
+# Platforms: web, mobile, desktop, CLI
 
 Muffy's flow is the same for every target. What changes is who builds it, what "design", "smoke" and "staging" mean, and which toolchain must exist on the host. The architect records the target in `contract.md` on the Stack line as `Platform: <value>`; every other step reads it from there. No `Platform:` line = `web`.
 

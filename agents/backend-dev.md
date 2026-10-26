@@ -25,21 +25,21 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 5. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator merges and removes the worktree.
 6. Leave the worktree in place and put its path and branch in the final message.
 
-- [Principles](references/backend-dev/principles.md) — security default, data integrity, performance metrics, reliability > velocity
-- [Purpose](references/backend-dev/purpose.md) — role, who you take work from and report to
-- [When to Use This Agent](references/backend-dev/when-to-use.md) — when this agent applies and when it does not
-- [Required Inputs](references/backend-dev/required-inputs.md) — contract, AC, brief, branch, `<brain>` path
-- [Workflow](references/backend-dev/workflow.md) — the step-by-step process, including the brain note
-- [Output Format](references/backend-dev/output-format.md) — commits, brain note, final message contents
-- [Rules and Guardrails](references/backend-dev/rules-and-guardrails.md) — stack/design, anti-slop and don't rules
-- [Coding Practices](references/backend-dev/coding-practices.md) — API, structure, data, error and test practices
-- [Coding Practices: Go](references/backend-dev/coding-practices-go.md) — read when the codebase has `go.mod`
-- [Coding Practices: Rust](references/backend-dev/coding-practices-rust.md) — read when the codebase has `Cargo.toml`
-- [Coding Practices: TypeScript](references/backend-dev/coding-practices-typescript.md) — read when the codebase is a TypeScript/Node server
-- [Coding Practices: CLI/console](references/backend-dev/coding-practices-cli.md) — read when the task is a command-line tool, console app or screenless daemon (`Platform: cli`)
+- [Principles](references/backend-dev/principles.md): security default, data integrity, performance metrics, reliability > velocity
+- [Purpose](references/backend-dev/purpose.md): role, who you take work from and report to
+- [When to Use This Agent](references/backend-dev/when-to-use.md): when this agent applies and when it does not
+- [Required Inputs](references/backend-dev/required-inputs.md): contract, AC, brief, branch, `<brain>` path
+- [Workflow](references/backend-dev/workflow.md): the step-by-step process, including the brain note
+- [Output Format](references/backend-dev/output-format.md): commits, brain note, final message contents
+- [Rules and Guardrails](references/backend-dev/rules-and-guardrails.md): stack/design, anti-slop and don't rules
+- [Coding Practices](references/backend-dev/coding-practices.md): API, structure, data, error and test practices
+- [Coding Practices: Go](references/backend-dev/coding-practices-go.md): read when the codebase has `go.mod`
+- [Coding Practices: Rust](references/backend-dev/coding-practices-rust.md): read when the codebase has `Cargo.toml`
+- [Coding Practices: TypeScript](references/backend-dev/coding-practices-typescript.md): read when the codebase is a TypeScript/Node server
+- [Coding Practices: CLI/console](references/backend-dev/coding-practices-cli.md): read when the task is a command-line tool, console app or screenless daemon (`Platform: cli`)
 - [PR Diagram](references/backend-dev/pr-diagram.md) - draw changed files as a PR Lens diagram
-- [Fix Profile](references/backend-dev/fix-profile.md) — fix-only rules for the fix lane (the debugger diagnoses, the auditor confirms)
-- [Quality Checks](references/backend-dev/quality-checks.md) — pre-handoff verification checklist
+- [Fix Profile](references/backend-dev/fix-profile.md): fix-only rules for the fix lane (the debugger diagnoses, the auditor confirms)
+- [Quality Checks](references/backend-dev/quality-checks.md): pre-handoff verification checklist
 
 ## Load on demand
 
@@ -59,7 +59,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [pr-diagram.md](references/backend-dev/pr-diagram.md) | When drawing the diagram, after tests pass and work is committed |
 | [quality-checks.md](references/backend-dev/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [fix-profile.md](references/backend-dev/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
-| [when-to-use.md](references/backend-dev/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/backend-dev/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style
 

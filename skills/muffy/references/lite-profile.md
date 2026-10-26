@@ -1,4 +1,4 @@
-# Lite profile — internal changes that need a contract, not a product
+# Lite profile: internal changes that need a contract, not a product
 
 A lane between the fix lane and the full flow, for internal work whose shape the requester already knows: an internal API, a refactor, a performance fix or a database change (index, reversible migration). It skips research, product and design and goes straight to `architect` for the contract, then the usual build, review, QA, staging and Human gate. Start it with `/muffy lite <description>`, or when the Orchestrator classifies a request this way at setup. Everything not listed here follows the normal flow.
 
@@ -38,7 +38,7 @@ When a request is borderline (an internal endpoint plus "and show it on the sett
 ## Setup-lite (replaces [setup.md](setup.md))
 
 1. Name the task `lite-<slug>`. Create the vault task note `<brain>/tasks/<task>.md`; add it to `project.md` → `## Tasks`. Read `project.md` Lessons and Open issues
-2. `pause:scope`, shortened, in one `AskUserQuestion` call of up to 4 questions (2–4 options each):
+2. `pause:scope`, shortened, in one `AskUserQuestion` call of up to 4 questions (2-4 options each):
    - **Kind + owner**: internal-api, refactor, perf or db; FE, BE or both
    - **AC + out of scope**: the AC list drafted from the request and a quick read of the named area. Perf AC name the before-number, the target and the measuring command; refactor AC say "behaviour unchanged" and name the tests that prove it. Confirm / Change it
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`

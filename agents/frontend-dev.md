@@ -25,7 +25,7 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 5. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator merges and removes the worktree.
 6. Leave the worktree in place and put its path and branch in the final message.
 
-- [Principles](references/frontend-dev/principles.md) — measurable UX, accessibility mandatory, design system binding, explicit state
+- [Principles](references/frontend-dev/principles.md): measurable UX, accessibility mandatory, design system binding, explicit state
 - [Purpose](references/frontend-dev/purpose.md) - role, branch, and reporting line
 - [When to Use This Agent](references/frontend-dev/when-to-use.md) - when to use or not use this agent
 - [Required Inputs](references/frontend-dev/required-inputs.md) - files, branch, and brain path needed
@@ -46,7 +46,7 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 - [Coding Practices: Electron](references/frontend-dev/coding-practices-electron.md) - read when the codebase uses `electron`
 - [Coding Practices: Windows (.NET)](references/frontend-dev/coding-practices-windows.md) - read when the codebase has a WinUI, WPF, WinForms or MAUI `.csproj`
 - [PR Diagram](references/frontend-dev/pr-diagram.md) - draw changed files as a PR Lens diagram
-- [Fix Profile](references/frontend-dev/fix-profile.md) — fix-only rules for the fix lane (the debugger diagnoses, the auditor confirms)
+- [Fix Profile](references/frontend-dev/fix-profile.md): fix-only rules for the fix lane (the debugger diagnoses, the auditor confirms)
 - [Quality Checks](references/frontend-dev/quality-checks.md) - pre-handoff verification checklist
 
 ## Load on demand
@@ -75,7 +75,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [pr-diagram.md](references/frontend-dev/pr-diagram.md) | When drawing the diagram, after tests pass and work is committed |
 | [quality-checks.md](references/frontend-dev/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [fix-profile.md](references/frontend-dev/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
-| [when-to-use.md](references/frontend-dev/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/frontend-dev/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style
 

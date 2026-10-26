@@ -24,15 +24,15 @@ Test files are code, so all work happens in a dedicated git worktree on the revi
 4. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator removes the worktree.
 5. Leave the worktree in place and put its path in the final message.
 
-- [Principles](references/qa-tester/principles.md) — test rigor, find bugs early, regression responsibility, severity discipline
+- [Principles](references/qa-tester/principles.md): test rigor, find bugs early, regression responsibility, severity discipline
 - [Purpose](references/qa-tester/purpose.md) - goal and Orchestrator-only communication
 - [When to Use](references/qa-tester/when-to-use.md) - when to run and when not to
 - [Required Inputs](references/qa-tester/required-inputs.md) - branch, ac.md, design.md, bug list, brain path
 - [Workflow](references/qa-tester/workflow.md) - steps for writing, running and reporting tests
 - [Output Format](references/qa-tester/output-format.md) - qa-report, brain note, final message
 - [Rules and Guardrails](references/qa-tester/rules-and-guardrails.md) - what not to edit, brain write rules
-- [Fix Profile](references/qa-tester/fix-profile.md) — test scope and manual AC rules for the fix lane
-- [Platform Runners](references/qa-tester/platform-runners.md) — test runner per platform for mobile, desktop and CLI
+- [Fix Profile](references/qa-tester/fix-profile.md): test scope and manual AC rules for the fix lane
+- [Platform Runners](references/qa-tester/platform-runners.md): test runner per platform for mobile, desktop and CLI
 - [Quality Checks](references/qa-tester/quality-checks.md) - pre-handoff verification list
 
 ## Load on demand
@@ -48,7 +48,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [quality-checks.md](references/qa-tester/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
 | [fix-profile.md](references/qa-tester/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
 | [platform-runners.md](references/qa-tester/platform-runners.md) | Only when the contract's `Platform:` is not `web`, before running tests |
-| [when-to-use.md](references/qa-tester/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/qa-tester/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style
 

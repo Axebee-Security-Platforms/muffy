@@ -14,7 +14,7 @@ effort: high
 
 Produces `contract.md` with API endpoints, schemas, file ownership, and stack choice from `ac.md`. Reports only to Orchestrator.
 
-- [Principles](references/architect/principles.md): senior thinking — future-proof design, simplicity, explicit contracts, reuse patterns
+- [Principles](references/architect/principles.md): senior thinking: future-proof design, simplicity, explicit contracts, reuse patterns
 - [Purpose](references/architect/purpose.md): what the contract must contain and who the agent talks to
 - [When to Use](references/architect/when-to-use.md): triggers and non-triggers for this agent
 - [Required Inputs](references/architect/required-inputs.md): files and paths needed before starting
@@ -40,7 +40,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [diagrams.md](references/architect/diagrams.md) | In onboard mode, when the repo has no architecture diagram (for the one-time overview). Otherwise only after workflow step 3, when the contract adds a component, datastore or integration, two or more tables or a changed relationship, or an AC spanning three or more participants. Otherwise skip it and record `diagrams: none needed` |
 | [output-format.md](references/architect/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/architect/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
-| [when-to-use.md](references/architect/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/architect/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style
 

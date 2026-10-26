@@ -1,6 +1,6 @@
 ## Plan diagrams (only when needed)
 
-**Default: no diagram.** The plan in `docs/plan/<task>.md` and the ACs in `ac.md` are the source of truth; a picture costs tokens and goes stale. Spec one only when a trigger below fires, when the user asks for a roadmap or a story map, or when your prompt says `Diagram requested: <kind>` or `Diagram facts: <request>` (then the triggers do not apply). You never write the file yourself — `diagrammer` draws every diagram muffy produces; your job is deciding whether a trigger fired and the facts it must show.
+**Default: no diagram.** The plan in `docs/plan/<task>.md` and the ACs in `ac.md` are the source of truth; a picture costs tokens and goes stale. Spec one only when a trigger below fires, when the user asks for a roadmap or a story map, or when your prompt says `Diagram requested: <kind>` or `Diagram facts: <request>` (then the triggers do not apply). You never write the file yourself: `diagrammer` draws every diagram muffy produces; your job is deciding whether a trigger fired and the facts it must show.
 
 | Diagram | File | `kind` | Spec it for `diagrammer` only when |
 |---|---|---|---|

@@ -14,11 +14,11 @@ description: >
   Not for a question about the code, a text-only one-line edit, or step-by-step work in main session.
 ---
 
-# Muffy — Feature Development Team
+# Muffy: Feature Development Team
 
 ## Purpose
 
-Orchestrate the subagents in `.claude/agents/` from research to deploy for one feature. The main session is the **Orchestrator**. Subagents never talk to each other — everything goes through the Orchestrator, and work is handed off as files in `.team/<task>/`.
+Orchestrate the subagents in `.claude/agents/` from research to deploy for one feature. The main session is the **Orchestrator**. Subagents never talk to each other. Everything goes through the Orchestrator, and work is handed off as files in `.team/<task>/`.
 
 ## Inputs
 
@@ -32,22 +32,22 @@ Load lazily: open a reference only at the step that needs it; subagents do the s
 
 Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup and Run profile: [references/resume.md](references/resume.md).
 
-- **Route** — first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | feature`): the command is the route, so say `Route: <mode>` and open that mode's reference instead
-- **Todo** (`/muffy todo`) — tasks in `.team` that are not done, read-only: [todo.md](references/todo.md)
-- **Onboard** (`/muffy onboard`) — existing codebase, first run: [onboard.md](references/onboard.md)
-- **Present** (`/muffy present`) — client deck outside the team flow: [present.md](references/present.md), missing documents: [doc-request.md](references/doc-request.md)
-- **Diagram** (`/muffy diagram`, or a standalone "draw a diagram") — route facts to the owning agent, then always `diagrammer`: [diagram.md](references/diagram.md); PNG/SVG only on request: [diagram-export.md](references/diagram-export.md)
-- **Setup** — folders and task note: [setup.md](references/setup.md)
-- **Run profile** — which steps to skip, never review/QA/staging/Human gate: [run-profile.md](references/run-profile.md). Small bug: fix lane [fix-profile.md](references/fix-profile.md) (`/muffy fix`). Internal API, refactor, measured perf, reversible migration: lite lane [lite-profile.md](references/lite-profile.md) (`/muffy lite`). Forced full flow, no triage: `/muffy feature <request>` runs every step; it skips only the route and the fix/lite triage, never a gate
-- **Steps 0–12** — agent, input and output per step: [steps.md](references/steps.md)
-- **Platforms** — when the contract's `Platform:` is not `web`, or the request names an app or CLI: [platforms.md](references/platforms.md)
+- **Route**: first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | feature`). The command is the route, so say `Route: <mode>` and open that mode's reference instead
+- **Todo** (`/muffy todo`): tasks in `.team` that are not done, read-only: [todo.md](references/todo.md)
+- **Onboard** (`/muffy onboard`): existing codebase, first run: [onboard.md](references/onboard.md)
+- **Present** (`/muffy present`): client deck outside the team flow: [present.md](references/present.md), missing documents: [doc-request.md](references/doc-request.md)
+- **Diagram** (`/muffy diagram`, or a standalone "draw a diagram"): route facts to the owning agent, then always `diagrammer`: [diagram.md](references/diagram.md); PNG/SVG only on request: [diagram-export.md](references/diagram-export.md)
+- **Setup**: folders and task note: [setup.md](references/setup.md)
+- **Run profile**: which steps to skip, never review/QA/staging/Human gate: [run-profile.md](references/run-profile.md). Small bug: fix lane [fix-profile.md](references/fix-profile.md) (`/muffy fix`). Internal API, refactor, measured perf, reversible migration: lite lane [lite-profile.md](references/lite-profile.md) (`/muffy lite`). Forced full flow, no triage: `/muffy feature <request>` runs every step. It skips only the route and the fix/lite triage, never a gate
+- **Steps 0 to 12**: agent, input and output per step: [steps.md](references/steps.md)
+- **Platforms**: when the contract's `Platform:` is not `web`, or the request names an app or CLI: [platforms.md](references/platforms.md)
 - **Publishing diagrams** (3e): [diagram-publish.md](references/diagram-publish.md) · **Design review** (3c): [design-review.md](references/design-review.md)
-- **Requirements interview** (steps 1–2, `needs-input`): [requirements.md](references/requirements.md)
+- **Requirements interview** (steps 1 and 2, `needs-input`): [requirements.md](references/requirements.md)
 - **Stack learning**: [stack-learning.md](references/stack-learning.md) · **Baseline freshness** (yellow/red only): [baseline-freshness.md](references/baseline-freshness.md) · **ADR ownership**: [adr.md](references/adr.md)
-- **Loops** — only when a reject/fail happens: [loops.md](references/loops.md)
-- **Token discipline** (prompt envelope script, report cap, quiet Bash, turn budget, compact points) and **Memory model** — each once at setup: [token-discipline.md](references/token-discipline.md), [memory-model.md](references/memory-model.md)
-- **Test levels** — before step 7 (fix lane: before step 4): [test-levels.md](references/test-levels.md)
-- **Closing** — step 12 only: [closing.md](references/closing.md)
+- **Loops**: only when a reject/fail happens: [loops.md](references/loops.md)
+- **Token discipline** (prompt envelope script, report cap, quiet Bash, turn budget, compact points) and **Memory model**: each once at setup: [token-discipline.md](references/token-discipline.md), [memory-model.md](references/memory-model.md)
+- **Test levels**: before step 7 (fix lane: before step 4): [test-levels.md](references/test-levels.md)
+- **Closing**: step 12 only: [closing.md](references/closing.md)
 
 ## Output Format
 
@@ -58,13 +58,13 @@ Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup
 
 ## Rules and Guardrails
 
-Critical rules — Orchestrator rules 1–4 plus the opt-in hooks: [references/hooks-enforcement.md](references/hooks-enforcement.md)
+Critical rules (Orchestrator rules 1 to 4, plus the opt-in hooks): [references/hooks-enforcement.md](references/hooks-enforcement.md)
 
 - Every agent ends with a JSON hand-off block; validate it ([schemas/](schemas/handoff.schema.json), `scripts/validate-handoff.mjs`) before acting on it; invalid twice → escalate, never guess
 - An agent's hand-off carries `deferred_writes` (the harness refused its document write): you write those files from its `<<<FILE>>>` blocks, then validate ([token-discipline.md](references/token-discipline.md))
 - A loop point that is rejected 4 times, or keeps the same blocker id open for 3 consecutive rejects, stops and asks the user: [references/loops.md](references/loops.md)
 - Only the Orchestrator merges branches and saves reviews as `review-<n>.md`
-- Run only the phases the plan marks for this run. In the fix lane, steps 4a (diagnose) and 4b (audit the cause) are never skipped, and the lane is silent (hand-off JSON between agents, no `SendMessage`), and a fix that outgrows the lane is promoted to the full flow, never patched on
+- Run only the phases the plan marks for this run. In the fix lane, steps 4a (diagnose) and 4b (audit the cause) are never skipped. The lane is silent (hand-off JSON between agents, no `SendMessage`). A fix that outgrows the lane is promoted to the full flow, never patched on
 - FE/BE report a temporary stack → stop, send to architect (+ ADR) before coding continues
 - An agent writes outside its vault folder → revert it and resend its rule; an agent can't find `<brain>` → `AskUserQuestion`
 - Never deploy to production without passing the Human gate

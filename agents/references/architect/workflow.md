@@ -45,7 +45,7 @@
    - Write the choice in `contract.md` under a Stack section with reasons.
    - **Build vs buy:** for each non-trivial capability (auth, payments, email, search, queue), record `build | buy | reuse` with one reason. Prefer reuse of what the codebase or an existing ADR already has. For a capability worth buying, read [third-party-providers.md](third-party-providers.md), propose 2 or 3 provider options, and let the user choose through the Orchestrator.
 6b. **Options before a hard-to-reverse choice.** This covers the stack, a datastore, the auth model, the deploy model, or a module split that FE and BE will build on.
-   - Write 2–3 real options in `contract/stack.md`: one line each (what it is, the trade-off, what it locks in), plus the one you pick with the reason.
+   - Write 2-3 real options in `contract/stack.md`: one line each (what it is, the trade-off, what it locks in), plus the one you pick with the reason.
    - If there is one obvious option (the codebase or an ADR already decides it), say so in one line instead.
 7. Write hard-to-reverse technical decisions (stack, DB, auth, deploy model, a build-vs-buy choice) as an ADR at `docs/adr/NNNN-<kebab-title>.md`, numbered after the latest file, using the same format as the PM's ADRs with `Kind: technical`. Product decisions (scope, priorities) are the PM's ADRs, not yours; see [adr.md](../../../skills/muffy/references/adr.md).
 8. Record in `<brain>/agents/architect/<task>.md`:

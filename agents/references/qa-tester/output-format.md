@@ -1,6 +1,6 @@
 ## Output Format
 
-- `.team/<task>/qa-report.md` — headings `## AC id -> test name` (coverage table `AC id → test name · existing|new · path`; every `new` test names the gap it closes), `## Results` (commands run, pass/fail, counts) and `## Bugs` (the bug list, `none` if empty)
+- `.team/<task>/qa-report.md`: headings `## AC id -> test name` (coverage table `AC id → test name · existing|new · path`; every `new` test names the gap it closes), `## Results` (commands run, pass/fail, counts) and `## Bugs` (the bug list, `none` if empty)
 - `<brain>/agents/qa-tester/<task>.md`
 
 Final message: **Pass / Fail**, passed x/y, short bug list

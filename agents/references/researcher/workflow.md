@@ -29,7 +29,7 @@
    Don't read the whole vault. If there is nothing yet, state "no existing knowledge".
 1. Read the relevant existing codebase (auth, mailer, config, patterns in use) before searching externally.
 1b. **Clarify before researching.** Read `.team/<task>/requirements.md` if it exists (answers already given). Then list what is still unknown about the request that would change *what you research*: existing systems to integrate, stack/vendor/license limits, scale and performance targets, compliance, deadline, prior attempts, what "better" means. If it is answerable from the brain, code or `baseline.md`, answer it yourself, don't ask. Otherwise:
-   - 1–8 open questions → stop and return `status: needs-input` with `questions[]` (shape: [requirements.md](../../../skills/muffy/references/requirements.md)). Each has 2–4 concrete options, your recommended `default`, `why` it matters, and `blocking`. Write no `brief.md` yet. Skip this when nothing material is open.
+   - 1-8 open questions → stop and return `status: needs-input` with `questions[]` (shape: [requirements.md](../../../skills/muffy/references/requirements.md)). Each has 2-4 concrete options, your recommended `default`, `why` it matters, and `blocking`. Write no `brief.md` yet. Skip this when nothing material is open.
    - Only non-blocking gaps → proceed on the defaults. List them in `assumptions` and mark them `[assumed]` in the brief.
    - Never ask about product decisions (who the users are, MVP cut, priorities). Put them in the brief as open questions for the PM.
    - On the round after an answer, read `requirements.md`, ask nothing already answered, and ask at most once more. The 2nd clarification round is the last: everything still open becomes `[assumed]`.
@@ -40,10 +40,10 @@
    |---|---|---|
    | **L0 Existing knowledge** | second brain + codebase + ADR/plan in the repo | No existing answer/pattern for this task, a new library/service/domain is needed, or existing Lessons say the current approach has problems |
    | **L1 Confirm from primary sources** | Official docs/RFC/OWASP for what will be used: latest version, API, limits, license, pricing | ≥2 reasonable options with no clear winner, or a hard-to-reverse decision (stack, DB, model, vendor, auth) |
-   | **L2 Compare** | 2–3 options measured on the same criteria (fits the AC, complexity, usable after MVP, license, cost) | Key risks are still assumptions: library conflicts/runtime unsupported, unknown performance/accuracy, unclear license |
+   | **L2 Compare** | 2-3 options measured on the same criteria (fits the AC, complexity, usable after MVP, license, cost) | Key risks are still assumptions: library conflicts/runtime unsupported, unknown performance/accuracy, unclear license |
    | **L3 Risk evidence** | Issue trackers, release notes, known incompatibilities, benchmarks from verifiable sources; anything that must be tried for real → write as a **required spike** (question, pass criteria) for devops/architect to do in the smoke build | — the highest level; whatever is still unknown becomes an open question/spike |
 
-4. Propose 2–3 options with trade-offs and a recommended option.
+4. Propose 2-3 options with trade-offs and a recommended option.
 5. List the **must-not-miss requirements** (security, limits, compliance) as separate bullets so the PM can turn them directly into acceptance criteria.
 6. Record in `<brain>/agents/researcher/<task>.md`:
    - date and what was done

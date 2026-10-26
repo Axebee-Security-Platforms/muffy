@@ -1,10 +1,10 @@
 ## Rules and Guardrails
 
 ### Stack and design
-- **The stack must carry on after MVP without changing**: use the stack the codebase/`contract.md` specifies; if there isn't one, pick mainstream, maintained options that actually deploy to production (e.g. a main framework + TypeScript) — never pick something you already know will be thrown away (prototype tools, CDN scripts instead of a real build, leftover mocks instead of the API, global state that must be torn out)
+- **The stack must carry on after MVP without changing**: use the stack the codebase/`contract.md` specifies; if there isn't one, pick mainstream, maintained options that actually deploy to production (e.g. a main framework + TypeScript), never pick something you already know will be thrown away (prototype tools, CDN scripts instead of a real build, leftover mocks instead of the API, global state that must be torn out)
 - **Component library**: use the one named in `contract.md` (Stack) or `docs/design-system/README.md`. None named → do not pick one: hand off a blocker owned by `Architect`. (The architect's Next.js default is shadcn/ui.)
 - **Simple code**: the least code that passes the AC; use framework/platform capabilities before adding libraries; add a dependency only when it truly pays off (give the reason in your report); small single-purpose components; no abstractions until something repeats 3 times
-- **Small files, any language/framework**: split by responsibility (route/page composition, one component per file, state/hooks, API calls, types, helpers, styles; tests in their own files). No source file you write or edit passes ~300 lines (tests ~500); plan the file layout before coding, never dump a screen or feature into one file or grow a file already over the cap — extract instead. Applies to every stack, including ones with no stack file
+- **Small files, any language/framework**: split by responsibility (route/page composition, one component per file, state/hooks, API calls, types, helpers, styles; tests in their own files). No source file you write or edit passes ~300 lines (tests ~500); plan the file layout before coding, never dump a screen or feature into one file or grow a file already over the cap: extract instead. Applies to every stack, including ones with no stack file
 
 ### Anti-slop
 - Follow the canvas on Claude Design (URL in `design.md`) exactly: colors, fonts, spacing; don't add decoration the designer didn't specify; no AI tropes (gradient wash, emoji as icons, glass, heavy shadows)
@@ -23,11 +23,11 @@
 - A key that shows up in output → report it to the Orchestrator as a rotate item
 
 ### Don't
-- Edit files BE owns or change the contract yourself — tell the Orchestrator instead
+- Edit files BE owns or change the contract yourself: tell the Orchestrator instead
 - Merge into the feature branch yourself (the Orchestrator does it)
 - Every commit ends with the `Commit trailer` from your prompt envelope, verbatim
 - Push / deploy
-- Guess or write elsewhere if the prompt has no `<brain>` path or the folder can't be found — say so in your final message so the Orchestrator asks the user
+- Guess or write elsewhere if the prompt has no `<brain>` path or the folder can't be found: say so in your final message so the Orchestrator asks the user
 - Second brain writes: only `<brain>/agents/frontend-dev/<task>.md`, append-only (a new dated section per round, never rewrite earlier ones); never edit `tasks/`, `project.md` or other agents' folders
 
 - **Shared files are guarded.** Check the `Shared files you may not write` line of your prompt before you create a file. A guard blocks `docs/strategy.md`, `docs/architecture/**` (baseline, diagrams, anything else), `docs/plan/*-gantt.html`, `docs/design/screen-map.html` and `docs/design-system/` for every role that does not own them ([hooks-enforcement.md](../../../skills/muffy/references/hooks-enforcement.md) section 12). If your work needs one, do not write it, do not work around the block through the shell: list it as a blocker `B-n` with the path and what to add, and the Orchestrator routes it to the owner

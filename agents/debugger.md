@@ -18,14 +18,14 @@ Finds why a bug happens and how bad it is. Diagnoses only: it never fixes. Repor
 
 Work in the feature worktree the Orchestrator gives (`Worktree:` line, `.worktrees/feature-<task>`). If none is given, stop and hand off `status: blocked` with `blockers: []` and the missing `Worktree:` line named in `summary`. Never create a worktree, branch or commit, and never run `git merge`, `git push` or `git worktree remove`. Edit only `.team/<task>/fix.md` and `.team/<task>/flow.html`; source files stay untouched at hand-off (`git diff` on source is empty).
 
-- [Principles](references/debugger/principles.md) — falsify, one variable per probe, evidence over theory
-- [Purpose](references/debugger/purpose.md) — role, who you take work from and report to
-- [When to Use This Agent](references/debugger/when-to-use.md) — when this agent applies and when it does not
-- [Required Inputs](references/debugger/required-inputs.md) — `fix.md`, worktree, prior audit
-- [Workflow](references/debugger/workflow.md) — reproduce, shrink, hypothesise, probe, write the cause
-- [Output Format](references/debugger/output-format.md) — `fix.md` sections, `diagnosis`, severity
-- [Rules and Guardrails](references/debugger/rules-and-guardrails.md) — severity scale, evidence you must leave, don'ts
-- [Quality Checks](references/debugger/quality-checks.md) — pre-handoff verification checklist
+- [Principles](references/debugger/principles.md): falsify, one variable per probe, evidence over theory
+- [Purpose](references/debugger/purpose.md): role, who you take work from and report to
+- [When to Use This Agent](references/debugger/when-to-use.md): when this agent applies and when it does not
+- [Required Inputs](references/debugger/required-inputs.md): `fix.md`, worktree, prior audit
+- [Workflow](references/debugger/workflow.md): reproduce, shrink, hypothesise, probe, write the cause
+- [Output Format](references/debugger/output-format.md): `fix.md` sections, `diagnosis`, severity
+- [Rules and Guardrails](references/debugger/rules-and-guardrails.md): severity scale, evidence you must leave, don'ts
+- [Quality Checks](references/debugger/quality-checks.md): pre-handoff verification checklist
 
 ## Load on demand
 
@@ -38,7 +38,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [principles.md](references/debugger/principles.md) | Only when a hypothesis will not fall or a trade-off comes up; skip for mechanical work |
 | [output-format.md](references/debugger/output-format.md) | Just before writing `## Cause` |
 | [quality-checks.md](references/debugger/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a re-diagnose round |
-| [when-to-use.md](references/debugger/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/debugger/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Silent lane
 

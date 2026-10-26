@@ -16,7 +16,7 @@ Before choosing anything, state in one line each: the subject (what the product 
 
 ### Pass 1: a short design plan
 Write it at the top of `docs/design-system/README.md` (design system creation) or in `design.md`, compact:
-- **Color**: 4–6 named values for the base palette, each with its role
+- **Color**: 4-6 named values for the base palette, each with its role
 - **Type**: typefaces and their roles (one family or two; if two, clearly distinct), a type scale with intentional weights and spacing, line length under 80 characters, serif body text gets slightly more line height than sans
 - **Layout**: a concept in one sentence, an ASCII wireframe, the alignment rule (left, centered, justified)
 - **Principle**: the one thing that makes this product look like itself

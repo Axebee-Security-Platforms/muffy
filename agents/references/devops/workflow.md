@@ -1,7 +1,7 @@
 ## Workflow
 
 ### Mode 1: Deployability
-1. Survey which deploy targets already exist (staging/production, pipeline, registry); if there are **none**, say so plainly — never assume there are
+1. Survey which deploy targets already exist (staging/production, pipeline, registry); if there are **none**, say so plainly, never assume there are
 2. Assess the stack proposed by the brief/architect: is it actually deployable, runtime + version, resources (CPU/RAM/GPU/disk), where large artifacts live (model weights, index, data), native or conflicting dependencies
 2b. **Propose the infrastructure only when the `infra:` answer in the prompt is `propose`.** Other answers:
    - existing → reuse it
@@ -17,26 +17,26 @@
 ### Mode 2: Smoke build
 Runs only when the Orchestrator's prompt says a smoke trigger is true (new runtime/dependency/native package/datastore, devops-owned files changed, or no passing smoke on record for this stack). A feature that only adds routes, UI or logic does not need it; staging (mode 3) covers that.
 0. Preflight: run `node .claude/skills/muffy/scripts/devops-preflight.mjs` (add `--health <url>` once the app is up). It checks `node -v` against `.nvmrc` (e.g. Node 24.21.0) and prints one PASS/FAIL line per check. A smoke on another Node version proves nothing; a FAIL = fail, report it
-1. On branch `ops/<task>` inside its worktree, create/edit only the infra files `contract.md` says devops owns — minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
-2. Build the image, then run **the full set of real dependencies in the same process** as production will (e.g. load the real model + real search library + real DB) with a small smoke script — not stubs
+1. On branch `ops/<task>` inside its worktree, create/edit only the infra files `contract.md` says devops owns: minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
+2. Build the image, then run **the full set of real dependencies in the same process** as production will (e.g. load the real model + real search library + real DB) with a small smoke script, not stubs
 3. Check that every version in the environment matches `contract.md` (runtime, main dependencies); mismatch = fail
 3b. Prove the baseline practices that a smoke can prove (builds from the pinned artifact, config from the environment, health check, rollback or restore step runs once where the stage allows); the rest stay `planned` or `gap` in `deploy.md` `## Practices`
-4. Fail → report with logs and cause (e.g. library conflict, version unavailable on the pinned runtime) — **FE/BE must not start** until it passes or architect changes the stack
+4. Fail → report with logs and cause (e.g. library conflict, version unavailable on the pinned runtime): **FE/BE must not start** until it passes or architect changes the stack
 5. Hand off to the Orchestrator to merge `ops/<task>` as the base of `fe/<task>` and `be/<task>`
 
 #### Smoke scope: start minimal, grow with the product
-Keep the smoke a thin, fast gate. Do not test business logic in it — that belongs to qa-tester and the FE/BE unit tests.
+Keep the smoke a thin, fast gate. Do not test business logic in it: that belongs to qa-tester and the FE/BE unit tests.
 
-**Stage 1 — Minimal smoke (first weeks, before any feature is done).** Check only:
+**Stage 1: Minimal smoke (first weeks, before any feature is done).** Check only:
 1. **Compile/build passes** (type-check/compile for the pinned runtime)
 2. **Docker build passes** (image builds from the pinned base image and lockfile)
 3. **App starts and health check returns HTTP 200** (container up, health endpoint reachable)
 
 Do not check internal logic yet. The "real dependencies, no stubs" rule above still applies: the app must boot with the real DB/model/library it will use, even if no feature code calls them.
 
-**Stage 2 — Grow the smoke as features land.** When FE/BE finish a core function (e.g. login, the main API endpoint) and the Orchestrator tells you it is done, add that function to the smoke as **one** happy-path check (e.g. log in with a seeded test user → token returned; main endpoint → 200 + expected shape). Rules:
+**Stage 2: Grow the smoke as features land.** When FE/BE finish a core function (e.g. login, the main API endpoint) and the Orchestrator tells you it is done, add that function to the smoke as **one** happy-path check (e.g. log in with a seeded test user → token returned; main endpoint → 200 + expected shape). Rules:
 - Add only functions the Orchestrator/contract names as core; one happy-path check each, no edge cases
-- Keep checks in a smoke script devops owns (e.g. `smoke/`), calling the running app over HTTP — never import or edit FE/BE code
+- Keep checks in a smoke script devops owns (e.g. `smoke/`), calling the running app over HTTP, never import or edit FE/BE code
 - Use seeded test data/accounts only, never real secrets or production data
 - If a check is flaky or slow, report it to the Orchestrator rather than deleting it silently
 - Keep the whole smoke fast (target: a few minutes); if it outgrows that, tell the Orchestrator
@@ -47,7 +47,7 @@ Before starting: check that the runtime/version to deploy matches `deploy.md` an
 
 Staging:
 0. Preflight, before any live call: run `node .claude/skills/muffy/scripts/devops-preflight.mjs --env-file <env file> --var <NAME[=prefix]> ...` (one `--var` per external credential, e.g. `--var ANTHROPIC_API_KEY=sk-ant-`). It checks `node -v` against `.nvmrc` and each credential by name and prefix, and never prints values; a FAIL on the runtime = fail. If a live call is needed and the Orchestrator has not approved it, stop at `pause:staging-credentials` and report (see `.claude/skills/muffy/references/run-profile.md#named-pauses`)
-1. Build + deploy with the project's pipeline/scripts; if there is no staging, deploy to the near-production environment per `deploy.md` — **never skip this step**
+1. Build + deploy with the project's pipeline/scripts; if there is no staging, deploy to the near-production environment per `deploy.md`: **never skip this step**
 2. Docker staging checklist (check each, record pass/fail):
    - env mapped from `.env.staging.local` into the container; names listed, values never printed
    - the app binds to a real interface and the origin it expects: `HOSTNAME=0.0.0.0` inside the container must not leak into the origin check (the BAD_ORIGIN case)

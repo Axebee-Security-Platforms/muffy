@@ -1,4 +1,4 @@
-# Route — pick the entry and the agents from the prompt
+# Route: pick the entry and the agents from the prompt
 
 Runs first on a free-text request, before any other reference. A request that starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | feature`) is already routed: skip this file. The Orchestrator reads the requester's prompt and picks the smallest route that delivers the outcome they asked for. It then says the route in one line before spawning anything: `Route: <name> → <agents>. Because: <the words in the prompt that decided it>.` The requester can override it.
 
@@ -84,10 +84,10 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | A bug or cosmetic fix with a symptom | fix ([fix-profile.md](fix-profile.md)) | `debugger` diagnoses, `auditor` checks the cause, then fix (FE and/or BE), `code-reviewer`, `qa-tester`, `devops` staging | Human gate |
 | Internal work with a known shape: an internal API, a refactor, a measured performance fix, an index or reversible migration, nothing a user sees ("split this module", "add an index, p95 is 1.8 s") | lite ([lite-profile.md](lite-profile.md)) | `architect` (+ devops for a migration), frontend-dev ∥ backend-dev, code-reviewer, qa-tester, devops staging | Human gate, then production |
 | A new feature or behaviour change across UI, API or data, "build X" | full flow ([steps.md](steps.md), [run-profile.md](run-profile.md)) | researcher, product-manager, designer ∥ architect ∥ devops, frontend-dev ∥ backend-dev, code-reviewer, qa-tester ∥ docs-writer, devops | Human gate, then production |
-| Compare options, "what is the best library", "what do competitors do" | research | `researcher` (L0–L2 by the question's depth) | the research brief, in chat. Saved to `docs/research/<slug>.md` only if asked |
+| Compare options, "what is the best library", "what do competitors do" | research | `researcher` (L0-L2 by the question's depth) | the research brief, in chat. Saved to `docs/research/<slug>.md` only if asked |
 | User stories, acceptance criteria, a phased plan, priorities | plan | `researcher` only if facts are missing, then `product-manager` | `ac.md` and the plan, for the requester to approve |
 | Screens, user flow, wireframes, UI states, design only | design | `designer` (plus `architect` if the screens need an API the requester has not defined) | the design canvas, at the design gate. Code is not written |
-| A UX/UI review of screens that already exist (a canvas, a running page, screenshots) | design-review | main session with the `impeccable` skill, following [design-review.md](design-review.md) steps 2–4 on the given screens | findings in chat (`UX-<n>`, severity, suggested fix). No file changes; fixes are a design or fix route the requester picks |
+| A UX/UI review of screens that already exist (a canvas, a running page, screenshots) | design-review | main session with the `impeccable` skill, following [design-review.md](design-review.md) steps 2-4 on the given screens | findings in chat (`UX-<n>`, severity, suggested fix). No file changes; fixes are a design or fix route the requester picks |
 | API, schema, contract or data model only | spec | `architect` | `contract.md`. No code |
 | A review of an architecture, an ADR, a contract or a module's design | arch-review | `architect`, read-only ("Review only" in the prompt) | findings in chat. A changed decision is a new ADR only if the requester then asks for one |
 | Write or supersede an ADR | adr | `architect` (technical) or `product-manager` (product), per [adr.md](adr.md) | the new `docs/adr/NNNN-*.md`, committed on the requester's go-ahead |

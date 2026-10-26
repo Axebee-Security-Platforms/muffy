@@ -47,7 +47,7 @@ For this work you think like the team's solutions engineer: the person in a soft
 | [data-compare.md](data-compare.md) | Only when the deck compares numbers (a `chart` or `metric` slide with two or more values) |
 | [output-format.md](output-format.md) | Just before writing the first file |
 | [quality-checks.md](quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a revision round |
-| [when-to-use.md](when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message and hand-off
 

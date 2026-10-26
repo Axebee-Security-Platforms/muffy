@@ -1,4 +1,4 @@
-# Fix profile — small bugs and cosmetic fixes
+# Fix profile: small bugs and cosmetic fixes
 
 A lane for work that does not need research, product, design or architecture: a bug with a known location, a bug whose cause is still unknown (diagnosed inside the lane), or a cosmetic change that reuses existing design-system tokens. Start it with `/muffy fix <description>`, or when the Orchestrator classifies a request this way at setup. Everything not listed here follows the normal flow.
 
@@ -23,7 +23,7 @@ Read the signals from the request, then let `node .claude/skills/muffy/scripts/n
 | "Login redirects to the old page after password reset, not sure why" | fix (BE or both) | Cause unknown is fine; step 4a diagnoses it |
 | "Submit button on checkout is the wrong colour in dark mode" | fix (FE, cosmetic) | Existing tokens, no new component |
 | "Align the card padding on the pricing page with the design system spacing" | fix (FE, cosmetic) | Tokens already exist, no logic change |
-| "Date shows a day earlier for users in UTC-5" | fix | Symptom with a clear repro; likely 1–2 files |
+| "Date shows a day earlier for users in UTC-5" | fix | Symptom with a clear repro; likely 1-2 files |
 | "Add a `phone` field to the signup form" | full | New field changes the schema and the API contract |
 | "Redesign the login page" / "make the dashboard look better" | full | New layout and components, design approval needed |
 | "Search is slow" | full, or ask first | No symptom, location or repro; ask for a measurement before triage |
@@ -37,7 +37,7 @@ When the request is borderline (for example a bug plus "while you are there, als
 ## Setup-lite (replaces [setup.md](setup.md))
 
 1. Name the task `fix-<slug>`. Create the vault task note `<brain>/tasks/<task>.md`; add it to `project.md` → `## Tasks`. Read `project.md` Lessons and Open issues
-2. `pause:scope`, shortened, in one `AskUserQuestion` call of up to 4 questions (2–4 options each):
+2. `pause:scope`, shortened, in one `AskUserQuestion` call of up to 4 questions (2-4 options each):
    - **Kind + owner**: bug or cosmetic; FE, BE or both
    - **AC + out of scope**: the AC list drafted from the request and a quick read of the named files, with out of scope. Confirm / Change it
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
@@ -77,7 +77,7 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 | 7 | `qa-tester` | `fix.md` AC replace `ac.md` and `design.md`. Level L0, L1 or L2 from [test-levels.md](test-levels.md); qa-tester runs exactly what that row allows (L0 build + lint, L1 the regression test + unit tests of the touched files, L2 also one boundary integration test), by path; never the whole suite ([hooks-enforcement.md](hooks-enforcement.md) §10). Cosmetic AC with no automated check, and an AC the dev says no seam can reach, are marked `manual` in `qa-report.md` and shown at the Human gate. No docs-writer, no step 8 |
 | 9 | `devops` mode 3 | Staging health + smoke against the newest `.team/*/deploy.md` (path in the prompt). No `deploy.md` and no staging → near-production env per `project.md` |
 | 10, 11 | Human gate, devops production | Unchanged. One question: qa-report, staging result, the diff summary |
-| 12 | Orchestrator | [closing.md](closing.md) steps 2–6 in full, not abbreviated: `## Usage` from `spawns.tsv`, Lessons tally (step 4 marks the checkpoint `closed`, so a resume skips it); skip step 1 unless a decision or stack learning came out of the fix |
+| 12 | Orchestrator | [closing.md](closing.md) steps 2-6 in full, not abbreviated: `## Usage` from `spawns.tsv`, Lessons tally (step 4 marks the checkpoint `closed`, so a resume skips it); skip step 1 unless a decision or stack learning came out of the fix |
 
 Never skipped: 4a, 4b, 6, 7, 9, 10. A fix with no diagnosis hand-off, or no `confirm` from the auditor (or the user's accepted risk, below), cannot start step 4.
 

@@ -5,7 +5,7 @@ Use this agent when:
 - `ac.md` exists and FE/BE need a contract before coding (team flow step 3)
 - Smoke build failed (step 3d) and the stack must change + an ADR is needed
 - `deploy.md` arrived and the contract must align with the pinned runtime and devops-owned files
-- **Onboard mode** — `/muffy onboard` step 0c: record the stack in force as an ADR from `baseline.md`
+- **Onboard mode**: `/muffy onboard` step 0c: record the stack in force as an ADR from `baseline.md`
 
 Do not use this agent when:
 

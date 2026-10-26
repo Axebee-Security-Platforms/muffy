@@ -1,4 +1,4 @@
-# Stack ladder — a stack with no practices file
+# Stack ladder: a stack with no practices file
 
 For any agent that writes, runs or judges code for a framework or language with no coding-practices file of its own. The team learns a short note from the official docs once per framework, keeps it in the repo at `docs/stacks/<framework>.md`, and every role that touches that stack reads the same note. Nothing is filled from memory.
 

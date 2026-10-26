@@ -20,11 +20,11 @@ The audience profile ([required-inputs.md](required-inputs.md)) picks the recipe
 
 | Profile | Recipe | Structure and wording | Length | `cta.kind` |
 |---|---|---|---|---|
-| role `decide` | Decision request, Pitch, Roadmap or Progress update, by the request | Answer first: the recommendation in the first slides ✅ (Duarte, Minto). Outcomes, cost and time; no technology names ✅ | Short (4–7 slides ⚠️); detail in `notes` ✅ | `decide` |
+| role `decide` | Decision request, Pitch, Roadmap or Progress update, by the request | Answer first: the recommendation in the first slides ✅ (Duarte, Minto). Outcomes, cost and time; no technology names ✅ | Short (4-7 slides ⚠️); detail in `notes` ✅ | `decide` |
 | role `evaluate` | Decision request, then `diagram` / `chart` as evidence | Facts and options with trade-offs first ✅ (NN/g). Shared terms only at familiarity `deep` ✅ | Medium (up to 12 slides) ⚠️ | `decide` (an advisory ask: "send concerns by <date>") ⚠️ |
-| role `use` | Feature intro: existing users start with what changes ✅ (NN/g change aversion); new users start with what they get ⚠️ | Plain words, the task in front | Short (4–7 slides ⚠️) | `act` |
+| role `use` | Feature intro: existing users start with what changes ✅ (NN/g change aversion); new users start with what they get ⚠️ | Plain words, the task in front | Short (4-7 slides ⚠️) | `act` |
 | role `operate` | Rollout for the team that runs it ⚠️ | Task first, practical ✅ (McMurrey, GOV.UK) | Medium (up to 12 slides) ⚠️ | `act` |
-| role `informed` | Results / before-after, or a short Feature intro | Most important point first ✅ (NN/g inverted pyramid). One slide per topic, not per feature: merge features into one slide of outcomes ⚠️ | Short (4–7 slides ⚠️) | `act` (a light ask: where to follow progress, who to ask) ⚠️. Report, don't persuade: status as it is, no selling ⚠️ |
+| role `informed` | Results / before-after, or a short Feature intro | Most important point first ✅ (NN/g inverted pyramid). One slide per topic, not per feature: merge features into one slide of outcomes ⚠️ | Short (4-7 slides ⚠️) | `act` (a light ask: where to follow progress, who to ask) ⚠️. Report, don't persuade: status as it is, no selling ⚠️ |
 | familiarity `none` | — | Define every term or drop it; no internal or branded names ✅. No component, file-format, library or infrastructure words (collector, PNG, library, environment): say what the audience gets or risks instead ⚠️ | — | — |
 | familiarity `deep` | — | Shared vocabulary allowed, still plain ✅ | — | — |
 | `cares` | — | Lead with the slides that answer it (cost → `metric`/`chart` of cost; time → `timeline`/`roadmap`; what-changes → the change slide first) ⚠️ | — | — |

@@ -8,11 +8,11 @@ Which tests run for which kind of change. The Orchestrator copies the row into t
 | **L1 bug fix, local logic** | Fix lane, the cause sits in one function or component | the dev, at step 4 | `qa-tester` (fix lane) | **One regression test** that fails before the fix and passes after (unit level), plus the existing unit tests of the touched files. Nothing else |
 | **L2 bug fix across a boundary** | The fix crosses an API, DB or module boundary, still within the fix lane | the dev (unit) and `qa-tester` (integration, only for the crossed boundary) | `qa-tester` | L1 + one integration test of that boundary, by path. E2e only if the bug is only visible end to end |
 | **L3 feature** | Full flow, new or changed AC | the dev (unit), `qa-tester` (integration and e2e for gaps in the coverage table) | `qa-tester` | Every AC covered once at the lowest level that asserts it: unit (dev), integration per endpoint, e2e per user flow in the AC. Scope = this task's files and AC. Fix rounds retest only the AC with blockers |
-| **L4 whole-system regression** | Release, or a change with wide blast radius | existing suites | `qa-tester`, only after approval | The repo's full unit + integration + e2e. Needs `pause:full-regression` ([run-profile.md](run-profile.md#named-pauses)); never part of L0–L3 |
+| **L4 whole-system regression** | Release, or a change with wide blast radius | existing suites | `qa-tester`, only after approval | The repo's full unit + integration + e2e. Needs `pause:full-regression` ([run-profile.md](run-profile.md#named-pauses)); never part of L0-L3 |
 
 ## Enforcement
 
-The Orchestrator writes the picked level to `.team/<task>/test-level` (for example `L1`) before it spawns `qa-tester`, and rewrites it when the level changes. `guard-test-level.mjs` then blocks, for `qa-tester` only, a test run or a new test file above the ceiling: L0 any test run or test file, L1 any integration or e2e run or new e2e/integration suite. L2–L3 scoping and L4 approval are enforced by `guard-full-regression.mjs`. See [hooks-enforcement.md](hooks-enforcement.md) §10–11. Without the hooks the table is a rule agents follow, not one that is checked.
+The Orchestrator writes the picked level to `.team/<task>/test-level` (for example `L1`) before it spawns `qa-tester`, and rewrites it when the level changes. `guard-test-level.mjs` then blocks, for `qa-tester` only, a test run or a new test file above the ceiling: L0 any test run or test file, L1 any integration or e2e run or new e2e/integration suite. L2-L3 scoping and L4 approval are enforced by `guard-full-regression.mjs`. See [hooks-enforcement.md](hooks-enforcement.md) §10-11. Without the hooks the table is a rule agents follow, not one that is checked.
 
 ## Picking the level
 

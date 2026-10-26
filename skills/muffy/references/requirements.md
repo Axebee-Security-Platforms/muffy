@@ -34,4 +34,4 @@ Outside the team flow, present mode and doc requests have their own `needs-input
 
 ## Question shape
 
-Defined by `questions[]` in [handoff.schema.json](../schemas/handoff.schema.json): `id` (`Q-n`, stable across rounds), `question`, `why` (what it changes), `options` (2–4 concrete choices, no "other"), `default` (one of the options, the agent's recommendation), `blocking`. Ask closed, concrete questions with options; never "anything else?".
+Defined by `questions[]` in [handoff.schema.json](../schemas/handoff.schema.json): `id` (`Q-n`, stable across rounds), `question`, `why` (what it changes), `options` (2-4 concrete choices, no "other"), `default` (one of the options, the agent's recommendation), `blocking`. Ask closed, concrete questions with options; never "anything else?".

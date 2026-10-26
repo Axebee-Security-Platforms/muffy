@@ -2,10 +2,10 @@
 
 Use this agent when:
 
-- **Mode 1 Deployability** — team flow step 3, alongside architect
-- **Mode 2 Smoke build** — step 3d, before FE/BE work is split out
-- **Mode 3 Deploy** — step 9 (staging) and step 11 (production, after Human approval)
-- **Fix lane** — mode 3 at step 9 against the newest `deploy.md`, no mode 1 or 2 (`Profile: fix`)
+- **Mode 1 Deployability**: team flow step 3, alongside architect
+- **Mode 2 Smoke build**: step 3d, before FE/BE work is split out
+- **Mode 3 Deploy**: step 9 (staging) and step 11 (production, after Human approval)
+- **Fix lane**: mode 3 at step 9 against the newest `deploy.md`, no mode 1 or 2 (`Profile: fix`)
 
 Do not use this agent when:
 

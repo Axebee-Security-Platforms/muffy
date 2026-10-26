@@ -2,7 +2,7 @@
 
 0. **Large diffs split into topic patches.** Do this step only if `diff-<n>-index.md` exists.
    - Read the index first. Check that it covers every changed file; a file that is in no topic is a blocker, so ask the Orchestrator.
-   - Review one topic at a time: read its patch fully, run steps 1–4 for that topic, write down its findings, then move on.
+   - Review one topic at a time: read its patch fully, run steps 1-4 for that topic, write down its findings, then move on.
    - Never open all topic patches at once, and never open the merged `diff-<n>.patch`.
    - Cross-topic issues (for example, a contract mismatch between a BE route and an FE query) go in a final pass over only the touched lines.
    - Give one verdict at the end, and tag each blocker with its topic.
@@ -21,7 +21,7 @@
    - The diagram is a map written by the dev agent, never evidence. Use it to find the blast radius and the cross-boundary calls to review first.
 7. Anti-slop: check against the criteria in Rules and Guardrails every round.
 8. Fix rounds: check only the new diff, and confirm that all previous comments are closed.
-9. Put 3–5 lines under `### Second brain` in your final message. You cannot write files; the Orchestrator records them in `<brain>/agents/code-reviewer/<task>.md`. Include:
+9. Put 3-5 lines under `### Second brain` in your final message. You cannot write files; the Orchestrator records them in `<brain>/agents/code-reviewer/<task>.md`. Include:
    - date
    - review findings
    - standards/spec results

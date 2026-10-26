@@ -40,14 +40,14 @@ Every re-spawn above is silent: the new spawn gets the previous hand-off in `Rea
 
 ## Escalation
 
-1. Write `.team/<task>/escalation-<n>.json` ([schema](../schemas/escalation.schema.json)): trigger, loops used, owner, open blockers with rounds open, one line per attempt, a recommendation, 2–4 options
+1. Write `.team/<task>/escalation-<n>.json` ([schema](../schemas/escalation.schema.json)): trigger, loops used, owner, open blockers with rounds open, one line per attempt, a recommendation, 2-4 options
 2. Validate it: `node .claude/skills/muffy/scripts/validate-handoff.mjs <file> escalation`
 3. Ask the user with `AskUserQuestion` (≤10 lines of context, recommended option first). Options, as relevant:
-   - `extend-loops` — +2 loops at this point, asked again if it runs out
-   - `change-approach` — send the root cause to the right owner (architect/PM/designer), then restart the point's counter
-   - `reduce-scope` — move the failing AC to the backlog in `docs/plan/<task>.md`, update `ac.md`, re-run traceability
-   - `fix-manually` — pause; the user edits, then resume at the same step
-   - `abort-task` — close per [closing.md](closing.md) with status `aborted`; lessons still get promoted
+   - `extend-loops`: +2 loops at this point, asked again if it runs out
+   - `change-approach`: send the root cause to the right owner (architect/PM/designer), then restart the point's counter
+   - `reduce-scope`: move the failing AC to the backlog in `docs/plan/<task>.md`, update `ac.md`, re-run traceability
+   - `fix-manually`: pause; the user edits, then resume at the same step
+   - `abort-task`: close per [closing.md](closing.md) with status `aborted`; lessons still get promoted
 4. Record the answer in `checkpoint.md` and `<brain>/tasks/<task>.md` → `## Lessons`. Never continue silently, never merge or deploy past an unresolved escalation
 
 ## Context checkpoints in loops

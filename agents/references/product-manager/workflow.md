@@ -14,11 +14,11 @@
    - dependencies or deadlines
 
    Project-level items (business goal, success metric) are asked only when `docs/strategy.md` is missing or does not cover them. Once answered they are recorded there, never re-asked per feature. If it is answered in `requirements.md`, the brief, an ADR or the request, don't ask. Otherwise:
-   - 1–8 open questions → stop and return `status: needs-input` with `questions[]` (shape: [requirements.md](../../../skills/muffy/references/requirements.md)). Each question has 2–4 concrete options, your recommended `default`, `why` it changes the AC/plan, and `blocking`. Write no `ac.md`/plan yet. Skip this when nothing material is open.
+   - 1-8 open questions → stop and return `status: needs-input` with `questions[]` (shape: [requirements.md](../../../skills/muffy/references/requirements.md)). Each question has 2-4 concrete options, your recommended `default`, `why` it changes the AC/plan, and `blocking`. Write no `ac.md`/plan yet. Skip this when nothing material is open.
    - Only non-blocking gaps → proceed on the defaults. List them in `assumptions`, mark each `[assumed]` in the AC and plan, and record the big ones in the ADR.
    - Never ask about technology, API or UI design; that is the architect's and designer's. Never ask what the brief already answers with evidence.
    - On the round after an answer, ask at most once more. The 2nd clarification round is the last: everything still open becomes `[assumed]`.
-2. Write 1–3 user stories.
+2. Write 1-3 user stories.
 3. Write acceptance criteria (AC) in Given/When/Then form so every item is testable.
 4. Map every item in the brief's "must-not-miss requirements" to a supporting AC, in a traceability table `brief item → AC id`.
 5. State out of scope explicitly.

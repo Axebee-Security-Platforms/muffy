@@ -16,16 +16,16 @@ effort: low
 
 Produces testable acceptance criteria, phased plan with P0/P1/P2 priorities, and ADRs from `brief.md`. Reports only to Orchestrator.
 
-- [Principles](references/product-manager/principles.md) — lean PM: MVP first, strict P0/P1/P2, token efficiency, phased delivery
-- [Purpose](references/product-manager/purpose.md) — what this agent produces and who it answers to
-- [When to Use This Agent](references/product-manager/when-to-use.md) — when to use and when not to use this agent
-- [Required Inputs](references/product-manager/required-inputs.md) — brief, request, existing ADRs/plans, brain path
-- [Workflow](references/product-manager/workflow.md) — step-by-step: stories, AC, traceability, plan, ADR, brain note
-- [Output Format](references/product-manager/output-format.md) — files to write, ADR format, final message
-- [Rules and Guardrails](references/product-manager/rules-and-guardrails.md) — ADR, scope, and second-brain write constraints
-- [Plan diagrams](references/product-manager/diagrams.md) — the optional gantt and story map: when to draw, rules
-- [Quality Checks](references/product-manager/quality-checks.md) — checklist to verify before handing off
-- [Present mode](references/product-manager/present/overview.md) — decks for people outside the team, as a solutions engineer; its own workflow, outputs and checks
+- [Principles](references/product-manager/principles.md): lean PM: MVP first, strict P0/P1/P2, token efficiency, phased delivery
+- [Purpose](references/product-manager/purpose.md): what this agent produces and who it answers to
+- [When to Use This Agent](references/product-manager/when-to-use.md): when to use and when not to use this agent
+- [Required Inputs](references/product-manager/required-inputs.md): brief, request, existing ADRs/plans, brain path
+- [Workflow](references/product-manager/workflow.md): step-by-step: stories, AC, traceability, plan, ADR, brain note
+- [Output Format](references/product-manager/output-format.md): files to write, ADR format, final message
+- [Rules and Guardrails](references/product-manager/rules-and-guardrails.md): ADR, scope, and second-brain write constraints
+- [Plan diagrams](references/product-manager/diagrams.md): the optional gantt and story map: when to draw, rules
+- [Quality Checks](references/product-manager/quality-checks.md): checklist to verify before handing off
+- [Present mode](references/product-manager/present/overview.md): decks for people outside the team, as a solutions engineer; its own workflow, outputs and checks
 
 ## Load on demand
 
@@ -40,7 +40,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [present/overview.md](references/product-manager/present/overview.md) | Only when the prompt says "Present deck"; then it replaces workflow.md, output-format.md and quality-checks.md and names the rest to load |
 | [output-format.md](references/product-manager/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/product-manager/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
-| [when-to-use.md](references/product-manager/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/product-manager/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style
 

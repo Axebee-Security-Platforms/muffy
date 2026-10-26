@@ -14,7 +14,7 @@ Every technical point is two halves, and the second half is the one on the slide
 
 | How it works (from the ADR or diagram) | Why it matters (from a source, in their terms) |
 |---|---|
-| "Results are cached" | "Pages open faster" — and the number only if a source measured it |
+| "Results are cached" | "Pages open faster", and the number only if a source measured it |
 | "Each customer's data is kept apart" | "Another customer can never see your data" |
 | "We use a payment provider instead of building one" | "Live sooner, and card security is the provider's job" |
 

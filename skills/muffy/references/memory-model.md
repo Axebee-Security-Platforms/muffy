@@ -21,7 +21,7 @@ The repo wins over the vault: an ADR overrides a vault note.
 
 ## Files in `.team/<task>/`
 
-`brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `design-review-<n>.md` (UX/UI review at 3c), `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/` (only when a main file passes 60 lines), `contract/` (always: `contract.md` is an index), `handoff/<step>-<role>-r<round>.json`, `spawns.tsv` (one line per fresh spawn), `fix.md` (fix lane, instead of `ac.md`/`contract.md`/`design.md`), `test-level` (L0–L4, Orchestrator-written), `full-regression.approved` (only while a user-approved full run is in progress), `canvas/`, `diagrams/`, `escalation-<n>.json` (only if a loop was cut off)
+`brief.md`, `ac.md`, `design.md`, `contract.md`, `deploy.md`, `design-review-<n>.md` (UX/UI review at 3c), `review-<n>.md`, `qa-report.md`, `release-notes.md`, `checkpoint.md`, `rounds/<step>-r<n>.md`, part files `ac/`, `brief/` (only when a main file passes 60 lines), `contract/` (always: `contract.md` is an index), `handoff/<step>-<role>-r<round>.json`, `spawns.tsv` (one line per fresh spawn), `fix.md` (fix lane, instead of `ac.md`/`contract.md`/`design.md`), `test-level` (L0-L4, Orchestrator-written), `full-regression.approved` (only while a user-approved full run is in progress), `canvas/`, `diagrams/`, `escalation-<n>.json` (only if a loop was cut off)
 
 ## Checkpoint
 

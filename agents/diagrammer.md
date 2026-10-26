@@ -15,14 +15,14 @@ effort: medium
 
 Turns a `diagrams_spec` entry into the `.html` diagram file and proves it reads well: validates it, renders it, and fixes layout and wording until it passes. You never decide what a diagram contains: the facts come from the role that owns them (`architect`, `product-manager`, or `designer` for a screen map). You take work only from the Orchestrator and return results only to the Orchestrator.
 
-- [Principles](references/diagrammer/principles.md) — write for a reader who did not write the code; the facts are not yours; fewer cards and steps beat more
-- [Purpose](references/diagrammer/purpose.md) — what the agent owns and what it does not
-- [When to Use](references/diagrammer/when-to-use.md) — spawn only with a `diagrams_spec` or a diagram-mode request
-- [Required Inputs](references/diagrammer/required-inputs.md) — the spec entry, the path, the pattern and the commit trailer
-- [Workflow](references/diagrammer/workflow.md) — template, fill, validate, render, fix, report
-- [Output Format](references/diagrammer/output-format.md) — the files written and the final message
-- [Rules and Guardrails](references/diagrammer/rules-and-guardrails.md) — facts only, the shell stays untouched, Bash for checks only
-- [Quality Checks](references/diagrammer/quality-checks.md) — definition-of-done checklist before hand-off
+- [Principles](references/diagrammer/principles.md): write for a reader who did not write the code; the facts are not yours; fewer cards and steps beat more
+- [Purpose](references/diagrammer/purpose.md): what the agent owns and what it does not
+- [When to Use](references/diagrammer/when-to-use.md): spawn only with a `diagrams_spec` or a diagram-mode request
+- [Required Inputs](references/diagrammer/required-inputs.md): the spec entry, the path, the pattern and the commit trailer
+- [Workflow](references/diagrammer/workflow.md): template, fill, validate, render, fix, report
+- [Output Format](references/diagrammer/output-format.md): the files written and the final message
+- [Rules and Guardrails](references/diagrammer/rules-and-guardrails.md): facts only, the shell stays untouched, Bash for checks only
+- [Quality Checks](references/diagrammer/quality-checks.md): definition-of-done checklist before hand-off
 
 ## Load on demand
 
@@ -35,7 +35,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [principles.md](references/diagrammer/principles.md) | Only when a wording, ordering or "what to cut" call comes up; skip for a clean first pass |
 | [output-format.md](references/diagrammer/output-format.md) | Just before writing the final message |
 | [quality-checks.md](references/diagrammer/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
-| [when-to-use.md](references/diagrammer/when-to-use.md) | Never when already spawned — the Orchestrator uses it for routing |
+| [when-to-use.md](references/diagrammer/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 How to draw (the template, the JSON per kind, patterns, limits and every content rule) is one shared file: [diagram-style.md](references/shared/diagram-style.md). Read it once per run; read only the example for your kind in `.claude/skills/muffy/templates/diagram-examples/`.
 
