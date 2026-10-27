@@ -65,7 +65,7 @@
     "questions": {
       "type": "array",
       "maxItems": 8,
-      "description": "researcher / product-manager / architect (provider choices) / devops (infrastructure choice) / designer (design-system intake) / product-manager in present mode (outline confirmation, missing inputs) / docs-writer (present-mode doc request) only: open questions the Orchestrator relays to the user (status needs-input; on any other status every question is blocking: false and is asked at the next human gate)",
+      "description": "researcher / product-manager / architect (provider choices) / designer (design-system intake) / product-manager in present mode (outline confirmation, missing inputs) / docs-writer (present-mode doc request) only: open questions the Orchestrator relays to the user (status needs-input; on any other status every question is blocking: false and is asked at the next human gate)",
       "items": {
         "type": "object",
         "additionalProperties": false,

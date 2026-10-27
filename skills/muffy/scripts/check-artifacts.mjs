@@ -9,8 +9,7 @@
 //   (fix lane: fix.md) has a test or `manual` in qa-report.md ## AC id -> test name, which lists no unknown AC;
 //   the Stack's `Platform:` is web|mobile|desktop|cli, and cli has contract/cli.md;
 //   contract/ownership.md: every row has one owner (FE, BE or devops) and no two owners' patterns overlap;
-//   deploy.md: ## Chosen infra, ## Practices and ## Risks exist, ## Infra options only when the checkpoint says `infra: propose`,
-//   and every `gap (<risk>)` under Practices appears under Risks.
+//   deploy.md: ## Target and ## Risks exist.
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
@@ -76,19 +75,7 @@ function checkDeploy(taskDir, errors) {
   const deployPath = join(taskDir, 'deploy.md');
   if (!existsSync(deployPath)) return;
   const deploy = readFileSync(deployPath, 'utf8');
-  for (const h of ['Chosen infra', 'Practices', 'Risks']) if (section(deploy, h) === null) errors.push(`deploy.md has no ## ${h} section`);
-  const cpPath = join(taskDir, 'checkpoint.md');
-  const cp = existsSync(cpPath) ? readFileSync(cpPath, 'utf8') : null;
-  const infra = cp?.match(/\binfra:\s*([a-z-]+)/i)?.[1]?.toLowerCase();
-  // setup copies a recorded answer into every task's checkpoint; without it the Infra options rule below cannot be checked
-  if (cp !== null && !infra) errors.push('checkpoint.md has no infra: line in ## Status, so deploy.md ## Infra options cannot be checked (setup copies the recorded answer)');
-  const hasOptions = section(deploy, 'Infra options') !== null;
-  if (infra === 'propose' && !hasOptions) errors.push('deploy.md needs ## Infra options (checkpoint says infra: propose)');
-  if (infra && infra !== 'propose' && hasOptions) errors.push(`deploy.md has ## Infra options but the checkpoint says infra: ${infra}; options are proposed only for infra: propose`);
-  const risks = section(deploy, 'Risks') ?? '';
-  for (const g of (section(deploy, 'Practices') ?? '').matchAll(/gap \(([^)]+)\)/g)) {
-    if (!risks.toLowerCase().includes(g[1].trim().toLowerCase())) errors.push(`deploy.md: practice gap "${g[1].trim()}" is not listed under ## Risks`);
-  }
+  for (const h of ['Target', 'Risks']) if (section(deploy, h) === null) errors.push(`deploy.md has no ## ${h} section`);
 }
 
 const readIf = (p) => (existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);

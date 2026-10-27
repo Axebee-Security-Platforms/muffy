@@ -5,7 +5,7 @@
 //         every [label] used has one definition, every definition is used, targets exist,
 //         spawns.tsv lines have 8 tab-separated columns, a pass|fail|blocked verdict and a note ending in
 //         tok:<n> or tok:n/a (a closed task may not have n/a on more than half its spawns),
-//         and the ## Status items baseline:, infra: and diagrams: have a known value.
+//         and the ## Status items baseline: and diagrams: have a known value.
 // Exit 0 = ok, 2 = violation (errors printed one per line) or unreadable input.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -28,7 +28,6 @@ const lineCount = (text) => (text.endsWith('\n') ? text.split('\n').length - 1 :
 // ## Status items that other steps read: key -> allowed value after "key:"
 const STATUS_ITEMS = {
   baseline: /^(green|yellow|red)( .+)?$/i,
-  infra: /^(existing(:\s*\S.*)?|later|propose|not-needed)$/i,
   diagrams: /^\d+ published$/i,
 };
 

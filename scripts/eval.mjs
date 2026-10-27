@@ -596,10 +596,6 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('check-artifacts: the fixture passes the Platform and deploy.md checks', checkTask(fixtureDir).length === 0, checkTask(fixtureDir).join('; '));
   let d = copy(); patch(d, 'contract.md', (t) => t.replace('Existing codebase.', 'Existing codebase. Platform: cli.'));
   check('check-artifacts: Platform cli needs contract/cli.md; an unknown Platform fails', checkTask(d).some((e) => e.includes('cli.md')) && (patch(d, 'contract.md', (t) => t.replace('Platform: cli.', 'Platform: toaster.')), checkTask(d).some((e) => e.includes('toaster'))));
-  d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later', 'infra: propose'));
-  check('check-artifacts: infra: propose needs ## Infra options; options without propose fail', checkTask(d).some((e) => e.includes('Infra options')) && (patch(d, 'checkpoint.md', (t) => t.replace('infra: propose', 'infra: later')), patch(d, 'deploy.md', (t) => `${t}\n## Infra options\nA or B\n`), checkTask(d).some((e) => e.includes('only for infra: propose'))));
-  d = copy(); patch(d, 'deploy.md', (t) => t.replace('Gap: no restore drill for Postgres yet.', 'Nothing else.'));
-  check('check-artifacts: a practice gap missing from ## Risks fails', checkTask(d).some((e) => e.includes('not listed under ## Risks')));
   d = copy(); patch(d, 'ac.md', (t) => t.replace(/\| Works at phone width \| AC-3 \|\r?\n/, ''));
   check('traceability: a brief requirement missing from ac.md ## Traceability fails', checkTask(d).some((e) => e.includes('"works at phone width" has no row')), checkTask(d).join('; '));
   d = copy(); patch(d, 'ac.md', (t) => t.replace('| Rate limit login attempts | AC-2 |', '| Rate limit login attempts | TBD |'));
@@ -643,10 +639,10 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     const spawnLines = readFileSync(join(cpd, 'spawns.tsv'), 'utf8').trim().split('\n').map((l) => l.split('\t'));
     check('checkpoint.mjs spawn: 8 columns, verdict from the hand-off, note capped at 8 words, check passes', spawnLines.every((c) => c.length === 8) && spawnLines[0][5] === 'pass' && spawnLines[1][5] === 'fail' && spawnLines[0][7].split(' ').length === 9 && checkpoint(cpd).length === 0, JSON.stringify(spawnLines) + checkpoint(cpd).join('; '));
   }
-  d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('infra: later', 'infra: maybe · diagrams: 2 published'));
+  d = copy(); patch(d, 'checkpoint.md', (t) => t.replace('Gates 3c and 3d passed.', 'Gates 3c and 3d passed. diagrams: 2 published'));
   const bad = checkpoint(d);
-  check('check-checkpoint: an unknown infra value fails, a valid diagrams item passes', bad.some((e) => e.includes('infra: maybe')) && !bad.some((e) => e.includes('diagrams')), bad.join('; '));
-  const spawnLine = (step, agent, note) => [step, agent, 'sonnet', 'low', '1', 'pass', '0', note].join('\t');
+  check('check-checkpoint: a valid diagrams item passes', !bad.some((e) => e.includes('diagrams')), bad.join('; '));
+  const spawnLine = (step, agent, note) => [step, agent, 'sonnet', 'low', '1', 'pass', '0', note].join('	');
   d = copy(); writeFileSync(join(d, 'spawns.tsv'), `${[spawnLine('1', 'researcher', 'L2 brief tok:95290'), spawnLine('2', 'product-manager', '22 AC tok:n/a')].join('\n')}\n`);
   const tokOk = checkpoint(d);
   writeFileSync(join(d, 'spawns.tsv'), `${spawnLine('1', 'researcher', 'L2 brief, 95k tokens')}\n`);
@@ -817,7 +813,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('baseline: an unknown flag is a usage error (exit 3)', run('--nope').status === 3);
   const { checkTask: cp } = await import('../skills/muffy/scripts/check-checkpoint.mjs');
   const d = mkdtempSync(join(repo, 'cp-')); cpSync(fixtureDir, d, { recursive: true });
-  const status = (v) => { const f = join(d, 'checkpoint.md'); writeFileSync(f, readFileSync(f, 'utf8').replace(/infra: later(?: · baseline: \w+)?/, `infra: later · baseline: ${v}`)); return cp(d); };
+  const status = (v) => { const f = join(d, 'checkpoint.md'); writeFileSync(f, readFileSync(f, 'utf8').replace(/Gates 3c and 3d passed\.(?: baseline: \w+)?/, `Gates 3c and 3d passed. baseline: ${v}`)); return cp(d); };
   check('check-checkpoint: baseline: green|yellow|red pass, another value fails', status('yellow').length === 0 && status('purple').some((e) => e.includes('baseline: purple')));
   rmSync(repo, { recursive: true, force: true });
 }
@@ -1090,7 +1086,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     check('preflight: --toolchain toString or constructor is a usage error, not a crash', pre('--toolchain', 'toString') === 2 && pre('--toolchain', 'constructor') === 2);
   }
 
-  // check-artifacts: a hook checks only the written artifact; the infra line must be in the checkpoint
+  // check-artifacts: a hook checks only the written artifact
   {
     const tmp = mkdtempSync(join(tmpdir(), 'muffy-review-artifacts-'));
     const d = join(tmp, '.team', 'login-flow'); cpSync(fixtureDir, d, { recursive: true });
@@ -1098,16 +1094,12 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     check('check-artifacts: the contract scope ignores a half-written deploy.md, the deploy scope reports it', checkTask(d, 'contract').length === 0 && checkTask(d, 'deploy').some((e) => e.includes('deploy.md')), checkTask(d, 'contract').join('; '));
     const viaHook = (file) => spawnSync(process.execPath, [S('check-artifacts.mjs'), '--hook'], { input: JSON.stringify({ tool_name: 'Write', tool_input: { file_path: join(d, file) } }), encoding: 'utf8' }).status;
     check('check-artifacts --hook: writing contract.md passes while deploy.md is half written; writing deploy.md fails', viaHook('contract.md') === 0 && viaHook('deploy.md') === 2);
-    cpSync(join(fixtureDir, 'deploy.md'), join(d, 'deploy.md'));
-    writeFileSync(join(d, 'checkpoint.md'), readFileSync(join(d, 'checkpoint.md'), 'utf8').replace(/infra: [a-z-]+ ?·? ?/, ''));
-    check('check-artifacts: a checkpoint with no infra: line fails the deploy.md check instead of skipping it', checkTask(d).some((e) => e.includes('no infra: line')), checkTask(d).join('; '));
     rmSync(tmp, { recursive: true, force: true });
   }
 
   {
     const row3 = stepDetail('3');
-    check('docs: step 3 aligns the contract with deploy.md and records the chosen infra', row3.indexOf('aligns the contract') > -1 && row3.includes('infra: existing: <chosen>'));
-    check('docs: setup copies a recorded infra: answer into every task checkpoint', readFileSync(rel('skills/muffy/references/setup.md'), 'utf8').includes('still copy that `infra:` line'));
+    check('docs: step 3 aligns the contract with deploy.md', row3.indexOf('aligns the contract') > -1);
     check('docs: the designer defaults a missing Platform to web instead of asking every time', readFileSync(rel('agents/references/designer/workflow.md'), 'utf8').includes('none named → `web`'));
   }
 }

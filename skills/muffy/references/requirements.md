@@ -1,6 +1,6 @@
 # Requirements interview
 
-Researcher (step 1), product-manager (step 2), architect (step 3, provider choices only), devops (step 3, mode 1, infrastructure choice only) and designer (step 3, design-system intake only) may not talk to the user. When the request leaves a decision open they return `status: needs-input` with `questions[]` in the hand-off block, and the Orchestrator relays them. The designer's intake is the exception: it returns `done` with one non-blocking question (see Limits). This is a clarification round, not a fix loop: it never touches the loop counters.
+Researcher (step 1), product-manager (step 2), architect (step 3, provider choices only), and designer (step 3, design-system intake only) may not talk to the user. When the request leaves a decision open they return `status: needs-input` with `questions[]` in the hand-off block, and the Orchestrator relays them. The designer's intake is the exception: it returns `done` with one non-blocking question (see Limits). This is a clarification round, not a fix loop: it never touches the loop counters.
 
 ## Orchestrator procedure
 
@@ -27,7 +27,6 @@ What each agent asks about lives in its own workflow; the Orchestrator only need
 | `researcher` | 1 | context and constraints that change what to research (never product decisions: those go to the PM as open questions in the brief) | [workflow](../../../agents/references/researcher/workflow.md) step 1b |
 | `product-manager` | 2 | product decisions that change the AC or the plan | [workflow](../../../agents/references/product-manager/workflow.md) step 1b |
 | `architect` | 3 | a third-party provider choice only | [third-party-providers.md](../../../agents/references/architect/third-party-providers.md) |
-| `devops` | 3, mode 1 | the infrastructure choice, only when `infra: propose` | [infrastructure-options.md](../../../agents/references/devops/infrastructure-options.md) |
 | `designer` | 3 | never for the design-system intake (that is one non-blocking question on a `done` hand-off, asked at `pause:design-review`); only a Platform conflict between sources, or the intake's follow-up round when the user said they have a brand | [design-system-intake.md](../../../agents/references/designer/design-system-intake.md) |
 
 Outside the team flow, present mode and doc requests have their own `needs-input` rounds ([present.md](present.md), [doc-request.md](doc-request.md)).

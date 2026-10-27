@@ -8,7 +8,7 @@ Add email + password login with rate limiting (request, verbatim): "Let users si
 Full run; nothing skipped.
 
 ## Status
-Step 6 approved. Gates 3c and 3d passed. infra: later
+Step 6 approved. Gates 3c and 3d passed.
 - gate 2b passed · user: "approve" · 2026-10-20
 
 ## Decisions in force

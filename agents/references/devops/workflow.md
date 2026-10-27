@@ -3,14 +3,6 @@
 ### Mode 1: Deployability
 1. Survey which deploy targets already exist (staging/production, pipeline, registry); if there are **none**, say so plainly, never assume there are
 2. Assess the stack proposed by the brief/architect: is it actually deployable, runtime + version, resources (CPU/RAM/GPU/disk), where large artifacts live (model weights, index, data), native or conflicting dependencies
-2b. **Propose the infrastructure only when the `infra:` answer in the prompt is `propose`.** Other answers:
-   - existing → reuse it
-   - later → local near-production, no proposal
-   - not-needed → no hosting
-   - missing → ask which applies
-
-   When proposing, read [infrastructure-options.md](infrastructure-options.md) and write 2 or 3 options. Pick whichever of cloud, on-premises, hybrid or existing are realistic for the brief and its constraints; never default to cloud. For each option give lock-in, operational load and recovery, then name a default. The choice is the user's: return `needs-input` with `questions[]` and wait for the answer in `requirements.md`
-2c. **Apply the practices:** read [infrastructure-best-practices.md](infrastructure-best-practices.md) and fill `## Practices` for the chosen infrastructure at the level the task needs (baseline now, production before the production deploy, regulated and on-premises only when they apply).
 3. Write `.team/<task>/deploy.md` (see Output Format)
 4. If the proposed stack can't be deployed or must be torn out after MVP → tell the Orchestrator with alternatives (architect writes the ADR)
 
@@ -20,7 +12,7 @@ Runs only when the Orchestrator's prompt says a smoke trigger is true (new runti
 1. On branch `ops/<task>` inside its worktree, create/edit only the infra files `contract.md` says devops owns: minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
 2. Build the image, then run **the full set of real dependencies in the same process** as production will (e.g. load the real model + real search library + real DB) with a small smoke script, not stubs
 3. Check that every version in the environment matches `contract.md` (runtime, main dependencies); mismatch = fail
-3b. Prove the baseline practices that a smoke can prove (builds from the pinned artifact, config from the environment, health check, rollback or restore step runs once where the stage allows); the rest stay `planned` or `gap` in `deploy.md` `## Practices`
+3b. Prove the baseline practices that a smoke can prove (builds from the pinned artifact, config from the environment, health check, rollback or restore step runs once where the stage allows). Whatever it cannot prove goes under `## Risks` in `deploy.md`.
 4. Fail → report with logs and cause (e.g. library conflict, version unavailable on the pinned runtime): **FE/BE must not start** until it passes or architect changes the stack
 5. Hand off to the Orchestrator to merge `ops/<task>` as the base of `fe/<task>` and `be/<task>`
 

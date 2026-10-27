@@ -36,7 +36,7 @@ Install (persistent config: the user approves it; never add it silently):
 ```
 
 ## 7. Checkpoint size: optional, needs user approval
-**Rule:** `checkpoint.md` ≤ 40 lines (excluding `## Goal`), every `rounds/*.md` ≤ 100 lines, links resolve, and the `baseline:`, `infra:` and `diagrams:` items in `## Status` hold a recognised value. Enforced after each write to a checkpoint or round file by [scripts/check-checkpoint.mjs](../scripts/check-checkpoint.mjs) (exit 2 = block). Not installed by default: add it to `.claude/settings.local.json` only after the user approves.
+**Rule:** `checkpoint.md` ≤ 40 lines (excluding `## Goal`), every `rounds/*.md` ≤ 100 lines, links resolve, and the `baseline:` and `diagrams:` items in `## Status` hold a recognised value. Enforced after each write to a checkpoint or round file by [scripts/check-checkpoint.mjs](../scripts/check-checkpoint.mjs) (exit 2 = block). Not installed by default: add it to `.claude/settings.local.json` only after the user approves.
 ```json
 "PostToolUse": [
   { "matcher": "Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/check-checkpoint.mjs --hook" } ] }
@@ -44,7 +44,7 @@ Install (persistent config: the user approves it; never add it silently):
 ```
 
 ## 8. Artifact size: optional, needs user approval
-**Rule:** `ac.md`, `brief.md`, `contract.md`, `fix.md` ≤ 60 lines, their part files (`ac/`, `brief/`, `contract/`) ≤ 120 lines, links resolve, every AC id appears in `contract.md` or under `contract/`, `Platform:` is `web|mobile|desktop|cli` (`cli` needs `contract/cli.md`), and `deploy.md` has `## Chosen infra`, `## Practices` and `## Risks`, has `## Infra options` only when the checkpoint says `infra: propose`, and lists every practice `gap` under Risks. Enforced after each write to one of those files by [scripts/check-artifacts.mjs](../scripts/check-artifacts.mjs) (exit 2 = block). Opt-in like rule 7.
+**Rule:** `ac.md`, `brief.md`, `contract.md`, `fix.md` ≤ 60 lines, their part files (`ac/`, `brief/`, `contract/`) ≤ 120 lines, links resolve, every AC id appears in `contract.md` or under `contract/`, `Platform:` is `web|mobile|desktop|cli` (`cli` needs `contract/cli.md`), and `deploy.md` has `## Target` and `## Risks`. Enforced after each write to one of those files by [scripts/check-artifacts.mjs](../scripts/check-artifacts.mjs) (exit 2 = block). Opt-in like rule 7.
 ```json
 "PostToolUse": [
   { "matcher": "Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/check-artifacts.mjs --hook" } ] }

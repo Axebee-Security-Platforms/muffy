@@ -42,7 +42,6 @@ When a request is borderline (an internal endpoint plus "and show it on the sett
    - **Kind + owner**: internal-api, refactor, perf or db; FE, BE or both
    - **AC + out of scope**: the AC list drafted from the request and a quick read of the named area. Perf AC name the before-number, the target and the measuring command; refactor AC say "behaviour unchanged" and name the tests that prove it. Confirm / Change it
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
-   - **Infra** (only when `project.md` / the last checkpoint never recorded `infra:`); otherwise copy it into checkpoint `## Status`
 3. Create the feature worktree from `<base>`: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/ac.md` there (format below). The Orchestrator writes it from the same reads; no `product-manager` is spawned for it
 4. Commit `ac.md` to `feature/<task>` (never to `<base>`)
 5. Write `checkpoint.md` in the feature worktree with `## Run profile` = `lite: skipped 1, 2, 3b, 3c` (add `3d` when no smoke trigger is true, [run-profile.md](run-profile.md))
