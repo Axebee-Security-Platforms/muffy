@@ -19,8 +19,10 @@ node .claude/skills/muffy/scripts/ux-search.mjs "<2-5 terms>" --domain <ux|web|c
 | `typography` | typography.csv | font pairings when a design system is created; the anti-slop font ban still applies |
 | `reasoning` | ui-reasoning.csv | decision rules and anti-patterns per product type, at design-system intake only |
 | `product`, `style`, `color`, `landing` | products, styles, colors, landing | design-system intake or a landing page only. Treat results as a starting point; `aesthetic-direction.md` pass 2 still applies, and these tables hold the generic defaults it warns about |
-| `icons`, `google-fonts` | icons, google-fonts | picking an icon or a typeface. The font ban in anti-slop still applies |
+| `icons`, `phosphor`, `google-fonts` | icons, phosphor-icons-upstream.json, google-fonts | picking an icon or a typeface. `icons` is the curated 100; `phosphor` is the full upstream catalog. A font result shows its `License` (do not pick one with no licence record) and a Phosphor icon is checked against upstream. The font ban in anti-slop still applies |
 | `gsap`, `react` | motion, react-performance | frontend-dev's concerns. Read only to see what FE will be asked to build; do not spec library code |
+
+Results from `style` and `reasoning` carry a `Provenance` line (status, verification date, `stale` when past its freshness limit). Treat a stale record as weaker advice. `ux-search.mjs --info` prints the data counts and checks the pinned snapshots against their recorded hashes.
 
 `--stack <name>` (instead of `--domain`) searches the guidelines for one UI stack, e.g. `--stack shadcn`. Use the stack the contract names, to check that a component exists before mapping it.
 

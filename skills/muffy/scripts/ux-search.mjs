@@ -2,8 +2,11 @@
 // Read-only BM25 search over the UX/UI rule tables in skills/muffy/data/ux/ (the designer agent's lookup).
 // Ported from the ui-ux-pro-max skill's search.py (MIT, see data/ux/LICENSE). It reads CSV and prints; it writes nothing.
 //   node .claude/skills/muffy/scripts/ux-search.mjs "<query>" [--domain <domain> | --stack <stack>] [-n 3] [--json] [--full]
-//   domains: ux web chart typography reasoning style color landing product icons gsap react google-fonts; stacks: see STACKS below
+//   node .claude/skills/muffy/scripts/ux-search.mjs --info [--json]     (data counts, snapshot hash check, stale records)
+//   domains: ux web chart typography reasoning style color landing product icons gsap react google-fonts phosphor; stacks: see STACKS below
+//   results also carry facts from the JSON snapshots: font licence, Phosphor upstream check, provenance record
 import { readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -72,13 +75,19 @@ const DOMAINS = {
     search: ['Category', 'Issue', 'Keywords', 'Description'],
     out: ['Category', 'Issue', 'Platform', 'Description', 'Do', "Don't", 'Code Example Good', 'Code Example Bad', 'Severity'],
   },
+  phosphor: {
+    file: 'phosphor-icons-upstream.json', // the full upstream Phosphor catalog (1,500+ icons), not the 100 curated rows in icons.csv
+    rows: (j) => j.icons.map((i) => ({ 'Icon Name': i.name, Component: i.component, Categories: i.categories.join(', '), Tags: i.tags.join(', '), 'Client Import': i.clientImport, 'SSR Import': i.ssrImport, Since: String(i.publishedIn) })),
+    search: ['Icon Name', 'Component', 'Categories', 'Tags'],
+    out: ['Icon Name', 'Component', 'Categories', 'Tags', 'Client Import', 'SSR Import', 'Since'],
+  },
   'google-fonts': {
     file: 'google-fonts.csv',
     search: ['Family', 'Category', 'Stroke', 'Classifications', 'Keywords', 'Subsets', 'Designers'],
     out: ['Family', 'Category', 'Stroke', 'Classifications', 'Styles', 'Variable Axes', 'Subsets', 'Designers', 'Popularity Rank', 'Google Fonts URL'],
   },
 };
-const NO_AUTO = new Set(['google-fonts']); // 730 KB: only searched when asked for by name
+const NO_AUTO = new Set(['google-fonts', 'phosphor']); // 730 KB and 840 KB: only searched when asked for by name
 
 const STACKS = ['react', 'nextjs', 'vue', 'svelte', 'astro', 'swiftui', 'react-native', 'flutter', 'nuxtjs', 'nuxt-ui', 'html-tailwind', 'shadcn', 'jetpack-compose', 'threejs', 'angular', 'laravel', 'javafx', 'wpf', 'winui', 'avalonia', 'uno', 'uwp'];
 const STACK_CFG = {
@@ -153,19 +162,54 @@ class BM25 {
 
 const cfgFor = (domain) => (STACKS.includes(domain) ? { file: `stacks/${domain}.csv`, ...STACK_CFG } : DOMAINS[domain]);
 
+const jsonCache = new Map();
+const readJson = (name) => {
+  if (!jsonCache.has(name)) {
+    const file = join(DATA, name);
+    if (!existsSync(file)) throw new Error(`missing data file ${name}`);
+    jsonCache.set(name, JSON.parse(readFileSync(file, 'utf8')));
+  }
+  return jsonCache.get(name);
+};
+
 const load = (domain) => {
   const cfg = cfgFor(domain);
   const file = join(DATA, cfg.file);
   if (!existsSync(file)) throw new Error(`missing data file ${cfg.file}`);
-  const rows = parseCsv(readFileSync(file, 'utf8'));
+  const rows = cfg.rows ? cfg.rows(readJson(cfg.file)) : parseCsv(readFileSync(file, 'utf8'));
   return { rows, index: new BM25(rows.map((r) => cfg.search.map((c) => r[c] ?? '').join(' '))) };
+};
+
+// Extra facts from the JSON snapshots, added to a result row: font licence, Phosphor upstream check, provenance record.
+const DAY = 86400000;
+const enrich = (domain, cfg, row) => {
+  const extra = {};
+  if (domain === 'google-fonts') {
+    const lic = readJson('google-font-licenses.json');
+    const hit = lic.families.find((f) => f.name === row.Family);
+    const out = lic.excludedFamilies.find((f) => f.name === row.Family);
+    extra.License = hit ? `${hit.license} (verified ${hit.verifiedAt})` : out ? `not verified: ${out.reason}` : 'no licence record; do not ship until checked';
+  }
+  if (domain === 'icons' && /^Phosphor/.test(row.Library ?? '')) {
+    const up = readJson('phosphor-icons-upstream.json').icons.find((i) => i.name === String(row['Icon Name']).toLowerCase());
+    extra['Phosphor upstream'] = up ? `found (${up.component}, since ${up.publishedIn})` : 'not found in the upstream catalog; check the name';
+  }
+  const prov = readJson('data-provenance.json');
+  const rec = prov.records.find((r) => r.sourceFile === cfg.file && r.sourceKey && Object.entries(r.sourceKey).every(([k, v]) => row[k] === v));
+  if (rec) {
+    const limit = prov.freshnessPolicy[`${rec.sla}Days`];
+    const age = Math.floor((Date.now() - Date.parse(rec.verifiedAt)) / DAY);
+    extra.Provenance = `${rec.status}, ${rec.sla}, verified ${rec.verifiedAt}${limit && age > limit ? ` (stale: ${age} days, limit ${limit})` : ''}`;
+  }
+  return extra;
 };
 
 const search = (query, domain, max, stack) => {
   const key = stack ?? domain;
   const { rows, index } = load(key);
+  const cfg = cfgFor(key);
   const results = index.score(query).filter(([, s]) => s > 0).slice(0, max)
-    .map(([i]) => Object.fromEntries(cfgFor(key).out.filter((c) => c in rows[i]).map((c) => [c, rows[i][c]])));
+    .map(([i]) => ({ ...Object.fromEntries(cfg.out.filter((c) => c in rows[i]).map((c) => [c, rows[i][c]])), ...enrich(key, cfg, rows[i]) }));
   return { domain: stack ? `stack:${stack}` : domain, query, file: cfgFor(key).file, count: results.length, coverage: index.coverage(query), results };
 };
 
@@ -197,6 +241,31 @@ const query = args.filter((a, i) => !a.startsWith('-') && !valueFlags.has(args[i
 const domainArg = value('--domain', '-d');
 const stackArg = value('--stack', '-s');
 const max = Number(value('--max-results', '-n') ?? 3);
+
+// --info: what the data holds, whether the pinned snapshots still match their recorded sha256, and how many records are stale.
+if (flag('--info')) {
+  try {
+    const sum = readJson('catalog-summary.json');
+    const prov = readJson('data-provenance.json');
+    const snaps = Object.entries(sum.snapshots).map(([f, { sha256 }]) => {
+      // recorded on LF content; a Windows checkout with autocrlf holds CRLF, so hash the LF form
+      const got = createHash('sha256').update(readFileSync(join(DATA, f), 'utf8').replace(/\r\n/g, '\n')).digest('hex');
+      return { file: f, ok: got === sha256 };
+    });
+    const stale = prov.records.filter((r) => { const lim = prov.freshnessPolicy[`${r.sla}Days`]; return lim && (Date.now() - Date.parse(r.verifiedAt)) / DAY > lim; }).length;
+    const info = { verifiedAt: sum.verifiedAt, counts: sum.counts, snapshots: snaps, provenanceRecords: prov.records.length, staleRecords: stale, pendingCandidates: sum.pendingCandidates.length };
+    console.log(flag('--json') ? JSON.stringify(info, null, 2) : [
+      `## UX data info (catalog verified ${info.verifiedAt})`,
+      `Counts: ${Object.entries(info.counts).map(([k, v]) => `${k} ${typeof v === 'object' ? v.total : v}`).join(', ')}`,
+      `Snapshots: ${snaps.map((s) => `${s.file} ${s.ok ? 'matches' : 'DIFFERS from'} its recorded sha256`).join('; ')}`,
+      `Provenance: ${info.provenanceRecords} records, ${stale} past their freshness limit; ${info.pendingCandidates} pending font candidates`,
+    ].join('\n'));
+    process.exit(snaps.every((s) => s.ok) ? 0 : 1);
+  } catch (e) {
+    console.error(`ux-search: ${e.message}`);
+    process.exit(1);
+  }
+}
 
 if (!query || (domainArg && !DOMAINS[domainArg]) || (stackArg && !STACKS.includes(stackArg)) || (domainArg && stackArg) || !Number.isInteger(max) || max < 1 || max > 20) {
   console.error(`usage: ux-search.mjs "<query>" [--domain ${Object.keys(DOMAINS).join('|')} | --stack ${STACKS.join('|')}] [-n 1-20] [--json] [--full]`);
