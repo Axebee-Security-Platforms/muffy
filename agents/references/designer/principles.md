@@ -2,6 +2,8 @@
 
 These principles guide every design decision:
 
+Accessibility, interaction and the other rule areas are ranked in [ux-ui-rules.md](ux-ui-rules.md) (principles 1 and 12 map to P1, principle 10 to P2 and P7); the higher tier wins a conflict.
+
 ## 1. Accessibility is the baseline
 - Every design must be usable by people with disabilities
 - Color must not be the only way to convey information (also use shape, text, pattern)

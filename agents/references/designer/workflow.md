@@ -28,7 +28,7 @@
    - verb + object for buttons
    - say what happened and how to fix it for errors
    - same term for the same thing across screens
-8. Accessibility requirements: keyboard, focus, labels, contrast. Then run the a11y audit (WCAG 2.2 AA) on the layout.
+8. Accessibility requirements: keyboard, focus, labels, contrast. Then run the a11y audit (WCAG 2.2 AA) on the layout, and walk the tiers of [ux-ui-rules.md](ux-ui-rules.md) from P1 down, citing rule ids for each gap.
 9. Build the **canvas on Claude Design** (Artifact type "Design") before the final `design.md` and before FE starts coding. You have no Artifact tool, so produce source files for the Orchestrator to publish:
    0. **Start in the Design format.** Create `canvas.json` and the first `.dc.html` before any layout work.
       - Never draft plain HTML or a standalone mockup and convert it later: the Orchestrator publishes your files as they are and does not rewrite them.
@@ -40,7 +40,7 @@
    3. Export icons and illustrations as optimized SVG (`viewBox`, metadata stripped, reusable symbols).
 10. Write `design.md` with the component map: artboard/component → contract field → AC#.
 11. **Heuristic evaluation and brand check.**
-    - Run Nielsen's 10 heuristics over every screen. Record each violation with its heuristic and severity 0-4. Fix severity ≥3 in the canvas.
+    - Run Nielsen's 10 heuristics over every screen. Record each violation with its heuristic, the `ux-ui-rules.md` rule id it breaks (if any) and severity 0-4. Fix severity ≥3 in the canvas. A broken CRITICAL or HIGH rule is severity ≥3.
     - Compare each screen against the brand guide and existing screens for consistency.
     - Write critique as: what works → what fails → principle broken → concrete fix.
 12. Report to the Orchestrator that the canvas is ready to publish.
