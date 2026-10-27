@@ -25,6 +25,7 @@ Produces Claude Design canvas and `design.md` from `ac.md`; owns design system i
 - [Product Structure](references/designer/product-structure.md): the screen map and navigation, only when needed
 - [Output Format](references/designer/output-format.md): deliverable files and the final message contents
 - [Rules and Guardrails](references/designer/rules-and-guardrails.md): design system consistency, anti-slop, and don'ts
+- [UX/UI Rules](references/designer/ux-ui-rules.md): rules in priority tiers P1 to P10 (CRITICAL to LOW) with ids and the gate effect of each tier
 - [Quality Checks](references/designer/quality-checks.md): definition-of-done checklist before handoff to FE
 
 ## Load on demand
@@ -33,7 +34,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](references/designer/purpose.md), [required-inputs.md](references/designer/required-inputs.md), [rules-and-guardrails.md](references/designer/rules-and-guardrails.md) | At start, once |
+| [purpose.md](references/designer/purpose.md), [required-inputs.md](references/designer/required-inputs.md), [rules-and-guardrails.md](references/designer/rules-and-guardrails.md), [ux-ui-rules.md](references/designer/ux-ui-rules.md) | At start, once. In `ux-ui-rules.md` skip the P10 Charts section unless the task has a chart |
 | [workflow.md](references/designer/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](references/designer/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [design-system-intake.md](references/designer/design-system-intake.md) | Only when `docs/design-system/` does not exist, the task has a UI and it is not an internal tool. Skip when it exists |

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- **Designer UX/UI rules in priority tiers.** New `agents/references/designer/ux-ui-rules.md` ranks the rules P1 (accessibility) to P10 (charts), adapted from the `ui-ux-pro-max` skill. CRITICAL and HIGH tiers (P1-P5, P9) block the hand-off, MEDIUM tiers (P6-P8) are recorded in `design.md`, LOW (P10) is advice. Each rule has an id that quality checks, the heuristic evaluation and the step 3c review cite.
+- **`ux-search.mjs` for the designer.** A Node port of the `ui-ux-pro-max` BM25 search (MIT, notice in `skills/muffy/data/ux/LICENSE`) over five tables in `skills/muffy/data/ux/`. Read-only. `guard-bash-allowlist.mjs` lets only `designer` run it; every other guarded role is refused.
+
 ### Fixed
 
 - **Human gates are enforced, not only written.** Step 2b (`pause:plan-review`) and step 3c (`pause:design-review`) were prose: a run could spawn designer, frontend-dev and backend-dev with no answer on record, and merge after a rejected review. Now:

@@ -14,7 +14,7 @@ At step 3 (first round, parallel with architect) the canvas source is ready to p
 - [ ] Every value on the canvas comes from `tokens.css`; no raw hex/px outside it (native targets: the same tokens, named so the stack's theme layer can bind them)
 - [ ] Every component used is documented in `docs/design-system/README.md` with variants and states; new or changed ones are in the Changelog
 - [ ] Every component on the canvas is mapped to the project's component library (e.g. shadcn/ui Button, shadcn/ui Input); no custom base components; a component the library lacks is added to `docs/design-system/` first (with a Changelog entry), never a one-off
-- [ ] Semantic color pairs meet contrast in both light and dark
+- [ ] Semantic color pairs meet contrast in both light and dark (`A11Y-1`)
 - [ ] The same state uses the same pattern on every screen
 - [ ] Persona and journey map exist; every journey drop-off risk has a designed state or message
 - [ ] Every button, error, empty state and helper text is final copy (verb + object buttons, actionable errors, consistent terminology)
@@ -25,4 +25,22 @@ At step 3 (first round, parallel with architect) the canvas source is ready to p
 - [ ] Design system: it already existed and was obeyed, or it was created after at most one question (a second round only when the user has a brand), nothing was asked that a file answered, no intake question was blocking, and the README has one `Style:` line (`starter` when no brand was supplied) with `[user]` or `[from code]` only on sourced values, not `[assumed]` on every value
 - [ ] Screen map: none spec'd with `screen-map: none needed (<reason>)` in the brain note, or one `diagrams_spec` entry (`kind: screenmap`) that matches a trigger in `product-structure.md` and adds no screen the design lacks; you wrote no `.html` diagram file
 - [ ] The `<brain>` note is written
+
+### UX/UI rules by tier ([ux-ui-rules.md](ux-ui-rules.md))
+Check in tier order. Start each `quality_checks.failed[]` entry with the rule id (e.g. `A11Y-2: focus ring missing on the filter chips`).
+
+**Block** (CRITICAL and HIGH: any failure means `not-ready`)
+- [ ] P1 Accessibility: `A11Y-1` to `A11Y-10`, including focus not hidden by sticky UI (`A11Y-2`) and a keyboard or single-pointer alternative for every drag (`A11Y-8`)
+- [ ] P2 Touch: target size and the 8 px gap (`TOUCH-1`, `TOUCH-2`), press/loading/disabled states (`TOUCH-3`), no gesture-only action (`TOUCH-5`)
+- [ ] P3 Performance: reserved space for async content, skeleton for waits over ~1 s, no layout shift on state change (`PERF-1` to `PERF-3`)
+- [ ] P4 Style and icons: one icon family and stroke, no emoji icons, one primary action per screen (`STYLE-2` to `STYLE-4`)
+- [ ] P5 Layout: 375 px has no horizontal scroll, the spacing scale is followed, fixed bars hide no content (`LAYOUT-2`, `LAYOUT-3`, `LAYOUT-6`)
+- [ ] P9 Navigation: back restores state, current location is marked, navigation is in the same place on every page (`NAV-1`, `NAV-2`, `NAV-4`)
+
+**Record** (MEDIUM: a failure is written in `design.md` as rule id, what differs, why; it does not block)
+- [ ] P6 Typography and color, P7 Motion, P8 Forms and feedback checked; each deviation has its line in `design.md`
+- [ ] Dark mode, 375 px, landscape (where the platform has it) and reduced motion were each checked on their own, not inferred from one view
+
+**Suggest** (LOW)
+- [ ] P10 Charts: only if the task has a chart; findings go in the brain note as suggestions
 - [ ] The final message ends with a valid JSON hand-off block

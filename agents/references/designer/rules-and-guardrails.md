@@ -4,6 +4,9 @@
 - You cannot ask the user directly. The design-system intake is one `blocking: false` entry in `questions[]` on a `status: done` hand-off, asked at the design gate ([design-system-intake.md](design-system-intake.md)); no brand or reference means the starter, never a wait; never invent a brand, logo or brand color, and you have no web access to look one up
 - You write no diagram file: `diagrammer` draws every diagram muffy produces. The one diagram you own the facts of is the screen map: when [product-structure.md](product-structure.md) says it is necessary, put a `diagrams_spec` entry (`kind: screenmap`, path `docs/design/screen-map.html`, the content) in your hand-off and `diagrammer` draws it. Every other kind comes from `architect` or `product-manager`, not from you
 
+### UX/UI priority
+Every screen is checked against [ux-ui-rules.md](ux-ui-rules.md), from P1 (accessibility) down to P10 (charts). Higher tier wins a conflict. CRITICAL and HIGH failures make the hand-off `not-ready`; MEDIUM failures are recorded in `design.md` with the reason; LOW is advice. Contrast, target-size and touch numbers live there only.
+
 ### Design system consistency
 The design system is the single source of truth for every task. Consistency beats novelty: a new screen must look like it belongs to the same product as the old ones.
 
@@ -26,7 +29,7 @@ The design system is the single source of truth for every task. Consistency beat
 - **One primary action per view**; the hierarchy primary → secondary → ghost is consistent across screens
 - **Consistent patterns**: the same state looks the same everywhere: one pattern each for loading (skeleton or spinner, pick one), empty, inline field error, page-level error, and success feedback
 - **Changes go through the system, not around it**: if a screen needs something the system lacks, add or change the token/component in `docs/design-system/` first, note it in the Changelog with the reason, then use it. Never fork a one-off variant inside a single screen
-- **Outside the web** (`Platform:` mobile or desktop): `tokens.css` and `var(--color-*)` are the web binding only. Name the same semantic tokens in `design.md` so a native app can bind them to its own theme layer (Flutter `ThemeData`, RN theme object, SwiftUI Asset colors, Compose `MaterialTheme`, a XAML `ResourceDictionary`, Electron CSS). Accessibility means the platform's own labels and roles (VoiceOver, TalkBack, UI Automation), dynamic type or font scaling, and touch targets of at least 44 pt / 48 dp
+- **Outside the web** (`Platform:` mobile or desktop): `tokens.css` and `var(--color-*)` are the web binding only. Name the same semantic tokens in `design.md` so a native app can bind them to its own theme layer (Flutter `ThemeData`, RN theme object, SwiftUI Asset colors, Compose `MaterialTheme`, a XAML `ResourceDictionary`, Electron CSS). Accessibility means the platform's own labels and roles (VoiceOver, TalkBack, UI Automation), dynamic type or font scaling, and touch targets per `TOUCH-1`
 - **Don't break existing screens**: changing an existing token or component is a breaking change: list the affected screens in `design.md` so the Orchestrator can route the follow-up to FE
 
 ### Anti-slop
@@ -34,7 +37,7 @@ The design system is the single source of truth for every task. Consistency beat
 - The overall look is defined once in the design system (1-3 typefaces, 1 background color, 0-2 accent colors) and every task follows it
 - No lorem ipsum, invented numbers/stats/reviews/logos; for data that doesn't exist yet, use clearly visible placeholders
 - On-screen text: only what users need to read, short and direct, no filler ("seamless", "powerful", "Welcome to…"), no design-rationale text inside artboards
-- Every element must have a purpose; remove pure decoration; touch targets ≥44px; contrast 4.5:1; use real `<button>`/`<a>`/`<label>`
+- Every element must have a purpose; remove pure decoration; use real `<button>`/`<a>`/`<label>`; target size and contrast follow `TOUCH-1` and `A11Y-1`
 - design.md: concise, don't repeat the AC wholesale, no empty sections
 
 ### Don't
@@ -43,4 +46,4 @@ The design system is the single source of truth for every task. Consistency beat
 - Write a separate HTML mockup outside the canvas as the primary deliverable (duplicates Claude Design)
 - Guess or write elsewhere if the prompt has no `<brain>` path or the folder can't be found: say so in your final message so the Orchestrator asks the user
 - Second brain writes: only `<brain>/agents/designer/<task>.md`, append-only (a new dated section per round, never rewrite earlier ones); never edit `tasks/`, `project.md` or other agents' folders
-- **Bash is for checks only.** You may run `node .claude/skills/muffy/scripts/validate-handoff.mjs`, `check-artifacts.mjs`, `check-checkpoint.mjs` and `check-presentation.mjs` (a present-mode deck), and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files
+- **Bash is for checks and rule lookup only.** You may run `node .claude/skills/muffy/scripts/validate-handoff.mjs`, `check-artifacts.mjs`, `check-checkpoint.mjs` and `check-presentation.mjs` (a present-mode deck), `ux-search.mjs` (see [ux-ui-rules.md](ux-ui-rules.md#lookup), one plain command, no pipes), and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files

@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 
 const GUARDED = new Set(['architect', 'designer', 'diagrammer', 'product-manager', 'docs-writer', 'researcher']);
 const NODE_CHECK = /^node\s+(?:\.claude[\\/])?skills[\\/]muffy[\\/]scripts[\\/](?:validate-handoff|check-artifacts|check-checkpoint|check-diagram(?:-render)?|check-stack-notes|check-presentation)\.mjs(?:\s+\S+)*$/;
+const UX_SEARCH = /^node\s+(?:\.claude[\\/])?skills[\\/]muffy[\\/]scripts[\\/]ux-search\.mjs(?:\s+(?:"[^"]*"|'[^']*'|\S+))*$/; // designer only: read-only lookup in data/ux/*.csv
 const IMPORT_CHECK = /^node\s+(?:\.claude[\\/])?skills[\\/]muffy[\\/]scripts[\\/]diagram-import\.mjs(?:\s+\S+)*$/; // read-only: prints a digest and a draft; --html would write a file, so it is refused here
 const GIT_READ = /^git\s+(?:status|diff|log|show)(?:\s+\S+)*$/;
 const GIT_WRITES = /--output|--ext-diff|--textconv|-c\s|--exec-path|--git-dir|--work-tree/; // flags that write files or run programs
@@ -16,7 +17,7 @@ const TRAVERSAL = /(^|[\\/\s])\.\.([\\/\s]|$)/;
 
 const block = (why) => {
   console.error(
-    `[muffy] blocked: ${why}. Bash is for checks only: node .claude/skills/muffy/scripts/{validate-handoff,check-artifacts,check-checkpoint,check-diagram,check-diagram-render,diagram-import (no --html),check-stack-notes,check-presentation}.mjs <args> and read-only git status/diff/log/show, one command at a time (references/hooks-enforcement.md §9).`,
+    `[muffy] blocked: ${why}. Bash is for checks only: node .claude/skills/muffy/scripts/{validate-handoff,check-artifacts,check-checkpoint,check-diagram,check-diagram-render,diagram-import (no --html),check-stack-notes,check-presentation}.mjs <args> and read-only git status/diff/log/show, one command at a time (references/hooks-enforcement.md §9). The designer may also run ux-search.mjs.`,
   );
   process.exit(2);
 };
@@ -37,6 +38,7 @@ if (tool === 'PowerShell') block(`${role} has no PowerShell`);
 const cmd = String(input.tool_input?.command ?? '').trim();
 if (SHELL_META.test(cmd)) block('no chaining, redirection or substitution');
 if (TRAVERSAL.test(cmd)) block('no ".." path segments');
+if (role === 'designer' && UX_SEARCH.test(cmd)) process.exit(0); // after the meta and traversal checks: no chaining, redirection or ".."
 if (NODE_CHECK.test(cmd) || (IMPORT_CHECK.test(cmd) && !/--html/.test(cmd))) process.exit(0);
 if (GIT_READ.test(cmd) && !GIT_WRITES.test(cmd)) process.exit(0);
 block(`command is not on the ${role} allowlist`);
