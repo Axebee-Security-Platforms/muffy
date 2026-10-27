@@ -1,6 +1,6 @@
 ## Infrastructure best practices
 
-Apply these to the infrastructure you propose and build in mode 1 and mode 2, and check the deployed result in mode 3. They are durable practices, not product-specific syntax: for a version-specific setting follow the repo, the lockfile and the provider's own docs, never memory. Scale them to the task: an MVP needs the **Baseline**; add **Production** before the production deploy; **Regulated** only when `requirements.md` or an ADR says so. A practice that does not apply is left out, not padded.
+Apply these to the infrastructure you propose and build in mode 1 and mode 2, . They are durable practices, not product-specific syntax: for a version-specific setting follow the repo, the lockfile and the provider's own docs, never memory. Scale them to the task: an MVP needs the **Baseline**; add **Production** when the plan names a real hosting target; **Regulated** only when `requirements.md` or an ADR says so. A practice that does not apply is left out, not padded.
 
 In `deploy.md` `## Practices` list each one that applies as `met`, `planned (<where>)` or `gap (<risk>)`. A gap is also a line under `## Risks`. Never write `met` for something you did not see in a file or a run.
 

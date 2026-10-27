@@ -29,7 +29,7 @@ import { parseOwnership } from './ownership.mjs';
 import { gateErrors } from './gate-rules.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4b', '4', '5', '5b', '6', '7', '8', '9', '10', '11', '12'];
+export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4b', '4', '5', '5b', '6', '7', '10', '11', '12'];
 const readIf = (p) => (existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);
 const section = (md, name) => md?.match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] ?? null;
 const version = (text) => text?.match(/\bRuntime:\s*[A-Za-z.]*\s*v?(\d+(?:\.\d+)*)/)?.[1];
@@ -104,7 +104,7 @@ export function checkAll(taskDir, { step, round, profile, skip = [], brain, base
     catch (e) { add('diff', [`git diff ${base}...${head} failed: ${String(e.stderr ?? e.message).trim()}`]); }
     if (files) {
       const own = readIf(join(taskDir, 'contract', 'ownership.md'));
-      const c = classify(files, { ownershipRows: own ? parseOwnership(own) : [], smokeOnRecord: smokeOnRecord(brain), stagingNone: /\bstaging:\s*none\b/i.test(status + (readIf(join(taskDir, 'deploy.md')) ?? '')) });
+      const c = classify(files, { ownershipRows: own ? parseOwnership(own) : [], smokeOnRecord: smokeOnRecord(brain) });
       const errs = [];
       if (c.smoke.required && skips.includes('3d') && profile !== 'fix') errs.push(`3d is skipped but a smoke trigger is true: ${c.smoke.reasons.join(', ')}`);
       if (profile && STEP_ORDER.indexOf(String(step)) >= STEP_ORDER.indexOf('4')) errs.push(...laneVerdict(c, profile).reasons.map((r) => `promote:full-flow: ${r}`));

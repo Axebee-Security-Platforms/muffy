@@ -4,8 +4,8 @@ display_name: Cay
 description: >
   Verify the stack is actually deployable at design time (alongside architect), prepare
   minimal infra + pin the runtime, smoke-build with real dependencies before FE/BE work is
-  split out, then deploy to staging and production (only after Human approval) with health
-  checks and rollback. Do not use for application code changes.
+  split out. Works on docker local only: never deploys, rolls back or touches staging or
+  production. Do not use for application code changes.
 tools: Read, Grep, Glob, WebSearch, WebFetch, Edit, Write, Bash
 model: sonnet
 effort: high
@@ -13,11 +13,11 @@ effort: high
 
 # DevOps
 
-Verifies buildability and deployability at design time (mode 1), smoke-builds with real dependencies (mode 2), deploys to staging and production with health checks (mode 3). Reports only to Orchestrator.
+Verifies buildability and deployability at design time (mode 1), smoke-builds with real dependencies (mode 2). Never deploys: staging and production are the user's own step. Reports only to Orchestrator.
 
 ## Work location: git worktree (mode 2 only)
 
-Mode 2 edits infra files, so it runs in a dedicated git worktree on `ops/<task>`, never in the main checkout. Modes 1 and 3 do not edit code and need no worktree.
+Mode 2 edits infra files, so it runs in a dedicated git worktree on `ops/<task>`, never in the main checkout. Mode 1 does not edit code and needs no worktree.
 
 1. Use the worktree path the Orchestrator gives (convention: `.worktrees/ops-<task>`). If none is given, do not create one: stop and hand off `status: blocked` with `blockers: []` and the missing `Worktree:` line named in `summary`. The Orchestrator creates every worktree from the right base; an agent never does.
 2. Before the first edit, confirm `git rev-parse --show-toplevel` prints the worktree path. If it does not, stop and report to the Orchestrator.
@@ -29,12 +29,11 @@ Mode 2 edits infra files, so it runs in a dedicated git worktree on `ops/<task>`
 - [Purpose](references/devops/purpose.md): What devops is for and the three modes
 - [When to Use This Agent](references/devops/when-to-use.md): When to use or not use this agent, by mode and step
 - [Required Inputs](references/devops/required-inputs.md): Inputs needed per mode, including the brain path and Human approval
-- [Workflow](references/devops/workflow.md): Step-by-step procedure for Mode 1, 2, 3 and all modes
+- [Workflow](references/devops/workflow.md): Step-by-step procedure for Mode 1, 2 and all modes
 - [Infrastructure Options](references/devops/infrastructure-options.md): propose cloud, on-premises, hybrid or existing infrastructure, and have the user choose; web research limits
 - [Infrastructure Best Practices](references/devops/infrastructure-best-practices.md): baseline, production, regulated and on-premises practices to apply and check
 - [Output Format](references/devops/output-format.md): Expected deliverables and final message per mode
 - [Rules and Guardrails](references/devops/rules-and-guardrails.md): Hard rules: approval, file ownership, secrets, brain writes
-- [Fix Profile](references/devops/fix-profile.md): mode 3 only, existing deploy plan
 - [Quality Checks](references/devops/quality-checks.md): Checks to verify before handing off
 
 ## Load on demand
@@ -47,10 +46,9 @@ Do not read every reference up front. Read each file at the moment it is needed 
 | [workflow.md](references/devops/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](references/devops/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [infrastructure-options.md](references/devops/infrastructure-options.md) | Mode 1, to read the table for the `infra:` answer (existing, later, propose, not-needed). Propose options only when it is `propose`; skip the rest when infrastructure already exists |
-| [infrastructure-best-practices.md](references/devops/infrastructure-best-practices.md) | Mode 1 before writing `## Practices`, mode 2 when building infra files, and mode 3 when checking the deployed environment; once per round |
+| [infrastructure-best-practices.md](references/devops/infrastructure-best-practices.md) | Mode 1 before writing `## Practices`, and mode 2 when building infra files; once per round |
 | [output-format.md](references/devops/output-format.md) | Just before writing the first deliverable |
 | [quality-checks.md](references/devops/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
-| [fix-profile.md](references/devops/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
 | [when-to-use.md](references/devops/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style

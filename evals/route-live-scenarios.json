@@ -79,7 +79,7 @@
   {
    "id": "h16",
    "prompt": "rollback production ไปเวอร์ชัน v2.3.1",
-   "expect": "ops"
+   "expect": "none"
   },
   {
    "id": "h17",
@@ -124,7 +124,7 @@
   {
    "id": "h25",
    "prompt": "เพิ่ม field เบอร์โทรในฟอร์มสมัครสมาชิก",
-   "expect": "full"
+   "expect": "redesign"
   },
   {
    "id": "h26",

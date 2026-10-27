@@ -26,10 +26,10 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkTask } from './check-checkpoint.mjs';
 import { LOOP_LIMIT } from './next-action.mjs';
-import { GATES, PAUSE_OF, laneOf, gateState } from './gate-rules.mjs';
+import { GATES, PAUSE_OF, laneOf, gateState, redesignScope } from './gate-rules.mjs';
 import { gate2b, gate3c } from './gate-summary.mjs';
 
-export const PAUSES = ['scope', 'staging-credentials', 'onboard-review', 'todo-review', 'plan-review', 'design-review', 'full-regression', 'human-gate'];
+export const PAUSES = ['scope', 'scope-upgrade', 'onboard-review', 'todo-review', 'plan-review', 'design-review', 'full-regression', 'human-gate'];
 const REJECTING = new Set(['Reject', 'Fail']);
 const DEF = /^\[([A-Za-z0-9.-]+)\]:\s*\S+\s*$/;
 
@@ -138,7 +138,7 @@ export function clearPause(taskDir) {
   if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
   const text = readFileSync(cpPath, 'utf8');
   const status = parse(text).sections.find((s) => s.name === 'Status')?.body ?? [];
-  if (laneOf(text) === 'feature') {
+  if (['feature', 'redesign'].includes(laneOf(text))) {
     for (const gate of GATES) {
       if (status.some((l) => l.includes(`paused at pause:${PAUSE_OF[gate]}`)) && gateState(text, gate) === 'open') {
         throw new Error(`unpause: pause:${PAUSE_OF[gate]} waits on gate ${gate}, which has no recorded answer. Record it with checkpoint.mjs gate <dir> ${gate} approve|reject --by "<the user's reply>" (approve clears the pause)`);
@@ -191,8 +191,10 @@ export function recordGate(taskDir, gate, action, { by, reason, plan } = {}) {
 
   if (action === 'skip') {
     if (!reason?.trim()) throw new Error('gate skip: --reason is required');
-    if (gate === '2b' && lane === 'feature') throw new Error('gate 2b cannot be skipped in the feature lane (only fix and lite skip it)');
+    if (gate === '2b' && lane === 'feature') throw new Error('gate 2b cannot be skipped in the feature lane (only fix, lite and a ui-only redesign skip it)');
+    if (gate === '2b' && lane === 'redesign' && redesignScope(text) !== 'ui-only') throw new Error('gate 2b can be skipped only in a ui-only redesign, where the AC are approved with the design at 3c');
     if (gate === '3c' && existsSync(join(taskDir, 'design.md'))) throw new Error('gate 3c cannot be skipped: design.md exists, so a designer ran');
+    if (gate === '3c' && lane === 'redesign' && existsSync(join(taskDir, 'contract.md'))) throw new Error('gate 3c cannot be skipped: contract.md exists, so the user approves the contract here');
     line = `gate ${gate} skipped · ${reason.trim()}`;
   } else {
     if (!paused) throw new Error(`gate ${gate}: save the pause first (checkpoint.mjs pause <dir> ${PAUSE_OF[gate]} --until "the user answers"), so the question is on record`);

@@ -1,15 +1,13 @@
 {
   "id": "smoke-skipped-no-trigger",
-  "description": "Existing stack, feature only adds routes, staging exists: 3d skipped, backend proceeds",
+  "description": "Existing stack, feature only adds routes: 3d skipped, backend proceeds",
   "task": "login-flow",
   "skip": [
     "3b",
     "3c",
     "3d"
   ],
-  "smoke_signals": {
-    "staging_none": false
-  },
+  "smoke_signals": {},
   "defaults": {
     "task": "login-flow",
     "round": 1,

@@ -25,6 +25,6 @@ You have `WebSearch` and `WebFetch`, and the only permitted use is checking fact
 - After the answer: put the chosen provider in `contract/stack.md`, write an ADR (hard to reverse).
 
 ### Never
-- Create an account, request or enter an API key, or sign a vendor agreement; credentials are the user's, and a live call to the provider waits for `pause:staging-credentials`
+- Create an account, request or enter an API key, or sign a vendor agreement; credentials are the user's, and a live call to the provider is never made by an agent; the user does it`
 - Pick a provider silently when a trigger above applies, or recommend one only because it is familiar: the options must differ on a real trade-off
 - Design the contract around a provider's feature set so tightly that swapping it needs a rewrite: put it behind the seam the module already needs ([principles.md](principles.md))

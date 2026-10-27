@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Reads the real diff, not an agent's own report, for two decisions:
 //   smoke  whether 3d runs: a manifest or lockfile changed, a devops-owned file changed, no passing smoke is on record in
-//          <brain>/agents/devops/, or staging: none (references/run-profile.md "Smoke triggers"; rules in next-action.mjs)
+//          <brain>/agents/devops/ (references/run-profile.md "Smoke triggers"; rules in next-action.mjs)
 //   scope  with --profile fix|lite: whether the change still fits its lane (fix-profile.md / lite-profile.md), counting source
 //          files (tests and .team/ excluded) and flagging schema/migration, auth, dependency and devops-owned paths
 //
@@ -26,7 +26,7 @@ const SCHEMA = /(^|\/)(migrations?|migrate)\/|\.sql$|(^|\/)schema\.(prisma|graph
 const AUTH = /(^|\/)(auth|authn|authz|permissions?|rbac|oauth|session)(\/|\.[a-z]+$)/i;
 
 // files: repo-relative paths changed. ownershipRows: parsed contract/ownership.md (optional). Pure, so the evals call it directly.
-export function classify(files, { ownershipRows = [], smokeOnRecord = true, stagingNone = false } = {}) {
+export function classify(files, { ownershipRows = [], smokeOnRecord = true } = {}) {
   const devopsOwned = (p) => DEVOPS_FILE.test(base(p)) || (ownershipRows.length > 0 && ownersOf(ownershipRows, p).includes('devops'));
   const deps = files.filter((p) => LOCKFILE.test(base(p)) || MANIFEST_NAMES.includes(base(p)) || (COVERED_FILE.test(base(p)) && /requirements.*\.txt$/.test(base(p))));
   const devops = files.filter(devopsOwned);
@@ -35,7 +35,6 @@ export function classify(files, { ownershipRows = [], smokeOnRecord = true, stag
     runtime_or_dependency_changed: deps.length > 0,
     devops_files_changed: devops.length > 0,
     no_passing_smoke_on_record: !smokeOnRecord,
-    staging_none: stagingNone,
   });
   return {
     smoke,
@@ -93,7 +92,6 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const c = classify(files, {
     ownershipRows: ownership ? parseOwnership(ownership) : [],
     smokeOnRecord: smokeOnRecord(o.brain),
-    stagingNone: /\bstaging:\s*none\b/i.test(read('checkpoint.md') + read('deploy.md')),
   });
   console.log(c.smoke.required ? `next=run-3d reasons=${c.smoke.reasons.join(',')}` : 'next=skip-3d reason=no-trigger (record "3d skipped: no trigger" in tasks/<task>.md)');
   console.log(`files: ${c.source.length} source / ${files.length} changed`);

@@ -15,7 +15,7 @@ Every row is also a scenario in `evals/route-scenarios.json`; change both togeth
 | "Review the branch feature/invoices-export before I merge" | review | Read-only verdict on an existing diff |
 | "Write Playwright tests for the login flow on this branch" | qa | Tests only, no production change |
 | "Write the release notes for the invoices export" | docs | Docs, then review; if the diff is unapproved, review first |
-| "Deploy the hotfix to staging" | ops | Staging only; production waits for the gate |
+| "Deploy the hotfix to staging" | none | The skill never deploys; answer with the task's Deploy hand-off |
 | "How does the retry queue work?" | none | A question about the code |
 | "Fix the typo in the footer" | none | Text only, renders the same |
 | "เจอบั๊ก แก้ไขให้หน่อย" | ask first | Bug report with no symptom or location |
@@ -25,6 +25,8 @@ Every row is also a scenario in `evals/route-scenarios.json`; change both togeth
 | "ออกแบบหน้าจอให้ก่อน ยังไม่ต้องเขียนโค้ด" | design | Stop point: design, no code |
 | "ออกแบบ API กับ schema สำหรับระบบคืนสินค้า" | spec | ออกแบบ + API/schema |
 | "ออกแบบระบบแจ้งเตือนให้หน่อย" | ask first | ออกแบบระบบ with no stop point: screens, API or build |
+| "ออกแบบหน้า dashboard ใหม่ให้หน่อย" | redesign | Changes a page that exists, no stop point; the scope is asked inside the lane |
+| "ปรับ flow การใช้คูปองให้ซ้อนกันได้ และคำนวณยอดรวมใหม่" | redesign | Changes a rule and screens that exist; scope UI + logic is picked by the user |
 | "รีวิวดีไซน์หน้า checkout ใน canvas นี้หน่อย https://claude.ai/artifact/abc" | design-review | รีวิว + ดีไซน์, the canvas is named |
 | "ช่วยรีวิว ADR 0007 เรื่องเลือก queue หน่อย" | arch-review | รีวิว + ADR |
 | "เขียน ADR ว่าเราเลือก Postgres แทน Mongo" | adr | A technical decision to record |
@@ -43,4 +45,4 @@ Every row is also a scenario in `evals/route-scenarios.json`; change both togeth
 | "ขอ gantt ของแผน onboarding ที่ยังไม่ได้วางแผน" | plan | Not planned yet: the timeline is the plan to make |
 | "วาด screen map ของแอปใหม่ที่ยังไม่มีหน้าจอ" | design | No screens yet: the map is design work |
 | "วาด flow การ login ของ task sso ที่กำลังทำ" | diagram-in-task | The task is open: its contract is the source |
-| "deploy ให้หน่อย" | ask first | No target; production is never assumed |
+| "deploy ให้หน่อย" | none | The skill never deploys; answer with the Deploy hand-off |

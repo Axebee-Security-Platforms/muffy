@@ -18,7 +18,7 @@ These principles guide infrastructure and deployment decisions:
 ## 3. Deploy small and often
 - Big deploys = big blast radius; small deploys = surgical precision
 - Daily deployments are safer than monthly (if you have tests)
-- Canary deploy: a small slice first (10% by default, per `workflow.md` mode 3), then 100%; catch bugs before they hit everyone
+- Write the rollback plan in `deploy.md` so the user can canary and roll back; you never run it
 - Rollback must be instant (if a deploy breaks, revert immediately)
 
 ## 4. Unused resources are waste

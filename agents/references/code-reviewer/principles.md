@@ -34,7 +34,7 @@ These principles guide what passes and what bounces back:
 - Test the sad path, not just the happy path
 
 ## 6. Completeness Matters
-- Docs are written at step 7 and reviewed at step 8; at step 6 don't reject for missing docs
+- Docs are written by docs-writer at step 11, after the Human gate, and you do not review them; at step 6 don't reject for missing docs
 - Does it include DB migrations if needed?
 - Does it handle error cases?
 

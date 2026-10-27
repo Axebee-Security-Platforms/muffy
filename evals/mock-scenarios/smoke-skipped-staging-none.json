@@ -1,9 +1,0 @@
-{
-  "id": "smoke-skipped-staging-none",
-  "description": "staging: none makes the smoke trigger true, so a profile that skips 3d is rejected",
-  "task": "login-flow",
-  "skip": ["3d"],
-  "smoke_signals": { "staging_none": true },
-  "events": [],
-  "expect": { "outcome": "invalid-profile", "actions": [] }
-}

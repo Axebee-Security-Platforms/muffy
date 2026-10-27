@@ -15,7 +15,7 @@
 4. If the proposed stack can't be deployed or must be torn out after MVP → tell the Orchestrator with alternatives (architect writes the ADR)
 
 ### Mode 2: Smoke build
-Runs only when the Orchestrator's prompt says a smoke trigger is true (new runtime/dependency/native package/datastore, devops-owned files changed, or no passing smoke on record for this stack). A feature that only adds routes, UI or logic does not need it; staging (mode 3) covers that.
+Runs only when the Orchestrator's prompt says a smoke trigger is true (new runtime/dependency/native package/datastore, devops-owned files changed, or no passing smoke on record for this stack). A feature that only adds routes, UI or logic does not need it; QA on docker local covers that.
 0. Preflight: run `node .claude/skills/muffy/scripts/devops-preflight.mjs` (add `--health <url>` once the app is up). It checks `node -v` against `.nvmrc` (e.g. Node 24.21.0) and prints one PASS/FAIL line per check. A smoke on another Node version proves nothing; a FAIL = fail, report it
 1. On branch `ops/<task>` inside its worktree, create/edit only the infra files `contract.md` says devops owns: minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
 2. Build the image, then run **the full set of real dependencies in the same process** as production will (e.g. load the real model + real search library + real DB) with a small smoke script, not stubs
@@ -42,36 +42,16 @@ Do not check internal logic yet. The "real dependencies, no stubs" rule above st
 - Keep the whole smoke fast (target: a few minutes); if it outgrows that, tell the Orchestrator
 - Record in the brain note which stage the smoke is at and which checks it now includes
 
-### Mode 3: Deploy
-Before starting: check that the runtime/version to deploy matches `deploy.md` and `contract.md`
-
-Staging:
-0. Preflight, before any live call: run `node .claude/skills/muffy/scripts/devops-preflight.mjs --env-file <env file> --var <NAME[=prefix]> ...` (one `--var` per external credential, e.g. `--var ANTHROPIC_API_KEY=sk-ant-`). It checks `node -v` against `.nvmrc` and each credential by name and prefix, and never prints values; a FAIL on the runtime = fail. If a live call is needed and the Orchestrator has not approved it, stop at `pause:staging-credentials` and report (see `.claude/skills/muffy/references/run-profile.md#named-pauses`)
-1. Build + deploy with the project's pipeline/scripts; if there is no staging, deploy to the near-production environment per `deploy.md`: **never skip this step**
-2. Docker staging checklist (check each, record pass/fail):
-   - env mapped from `.env.staging.local` into the container; names listed, values never printed
-   - the app binds to a real interface and the origin it expects: `HOSTNAME=0.0.0.0` inside the container must not leak into the origin check (the BAD_ORIGIN case)
-   - health check returns 200 from the host
-   - smoke sends a real POST from the host's origin, not only a GET health probe
-3. Run migrations, health check, smoke test. Then compare the deployed environment with `deploy.md` `## Practices`: report each practice you could confirm and the resources actually created. Never open a billing page or enter payment details yourself
-4. Fail → collect logs and report (don't fix code yourself)
-
-Production:
-1. Check that migrations are reversible and there is a rollback plan
-2. Deploy as a canary (e.g. 10%) if the infra supports it
-3. Health check + error rate compared to baseline
-4. Pass → expand to 100%; fail → **roll back immediately** and report
-
 ### Non-web platforms (`Platform:` mobile, desktop or cli)
-Modes 1 to 3 keep their purpose; the evidence changes. The toolchain check comes first ([platforms.md](../../../skills/muffy/references/platforms.md#toolchain-on-the-host); missing → `status: blocked`, `toolchain-missing: <name> on <host OS>`, never a faked pass), then the evidence for the platform:
+Modes 1 and 2 keep their purpose; the evidence changes. The toolchain check comes first ([platforms.md](../../../skills/muffy/references/platforms.md#toolchain-on-the-host); missing → `status: blocked`, `toolchain-missing: <name> on <host OS>`, never a faked pass), then the evidence for the platform:
 
-| Platform | Smoke build (mode 2, step 3d) | Staging (mode 3, step 9) |
-|---|---|---|
-| `web` | Container builds and the health route answers | Deploy to staging, health + smoke |
-| Android | Debug APK/AAB builds; app installs and launches on an emulator | Internal-testing track or a signed-debug APK handed to the user |
-| iOS | Simulator build launches | TestFlight internal build, or a simulator build handed to the user |
-| Mac / Windows / Electron | App builds and starts, main window opens, exits cleanly | Unsigned installer or app bundle produced by CI, run by the user |
-| `cli` | Binary builds; `--help` and one core command exit 0 | The release binary run against a smoke command on a clean directory (no repo files) |
+| Platform | Smoke build (mode 2, step 3d) |
+|---|---|
+| `web` | Container builds and the health route answers |
+| Android | Debug APK/AAB builds; app installs and launches on an emulator |
+| iOS | Simulator build launches |
+| Mac / Windows / Electron | App builds and starts, main window opens, exits cleanly |
+| `cli` | Binary builds; `--help` and one core command exit 0 |
 
 What to skip:
 - Skip the Docker and HTTP health checks above unless the app also ships a server.

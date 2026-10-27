@@ -1,22 +1,22 @@
 # Run profile: skip what the feature doesn't need
 
-A small bug or cosmetic fix does not use the table below: it runs the fix lane ([fix-profile.md](fix-profile.md)), which skips 1, 2, 3, 3b, 3c, 3d and 8, adds steps 4a (diagnose) and 4b (audit the cause), and still never skips 6, 7, 9 and 10. If the fix grows past the lane's limits it is promoted to the full flow. Internal work with a known shape (internal API, refactor, measured performance, reversible DB change) runs the lite lane ([lite-profile.md](lite-profile.md)), which skips 1, 2, 3b, 3c and 8 and starts at the architect.
+A small bug or cosmetic fix does not use the table below: it runs the fix lane ([fix-profile.md](fix-profile.md)), which skips 1, 2, 3, 3b, 3c and 3d, adds steps 4a (diagnose) and 4b (audit the cause), and still never skips 6, 7 and 10. If the fix grows past the lane's limits it is promoted to the full flow. Internal work with a known shape (internal API, refactor, measured performance, reversible DB change) runs the lite lane ([lite-profile.md](lite-profile.md)), which skips 1, 2, 3b and 3c and starts at the architect. A change to an existing screen, UX/UI or business-logic flow runs the redesign lane ([redesign-profile.md](redesign-profile.md)), whose scope the user picks at `pause:scope`.
 
 | Condition | Skip |
 |---|---|
 | No UI change (including a CLI without screens: the request, `requirements.md` or `baseline.md` says so before any `Platform:` line exists; see [platforms.md](platforms.md)) | `designer`, 3b, 3c, `frontend-dev` |
 | No backend/API change | `backend-dev`; `architect` writes only the parts FE needs |
-| No public API or user-facing change | `docs-writer`, step 8 |
-| Existing stack, no smoke trigger (below) | devops mode 1 is a short check against the existing `deploy.md`; **3d is skipped by default**. Regressions are still caught at step 9 (staging health + smoke) |
+| No public API or user-facing change, no migration and no new config | `docs-writer` (step 11; it runs after the Human gate) |
+| Existing stack, no smoke trigger (below) | devops mode 1 is a short check against the existing `deploy.md`; **3d is skipped by default**. Regressions are caught by QA on docker local |
 | Answer and pattern already in the repo/vault | researcher stops at L0 |
 
 Effort follows the signals in [token-discipline.md](token-discipline.md), not the profile table: a skipped step needs no agent, and production mode never lowers `code-reviewer`, `architect` or `devops`.
 
-**Smoke triggers (3d runs only if one is true):** the contract adds or bumps a runtime, a dependency in the lockfile, a native/binary package or a datastore; devops-owned files change (Dockerfile, base image, `.nvmrc`, compose); or `<brain>/agents/devops/` has no passing smoke recorded for this stack (first feature, onboarding, or the last smoke failed); or `staging: none` (no safety net at step 9). Adding routes, UI or business logic alone is not a trigger. For a non-web `Platform:`, a new native module, plugin or entitlement, a minimum OS version change, or a signing/build config change is a trigger too, and what 3d and staging mean comes from [platforms.md](platforms.md#what-3d-smoke-and-9-staging-mean). Record "3d skipped: no trigger" in `tasks/<task>.md`. Decide it from the real diff, not by reading it yourself: `node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --brain <brain> --team-dir .team/<task>` checks manifests and lockfiles, devops-owned files (including `contract/ownership.md` devops rows), the devops brain notes for a passing smoke, and `staging: none`, then prints `next=run-3d` or `next=skip-3d`. A runtime the contract adds before any code exists is not in a diff yet: then pass the flags to `node .claude/skills/muffy/scripts/next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke] [--staging-none]`.
+**Smoke triggers (3d runs only if one is true):** the contract adds or bumps a runtime, a dependency in the lockfile, a native/binary package or a datastore; devops-owned files change (Dockerfile, base image, `.nvmrc`, compose); or `<brain>/agents/devops/` has no passing smoke recorded for this stack (first feature, onboarding, or the last smoke failed). Adding routes, UI or business logic alone is not a trigger. For a non-web `Platform:`, a new native module, plugin or entitlement, a minimum OS version change, or a signing/build config change is a trigger too, and what 3d means comes from [platforms.md](platforms.md#smoke-3d). Record "3d skipped: no trigger" in `tasks/<task>.md`. Decide it from the real diff, not by reading it yourself: `node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --brain <brain> --team-dir .team/<task>` checks manifests and lockfiles, devops-owned files (including `contract/ownership.md` devops rows), the devops brain notes for a passing smoke, then prints `next=run-3d` or `next=skip-3d`. A runtime the contract adds before any code exists is not in a diff yet: then pass the flags to `node .claude/skills/muffy/scripts/next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke]`.
 
 **3d is a stack smoke, not a route test.** It proves the stack boots with real dependencies in one process, using only code that exists on `ops/<task>` (stubs and a health route are fine). A spike that needs a route or screen that `backend-dev` has not written yet is not a 3d item: devops marks it `spike-route` in `deploy.md`, 3d passes without it, and devops runs it once after the first `backend-dev` round, before step 6. Never loop 3d (and burn its 3 rounds) waiting for feature code; a `spike-route` that still fails after step 4 goes to the loop in [loops.md](loops.md) as a normal blocker.
 
-3c (including `pause:design-review`) is skipped only together with the designer. Never skip: review (6), QA (7), staging (9), Human gate (10). Record skipped steps and why in `tasks/<task>.md`.
+3c (including `pause:design-review`) is skipped only together with the designer. Never skip: review (6), QA (7), Human gate (10). Record skipped steps and why in `tasks/<task>.md`.
 
 ## Named pauses
 
@@ -24,8 +24,8 @@ A pause stops the flow on purpose. It has an id, a resume condition, and one lin
 
 | Pause | Where | Stop until |
 |---|---|---|
-| `pause:scope` | setup, after scope confirmation (fix lane: one short question with the classification and AC list) | the user confirms scope (or edits it) and answers the staging question |
-| `pause:staging-credentials` | before step 9 makes any live call to an external API or OAuth provider | the user approves each live call in chat, and the keys are confirmed present by name and prefix |
+| `pause:scope` | setup, after scope confirmation (fix lane: one short question with the classification and AC list) | the user confirms scope (or edits it) |
+| `pause:scope-upgrade` | redesign lane, when a UI-only run reports `needs-logic` ([redesign-profile.md](redesign-profile.md)) | the user adds the logic work, or cuts that part from the design. At most once per task |
 | `pause:onboard-review` | onboard step 0d ([onboard.md](onboard.md)) | the user approves or edits `baseline.md` and the ADR |
 | `pause:todo-review` | todo step 6 ([todo.md](todo.md)) | the user picks which unfinished task to continue; the pick hands off to resume |
 | `pause:plan-review` | step 2b, after `product-manager` returns `ac.md` and the plan (not on `needs-input`, which is an interview) | the user approves the AC and plan (Approve), or asks for changes and then approves the revision. Nothing goes to step 3 before this. Skipped when step 2 is skipped (fix and lite lanes) |
