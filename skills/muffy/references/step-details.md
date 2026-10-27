@@ -57,3 +57,15 @@ The long form of the rows in [steps.md](steps.md) that need more than one line. 
 **Input:** `fe/<task>` + `be/<task>` worktrees: each `.pr-lens/<title>/` render folder (folder path in the hand-off `paths_written`)
 
 **Output:** (1) Publish the PR diagrams as one Claude Artifact (not the prlens.dev canvas): `node .claude/skills/muffy/scripts/build-diagram-page.mjs <scratchpad>/pr-diagrams.html <fe render dir> <be render dir>`, then publish that file with the Artifact tool (icon `diagram`); keep the URL for `review-<n>.md`, the Human gate and the closing report. (2) Copy each `drawn.graph.json` to `.team/<task>/diagrams/fe.graph.json` / `be.graph.json` (the reviewer is read-only and cannot open a URL; step 6 reads these files). Missing diagram → skip, never block. Details: [pr-diagram.md](../../../agents/references/frontend-dev/pr-diagram.md)
+
+## Step 11
+
+**Agent:** `docs-writer`, spawned only after the Human gate (step 10) approves; the prompt carries `Human approved: <date>`.
+
+**Why last:** docs written before the gate are rewritten when the user rejects, and need `TBD` test numbers until QA finishes. After the gate the diff and `qa-report.md` are final, so one round is enough.
+
+**Output:** the task's docs and `release-notes.md` (an Announcement only with `announcement: yes`). Write only what the diff touched. `release-notes.md` ends with a **Deploy hand-off**: branch and commit, migrations to run (and their rollback), new env vars or config, the order to do them in, and what to check after. No agent deploys; the user does, from this list.
+
+**Check:** there is no `code-reviewer` pass. Before the hand-off the docs-writer traces every endpoint, field, rule and number it wrote to a file in the diff, `contract.md` or `qa-report.md`, and lists those sources in its hand-off. A failed check is fixed in this step; it never reopens the Human gate or the code approval.
+
+**Skip:** the fix and lite lanes may skip it when the diff changes nothing a user sees, runs no migration, adds no config and no doc mentions the changed part; record `docs skipped: <reason>` in `tasks/<task>.md`. The redesign lane never skips it. The full flow skips it under the rule in [run-profile.md](run-profile.md).

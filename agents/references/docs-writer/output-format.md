@@ -1,10 +1,10 @@
 # Output Format
 
 - Docs files in the locations the project's conventions dictate
-- `.team/<task>/release-notes.md` with sections: changes, breaking changes, migrations, rollback; plus announcement (value proposition, benefit bullets, short text) only when the prompt says `announcement: yes`
+- `.team/<task>/release-notes.md` with sections: changes, breaking changes, migrations, rollback, and a final **Deploy hand-off** (branch and commit, migrations to run and their rollback, new env vars or config, the order to do them in, what to check after); plus announcement (value proposition, benefit bullets, short text) only when the prompt says `announcement: yes`
 - `<brain>/agents/docs-writer/<task>.md`
 
-Final message: list of files + places where the contract and code disagree (if any)
+Final message: list of files + places where the contract and code disagree (if any). The hand-off `summary` lists the source file for every endpoint, field, rule and number you wrote (the self-check; no `code-reviewer` reads your docs)
 
 End the final message with the one-line JSON hand-off block (`.claude/skills/muffy/schemas/handoff.schema.json`). It does not count toward the prompt's final-message line limit. Types that are often wrong: `step` is a string (`"4"`, not `4`); `status` is `done`, `blocked`, `needs-input` or `not-ready` (never `ready`); `blockers` is an array of `{id, problem, owner}` objects (`[]` when none, never a string); `owner` is `FE`, `BE`, `Docs`, `Devops`, `Architect`, `Designer`, `PM` or `Researcher` (never `Orchestrator`).
 

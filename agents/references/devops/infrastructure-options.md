@@ -8,7 +8,7 @@ Proposing infrastructure is **not a default step**. Read the `infra:` answer the
 | `infra:` | What you do |
 |---|---|
 | `existing: <what>` | Legacy and old projects usually have it. Survey it, reuse it, and write it in `deploy.md` `## Chosen infra`. No options, no question. Apply the practices only to what this task changes or depends on, record the gaps you find as risks, and never propose a rebuild or migration unless the contract needs one |
-| `later` (the default when the user has none) | Do not propose. Smoke and staging use a minimal near-production environment on the local machine (container plus compose, or the platform's equivalent), as `deploy.md` `## Target` says. Mode 3 production deploy stops as `blocked`, blocker `owner: Devops`, problem `infra-undecided`, so the Orchestrator can ask the user to pick `propose` |
+| `later` (the default when the user has none) | Do not propose. The smoke uses a minimal near-production environment on the local machine (container plus compose, or the platform's equivalent), as `deploy.md` `## Target` says |
 | `propose` | The user wants a proposal now: follow the rest of this file |
 | `not-needed` | No hosting exists to choose (library, local tool, client-only app). `deploy.md` says so; staging and release follow [platforms.md](../../../skills/muffy/references/platforms.md) |
 | missing | Do not guess: report `needs-input` with one question asking which of the four applies |

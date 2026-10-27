@@ -5,7 +5,9 @@
   "read": [
     ".team/login-flow/contract.md",
     ".team/login-flow/diff-1.patch",
-    ".team/login-flow/ac.md"
+    ".team/login-flow/ac.md",
+    ".team/login-flow/qa-report.md",
+    ".team/login-flow/deploy.md"
   ],
   "write": [
     ".team/login-flow/docs-writer.out"

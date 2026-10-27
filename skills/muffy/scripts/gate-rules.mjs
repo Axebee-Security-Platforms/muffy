@@ -4,7 +4,7 @@
 //   check-all.mjs     after a step: a hand-off past an open gate is an error
 //   checkpoint.mjs gate   records the user's answer (the only writer of the gate lines in ## Status)
 // A gate is passed when ## Status has `gate <id> passed`, or skipped when it has `gate <id> skipped`. Other lines
-// that name the gate (`not passed`, `rejected`) do not count. Only the feature lane has gates: fix and lite skip them.
+// that name the gate (`not passed`, `rejected`) do not count. The feature and redesign lanes have gates: fix and lite skip them.
 export const GATES = ['2b', '3c'];
 export const PAUSE_OF = { '2b': 'plan-review', '3c': 'design-review' };
 
@@ -24,12 +24,18 @@ const STEP_NEEDS = {
 const norm = (text) => String(text ?? '').replace(/\r\n/g, '\n');
 export const section = (text, name) => norm(text).match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] ?? null;
 
-// feature unless the Run profile names the fix or lite lane
+// feature unless the Run profile names the fix, lite or redesign lane
 export function laneOf(cpText) {
   const rp = section(cpText, 'Run profile') ?? '';
+  if (/\bredesign lane\b|\/muffy redesign\b/i.test(rp)) return 'redesign';
   if (/\bfix lane\b|\/muffy fix\b/i.test(rp)) return 'fix';
   if (/\blite lane\b|\/muffy lite\b/i.test(rp)) return 'lite';
   return 'feature';
+}
+
+// redesign lane scope the user picked at pause:scope, written in the Run profile as `redesign lane (ui-only | ui+logic | logic-only)`
+export function redesignScope(cpText) {
+  return (section(cpText, 'Run profile') ?? '').match(/redesign lane \((ui-only|ui\+logic|logic-only)\)/i)?.[1]?.toLowerCase() ?? null;
 }
 
 export function gateState(cpText, gate) {
@@ -46,7 +52,7 @@ export function gateState(cpText, gate) {
 
 // the gates a spawn of `role` needs before it may start (prompt tells devops mode 2 from mode 1)
 export function gatesForSpawn(role, prompt = '', lane = 'feature') {
-  if (lane !== 'feature' || BEFORE_GATES.has(role)) return [];
+  if (!['feature', 'redesign'].includes(lane) || BEFORE_GATES.has(role)) return [];
   const needs = ['2b'];
   if (AFTER_DESIGN.has(role) || (role === 'devops' && /\bmode\s*2\b/i.test(prompt))) needs.push('3c');
   return needs;
@@ -74,7 +80,7 @@ export function missingGates(cpText, role, prompt = '') {
 // post-hoc: the steps of the hand-offs so far against the gates in the checkpoint
 export function gateErrors(cpText, steps, { designExists = false, lane } = {}) {
   const l = lane ?? (cpText === null ? 'feature' : laneOf(cpText));
-  if (l !== 'feature') return [];
+  if (!['feature', 'redesign'].includes(l)) return [];
   const errs = [];
   for (const step of [...new Set(steps.map(String))]) {
     for (const g of STEP_NEEDS[step] ?? []) {

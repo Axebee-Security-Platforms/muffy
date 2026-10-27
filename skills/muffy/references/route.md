@@ -1,15 +1,16 @@
 # Route: pick the entry and the agents from the prompt
 
-Runs first on a free-text request, before any other reference. A request that starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | feature`) is already routed: skip this file. The Orchestrator reads the requester's prompt and picks the smallest route that delivers the outcome they asked for. It then says the route in one line before spawning anything: `Route: <name> → <agents>. Because: <the words in the prompt that decided it>.` The requester can override it.
+Runs first on a free-text request, before any other reference. A request that starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | redesign | feature`) is already routed: skip this file. The Orchestrator reads the requester's prompt and picks the smallest route that delivers the outcome they asked for. It then says the route in one line before spawning anything: `Route: <name> → <agents>. Because: <the words in the prompt that decided it>.` The requester can override it.
 
 The route is decided by the **outcome asked for**, not by a single keyword. "Bug" alone does not make a fix, "review" alone does not make a review-only run, "ออกแบบ" alone does not make a design run; the decision order below decides.
 
 ## Decision order
 
-Walk it top to bottom and stop at the first step that answers. The fix and lite lanes keep their own triage; this order only decides which triage runs.
+Walk it top to bottom and stop at the first step that answers. The fix, lite and redesign lanes keep their own triage; this order only decides which triage runs.
 
 1. **Continue earlier work** ("continue", "resume", ทำต่อ) → resume
-2. **`/muffy feature <request>`** → full flow, with no fix or lite triage and no Examples read. It skips only this decision; minimum intake, `pause:scope` and every gate still run. When the request is plainly a typo or a one-line text edit, say so once ("`/muffy fix` is cheaper") and carry on as asked
+2. **`/muffy redesign <request>`** → the redesign lane; its scope question is still asked.
+   **`/muffy feature <request>`** → full flow, with no fix or lite triage and no Examples read. It skips only this decision; minimum intake, `pause:scope` and every gate still run. When the request is plainly a typo or a one-line text edit, say so once ("`/muffy fix` is cheaper") and carry on as asked
    **A named mode** (`/muffy todo | onboard | present | diagram`, or a request that can only mean one of them: "find what is half done", "make a deck for the client", "draw the deployment diagram") → that mode. A diagram request first passes the two checks in [diagram.md](diagram.md#before-the-scope-question): the subject has an open task → **diagram-in-task**; the subject is not designed yet → the kind's own route (**spec** for architecture, deployment, erd, state and flow; **design** for a screen map; **plan** for a gantt or story map), with the diagram as its stop point ([kinds table](diagram.md#kinds-fixed-never-ask-the-user-to-pick-an-agent))
 3. **A question** about the code or the repo ("how does X work?", "X ทำงานยังไง") → none
 4. **A stated stop point** ("just the design", "plan it, don't build", "research, no code", "ยังไม่ต้องเขียนโค้ด", "แค่รีวิว") → the route for that stop point, even when the request also names a feature
@@ -18,8 +19,10 @@ Walk it top to bottom and stop at the first step that answers. The fix and lite 
    1. Text only, one line, nothing renders or behaves differently (typo, comment, a copy string) → none
    2. A bug report (something that worked or should work does not) → fix triage ([fix-profile.md](fix-profile.md)): fix, full, or ask first
    3. Internal work, nothing a user or outside caller sees except speed → lite triage ([lite-profile.md](lite-profile.md)): lite, full, or ask first
-   4. Anything else → full flow
-7. **Two routes still fit** → one `AskUserQuestion` with the candidate routes as options, the smaller first. Never guess a route that writes code
+   4. A change to a screen, UX flow or business-logic rule the product already has, not a bug and not a new capability → redesign ([redesign-profile.md](redesign-profile.md)); its scope (UI only, UI + logic, logic only) is always asked
+   5. A new capability the product lacks ("build X", "add X") → full flow
+   6. Anything else → step 7
+7. **Two routes fit, or the prompt is too vague to tell** → ask in rounds of one `AskUserQuestion` until one route fits. Each question cuts the candidates; options run smallest route first, full flow last. "ทำเลย" or "แล้วแต่" means the smallest route that fits, never full flow. Never guess a route that writes code
 
 After the route is picked, check its minimum intake (below). A missing fact is asked before any spawn.
 
@@ -31,7 +34,8 @@ The verb alone never decides. Read the object of the verb, then use the tie-brea
 |---|---|---|---|
 | ออกแบบ / design | หน้าจอ, flow, UI, wireframe | design | — |
 | ออกแบบ / design | API, schema, ฐานข้อมูล, data model | spec | — |
-| ออกแบบระบบ / design the system | a whole feature, no stop point | full flow | Ask: "screens, API/schema, or build it?" with design, spec, full flow as options |
+| ออกแบบระบบ / design the system | a whole feature, no stop point | ask | Ask: "screens, API/schema, or build it?" with design, spec, full flow as options |
+| redesign / ออกแบบใหม่ / ปรับหน้า / แก้ flow | an existing page, flow or rule | redesign | Scope is always asked. Stop point "just the design" → design |
 | รีวิว / review / เช็ค / check | PR, branch, diff, โค้ด | review | No PR or branch named → ask for it |
 | รีวิว / review | ดีไซน์, หน้าจอ, canvas, UX | design-review | No URL, canvas or screen named → ask for it |
 | รีวิว / review | architecture, ADR, contract, สถาปัตยกรรม | arch-review | — |
@@ -47,10 +51,10 @@ The verb alone never decides. Read the object of the verb, then use the tie-brea
 | สร้าง / วาด / ออกแบบ | ERD, architecture, deployment, flow or state of something not designed yet | spec | Not sure it exists → check the repo (code, schema, migration, contract) before asking |
 | สร้าง / วาด | screen map of an app whose screens are not designed yet | design | — |
 | สร้าง / วาด | gantt, timeline, story map of work not planned yet | plan | — |
-| ทำ / สร้าง / build / add | a feature | full flow (or lite or fix by triage) | — |
+| ทำ / สร้าง / build / add | a capability the product lacks | full flow (or lite or fix by triage) | It exists already → redesign; unclear → ask |
 | วางแผน / plan | a feature or a roadmap | plan | — |
 | วิจัย / หาข้อมูล / compare | options, libraries, competitors | research | — |
-| deploy / ขึ้น / rollback | staging, production, a version | ops | No target named → ask; production is never assumed |
+| deploy / ขึ้น / rollback | staging, production, a version | none | The skill never deploys: say so, point to the task's Deploy hand-off |
 
 ## Minimum intake (ask before spawning)
 
@@ -68,7 +72,8 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | spec | the feature and who consumes the API or schema | the consumer |
 | arch-review | the document or area: an ADR, `contract.md`, `baseline.md`, or a module path | which document or area |
 | adr | the decision and whether it is product or technical ([adr.md](adr.md)) | the decision |
-| ops | the target (staging or production) and the action | the target. Production is never assumed |
+| redesign | the screen, flow or rule, and what should change | what to change and where |
+| ops | the local infra file or area (Dockerfile, compose, runtime pin, CI) and the change | the file or area |
 | review | the diff: branch, PR or file list | the branch or PR |
 | qa | the branch and what to test | the branch |
 | docs | the shipped change or its diff, and whether the diff is approved | the change |
@@ -81,9 +86,10 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 |---|---|---|---|
 | A question about the code or the repo ("how does X work?") | none | main session answers, reading with Grep/Read | the answer. No muffy |
 | A text-only one-line edit (typo, comment, a copy string) | none | main session edits | the edit. No muffy |
-| A bug or cosmetic fix with a symptom | fix ([fix-profile.md](fix-profile.md)) | `debugger` diagnoses, `auditor` checks the cause, then fix (FE and/or BE), `code-reviewer`, `qa-tester`, `devops` staging | Human gate |
-| Internal work with a known shape: an internal API, a refactor, a measured performance fix, an index or reversible migration, nothing a user sees ("split this module", "add an index, p95 is 1.8 s") | lite ([lite-profile.md](lite-profile.md)) | `architect` (+ devops for a migration), frontend-dev ∥ backend-dev, code-reviewer, qa-tester, devops staging | Human gate, then production |
-| A new feature or behaviour change across UI, API or data, "build X" | full flow ([steps.md](steps.md), [run-profile.md](run-profile.md)) | researcher, product-manager, designer ∥ architect ∥ devops, frontend-dev ∥ backend-dev, code-reviewer, qa-tester ∥ docs-writer, devops | Human gate, then production |
+| A bug or cosmetic fix with a symptom | fix ([fix-profile.md](fix-profile.md)) | `debugger` diagnoses, `auditor` checks the cause, then fix (FE and/or BE), `code-reviewer`, `qa-tester`, `docs-writer` after the gate | Human gate |
+| Internal work with a known shape: an internal API, a refactor, a measured performance fix, an index or reversible migration, nothing a user sees ("split this module", "add an index, p95 is 1.8 s") | lite ([lite-profile.md](lite-profile.md)) | `architect` (+ devops for a migration), frontend-dev ∥ backend-dev, code-reviewer, qa-tester, docs-writer after the gate | Human gate |
+| A new capability across UI, API or data, "build X" | full flow ([steps.md](steps.md), [run-profile.md](run-profile.md)) | researcher, product-manager, designer ∥ architect ∥ devops, frontend-dev ∥ backend-dev, code-reviewer, qa-tester, docs-writer after the gate | Human gate |
+| A change to an existing screen, UX flow or business-logic rule ("redesign the dashboard", "ปรับ flow สมัครสมาชิก") | redesign ([redesign-profile.md](redesign-profile.md)) | `product-manager`, `designer` and/or `architect`, `frontend-dev` and/or `backend-dev` by the scope asked, `code-reviewer`, `qa-tester` on touched paths, `docs-writer` after the gate | Human gate |
 | Compare options, "what is the best library", "what do competitors do" | research | `researcher` (L0-L2 by the question's depth) | the research brief, in chat. Saved to `docs/research/<slug>.md` only if asked |
 | User stories, acceptance criteria, a phased plan, priorities | plan | `researcher` only if facts are missing, then `product-manager` | `ac.md` and the plan, for the requester to approve |
 | Screens, user flow, wireframes, UI states, design only | design | `designer` (plus `architect` if the screens need an API the requester has not defined) | the design canvas, at the design gate. Code is not written |
@@ -91,7 +97,7 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | API, schema, contract or data model only | spec | `architect` | `contract.md`. No code |
 | A review of an architecture, an ADR, a contract or a module's design | arch-review | `architect`, read-only ("Review only" in the prompt) | findings in chat. A changed decision is a new ADR only if the requester then asks for one |
 | Write or supersede an ADR | adr | `architect` (technical) or `product-manager` (product), per [adr.md](adr.md) | the new `docs/adr/NNNN-*.md`, committed on the requester's go-ahead |
-| Deploy, rollback, infra, runtime pin, staging or production | ops | `devops` (check mode, or deploy mode after its gate) | the deploy result. Production only after the Human gate, never from this route alone |
+| Local infra files: Dockerfile, compose, runtime pin, CI config | ops | `devops` (local only) | the infra change, checked on docker local. It never deploys; a deploy request is answered with the Deploy hand-off |
 | Review an existing diff, branch or PR, "is this safe", "check my change" | review | `code-reviewer` (read-only) | the verdict in chat, saved as `review-<n>.md` only inside a task. No fixes |
 | Write or run tests, QA, regression on a branch | qa | `qa-tester` | `qa-report.md`. No production code change. Whole-system run needs `pause:full-regression` |
 | API docs or release notes for a change | docs | `docs-writer`, then `code-reviewer` on the docs | the reviewed docs. If the diff is not yet approved, route to review first |
@@ -106,7 +112,7 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 ## Rules
 
 - **Smallest route that delivers the outcome.** "Plan it" stops at the plan. "Review this branch" is `code-reviewer` alone, not the full flow. Escalate to a bigger route only when the prompt asks for the later step.
-- **Code always carries the gates.** Any route that writes code keeps review, QA, staging and the Human gate. A design-only, spec-only, research-only or review-only route writes no code, so it does not start the team flow.
+- **Code always carries the gates.** Any route that writes code keeps review, QA and the Human gate. A design-only, spec-only, research-only or review-only route writes no code, so it does not start the team flow.
 - **None or fix.** The main session edits only text that renders the same way (a typo, a comment, a copy string). A change to how something looks or behaves, even one line (a colour, a spacing value, a condition), goes through fix triage, because it needs a visual check or a regression test.
 - **Single-agent routes are real runs.** Spawn the agent fresh with the request verbatim, the route's stop point and the commit trailer. It still ends with a hand-off block that is validated. Create `.team/<task>/` only when the route writes a repo file that belongs to a task (`ac.md`, `contract.md`, `qa-report.md`, `review-<n>.md`); otherwise the agent's output goes to the requester in chat.
 - **Mixed prompts.** "Fix this bug and also plan the next feature": split at the outcome. Run the fix lane and keep the plan as a separate task (`pause:scope` cuts out the extra work, see [fix-profile.md](fix-profile.md)).

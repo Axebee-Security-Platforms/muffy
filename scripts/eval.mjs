@@ -14,6 +14,7 @@ import { simulate, chooseEffort, spawnProfile, MODELS, LEVELS, LOOP_LIMIT, REPEA
 import { runFixLaneEvals } from './lib/fix-lane-evals.mjs';
 import { runOwnershipEvals } from './lib/ownership-evals.mjs';
 import { runLiteLaneEvals } from './lib/lite-lane-evals.mjs';
+import { runRedesignLaneEvals } from './lib/redesign-lane-evals.mjs';
 import { runPendingEvals } from './lib/pending-evals.mjs';
 import { runGateEvals } from './lib/gate-evals.mjs';
 import { runRouteEvals } from './lib/route-evals.mjs';
@@ -279,13 +280,13 @@ for (const sc of readJson(rel('evals/smoke-scenarios.json'))) {
 }
 const profileDoc = readFileSync(rel('skills/muffy/references/run-profile.md'), 'utf8');
 const triggerLine = profileDoc.split(/\r?\n/).find((l) => l.startsWith('**Smoke triggers')) ?? '';
-for (const [key, kw] of Object.entries({ runtime_or_dependency_changed: 'lockfile', devops_files_changed: 'Dockerfile', no_passing_smoke_on_record: 'no passing smoke', staging_none: 'staging: none' })) {
+for (const [key, kw] of Object.entries({ runtime_or_dependency_changed: 'lockfile', devops_files_changed: 'Dockerfile', no_passing_smoke_on_record: 'no passing smoke' })) {
   check(`smoke-doc: run-profile.md documents trigger ${key}`, triggerLine.includes(kw), `missing "${kw}"`);
 }
-check('smoke-doc: every SMOKE_TRIGGERS key has a documented keyword', Object.keys(SMOKE_TRIGGERS).length === 4);
+check('smoke-doc: every SMOKE_TRIGGERS key has a documented keyword', Object.keys(SMOKE_TRIGGERS).length === 3);
 {
   const scope = (readFileSync(rel('skills/muffy/references/setup.md'), 'utf8').match(/^5\. \*\*Confirm scope\*\* \(`pause:scope`\)[\s\S]*?(?=^\d+\. )/m) ?? [''])[0];
-  check('smoke-doc: setup.md asks the staging question at pause:scope', /\*\*Staging\*\*: yes \/ substitute[^\n]*\/ none/.test(scope) && /staging: <yes \| substitute/.test(scope), scope.slice(0, 80));
+  check('smoke-doc: setup.md no longer asks a staging question at pause:scope', !/\*\*Staging\*\*/.test(scope) && !/staging: <yes/.test(scope), scope.slice(0, 80));
 }
 check('smoke-scenarios: every trigger has a positive scenario', Object.keys(SMOKE_TRIGGERS).every((k) => readJson(rel('evals/smoke-scenarios.json')).some((s) => s.signals[k] === true && s.expect === true)));
 
@@ -677,7 +678,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('diff-signals: a lockfile or manifest -> runtime_or_dependency_changed', c(['package-lock.json']).smoke.reasons.includes('runtime_or_dependency_changed') && c(['apps/web/package.json']).smoke.required);
   check('diff-signals: Dockerfile, compose, .nvmrc -> devops_files_changed', ['Dockerfile', 'docker/Dockerfile.api', 'compose.yaml', '.nvmrc'].every((f) => c([f]).smoke.reasons.includes('devops_files_changed')));
   check('diff-signals: a devops row in ownership.md counts as devops-owned', c(['infra/main.tf'], { ownershipRows: parseOwnership('| Pattern | Owner |\n|---|---|\n| infra/** | devops |\n') }).devops.length === 1);
-  check('diff-signals: no passing smoke on record, or staging none -> run 3d', c(['src/a.ts'], { smokeOnRecord: false }).smoke.required && c(['src/a.ts'], { stagingNone: true }).smoke.reasons.includes('staging_none'));
+  check('diff-signals: no passing smoke on record -> run 3d', c(['src/a.ts'], { smokeOnRecord: false }).smoke.required);
   const five = ['a', 'b', 'c', 'd', 'e'].map((x) => `src/${x}.ts`);
   check('diff-signals: fix lane keeps 5 source files; tests and .team/ do not count', !laneVerdict(c([...five, 'test/a.test.ts', 'src/b.spec.ts', '.team/t/fix.md']), 'fix').promote);
   check('diff-signals: fix lane promotes the 6th source file', laneVerdict(c([...five, 'src/f.ts']), 'fix').promote);
@@ -773,11 +774,11 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   writeFileSync(join(d, 'design-review-2.md'), '| id | artboard | problem | severity | fix |\n|---|---|---|---|---|\n| UX-2 | login-phone | breaks at 320px | high | stack fields |\n');
   check('gate 3c: a high finding in the latest review makes it not ready', gate3c(d).notReady.some((x) => x.includes('1 high UX finding')));
   d = copy();
-  check('gate 10: no step-9 hand-off is not ready', gate10(d).notReady.some((x) => x.includes('staging')));
-  writeFileSync(join(d, 'handoff/9-devops-r1.json'), JSON.stringify({ role: 'devops', task: TASK, step: '9', round: 1, status: 'done', paths_written: [], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'staging healthy, smoke 5/5' }));
+  check('gate 10: no staging step exists, so a missing step-9 hand-off is not a reason', !gate10(d).notReady.some((x) => x.includes('staging')));
+  writeFileSync(join(d, 'handoff/3d-devops-r1.json'), JSON.stringify({ role: 'devops', task: TASK, step: '3d', round: 1, status: 'done', paths_written: [], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'stack boots, smoke 5/5' }));
   writeFileSync(join(d, 'handoff/6-code-reviewer-r2.json'), JSON.stringify({ role: 'code-reviewer', task: TASK, step: '6', round: 2, status: 'done', verdict: 'Approve', blockers: [], needs_validation: [{ id: 'V-1', question: 'is 5 attempts per minute the right limit?', owner: 'PM' }], quality_checks: { passed: true, failed: [] }, summary: 'ok' }));
   r = gate10(d);
-  check('gate 10: QA, staging, migrations, rollback and open V- questions are shown; ready', r.notReady.length === 0 && text(r).includes('Pass 3/3') && text(r).includes('smoke 5/5') && text(r).includes('0003 adds sessions table') && text(r).includes('V-1 is 5 attempts'), text(r) + r.notReady);
+  check('gate 10: QA, the 3d smoke and open V- questions are shown; ready', r.notReady.length === 0 && text(r).includes('Pass 3/3') && text(r).includes('smoke 5/5') && text(r).includes('V-1 is 5 attempts'), text(r) + r.notReady);
   writeFileSync(join(d, 'qa-report.md'), readFileSync(join(d, 'qa-report.md'), 'utf8').replace(/## Bugs\r?\nNone\./, '## Bugs\n- BUG-1 AC-2 returns 500 not 429'));
   check('gate 10: open bugs make it not ready', gate10(d).notReady.some((x) => x.includes('open bugs')));
   rmSync(tmp, { recursive: true, force: true });
@@ -883,8 +884,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   const skill = readFileSync(rel('skills/muffy/SKILL.md'), 'utf8');
   const route = readFileSync(rel('skills/muffy/references/route.md'), 'utf8');
   check('route-skip: SKILL.md says a mode command skips route.md, and route.md says the same', /Skip it when the request starts with a mode command/.test(skill) && /already routed: skip this file/.test(route));
-  check('route-skip: every mode command named in SKILL.md has a reference file', ['todo', 'onboard', 'present', 'diagram', 'resume', 'fix-profile', 'lite-profile'].every((m) => existsSync(rel('skills/muffy/references', `${m}.md`))));
-  check('route-skip: route.md stays under 15 KB (worked examples live in route-examples.md)', Buffer.byteLength(route) < 15360, `${Buffer.byteLength(route)} bytes`);
+  check('route-skip: every mode command named in SKILL.md has a reference file', ['todo', 'onboard', 'present', 'diagram', 'resume', 'fix-profile', 'lite-profile', 'redesign-profile'].every((m) => existsSync(rel('skills/muffy/references', `${m}.md`))));
 }
 
 /* 7f. learning a stack (references/stack-learning.md): stale notes, guard entries, project extensions */
@@ -1116,6 +1116,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
 runFixLaneEvals({ check, root });
 runOwnershipEvals({ check, root });
 runLiteLaneEvals({ check, root });
+runRedesignLaneEvals({ check, root });
 
 /* 8b. routing (references/route.md): decision order, Examples table, intake rows */
 runRouteEvals({ check, root });

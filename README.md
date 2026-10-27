@@ -2,9 +2,9 @@
 
 # Muffy
 
-### One skill, thirteen subagents, one feature from research to production.
+### One skill, thirteen subagents, one feature from research to a branch you can deploy.
 
-**Describe a feature. The team researches, designs, builds, reviews, tests, and ships it, with a human approving the design before code starts and every production release.**
+**Describe a feature. The team researches, designs, builds, reviews and tests it on docker local, with a human approving the design before code starts and the branch before it is handed over. Deploying is your step: the team never touches staging or production.**
 
 [Quick start](#quick-start) · [Commands](#commands) · [How muffy works](#how-muffy-works) · [What each step produces](#what-each-step-produces) · [Example](#example) · [FAQ](#faq) · [Documentation](#documentation)
 
@@ -81,7 +81,7 @@ Outside the team flow. The product manager, thinking like a solutions engineer, 
 /muffy fix login redirects to the old page after password reset
 ```
 
-The fix lane skips research, product, design and architecture. A `debugger` first **diagnoses** (reproduces the problem, finds the cause, rates its severity, no code), an independent `auditor` on a different model **checks the evidence** against that severity, and only then does a dev agent fix it with a regression test. The agents never talk to each other: they pass hand-off JSON. `code-reviewer`, `qa-tester`, staging and the Human gate still run. The cause may be unknown at the start; if the diagnosis finds the problem is in the contract, a dependency or the stack, or the fix touches more than 5 source files, the run is promoted to the full flow. Details: [fix-profile](skills/muffy/references/fix-profile.md).
+The fix lane skips research, product, design and architecture. A `debugger` first **diagnoses** (reproduces the problem, finds the cause, rates its severity, no code), an independent `auditor` on a different model **checks the evidence** against that severity, and only then does a dev agent fix it with a regression test. The agents never talk to each other: they pass hand-off JSON. `code-reviewer`, `qa-tester` and the Human gate still run, then `docs-writer`. The cause may be unknown at the start; if the diagnosis finds the problem is in the contract, a dependency or the stack, or the fix touches more than 5 source files, the run is promoted to the full flow. Details: [fix-profile](skills/muffy/references/fix-profile.md).
 
 ### Draw a diagram
 
@@ -126,11 +126,9 @@ flowchart LR
   DH -->|changes| P
   DH -->|approve| B{{frontend-dev / backend-dev<br/>in parallel}}
   B --> RV[code-reviewer]
-  RV --> Q{{qa-tester / docs-writer<br/>in parallel}}
-  Q --> RV2[code-reviewer]
-  RV2 --> S[devops: staging]
-  S --> H{Human gate}
-  H -->|approve| D[devops: canary to production]
+  RV --> Q[qa-tester on docker local]
+  Q --> H{Human gate:<br/>accept the branch}
+  H -->|approve| DW[docs-writer + Deploy hand-off]
 ```
 
 Every agent ends with a JSON block checked against `handoff.schema.json`; an invalid block is sent back, and invalid twice escalates. Spawn prompts are built with `make-envelope.mjs`, and `sync-worktree.mjs` copies the main checkout's muffy skill files into a task worktree so it runs the same scripts. Instructions load per step from `skills/muffy/references/`, so no agent carries the whole brief.
@@ -163,7 +161,7 @@ Every agent ends with a JSON block checked against `handoff.schema.json`; an inv
     </tr>
     <tr>
       <td>Review</td>
-      <td>Design approval before code; code review and QA gates; Human gate before production</td>
+      <td>Design approval before code; code review and QA gates; Human gate before handover</td>
       <td>Depends on whether someone remembers to ask</td>
     </tr>
     <tr>
@@ -203,18 +201,16 @@ Every agent ends with a JSON block checked against `handoff.schema.json`; an inv
 | 5 | Orchestrator | Merge into `feature/<task>` with `--no-ff` |
 | 5b | Orchestrator (**off by default**) | PR diagrams as one Claude Artifact, when you ask for them |
 | 6 | `code-reviewer` | Approve or Reject, saved as `review-<n>.md` |
-| 7 | `qa-tester` ∥ `docs-writer` | `qa-report.md`, docs, `release-notes.md` (+ announcement if you opted in) |
-| 8 | `code-reviewer` | Approve or Reject on docs and fixes |
-| 9 | `devops` | Staging deploy: health check and smoke test |
-| 10 | **Human gate** | You approve or reject with the QA report and staging result in front of you |
-| 11 | `devops` | Canary, then 100% or rollback |
+| 7 | `qa-tester` | `qa-report.md`, run on docker local |
+| 10 | **Human gate** | You accept or reject the branch with the QA report in front of you |
+| 11 | `docs-writer` (after the gate) | Docs and `release-notes.md` with a **Deploy hand-off** (migrations, config, order, checks); you deploy from it (+ announcement if you opted in) |
 | 12 | Orchestrator | Final checks and a short report to you |
 
 Large `ac` and `brief` files split into an index plus part files once they pass 60 lines; `contract.md` is always an index with one part file per section. Details: [steps](skills/muffy/references/steps.md).
 
 ### Run profile
 
-The Orchestrator skips steps the feature does not need (no UI change skips design and frontend; no public API change skips docs). It never skips review, QA, staging, or the Human gate. Skipped steps and the reason are recorded in the vault task note. See [run-profile](skills/muffy/references/run-profile.md).
+The Orchestrator skips steps the feature does not need (no UI change skips design and frontend; no public API change skips docs). It never skips review, QA or the Human gate. Skipped steps and the reason are recorded in the vault task note. See [run-profile](skills/muffy/references/run-profile.md).
 
 ### Fix lane
 
@@ -227,13 +223,13 @@ The Orchestrator skips steps the feature does not need (no UI change skips desig
 | 4b | `auditor` | Re-runs the repro once and grades the evidence against the severity: `confirm`, `need-validation` (back to the debugger once, through the hand-off file) or `reject` (you choose: more information, accept the risk, cancel) |
 | 4 | `frontend-dev` / `backend-dev` | Fix plus a regression test that fails before and passes after |
 | 6, 7 | `code-reviewer`, `qa-tester` | Review and QA against `fix.md`; a cosmetic AC with no automated check is marked `manual` |
-| 9, 10, 11 | `devops`, Human gate | Staging, your approval, production, as in the full flow |
+| 10, 11 | Human gate, `docs-writer` | Your approval, then the changelog and a Deploy hand-off (skipped when nothing user-visible, no migration, no config) |
 
-Research, product, design, architecture, docs and step 8 are skipped. The cause may be unknown at the start: an `unknown` diagnosis asks you for more evidence once, then escalates. A diagnosis that finds the cause in the contract, a dependency or the stack (`needs-full-flow`), or a fix that touches more than 5 source files, is promoted to the full flow.
+Research, product, design and architecture are skipped. The cause may be unknown at the start: an `unknown` diagnosis asks you for more evidence once, then escalates. A diagnosis that finds the cause in the contract, a dependency or the stack (`needs-full-flow`), or a fix that touches more than 5 source files, is promoted to the full flow.
 
 ### Feature command
 
-`/muffy feature <description>` forces the full flow: research through deploy, with no fix or lite triage and no route read (mode commands skip `route.md` entirely). Use it when you already know the work is a feature. It skips only the choice of route; the intake question, `pause:scope`, review, QA and the Human gate still run. For a small bug `/muffy fix` costs far less, and the Orchestrator says so once before carrying on as asked.
+`/muffy feature <description>` forces the full flow: research through a QA-passed branch, with no fix or lite triage and no route read (mode commands skip `route.md` entirely). Use it when you already know the work is a feature. It skips only the choice of route; the intake question, `pause:scope`, review, QA and the Human gate still run. For a small bug `/muffy fix` costs far less, and the Orchestrator says so once before carrying on as asked.
 
 ### Lite lane
 
@@ -244,9 +240,21 @@ Research, product, design, architecture, docs and step 8 are skipped. The cause 
 | Setup-lite | Orchestrator | Writes `ac.md` (kind, owner, AC); one confirmation at `pause:scope` |
 | 3 | `architect` (+ `devops` for a migration) | Contract |
 | 4–7 | devs, `code-reviewer`, `qa-tester` | As in the full flow; QA at L2 (L3 for an internal API with new AC) |
-| 9, 10, 11 | `devops`, Human gate | Staging, your approval, production |
+| 10, 11 | Human gate, `docs-writer` | Your approval, then the changelog and a Deploy hand-off (migration, rollback, numbers) |
 
-Research, product, design, docs and step 8 are skipped. If the architect or a dev reports a blocker owned by `Researcher`, `PM` or `Designer`, or the work passes 15 source files, the run is promoted to the full flow.
+Research, product and design are skipped. If the architect or a dev reports a blocker owned by `Researcher`, `PM` or `Designer`, or the work passes 15 source files, the run is promoted to the full flow.
+
+### Redesign lane
+
+`/muffy redesign <description>` (or a request that changes a screen, UX flow or business rule the product already has) runs only the agents the change needs. It always asks the scope at `pause:scope`:
+
+| Scope | Agents |
+|---|---|
+| UI only | `product-manager` → `designer` → (you approve the AC and design together) → `frontend-dev` → `code-reviewer` → `qa-tester` (touched pages only) → Human gate → `docs-writer` |
+| UI + logic | `product-manager` → `architect` ∥ `designer` → `frontend-dev` ∥ `backend-dev` → review → QA → Human gate → `docs-writer` |
+| Logic only | `product-manager` → `architect` → `backend-dev` → review → QA → Human gate → `docs-writer` |
+
+No researcher and no devops unless the stack changes. If a UI-only run finds it needs a backend change, it stops at `pause:scope-upgrade` and asks once. Details: [redesign-profile](skills/muffy/references/redesign-profile.md).
 
 ### Gates and pauses
 
@@ -256,11 +264,11 @@ Research, product, design, docs and step 8 are skipped. If the architect or a de
 | `pause:onboard-review` | Onboard step 0d | You approve or edit the baseline, ADR, and agent-context change |
 | `pause:plan-review` (2b) | After the product-manager writes the AC and plan | You approve the AC, plan phases and out of scope (or request changes and approve the revision). Nothing goes to `designer` / `architect` / `devops` before this |
 | `pause:design-review` (3c) | After design, once the designer's definition of done is fully checked | You approve the design (or request changes and approve the revision). Nothing goes to `frontend-dev` / `backend-dev` before this |
-| Smoke build (3d) | After devops mode 1, only when the stack changes (new runtime, dependency or devops-owned file) or no smoke has passed yet | Real dependencies run in one process. Feature-only changes skip it; staging still smoke-tests |
-| `pause:staging-credentials` | Before a live call to an external API | You approve each call and the keys are confirmed by name and prefix |
+| Smoke build (3d) | After devops mode 1, only when the stack changes (new runtime, dependency or devops-owned file) or no smoke has passed yet | Real dependencies run in one process. Feature-only changes skip it; QA on docker local still runs |
+| `pause:scope-upgrade` | Redesign lane, when a UI-only run needs logic | You add the logic or cut that part from the design |
 | `pause:human-gate` | Step 10 | You answer Approve or Reject |
 
-You approve the design before any code is written; only the Human gate approves production.
+You approve the design before any code is written and the branch before it is handed over. No agent deploys.
 
 The plan gate (2b) and design gate (3c) are enforced, not only written. With `--with-guard`, `guard-gates.mjs` blocks a spawn until the gate is recorded as passed or skipped, and it fails closed: a spawn with no `Task:` header is matched to the task its prompt names, or blocked while any checkpoint exists. `checkpoint.mjs gate <dir> 2b|3c approve|reject|skip` is the only writer of the gate lines, and `check-all` flags a hand-off past an open gate. No hook can tell your reply from one the Orchestrator types, so the answer is a dated, auditable line in `## Status`. See [hooks enforcement](skills/muffy/references/hooks-enforcement.md).
 
@@ -283,7 +291,7 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 | `designer` | Canvas, `design.md`, the project design system, and the look of `/muffy present` decks |
 | `diagrammer` | Draws every diagram (architecture, deployment, state, ERD, flow, screen map, gantt, story map) from facts the other roles decided, checks it renders, and keeps the words plain for readers who are not engineers |
 | `architect` | API contract, ADRs, stack decisions, build vs buy (recommends third-party providers; web access only to check a provider's facts) |
-| `devops` | Deploy plan, smoke build, staging, production rollout |
+| `devops` | Deploy plan, smoke build, local infra files (never deploys) |
 | `frontend-dev` | UI implementation on `fe/<task>` (web, mobile and desktop apps) |
 | `backend-dev` | API and data implementation on `be/<task>`; also CLI and console apps |
 | `debugger` | Fix lane only: finds the cause of a bug, rates its severity, names the owner; no code |
@@ -303,8 +311,8 @@ Request in the main session: `/muffy feature add password reset, task name passw
 2. **Research and plan.** `researcher` asks a few clarifying questions through the Orchestrator, then writes `brief.md`. `product-manager` writes `ac.md` and `docs/plan/password-reset.md`.
 3. **Parallel design.** `designer`, `architect`, and `devops` run together and produce `design.md`, `contract.md`, and `deploy.md`. The Orchestrator publishes the canvas and saves its URL. The design gate (checklist plus your approval of the canvas) and the smoke build must pass before code starts.
 4. **Build.** `frontend-dev` and `backend-dev` work on `fe/password-reset` and `be/password-reset`. The Orchestrator merges them into `feature/password-reset`.
-5. **Review and QA.** `code-reviewer` approves or rejects. `qa-tester` writes `qa-report.md` while `docs-writer` writes the docs and release notes.
-6. **Release.** `devops` deploys to staging. You approve at the Human gate, then `devops` rolls out to production with a canary and a rollback path.
+5. **Review and QA.** `code-reviewer` approves or rejects. `qa-tester` writes `qa-report.md` on docker local.
+6. **Handover.** You accept the branch at the Human gate, then `docs-writer` writes the docs and a Deploy hand-off. You deploy it yourself.
 
 </details>
 
@@ -325,9 +333,9 @@ No. The vault holds task notes and the consolidated `project.md` (Lessons, Open 
 </details>
 
 <details>
-<summary><strong>Can it deploy to production without me?</strong></summary>
+<summary><strong>Can it deploy to staging or production?</strong></summary>
 
-No. Production rollout starts only after you approve at the Human gate, with "Human approved" in the prompt.
+No. The team stops at a reviewed, QA-passed branch on docker local. Deploying is a separate step you do, from the Deploy hand-off that `docs-writer` writes after you approve.
 
 </details>
 

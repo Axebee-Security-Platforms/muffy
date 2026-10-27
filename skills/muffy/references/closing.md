@@ -13,4 +13,4 @@ Read this only at step 12, or when the user stops the flow.
    - **Daily note (optional)**: only if `<vault>/daily/` exists, append one bullet under `## Log` of `<vault>/daily/YYYY-MM-DD.md` (skip if the file is missing; never create it): `- [[Projects/<repo-name>/tasks/<task>]]: <status> · <one-line outcome>`. Append only, never edit other lines, no secrets
 4. **Mark the checkpoint closed**: rewrite `checkpoint.md` with `## Status` = `closed` (so a resume without a vault skips it)
 5. **`.team/<task>/`** stays committed as the audit trail; `diff*.patch` is gitignored (regenerable)
-6. **Final message to the user**: status, commit/PR, staging/production result, links to plan + ADR, diagram links (from the task note's `## Diagrams`), open issues, and any step that was skipped or failed: stated as such
+6. **Final message to the user**: status, commit/PR, the **Deploy hand-off** (branch and commit, migrations, config, order, what to check; the user deploys, no agent does), links to plan + ADR, diagram links (from the task note's `## Diagrams`), open issues, and any step that was skipped or failed: stated as such

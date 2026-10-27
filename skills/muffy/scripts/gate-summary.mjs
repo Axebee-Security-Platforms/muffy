@@ -4,8 +4,8 @@
 //   2b  user stories, AC list, out of scope, plan phases with P0/P1/P2 counts, brief → AC gaps, every [assumed] item
 //   3c  canvas URL, AC → artboard (missing ones flagged), design-system changes, [verify] items, open UX findings from the
 //       latest design-review-<n>.md (a `high` one means the gate is not ready: send it to the designer first)
-//   10  QA result, bugs and AC coverage gaps, staging result from the step-9 hand-off, breaking changes / migrations / rollback
-//       from release-notes.md, open V- questions
+//   10  QA result, bugs and AC coverage gaps, the 3d smoke result when 3d ran, open V- questions. Release notes and the Deploy
+//       hand-off come after this gate (step 11), so they are not shown here
 //
 // Usage: node gate-summary.mjs <.team/<task>> 2b|3c|10 [--plan docs/plan/<task>.md]
 // Prints the summary (markdown, short lines) on stdout, then `ready=yes` or `ready=no` with the reasons.
@@ -14,6 +14,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkTask } from './check-artifacts.mjs';
+import { laneOf, redesignScope } from './gate-rules.mjs';
 
 const readIf = (p) => (p && existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);
 const section = (md, name) => md?.match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'mi'))?.[1]?.trim() ?? null;
@@ -48,8 +49,12 @@ export function gate2b(taskDir, { plan } = {}) {
   out.push('', `**Acceptance criteria (${acs.length})**`, ...acs.map(([id, t]) => `- ${id} ${t}`));
   const oos = section(ac, 'Out of scope');
   out.push('', `**Out of scope:** ${none(oos) ? 'none' : short(oos.replace(/\n/g, '; '), 160)}`);
+  const cpText = readIf(join(taskDir, 'checkpoint.md'));
+  const noPlan = cpText && laneOf(cpText) === 'redesign'; // the redesign lane writes no plan phases (redesign-profile.md)
   const planText = readIf(plan);
-  if (planText) {
+  if (noPlan && !planText) {
+    // nothing to show: the AC and out of scope above are the whole question
+  } else if (planText) {
     const phases = planText.split(/^## /m).slice(1).map((p) => {
       const [title, ...rest] = p.split('\n');
       const body = rest.join('\n');
@@ -69,13 +74,26 @@ export function gate2b(taskDir, { plan } = {}) {
   return { lines: out, notReady };
 }
 
+// logic-only redesign: no designer ran, so the gate asks the user to approve the architect's contract with the AC
+function gate3cContract(taskDir, ac) {
+  const contract = readIf(join(taskDir, 'contract.md'));
+  if (!contract) return { lines: [], notReady: ['contract.md is missing'] };
+  const heads = contract.split('\n').filter((l) => /^#{1,3} /.test(l)).map((l) => `- ${short(l.replace(/^#+ /, ''), 80)}`);
+  const verify = markers(contract, 'verify');
+  const out = ['**Contract (logic-only redesign, no design.md)**', ...heads.slice(0, 16), '', '**Acceptance criteria**', ...acList(ac).map(([id, t]) => `- ${id} ${t}`), '', `**[verify] items (${verify.length}):** ${verify.length ? '' : 'none'}`, ...verify.map((v) => `- ${v}`)];
+  return { lines: out, notReady: acList(ac).length ? [] : ['ac.md lists no AC'] };
+}
+
 export function gate3c(taskDir) {
   const design = readIf(join(taskDir, 'design.md'));
   const ac = readIf(join(taskDir, 'ac.md'));
   const out = [];
   const notReady = [];
-  if (!design) return { lines: [], notReady: ['design.md is missing'] };
   const checkpoint = readIf(join(taskDir, 'checkpoint.md'));
+  const scope = checkpoint && laneOf(checkpoint) === 'redesign' ? redesignScope(checkpoint) : null;
+  if (scope === 'logic-only') return gate3cContract(taskDir, ac);
+  if (!design) return { lines: [], notReady: ['design.md is missing'] };
+  if (scope === 'ui-only') out.push('**Acceptance criteria** (approved together with the design)', ...acList(ac).map(([id, t]) => `- ${id} ${t}`), '');
   const canvas = design.match(/https?:\/\/\S+/)?.[0] ?? checkpoint?.match(/canvas:\s*(https?:\/\/\S+)/)?.[1];
   out.push(`**Canvas:** ${canvas ?? 'not published'}`);
   if (!canvas) notReady.push('no canvas URL in design.md or checkpoint');
@@ -116,15 +134,12 @@ export function gate10(taskDir) {
     const gaps = checkTask(taskDir, 'qa').filter((e) => e.startsWith('traceability:'));
     if (gaps.length) { out.push('**AC coverage gaps**', ...gaps.map((g) => `- ${g.replace('traceability: ', '')}`)); notReady.push(`${gaps.length} AC coverage gap(s)`); }
   }
-  const staging = latest(taskDir, /^9-devops-r\d+\.json$/);
-  if (staging) {
-    out.push(`**Staging:** ${staging.status}${staging.verdict ? ` · ${staging.verdict}` : ''} · ${short(staging.summary ?? '', 120)}`);
-    if (staging.status !== 'done' || /^fail/i.test(staging.verdict ?? '')) notReady.push('staging did not pass');
-  } else { out.push('**Staging:** no step-9 hand-off on file'); notReady.push('no staging result (step 9)'); }
-  const rn = readIf(join(taskDir, 'release-notes.md'));
-  if (rn) for (const s of ['Breaking changes', 'Migrations', 'Rollback']) { const t = section(rn, s); out.push(`**${s}:** ${none(t) ? 'none' : short(t.replace(/\n/g, '; '), 160)}`); }
-  else out.push('**Release notes:** missing');
-  const review = latest(taskDir, /^[68]-code-reviewer-r\d+\.json$/);
+  const smoke = latest(taskDir, /^3d-devops-r\d+\.json$/);
+  if (smoke) {
+    out.push(`**Smoke (3d):** ${smoke.status}${smoke.verdict ? ` · ${smoke.verdict}` : ''} · ${short(smoke.summary ?? '', 120)}`);
+    if (smoke.status !== 'done' || /^fail/i.test(smoke.verdict ?? '')) notReady.push('the 3d smoke did not pass');
+  }
+  const review = latest(taskDir, /^6-code-reviewer-r\d+\.json$/);
   const vs = review?.needs_validation ?? [];
   out.push(`**Open questions (V-):** ${vs.length ? '' : 'none'}`, ...vs.map((v) => `- ${v.id} ${short(v.question ?? '', 100)} (${v.owner ?? '-'})`));
   return { lines: out, notReady };

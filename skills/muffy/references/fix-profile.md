@@ -24,8 +24,8 @@ Read the signals from the request, then let `node .claude/skills/muffy/scripts/n
 | "Submit button on checkout is the wrong colour in dark mode" | fix (FE, cosmetic) | Existing tokens, no new component |
 | "Align the card padding on the pricing page with the design system spacing" | fix (FE, cosmetic) | Tokens already exist, no logic change |
 | "Date shows a day earlier for users in UTC-5" | fix | Symptom with a clear repro; likely 1-2 files |
-| "Add a `phone` field to the signup form" | full | New field changes the schema and the API contract |
-| "Redesign the login page" / "make the dashboard look better" | full | New layout and components, design approval needed |
+| "Add a `phone` field to the signup form" | redesign | An existing form plus its schema and API contract; the scope is asked |
+| "Redesign the login page" / "make the dashboard look better" | redesign | Changes an existing screen or flow; needs design approval ([redesign-profile.md](redesign-profile.md)) |
 | "Search is slow" | full, or ask first | No symptom, location or repro; ask for a measurement before triage |
 | "Invoice totals are wrong" | fix → promoted | Starts as a fix; step 4a finds the cause is a rounding rule in the contract and returns `needs-full-flow` |
 | "Upgrade React to 19 and fix what breaks" | full | A dependency change |
@@ -41,10 +41,9 @@ When the request is borderline (for example a bug plus "while you are there, als
    - **Kind + owner**: bug or cosmetic; FE, BE or both
    - **AC + out of scope**: the AC list drafted from the request and a quick read of the named files, with out of scope. Confirm / Change it
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
-   - **Staging** (only when `project.md` / the last checkpoint never recorded `staging:`)
 3. Create the feature worktree from `<base>`, which holds the team folder: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/fix.md` there (≤ 60 lines, below). The Orchestrator writes it from the same reads; no agent is spawned for it
 4. Commit `fix.md` to `feature/<task>` (never to `<base>`). The `debugger` (4a) and `auditor` (4b) work in the feature worktree and write nothing outside `.team/<task>/`. The dev worktrees are cut at step 4, after the audit, from the feature commit that holds the confirmed `## Cause`: `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> feature/<task>`, one per owner the debugger named. qa gets one at step 7 as usual
-5. Write `checkpoint.md` in the feature worktree with `## Run profile` = `fix: skipped 1, 2, 3, 3b, 3c, 3d, 8`
+5. Write `checkpoint.md` in the feature worktree with `## Run profile` = `fix: skipped 1, 2, 3, 3b, 3c, 3d`
 
 ## `fix.md`
 
@@ -74,12 +73,12 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 | 4 | `frontend-dev` / `backend-dev` per the debugger's `owner` (FE ∥ BE if both), a fresh spawn | Fix + regression test that fails before and passes after. Cosmetic: the AC's visual check. Cold start: the prompt's `Read:` lists `fix.md` and the debugger's and auditor's hand-offs, so the dev reads only `diagnosis.files` plus tests |
 | 5 | Orchestrator | Merge into `feature/<task>` with `--no-ff`, as usual |
 | 6 | `code-reviewer` | Diff + `fix.md` (including Cause and Repro). Never skipped, never downgraded |
-| 7 | `qa-tester` | `fix.md` AC replace `ac.md` and `design.md`. Level L0, L1 or L2 from [test-levels.md](test-levels.md); qa-tester runs exactly what that row allows (L0 build + lint, L1 the regression test + unit tests of the touched files, L2 also one boundary integration test), by path; never the whole suite ([hooks-enforcement.md](hooks-enforcement.md) §10). Cosmetic AC with no automated check, and an AC the dev says no seam can reach, are marked `manual` in `qa-report.md` and shown at the Human gate. No docs-writer, no step 8 |
-| 9 | `devops` mode 3 | Staging health + smoke against the newest `.team/*/deploy.md` (path in the prompt). No `deploy.md` and no staging → near-production env per `project.md` |
-| 10, 11 | Human gate, devops production | Unchanged. One question: qa-report, staging result, the diff summary |
+| 7 | `qa-tester` | `fix.md` AC replace `ac.md` and `design.md`. Level L0, L1 or L2 from [test-levels.md](test-levels.md); qa-tester runs exactly what that row allows (L0 build + lint, L1 the regression test + unit tests of the touched files, L2 also one boundary integration test), by path; never the whole suite ([hooks-enforcement.md](hooks-enforcement.md) §10). Cosmetic AC with no automated check, and an AC the dev says no seam can reach, are marked `manual` in `qa-report.md` and shown at the Human gate. Runs on docker local; there is no staging |
+| 10 | Human gate | One question: qa-report, the diff summary, the AC marked `manual`. Approve means "accept this branch", not "deploy" |
+| 11 | `docs-writer`, after the Human gate approves | The fix in the changelog or release notes (symptom, cause, what changed), the docs that described the wrong behaviour, and a **Deploy hand-off** (branch and commit, anything to run or configure). Only what the fix diff touched; self-check instead of a review. Skipped when the diff changes nothing a user sees, runs no migration, adds no config, and no doc mentions the fixed behaviour: record `docs skipped: <reason>` in `tasks/<task>.md` |
 | 12 | Orchestrator | [closing.md](closing.md) steps 2-6 in full, not abbreviated: `## Usage` from `spawns.tsv`, Lessons tally (step 4 marks the checkpoint `closed`, so a resume skips it); skip step 1 unless a decision or stack learning came out of the fix |
 
-Never skipped: 4a, 4b, 6, 7, 9, 10. A fix with no diagnosis hand-off, or no `confirm` from the auditor (or the user's accepted risk, below), cannot start step 4.
+Never skipped: 4a, 4b, 6, 7, 10. A fix with no diagnosis hand-off, or no `confirm` from the auditor (or the user's accepted risk, below), cannot start step 4.
 
 **The lane is silent.** No fix-lane agent talks to another and none is continued with `SendMessage`. The debugger, the auditor and the devs exchange only hand-off JSON: the Orchestrator validates each file in `handoff/` and puts its path in the next spawn's `Read:` line. Every round, including a re-diagnose, is a fresh spawn.
 

@@ -2,14 +2,14 @@
 name: muffy
 display_name: Earl Grey
 description: >
-  Run a subagent team (main session = Orchestrator) from research to deploy, on the smallest route.
-  Use to build a feature end to end (ทำฟีเจอร์, `/muffy feature`); for a bug report
-  with a symptom or error ("found a bug", "it errors", "this is broken", เจอบั๊ก, พัง, error) via the fix lane
-  (`/muffy fix`); for an internal API, refactor, measured perf fix or migration (`/muffy lite`, ทำให้เร็วขึ้น);
-  and for a single-step request: research or compare (วิจัย, เปรียบเทียบ), plan or user stories (วางแผน),
-  screens (ออกแบบหน้าจอ), API or schema (ออกแบบ API), a UX/UI review (รีวิวดีไซน์), an architecture or ADR review,
-  a new ADR, a code/PR review (รีวิว PR), tests (เขียนเทสต์), docs or README (ทำเอกสาร), deploy or rollback.
-  Also: resume (`/muffy resume`, "continue", ทำต่อ), `/muffy todo` for unfinished `.team` tasks, `/muffy onboard`,
+  Run a subagent team (main session = Orchestrator) from research to a QA-passed branch, on the smallest route. Never deploys.
+  Use to build a new capability (ทำฟีเจอร์, `/muffy feature`); for a bug with a symptom (เจอบั๊ก, พัง, error) via
+  the fix lane (`/muffy fix`); for an internal API, refactor, perf fix or migration (`/muffy lite`, ทำให้เร็วขึ้น);
+  for changing an existing screen, UX/UI or logic flow (`/muffy redesign`, ออกแบบใหม่, ปรับหน้า, แก้ flow); and for a
+  single-step request: research (วิจัย), plan or user stories (วางแผน), screens (ออกแบบหน้าจอ), API or schema,
+  a UX/UI review (รีวิวดีไซน์), an architecture or ADR review, a new ADR, a PR review (รีวิว PR), tests,
+  docs or README (ทำเอกสาร), local infra files.
+  Also: resume (`/muffy resume`, ทำต่อ), `/muffy todo` for unfinished `.team` tasks, `/muffy onboard`,
   `/muffy present` for a client deck (ทำสไลด์), `/muffy diagram` for a standalone diagram.
   Not for a question about the code, a text-only one-line edit, or step-by-step work in main session.
 ---
@@ -32,13 +32,13 @@ Load lazily: open a reference only at the step that needs it; subagents do the s
 
 Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup and Run profile: [references/resume.md](references/resume.md).
 
-- **Route**: first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | feature`). The command is the route, so say `Route: <mode>` and open that mode's reference instead
+- **Route**: first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | redesign | feature`). The command is the route, so say `Route: <mode>` and open that mode's reference instead
 - **Todo** (`/muffy todo`): tasks in `.team` that are not done, read-only: [todo.md](references/todo.md)
 - **Onboard** (`/muffy onboard`): existing codebase, first run: [onboard.md](references/onboard.md)
 - **Present** (`/muffy present`): client deck outside the team flow: [present.md](references/present.md), missing documents: [doc-request.md](references/doc-request.md)
 - **Diagram** (`/muffy diagram`, or a standalone "draw a diagram"): route facts to the owning agent, then always `diagrammer`: [diagram.md](references/diagram.md); PNG/SVG only on request: [diagram-export.md](references/diagram-export.md)
 - **Setup**: folders and task note: [setup.md](references/setup.md)
-- **Run profile**: which steps to skip, never review/QA/staging/Human gate: [run-profile.md](references/run-profile.md). Small bug: fix lane [fix-profile.md](references/fix-profile.md) (`/muffy fix`). Internal API, refactor, measured perf, reversible migration: lite lane [lite-profile.md](references/lite-profile.md) (`/muffy lite`). Forced full flow, no triage: `/muffy feature <request>` runs every step. It skips only the route and the fix/lite triage, never a gate
+- **Run profile**: which steps to skip, never review/QA/Human gate: [run-profile.md](references/run-profile.md). Small bug: fix lane [fix-profile.md](references/fix-profile.md) (`/muffy fix`). Internal API, refactor, measured perf, reversible migration: lite lane [lite-profile.md](references/lite-profile.md) (`/muffy lite`). Change to an existing screen, UX/UI or business-logic flow: redesign lane [redesign-profile.md](references/redesign-profile.md) (`/muffy redesign`). Forced full flow, no triage: `/muffy feature <request>` runs every step. It skips only the route and the fix/lite triage, never a gate
 - **Steps 0 to 12**: agent, input and output per step: [steps.md](references/steps.md)
 - **Platforms**: when the contract's `Platform:` is not `web`, or the request names an app or CLI: [platforms.md](references/platforms.md)
 - **Publishing diagrams** (3e): [diagram-publish.md](references/diagram-publish.md) · **Design review** (3c): [design-review.md](references/design-review.md)
@@ -67,7 +67,7 @@ Critical rules (Orchestrator rules 1 to 4, plus the opt-in hooks): [references/h
 - Run only the phases the plan marks for this run. In the fix lane, steps 4a (diagnose) and 4b (audit the cause) are never skipped. The lane is silent (hand-off JSON between agents, no `SendMessage`). A fix that outgrows the lane is promoted to the full flow, never patched on
 - FE/BE report a temporary stack → stop, send to architect (+ ADR) before coding continues
 - An agent writes outside its vault folder → revert it and resend its rule; an agent can't find `<brain>` → `AskUserQuestion`
-- Never deploy to production without passing the Human gate
+- No agent deploys, rolls back or touches staging or production: work ends on docker local at the Human gate. The user deploys from the Deploy hand-off
 - Never Read, grep or print `.env*` files in full; check that a variable exists and its prefix is right, by name only ([hooks-enforcement.md](references/hooks-enforcement.md) §6). A key shown or pasted in chat → rotate it; log the rotation in checkpoint `## Open blockers`
 - Every commit by every agent ends with the run's `Commit trailer`, passed in the prompt envelope. The Orchestrator copies it verbatim from the attribution line its harness provides; no model name is hard-coded in this skill. If the harness gives none, ask once at setup
 - Pauses are named (`pause:<id>`) and only the ones in [run-profile.md](references/run-profile.md); each records its resume condition in checkpoint `## Status`

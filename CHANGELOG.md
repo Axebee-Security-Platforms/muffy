@@ -2,7 +2,15 @@
 
 ## Unreleased
 
+### Changed
+
+- **No staging or production in any lane.** Work ends on docker local at the Human gate; deploying is the user's step. Steps 8 (docs review) and 9 (staging) are gone and step 11 is now `docs-writer` instead of `devops` production; ids are kept so hand-offs and scripts keep one numbering. `pause:staging-credentials`, the staging question at `pause:scope`, the `staging_none` smoke trigger and devops mode 3 (and its `fix-profile.md`) are removed. The `ops` route is now local infra only; a deploy or rollback request is answered with the Deploy hand-off instead of routed.
+- **`docs-writer` runs last, after the Human gate approves,** in the full flow, lite, fix and the new redesign lane. It writes only what the diff touched, with no `TBD` and no second round, ends `release-notes.md` with a **Deploy hand-off** and self-checks its sources; no `code-reviewer` pass. Fix and lite may skip it when nothing a user sees changed, there is no migration or config and no doc mentions the changed part (`docs skipped: <reason>`). The gate summary at step 10 no longer shows release notes or a staging result.
+- **Full flow is the last route, not the default.** Decision step 6.4 is replaced: a change to something the product already has goes to redesign, a capability it lacks goes to full flow, and anything vaguer is asked in rounds until one route fits. "ทำเลย" or "แล้วแต่" picks the smallest route that fits.
+
 ### Added
+
+- **Redesign lane** (`/muffy redesign`, `references/redesign-profile.md`) for changing an existing screen, UX flow or business-logic rule. The scope (UI only, UI + logic, logic only) is always asked at `pause:scope`; each scope runs only the agents it needs, QA is L3 limited to the touched paths, the AC and design are approved together for UI only, and `pause:scope-upgrade` handles a UI-only run that turns out to need logic. `gate-rules.mjs`, `checkpoint.mjs` and `gate-summary.mjs` know the lane; checks in `scripts/lib/redesign-lane-evals.mjs`.
 
 - **Designer UX/UI rules in priority tiers.** New `agents/references/designer/ux-ui-rules.md` ranks the rules P1 (accessibility) to P10 (charts), adapted from the `ui-ux-pro-max` skill. CRITICAL and HIGH tiers (P1-P5, P9) block the hand-off, MEDIUM tiers (P6-P8) are recorded in `design.md`, LOW (P10) is advice. Each rule has an id that quality checks, the heuristic evaluation and the step 3c review cite.
 - **`ux-search.mjs` for the designer.** A Node port of the `ui-ux-pro-max` BM25 search (MIT, notice in `skills/muffy/data/ux/LICENSE`) over five tables in `skills/muffy/data/ux/`. Read-only. `guard-bash-allowlist.mjs` lets only `designer` run it; every other guarded role is refused.

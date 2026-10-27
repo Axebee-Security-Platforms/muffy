@@ -8,7 +8,7 @@
 //   node next-action.mjs loop <handoff.json | handoff dir>... [--profile fix] [--skip 3d,8] [--smoke <signal,...>] [--task <task>] [--escalation-out <file>]
 //        hand-offs in the order they came back; a directory is read in file-time order
 //   node next-action.mjs effort --role <role> [--mode production|prototype] [--high-impact] [--assumed] [--exact-fix] [--stalled <n>]
-//   node next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke] [--staging-none]
+//   node next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke]
 //   node next-action.mjs triage fix|lite '<signals json>'
 // Prints one verdict line (`next=<action> ...`), then detail lines. Exit 0 = proceed, 1 = escalate / blocked / invalid, 2 = usage error.
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
@@ -28,7 +28,6 @@ export const SMOKE_TRIGGERS = {
   runtime_or_dependency_changed: 'contract adds or bumps a runtime, lockfile dependency, native/binary package or datastore',
   devops_files_changed: 'devops-owned files change (Dockerfile, base image, .nvmrc, compose)',
   no_passing_smoke_on_record: 'no passing smoke recorded for this stack (first feature, onboarding, last smoke failed)',
-  staging_none: 'staging: none (no safety net at step 9)',
 };
 
 export function smokeRequired(signals = {}) {
@@ -41,7 +40,7 @@ export function smokeRequired(signals = {}) {
 export const LOOP_LIMIT = 3; // fix loops allowed per loop point; the 4th rejection escalates
 export const REPEAT_LIMIT = 3; // same blocker id open in this many consecutive rejections = fix is not converging
 export const GATED_STEPS = ['3c', '3d']; // must pass before step 4; 3c passes only after the user approves the design (pause:design-review)
-export const NEVER_SKIP = ['6', '7', '9', '10'];
+export const NEVER_SKIP = ['6', '7', '10'];
 export const FIX_NEVER_SKIP = ['4a', '4b']; // fix lane (references/fix-profile.md): diagnose, then audit the cause, before any code
 export const SEVERITIES = ['low', 'medium', 'high', 'critical']; // impact of the bug; the auditor's evidence bar rises with it (agents/references/auditor/rules-and-guardrails.md)
 export const EVIDENCE_LEVELS = ['none', ...SEVERITIES]; // the highest severity tier whose minimum evidence a diagnosis meets
@@ -296,11 +295,11 @@ export function spawnProfile({ role, step, round = 1, teamDir, brain, mode = 'pr
   const history = section(checkpoint, 'History').split('\n');
   const stalledRounds = Math.max(0, ...open.map((id) => history.filter((l) => new RegExp(`\\b${id}\\b`).test(l)).length));
 
-  // exact fix: round 2+, and every blocker the latest review/QA/staging hand-off gives this role names file:line
+  // exact fix: round 2+, and every blocker the latest review/QA hand-off gives this role names file:line
   let exactFix = false;
   if (Number(round) > 1 && owner) {
     const latest = listJson(join(teamDir, 'handoff'))
-      .filter((h) => ['6', '7', '8', '9'].includes(String(h.step)) && Array.isArray(h.blockers))
+      .filter((h) => ['6', '7'].includes(String(h.step)) && Array.isArray(h.blockers))
       .sort((a, b) => (a.round ?? 0) - (b.round ?? 0) || Number(a.step) - Number(b.step)).at(-1);
     const mine = latest?.blockers.filter((b) => b.owner === owner) ?? [];
     exactFix = mine.length > 0 && mine.every((b) => /:\d+/.test(b.file ?? '') && (b.problem ?? '').trim().length > 0);
@@ -378,7 +377,6 @@ const SMOKE_FLAGS = {
   '--runtime-changed': 'runtime_or_dependency_changed',
   '--devops-files-changed': 'devops_files_changed',
   '--no-passing-smoke': 'no_passing_smoke_on_record',
-  '--staging-none': 'staging_none',
 };
 
 function usage(msg) {
@@ -388,7 +386,7 @@ function usage(msg) {
 }
 
 // Steps a lane skips by definition (run-profile.md first paragraph); --skip adds the run's own skips on top.
-export const LANE_SKIPS = { fix: ['1', '2', '2b', '3', '3b', '3c', '3d', '8'], lite: ['1', '2', '2b', '3b', '3c', '8'] };
+export const LANE_SKIPS = { fix: ['1', '2', '2b', '3', '3b', '3c', '3d'], lite: ['1', '2', '2b', '3b', '3c'] };
 
 const opt = (args, name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
 

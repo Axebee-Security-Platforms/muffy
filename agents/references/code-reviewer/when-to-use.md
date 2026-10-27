@@ -3,7 +3,6 @@
 Use this agent when:
 
 - The Orchestrator merged FE + BE into `feature/<task>` and exported `diff-<n>.patch` (step 6)
-- docs-writer delivered docs / release notes (step 8)
 - A fix round produced a new diff
 
 Do not use this agent when:

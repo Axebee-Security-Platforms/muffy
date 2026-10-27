@@ -1,6 +1,6 @@
 # Steps
 
-Row order is execution order: 0 → 1 → 2 → 2b → 3 → 3b → 3e → 3c → 3d → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12.
+Row order is execution order: 0 → 1 → 2 → 2b → 3 → 3b → 3e → 3c → 3d → 4 → 5 → 6 → 7 → 10 → 11 → 12. Steps 8 and 9 no longer exist (docs review and staging were removed); their ids stay unused so hand-offs and scripts keep one numbering.
 
 Routing: an agent's `references/<agent>/when-to-use.md` (under `.claude/agents/`) lists when it is and is not the right agent. Read it only when a request or a hand-off leaves the owner unclear; the table below is the default.
 
@@ -21,9 +21,7 @@ Routing: an agent's `references/<agent>/when-to-use.md` (under `.claude/agents/`
 | 5 | Orchestrator | — | `check-ownership.mjs .team/<task>` first (out-of-lane, both, unowned, stale-contract go back to their owner), then `git merge --no-ff` into `feature/<task>`. Details: [step-details.md](step-details.md#step-5) |
 | 5b | Orchestrator, **only if the user asked for PR diagrams** (off by default) | `fe/<task>` + `be/<task>` `.pr-lens/` render folders | Publish the PR diagrams as one Artifact and copy each `drawn.graph.json` to `.team/<task>/diagrams/`. Missing diagram → skip, never block. Details: [step-details.md](step-details.md#step-5b) |
 | 6 | `code-reviewer` | `diff-<n>.patch` (large: topic patches `diff-<n>-<topic>.patch` + `diff-<n>-index.md`, see [token-discipline.md](token-discipline.md)), `ac.md`, `contract.md`, `diagrams/*.graph.json` if present | Approve / Reject |
-| 7 | `qa-tester` ∥ `docs-writer` | branch / contract + approved diff. docs-writer writes an Announcement only if the prompt says `announcement: yes` (user opted in at `pause:scope`); docs-writer starts with `TBD` in every test number; once `qa-report.md` exists a fresh docs-writer spawn (round 2, `Read:` its r1 hand-off + the report) fills the numbers | `qa-report.md` / docs + `release-notes.md` |
-| 8 | `code-reviewer` | docs (+ fix diff) | Approve / Reject |
-| 9 | `devops` staging | feature branch | Before any gate: `node -v` vs `.nvmrc` (mismatch = fail). Credential preflight first → `pause:staging-credentials` if live keys are needed. Then health + smoke per the Mode 3 checklist in [devops/workflow.md](../../../agents/references/devops/workflow.md); no staging → near-production env per `deploy.md` |
-| 10 | **Human gate** | `AskUserQuestion` with the body from `node .claude/skills/muffy/scripts/gate-summary.mjs .team/<task> 10` (qa-report, staging result, release-notes, open `V-` questions; `ready=no` → fix its reasons first) | Before asking: update `<brain>/tasks/<task>.md` status and checkpoint. Approve / Reject |
-| 11 | `devops` production | "Human approved" in the prompt | canary → 100% or rollback |
+| 7 | `qa-tester` | branch / contract + approved diff | `qa-report.md`. Runs on docker local; there is no staging in this skill |
+| 10 | **Human gate** | `AskUserQuestion` with the body from `node .claude/skills/muffy/scripts/gate-summary.mjs .team/<task> 10` (qa-report, smoke result if 3d ran, open `V-` questions; `ready=no` → fix its reasons first) | Before asking: update `<brain>/tasks/<task>.md` status and checkpoint. Approve means "accept this branch"; it does not authorise a deploy. Approve / Reject |
+| 11 | `docs-writer`, **after the Human gate approves** | approved diff, `qa-report.md`, `contract.md`, `deploy.md`; "Human approved" in the prompt | Docs + `release-notes.md` with a **Deploy hand-off**; only what the diff touched, no `TBD`, self-check instead of a review. Skippable only where the profile says so. Details: [step-details.md](step-details.md#step-11) |
 | 12 | Orchestrator | — | Read `references/closing.md` and follow it |
