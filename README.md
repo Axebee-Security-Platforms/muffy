@@ -16,7 +16,7 @@
 
 You have a feature to build and a Claude Code session. Ask the `muffy` skill to run it. The main session becomes the **Orchestrator** and starts specialist subagents in a fixed 12-step flow: research, product, design, architecture, devops, frontend, backend, review, QA, docs. Each step has an owner, its inputs, and a gate. Work moves as files in `.team/<task>/` plus a validated JSON hand-off, not as chat summaries.
 
-A free-text request is first routed to the smallest route that fits: a single step, the [fix lane](#fix-lane) for small bugs and cosmetic fixes, the [lite lane](#lite-lane) for internal APIs, refactors and measured performance work, or the full flow. A mode command (`/muffy fix`, `/muffy lite`, `/muffy feature` and the rest) skips the routing and goes straight to that route.
+A free-text request is first routed to the smallest route that fits: a single step, the [fix lane](#fix-lane) for small bugs and cosmetic fixes, the [lite lane](#lite-lane) for internal APIs, refactors and measured performance work, the [redesign lane](#redesign-lane) for changing something the product already has, or the full flow (last, for a new capability). A mode command (`/muffy fix`, `/muffy lite`, `/muffy feature` and the rest) skips the routing and goes straight to that route.
 
 The flow replaces ad-hoc multi-agent prompts. Unreviewed code and lost hand-offs stop reaching `main`; a repeated failure stops after three fix loops and goes to you.
 
@@ -83,6 +83,14 @@ Outside the team flow. The product manager, thinking like a solutions engineer, 
 
 The fix lane skips research, product, design and architecture. A `debugger` first **diagnoses** (reproduces the problem, finds the cause, rates its severity, no code), an independent `auditor` on a different model **checks the evidence** against that severity, and only then does a dev agent fix it with a regression test. The agents never talk to each other: they pass hand-off JSON. `code-reviewer`, `qa-tester` and the Human gate still run, then `docs-writer`. The cause may be unknown at the start; if the diagnosis finds the problem is in the contract, a dependency or the stack, or the fix touches more than 5 source files, the run is promoted to the full flow. Details: [fix-profile](skills/muffy/references/fix-profile.md).
 
+### Change something the product already has
+
+```text
+/muffy redesign checkout page: show shipping cost before the payment step
+```
+
+The redesign lane is for an existing screen, UX flow or business rule. It asks the scope at `pause:scope` (UI only, UI + logic, logic only) and runs only the agents that scope needs. Details: [redesign-profile](skills/muffy/references/redesign-profile.md).
+
 ### Draw a diagram
 
 ```text
@@ -103,6 +111,7 @@ Run the installer again with `--clean`, and restart Claude Code.
 | `/muffy feature <request>` | Force the full flow, no triage |
 | `/muffy fix <request>` | Small bug or cosmetic fix ([fix lane](#fix-lane)) |
 | `/muffy lite <request>` | Internal work with a known shape ([lite lane](#lite-lane)) |
+| `/muffy redesign <request>` | Change an existing screen, UX flow or business rule ([redesign lane](#redesign-lane)) |
 | `/muffy resume` | Continue an interrupted run from its checkpoint |
 | `/muffy todo` | List tasks in `.team/` that are not done |
 | `/muffy onboard` | Record the baseline of an existing codebase |
@@ -288,7 +297,7 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 |---|---|
 | `researcher` | Brief, evidence, onboard baseline; asks clarifying questions |
 | `product-manager` | Acceptance criteria, plan, strategy score, project goal and success metric; the only writer of `docs/strategy.md`; in `/muffy present`, the content of decks for clients and end-users, as a solutions engineer |
-| `designer` | Canvas, `design.md`, the project design system, and the look of `/muffy present` decks |
+| `designer` | Canvas, `design.md`, the project design system, and the look of `/muffy present` decks; checks the design against priority-tiered [UX/UI rules](agents/references/designer/ux-ui-rules.md) (accessibility first) and looks up styles, colors and fonts with `ux-search.mjs` |
 | `diagrammer` | Draws every diagram (architecture, deployment, state, ERD, flow, screen map, gantt, story map) from facts the other roles decided, checks it renders, and keeps the words plain for readers who are not engineers |
 | `architect` | API contract, ADRs, stack decisions, build vs buy (recommends third-party providers; web access only to check a provider's facts) |
 | `devops` | Deploy plan, smoke build, local infra files (never deploys) |
