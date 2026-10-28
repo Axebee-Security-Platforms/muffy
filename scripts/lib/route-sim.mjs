@@ -4,7 +4,7 @@
 // evals/route-scenarios.json.
 import { triage, triageLite } from '../../skills/muffy/scripts/next-action.mjs';
 
-export const MODES = ['todo', 'onboard', 'present', 'diagram'];
+export const MODES = ['menu', 'todo', 'onboard', 'present', 'diagram'];
 // Routes whose outcome is not a code change (decision order steps 4 and 5).
 export const NON_CODE_ROUTES = ['research', 'plan', 'design', 'design-review', 'spec', 'arch-review', 'adr', 'review', 'qa', 'docs', 'docs-existing', 'ops'];
 // diagram.md "Kinds": the route a diagram of something not designed yet goes to, by kind.
@@ -13,7 +13,9 @@ export const ROUTES = ['resume', ...MODES, 'diagram-in-task', 'none', ...NON_COD
 
 // s: { resume, command, mode, kind, open_task, not_designed, question, deploy, stop_point, outcome, ambiguous, missing_intake, text_only, bug, internal, change_existing, new_capability, fix: {...}, lite: {...} }
 export function route(s = {}) {
+  // resume with no task name is still resume (resume.md picks the task or shows the menu); a bare `/muffy` shows the menu
   if (s.resume === true) return { route: 'resume', step: 1 };
+  if (s.bare === true) return { route: 'menu', step: 1 };
   // `/muffy feature <request>`: the requester forced the full flow; only this decision is skipped, intake and gates still run
   if (s.command === 'feature') return { route: 'full', step: 2 };
   // `/muffy redesign <request>`: the lane is forced; its scope question (UI only, UI + logic, logic only) is still asked inside it

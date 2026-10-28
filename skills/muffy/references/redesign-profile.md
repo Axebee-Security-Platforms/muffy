@@ -15,9 +15,9 @@ A prompt that fits two routes is asked, not guessed ([route.md](route.md) decisi
 
 ## Scope question (`pause:scope`, always asked, never defaulted)
 
-One `AskUserQuestion` call of up to 3 questions:
+Two calls, since the plan card depends on the scope: the **Scope** question alone, then one call with the plan card's question ([route.md](route.md#say-the-plan)), **Base** and **Announcement**:
 
-- **Scope**: **UI only** (screens and UX, no backend change) / **UI + logic** (screens and the rules or API behind them) / **logic only** (backend rules, no screen change). Recommend UI only when the prompt names no rule, permission, calculation or state
+- **Scope**, worded for the requester: **เปลี่ยนแค่หน้าตา / the look only** (`ui-only`: screens and UX, no backend change) / **เปลี่ยนทั้งหน้าตาและกฎ / the look and the rules** (`ui+logic`: screens and the rules or API behind them) / **เปลี่ยนแค่กฎเบื้องหลัง / the rules only** (`logic-only`: backend rules, no screen change). Recommend the look only when the prompt names no rule, permission, calculation or state
 - **Base** (only when `main` and the current branch differ): recorded as `base:` in checkpoint `## Status`
 - **Announcement** (user-facing change only; off by default): yes puts `announcement: yes` in the docs-writer prompt
 

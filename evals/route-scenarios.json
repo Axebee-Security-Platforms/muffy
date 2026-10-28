@@ -101,5 +101,11 @@
   ,{ "id": "feature-command", "request": "/muffy feature fix the typo in the footer and add dark mode",
     "signals": { "command": "feature", "text_only": true, "outcome": "code" }, "expect": "full", "note": "the command forces the full flow even when triage would pick none or fix" },
   { "id": "feature-command-th", "request": "/muffy feature แก้บั๊กปุ่มล็อกอินให้หน่อย",
-    "signals": { "command": "feature", "outcome": "code", "bug": true, "fix": { "has_symptom": true, "has_location": true, "expected_source_files": 1 } }, "expect": "full", "note": "explicit command beats the fix triage" }
+    "signals": { "command": "feature", "outcome": "code", "bug": true, "fix": { "has_symptom": true, "has_location": true, "expected_source_files": 1 } }, "expect": "full", "note": "explicit command beats the fix triage" },
+  { "id": "bare-muffy", "request": "/muffy",
+    "signals": { "bare": true }, "expect": "menu", "note": "no request: the menu, never a guess" },
+  { "id": "bare-resume-th", "request": "/muffy resume",
+    "signals": { "bare": true, "resume": true }, "expect": "resume", "note": "resume with no task name is resume: one open task goes straight in, otherwise resume.md shows the menu" },
+  { "id": "stop-plan-th", "request": "แค่วางแผนระบบสมาชิกก่อน ยังไม่ต้องทำ",
+    "signals": { "stop_point": "plan", "outcome": "code", "new_capability": true }, "expect": "plan", "note": "a stop point in the requester's words beats the full flow" }
 ]

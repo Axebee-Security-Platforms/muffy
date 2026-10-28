@@ -44,6 +44,74 @@ export const STEP_NEEDS = Object.fromEntries(STEP_ORDER.flatMap((s, i) => {
   return needs.length ? [[s, needs]] : [];
 }));
 
+/* ---------- the plan card (route.md "Say the plan"): the lane in the words of the work, not its name ---------- */
+
+// What the user sees for each step. Steps with no label (0, 3b, 3e, 5, 5b, 12) are the Orchestrator's own bookkeeping.
+// A lane or scope can word a step its own way (`labels`); `maybe` marks a step that runs only when its trigger is true.
+export const STEP_LABELS = {
+  '1': { th: 'วิจัยข้อมูล', en: 'research' },
+  '2': { th: 'เขียน user story และแผน', en: 'user stories and plan' },
+  '2b': { th: 'คุณอนุมัติแผน', en: 'you approve the plan' },
+  '3': { th: 'ออกแบบหน้าจอ, API และ infra', en: 'design screens, API and infra' },
+  '3c': { th: 'คุณอนุมัติดีไซน์', en: 'you approve the design' },
+  '3d': { th: 'ทดสอบ stack บน docker', en: 'stack smoke on docker', maybe: true },
+  '4a': { th: 'หาสาเหตุ (ยังไม่แก้โค้ด)', en: 'find the cause (no code yet)' },
+  '4b': { th: 'อีกโมเดลตรวจสาเหตุซ้ำ', en: 'a second model checks the cause' },
+  '4': { th: 'เขียนโค้ด', en: 'write the code' },
+  '6': { th: 'รีวิวโค้ด', en: 'code review' },
+  '7': { th: 'เทสบน docker local', en: 'QA on docker local' },
+  '10': { th: 'คุณอนุมัติ branch', en: 'you accept the branch' },
+  '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off' },
+};
+const LANE_WORDS = {
+  feature: { th: 'ทำฟีเจอร์ใหม่', en: 'build something new', why: { th: '', en: '' }, labels: { '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off', maybe: true } } },
+  fix: {
+    th: 'แก้บั๊ก', en: 'fix a bug', why: { th: 'มีอาการและจุดที่เกิดชัดแล้ว', en: 'the symptom and where it happens are known' },
+    labels: { '4': { th: 'แก้โค้ด + regression test', en: 'fix + regression test' }, '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off', maybe: true } },
+  },
+  lite: {
+    th: 'ปรับภายใน (ผู้ใช้ไม่เห็น)', en: 'internal change (nothing a user sees)', why: { th: 'ผู้ใช้มองไม่เห็นการเปลี่ยนแปลง', en: 'nothing a user sees changes' },
+    labels: { '3': { th: 'ออกแบบ API / โครงสร้าง', en: 'design the API or structure' }, '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off', maybe: true } },
+  },
+  redesign: {
+    th: 'ปรับของที่มีอยู่', en: 'change what already exists', why: { th: 'ของนี้มีอยู่แล้ว', en: 'it already exists' },
+    labels: { '2': { th: 'เขียน AC ของการเปลี่ยนแปลง', en: 'acceptance criteria for the change' } },
+    scopes: {
+      'ui-only': { th: 'เปลี่ยนแค่หน้าตา', en: 'look only', labels: { '3': { th: 'ออกแบบหน้าจอใหม่', en: 'design the new screens' }, '3c': { th: 'คุณอนุมัติ AC และดีไซน์', en: 'you approve the AC and design' } } },
+      'ui+logic': { th: 'เปลี่ยนหน้าตาและกฎ', en: 'look and rules', labels: { '3': { th: 'ออกแบบหน้าจอและ API', en: 'design the screens and API' } } },
+      'logic-only': { th: 'เปลี่ยนแค่กฎเบื้องหลัง', en: 'rules only', labels: { '3': { th: 'ออกแบบกฎ / API', en: 'design the rules or API' }, '3c': { th: 'คุณอนุมัติ contract', en: 'you approve the contract' } } },
+    },
+  },
+};
+const STOP_DEFAULT = { th: 'branch ที่ผ่าน QA บน docker local (ไม่ deploy ให้)', en: 'a QA-passed branch on docker local (never deployed)' };
+
+// The card the Orchestrator shows before spawning, from the lane table: steps that run, steps skipped and why, where it stops.
+// until: stop after this step (a stated stop point: "แค่วางแผน" → 2b, "ยังไม่ต้องเขียนโค้ด" → 3c)
+export function planCard(lane, { scope, until, skip = [], lang = 'th' } = {}) {
+  const words = LANE_WORDS[lane];
+  if (!words) throw new Error(`unknown lane: ${lane} (${Object.keys(LANES).join(', ')})`);
+  if (lane === 'redesign' && !scopeOf(scope)) throw new Error(`the redesign card needs a scope (${SCOPES.join(', ')}): ask it first`);
+  if (until && !STEP_LABELS[until]) throw new Error(`--until ${until} is not a step the user sees (${Object.keys(STEP_LABELS).join(', ')})`);
+  const sw = scope ? words.scopes[scopeOf(scope)] : null;
+  const label = (s) => ({ ...STEP_LABELS[s], ...(words.labels?.[s] ?? {}), ...(sw?.labels?.[s] ?? {}) });
+  const skipped = new Set([...skipsOf(lane, scopeOf(scope)), ...skip]);
+  const shown = STEP_ORDER.filter((s) => STEP_LABELS[s]);
+  const kept = shown.filter((s) => !skipped.has(s) && (lane === 'fix' || !['4a', '4b'].includes(s)));
+  const cut = until ? kept.slice(0, kept.indexOf(until) + 1) : kept;
+  const maybe = lang === 'th' ? ' (ถ้าจำเป็น)' : ' (if needed)';
+  const steps = cut.map((s) => `${label(s)[lang]}${label(s).maybe ? maybe : ''}`);
+  const left = shown.filter((s) => skipped.has(s) && !['2b', '3c', '3d', '4a', '4b'].includes(s)).map((s) => label(s)[lang]);
+  const T = lang === 'th'
+    ? { plan: 'แผน', steps: 'ขั้นตอน', skip: 'ข้าม', stop: 'หยุดที่' }
+    : { plan: 'Plan', steps: 'Steps', skip: 'Skipped', stop: 'Stops at' };
+  return [
+    `${T.plan}: ${words[lang]}${sw ? ` · ${sw[lang]}` : ''}`,
+    `${T.steps}: ${steps.join(' → ')}`,
+    ...(left.length ? [`${T.skip}: ${left.join(', ')}${words.why[lang] ? ` (${words.why[lang]})` : ''}`] : []),
+    `${T.stop}: ${until ? label(until)[lang] : STOP_DEFAULT[lang]}`,
+  ];
+}
+
 /* ---------- the Run profile line ---------- */
 
 const norm = (text) => String(text ?? '').replace(/\r\n/g, '\n');

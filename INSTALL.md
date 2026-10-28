@@ -75,7 +75,7 @@ Caveats:
 2. Check `SECOND_BRAIN_VAULT` in `.claude/settings.local.json`.
 3. Existing codebase: nothing to run. The installer scans the repo (`--no-scan` skips it), and the first `/muffy` request asks once to look around first, then carries on. See [onboard.md](skills/muffy/references/onboard.md).
 4. Add the repo's own docs the flow uses: `docs/plan/`, `docs/adr/`, `docs/design-system/`, and `.nvmrc` if devops should check the runtime.
-5. Start a feature from the main Claude Code session: `/muffy <feature request>` with a kebab-case task name. For a small bug or cosmetic fix use `/muffy fix <description>` (see [fix-profile.md](skills/muffy/references/fix-profile.md)).
+5. From the main Claude Code session, type `/muffy <what you want>` in your own words: muffy picks the route and shows the plan before it starts. A bare `/muffy` shows the menu (unfinished tasks, project status). Shortcuts such as `/muffy fix <description>` are listed in the [README](README.md#commands).
 
 ## Not for
 

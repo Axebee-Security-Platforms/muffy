@@ -11,13 +11,14 @@
 //   node next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke]
 //   node next-action.mjs triage fix|lite '<signals json>'
 //   node next-action.mjs baseline --lane <lane> [--repo .] [--no-code]      (setup step 3: continue | refresh:silent | ask:*)
+//   node next-action.mjs plan-card <lane> [--scope s] [--until step] [--skip 3d] [--lang th|en]   (route.md: the plan shown before spawning)
 // Prints one verdict line (`next=<action> ...`), then detail lines. Exit 0 = proceed, 1 = escalate / blocked / invalid, 2 = usage error.
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { validate } from './schema.mjs';
-import { LANES, NEVER_SKIP, skipsOf, neverSkipOf } from './lanes.mjs';
+import { LANES, NEVER_SKIP, skipsOf, neverSkipOf, planCard } from './lanes.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const schema = (kind) => JSON.parse(readFileSync(join(here, '..', 'schemas', `${kind}.schema.json`), 'utf8'));
@@ -400,7 +401,7 @@ const SMOKE_FLAGS = {
 
 function usage(msg) {
   if (msg) console.error(msg);
-  console.error('usage: next-action.mjs loop <handoff...> | effort --role <role> | smoke [flags] | triage fix|lite <json> | baseline --lane <lane> [--repo .] [--no-code]');
+  console.error('usage: next-action.mjs loop <handoff...> | effort --role <role> | smoke [flags] | triage fix|lite <json> | baseline --lane <lane> [--repo .] [--no-code] | plan-card <lane> [--scope s] [--until step] [--skip a,b] [--lang th|en]');
   process.exit(2);
 }
 
@@ -486,6 +487,14 @@ function runBaseline(args) {
   return 0;
 }
 
+function runPlanCard(args) {
+  const lane = args[0];
+  if (!LANES[lane]) usage(`plan-card: give a lane (${Object.keys(LANES).join(', ')})`);
+  const lines = planCard(lane, { scope: opt(args, '--scope'), until: opt(args, '--until'), skip: (opt(args, '--skip') ?? '').split(',').filter(Boolean), lang: opt(args, '--lang') ?? 'th' });
+  for (const l of lines) console.log(l);
+  return 0;
+}
+
 function runTriage(args) {
   const [lane, json] = args;
   if (!['fix', 'lite'].includes(lane) || !json) usage('triage: fix|lite and a signals JSON object');
@@ -499,7 +508,7 @@ function runTriage(args) {
 
 if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const [cmd, ...args] = process.argv.slice(2);
-  const run = { loop: runLoop, effort: runEffort, smoke: runSmoke, triage: runTriage, baseline: runBaseline }[cmd];
+  const run = { loop: runLoop, effort: runEffort, smoke: runSmoke, triage: runTriage, baseline: runBaseline, 'plan-card': runPlanCard }[cmd];
   if (!run) usage(cmd ? `unknown command: ${cmd}` : undefined);
   try { process.exit(run(args)); } catch (e) { console.error(`next-action: ${e.message}`); process.exit(2); }
 }

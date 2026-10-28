@@ -38,6 +38,7 @@ When the request is borderline (for example a bug plus "while you are there, als
 
 1. Name the task `fix-<slug>` and run the common setup, [setup.md](setup.md) steps 1-4: brain and task note, the baseline check with `next-action.mjs baseline --lane fix`, then `project.md` Lessons and Open issues. Write the held `baseline` value into `## Status` with the checkpoint
 2. `pause:scope`, shortened, in one `AskUserQuestion` call of up to 4 questions (2-4 options each):
+   - **Plan**: the card from `next-action.mjs plan-card fix`, go / bigger ([route.md](route.md#say-the-plan))
    - **Kind + owner**: bug or cosmetic; FE, BE or both
    - **AC + out of scope**: the AC list drafted from the request and a quick read of the named files, with out of scope. Confirm / Change it
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`

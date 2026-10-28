@@ -9,7 +9,7 @@ description: >
   single-step request: research (วิจัย), plan or user stories (วางแผน), screens (ออกแบบหน้าจอ), API or schema,
   a UX/UI review (รีวิวดีไซน์), an architecture or ADR review, a new ADR, a PR review (รีวิว PR), tests,
   docs or README (ทำเอกสาร), local infra files.
-  Also: resume (`/muffy resume`, ทำต่อ), `/muffy todo` for unfinished `.team` tasks, `/muffy onboard`,
+  Also: bare `/muffy` for a menu of unfinished tasks (งานค้าง, ทำต่อ, `/muffy resume`), `/muffy onboard`,
   `/muffy present` for a client deck (ทำสไลด์), `/muffy diagram` for a standalone diagram.
   Not for a question about the code, a text-only one-line edit, or step-by-step work in main session.
 ---
@@ -32,8 +32,9 @@ Load lazily: open a reference only at the step that needs it; subagents do the s
 
 Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup and Run profile: [references/resume.md](references/resume.md).
 
-- **Route**: first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | redesign | feature`). The command is the route, so say `Route: <mode>` and open that mode's reference instead
-- **Todo** (`/muffy todo`): tasks in `.team` that are not done, read-only: [todo.md](references/todo.md)
+- **Menu**: a bare `/muffy` (no request) or `/muffy todo`, and resume when it cannot pick one task: [menu.md](references/menu.md)
+- **Route**: first, on a free-text request; show the plan before spawning (`next-action.mjs plan-card`): [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy onboard | present | diagram | resume <task> | fix | lite | redesign | feature`): the command is the route, so open that mode's reference, and a lane still shows its plan card
+- **Todo**: the menu's list of tasks in `.team` that are not done, read-only: [todo.md](references/todo.md)
 - **Onboard**: started by setup step 3 when a task finds no usable baseline (asked once, depth by lane, then the task carries on), or by hand with `/muffy onboard`: [onboard.md](references/onboard.md)
 - **Present** (`/muffy present`): client deck outside the team flow: [present.md](references/present.md), missing documents: [doc-request.md](references/doc-request.md)
 - **Diagram** (`/muffy diagram`, or a standalone "draw a diagram"): route facts to the owning agent, then always `diagrammer`: [diagram.md](references/diagram.md); PNG/SVG only on request: [diagram-export.md](references/diagram-export.md)

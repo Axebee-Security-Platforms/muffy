@@ -16,7 +16,7 @@
 
 You have a feature to build and a Claude Code session. Ask the `muffy` skill to run it. The main session becomes the **Orchestrator** and starts specialist subagents in a fixed 12-step flow: research, product, design, architecture, devops, frontend, backend, review, QA, docs. Each step has an owner, its inputs, and a gate. Work moves as files in `.team/<task>/` plus a validated JSON hand-off, not as chat summaries.
 
-A free-text request is first routed to the smallest route that fits: a single step, the [fix lane](#fix-lane) for small bugs and cosmetic fixes, the [lite lane](#lite-lane) for internal APIs, refactors and measured performance work, the [redesign lane](#redesign-lane) for changing something the product already has, or the full flow (last, for a new capability). A mode command (`/muffy fix`, `/muffy lite`, `/muffy feature` and the rest) skips the routing and goes straight to that route.
+You don't pick a lane or remember commands. Type what you want in your own words; muffy picks the smallest route that gets it done, shows you the plan (what runs, what is skipped and why, where it stops), and starts when you say go. Lanes and steps are explained in [How muffy works](#how-muffy-works).
 
 The flow replaces ad-hoc multi-agent prompts. Unreviewed code and lost hand-offs stop reaching `main`; a repeated failure stops after three fix loops and goes to you.
 
@@ -43,25 +43,41 @@ The installer copies the agents to `.claude/agents/` and the skill to `.claude/s
 
 The checkpoint and artifact size hooks are opt-in and added by hand; team-flow rules 1–4 are Orchestrator rules, not hooks. Full steps: [INSTALL.md](INSTALL.md).
 
-### Find unfinished tasks
+### Use it
 
 ```text
-/muffy todo
+/muffy <what you want, in your own words>
+/muffy
 ```
 
-Lists the tasks in `.team/` that are not done (checkpoint status is not `closed`), then asks which to continue with `/muffy resume`. Read-only. It does not look at git branches or trackers. Details: [todo](skills/muffy/references/todo.md).
+The first form does the work; a bare `/muffy` shows the menu: unfinished tasks to continue, what muffy knows about the project, and what else it can do.
+
+| You type | What happens | Under the hood |
+|---|---|---|
+| `/muffy ปุ่ม Submit หน้า checkout สีผิดใน dark mode` | Finds the cause first (no code), a second model checks it, then the fix with a regression test, review, QA and your approval | fix |
+| `/muffy ปรับ flow การใช้คูปองให้ซ้อนกันได้ และคำนวณยอดรวมใหม่` | Asks whether the look, the rules or both change, then AC, design or contract for you to approve, build, review, QA | redesign |
+| `/muffy query หน้า orders ช้า p95 1.8 วิ ช่วยเพิ่ม index ให้หน่อย (แนบ EXPLAIN ANALYZE)` | Contract for the change, the index, before and after numbers at your approval | lite |
+| `/muffy ทำระบบรีเซ็ตรหัสผ่านให้หน่อย` | Research, user stories and plan (you approve), design (you approve), build, review, QA, your approval, docs | full flow |
+| `/muffy ออกแบบหน้าจอให้ก่อน ยังไม่ต้องเขียนโค้ด` | Screens only, stops at the design you approve | design |
+| `/muffy ช่วยรีวิว PR #42 ก่อน merge หน่อย` | Code review only; the verdict in chat | review |
+| `/muffy ทำสไลด์สรุปฟีเจอร์ login ให้ลูกค้า` | Asks who the audience is, then a deck you review | present |
+| `/muffy ทำต่อจากเมื่อวาน` | Picks up the unfinished task where it stopped | resume |
+| `/muffy เจอบั๊ก แก้ไขให้หน่อย` | Asks what happens and where first: nothing starts on a guess | ask |
+
+Before anything starts you see the plan, for example:
+
+```text
+แผน: แก้บั๊ก
+ขั้นตอน: หาสาเหตุ (ยังไม่แก้โค้ด) → อีกโมเดลตรวจสาเหตุซ้ำ → แก้โค้ด + regression test → รีวิวโค้ด → เทสบน docker local → คุณอนุมัติ branch → เขียนเอกสาร + Deploy hand-off (ถ้าจำเป็น)
+ข้าม: วิจัยข้อมูล, เขียน user story และแผน, ออกแบบหน้าจอ, API และ infra (มีอาการและจุดที่เกิดชัดแล้ว)
+หยุดที่: branch ที่ผ่าน QA บน docker local (ไม่ deploy ให้)
+```
+
+Answer go, stop earlier ("แค่วางแผน", "ยังไม่ต้องเขียนโค้ด"), or bigger or smaller. Nothing is deployed: the work ends on a branch you accept.
 
 ### Onboarding an existing codebase (automatic)
 
 You don't run it yourself. The first request on a repo with code but no `docs/architecture/baseline.md` asks once to look around first, then carries on with that request. A bug fix or internal change gets a quick baseline (stack, layout, commands; no review); a redesign or a new feature gets the full one (baseline, stack ADR, design-system README) and you review it at a Human gate, answering the `[verify]` items one by one. After approval, onboard adds a short muffy block to `CLAUDE.md` / `AGENTS.md` (created if missing, never touching other lines). When the code has moved on (baseline yellow), the next task refreshes it without asking. `/muffy onboard` still runs it by hand. Details: [onboard](skills/muffy/references/onboard.md).
-
-### Ask for a feature
-
-```text
-/muffy feature add password reset, task name password-reset
-```
-
-The Orchestrator confirms the scope (and, for user-facing features, offers an optional release announcement; it is off unless you say yes), then runs the steps. Before research and planning, the researcher and product manager may ask you clarifying questions through the Orchestrator.
 
 ### Make a presentation for a client or end-users
 
@@ -70,22 +86,6 @@ The Orchestrator confirms the scope (and, for user-facing features, offers an op
 ```
 
 Outside the team flow. The product manager, thinking like a solutions engineer, asks who the audience is, drafts an outline for you to confirm, then writes the content; the designer turns it into a slide show (one slide at a time, Auto-play with captions). You also get an outline and `data.csv` you can edit in Canva, Google Slides or PowerPoint. Every number and date must trace to a source; nothing internal (agent names, ticket ids, branches) reaches the slides. You are the reviewer. Details: [present](skills/muffy/references/present.md).
-
-### Fix a small bug or cosmetic issue
-
-```text
-/muffy fix login redirects to the old page after password reset
-```
-
-The fix lane skips research, product, design and architecture. A `debugger` first **diagnoses** (reproduces the problem, finds the cause, rates its severity, no code), an independent `auditor` on a different model **checks the evidence** against that severity, and only then does a dev agent fix it with a regression test. The agents never talk to each other: they pass hand-off JSON. `code-reviewer`, `qa-tester` and the Human gate still run, then `docs-writer`. The cause may be unknown at the start; if the diagnosis finds the problem is in the contract, a dependency or the stack, or the fix touches more than 5 source files, the run is promoted to the full flow. Details: [fix-profile](skills/muffy/references/fix-profile.md).
-
-### Change something the product already has
-
-```text
-/muffy redesign checkout page: show shipping cost before the payment step
-```
-
-The redesign lane is for an existing screen, UX flow or business rule. It asks the scope at `pause:scope` (UI only, UI + logic, logic only) and runs only the agents that scope needs. Details: [redesign-profile](skills/muffy/references/redesign-profile.md).
 
 ### Draw a diagram
 
@@ -103,18 +103,24 @@ Run the installer again with `--clean`, and restart Claude Code.
 
 | Command | Use it for |
 |---|---|
-| `/muffy <request>` | Free text: the Orchestrator picks the route and says it in one line before starting |
-| `/muffy feature <request>` | Force the full flow, no triage |
-| `/muffy fix <request>` | Small bug or cosmetic fix ([fix lane](#fix-lane)) |
-| `/muffy lite <request>` | Internal work with a known shape ([lite lane](#lite-lane)) |
-| `/muffy redesign <request>` | Change an existing screen, UX flow or business rule ([redesign lane](#redesign-lane)) |
-| `/muffy resume` | Continue an interrupted run from its checkpoint |
-| `/muffy todo` | List tasks in `.team/` that are not done |
-| `/muffy onboard` | Record the baseline of an existing codebase |
-| `/muffy present <request>` | Client or end-user presentation |
-| `/muffy diagram <request>` | Standalone diagram |
+| `/muffy <request>` | Anything: muffy picks the route and shows the plan before it starts |
+| `/muffy` | The menu: unfinished tasks, what muffy knows about the project, decks and diagrams |
 
-Single-step requests (research, plan, screens, API or schema, code or PR review, tests, docs, deploy or rollback) are also routed to the one agent that owns them. Details: [route](skills/muffy/references/route.md).
+Shortcuts, when you already know the route (each still shows its plan and keeps every gate):
+
+| Shortcut | Goes straight to |
+|---|---|
+| `/muffy fix <request>` | The [fix lane](#fix-lane): a bug or cosmetic fix with a symptom |
+| `/muffy lite <request>` | The [lite lane](#lite-lane): internal work nothing a user sees |
+| `/muffy redesign <request>` | The [redesign lane](#redesign-lane): change a screen, UX flow or business rule that exists |
+| `/muffy feature <request>` | The full flow, no triage |
+| `/muffy resume <task>` | That task, from its checkpoint (`/muffy resume` alone goes into the only unfinished task, or shows the menu) |
+| `/muffy present <request>` | A client or end-user deck |
+| `/muffy diagram <request>` | A standalone diagram |
+| `/muffy onboard` | Look at the project again now (it also happens on its own) |
+| `/muffy todo` | Same as the menu |
+
+Single-step requests (research, plan, screens, API or schema, code or design review, tests, docs) are routed to the one agent that owns them. A stop point in your words ("แค่วางแผน", "ยังไม่ต้องเขียนโค้ด", "แค่รีวิว") picks where the run ends. Details: [route](skills/muffy/references/route.md).
 
 ## How muffy works
 

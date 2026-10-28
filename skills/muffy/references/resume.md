@@ -11,7 +11,7 @@ A new session has no memory of the run. Everything it needs is in `.team/<task>/
 1. Find the task, reading as little as possible:
    - **Index first**: `<brain>/project.md` → `## Tasks`. Rows marked `in progress` are the unfinished tasks; no checkpoint is opened to learn this
    - **No vault or no project.md**: `grep -m1 "^Updated:" .team/*/checkpoint.md` (also under `.worktrees/*/`), then read only the `## Status` of those; a task whose `## Status` says `closed` is finished
-   - One unfinished task → use it. Several → `AskUserQuestion` listing each task with its `Updated:` line. None → say there is nothing to resume and ask what to build
+   - One unfinished task → use it. Several, or none → show the menu ([menu.md](menu.md)), which lists them and asks what to do
 2. Read only that task's `checkpoint.md` and `<brain>/tasks/<task>.md`. The first line of `## Run profile` names the lane (`lane: fix`, `lane: lite`, `lane: redesign (<scope>)`; older checkpoints wrote `fix:`, `lite:` or `redesign lane (<scope>):`): read [fix-profile.md](fix-profile.md), [lite-profile.md](lite-profile.md) or [redesign-profile.md](redesign-profile.md) before continuing. `lane: feature` or no lane line is the full flow. Do not replay old conversations or re-read finished artifacts
 3. Check the repo against the checkpoint: `git status --short`, `git branch --list '*/<task>'`, `git worktree list`. The checkpoint is a cache: if it disagrees with an ADR, `contract.md`, a hand-off file or git, the other source wins and the checkpoint is corrected
 4. Missing or stale `.team/` (nothing committed, wrong branch) → look on the task's branches (`ops/`, `fe/`, `be/`, `feature/`) with `git log --all -- .team/<task>`, tell the user which branch holds it, and ask before switching
