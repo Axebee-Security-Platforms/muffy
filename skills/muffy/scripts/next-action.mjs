@@ -5,7 +5,7 @@
 // is a rule changed for both the running skill and `npm test`. Change the doc in the same commit.
 //
 // Usage:
-//   node next-action.mjs loop <handoff.json | handoff dir>... [--profile fix] [--skip 3d,8] [--smoke <signal,...>] [--task <task>] [--escalation-out <file>]
+//   node next-action.mjs loop <handoff.json | handoff dir>... [--profile fix|lite|redesign [--scope <scope>]] [--skip 3d] [--smoke <signal,...>] [--task <task>] [--escalation-out <file>]
 //        hand-offs in the order they came back; a directory is read in file-time order
 //   node next-action.mjs effort --role <role> [--mode production|prototype] [--high-impact] [--assumed] [--exact-fix] [--stalled <n>]
 //   node next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke]
@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { validate } from './schema.mjs';
+import { LANES, NEVER_SKIP, skipsOf, neverSkipOf } from './lanes.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const schema = (kind) => JSON.parse(readFileSync(join(here, '..', 'schemas', `${kind}.schema.json`), 'utf8'));
@@ -40,13 +41,13 @@ export function smokeRequired(signals = {}) {
 export const LOOP_LIMIT = 3; // fix loops allowed per loop point; the 4th rejection escalates
 export const REPEAT_LIMIT = 3; // same blocker id open in this many consecutive rejections = fix is not converging
 export const GATED_STEPS = ['3c', '3d']; // must pass before step 4; 3c passes only after the user approves the design (pause:design-review)
-export const NEVER_SKIP = ['6', '7', '10'];
-export const FIX_NEVER_SKIP = ['4a', '4b']; // fix lane (references/fix-profile.md): diagnose, then audit the cause, before any code
+export { NEVER_SKIP };
+export const FIX_NEVER_SKIP = LANES.fix.neverSkip; // fix lane (references/fix-profile.md): diagnose, then audit the cause, before any code
 export const SEVERITIES = ['low', 'medium', 'high', 'critical']; // impact of the bug; the auditor's evidence bar rises with it (agents/references/auditor/rules-and-guardrails.md)
 export const EVIDENCE_LEVELS = ['none', ...SEVERITIES]; // the highest severity tier whose minimum evidence a diagnosis meets
 export const AUDIT_ROUNDS = 1; // need-validation rounds allowed before the auditor's verdict counts as reject
-export const FIX_MAX_FILES = 5; // source files (tests and .team/ excluded) before a fix is promoted to the full flow
-export const LITE_MAX_FILES = 15; // same count for the lite lane (references/lite-profile.md)
+export const FIX_MAX_FILES = LANES.fix.maxFiles; // source files (tests and .team/ excluded) before a fix is promoted to the full flow
+export const LITE_MAX_FILES = LANES.lite.maxFiles; // same count for the lite lane (references/lite-profile.md)
 const isSource = (p) => !/(^|[\\/])\.team[\\/]/.test(p) && !/(^|[\\/])(tests?|__tests__)[\\/]|\.(test|spec)\.[a-z]+$/i.test(p);
 
 const REJECTING = new Set(['Reject', 'Fail']);
@@ -72,7 +73,7 @@ export function simulate(scenario) {
   const fix = scenario.profile === 'fix';
 
   const violations = NEVER_SKIP.filter((s) => skipped.has(s)).map((s) => `never-skip step ${s} was skipped`);
-  if (fix) violations.push(...FIX_NEVER_SKIP.filter((s) => skipped.has(s)).map((s) => `fix lane: step ${s} was skipped`));
+  if (LANES[scenario.profile]) violations.push(...neverSkipOf(scenario.profile).filter((s) => !NEVER_SKIP.includes(s) && skipped.has(s)).map((s) => `${scenario.profile} lane: step ${s} was skipped`));
   if (skipped.has('3d')) {
     const { required, reasons } = smokeRequired(scenario.smoke_signals);
     if (required) violations.push(`3d skipped although a smoke trigger is true: ${reasons.join(', ')}`);
@@ -385,8 +386,8 @@ function usage(msg) {
   process.exit(2);
 }
 
-// Steps a lane skips by definition (run-profile.md first paragraph); --skip adds the run's own skips on top.
-export const LANE_SKIPS = { fix: ['1', '2', '2b', '3', '3b', '3c', '3d'], lite: ['1', '2', '2b', '3b', '3c'] };
+// Steps a lane skips by definition (lanes.mjs); --skip adds the run's own skips on top. Redesign skips depend on the scope: skipsOf().
+export const LANE_SKIPS = { fix: skipsOf('fix'), lite: skipsOf('lite') };
 
 const opt = (args, name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
 
@@ -401,7 +402,7 @@ function handoffFiles(paths) {
 }
 
 function runLoop(args) {
-  const valued = new Set(['--profile', '--skip', '--smoke', '--task', '--escalation-out']);
+  const valued = new Set(['--profile', '--scope', '--skip', '--smoke', '--task', '--escalation-out']);
   const paths = args.filter((a, i) => !a.startsWith('--') && !valued.has(args[i - 1]));
   if (!paths.length) usage('loop: give at least one hand-off file or directory');
   const events = handoffFiles(paths).map((f) => {
@@ -412,7 +413,7 @@ function runLoop(args) {
   const out = simulate({
     task: opt(args, '--task'),
     profile,
-    skip: [...(LANE_SKIPS[profile] ?? []), ...(opt(args, '--skip') ?? '').split(',').filter(Boolean)],
+    skip: [...skipsOf(profile, opt(args, '--scope')), ...(opt(args, '--skip') ?? '').split(',').filter(Boolean)],
     smoke_signals: smoke,
     events,
   });

@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process';
 import { gateState, gatesForSpawn, missingGates, gateErrors, auditMissing } from '../../skills/muffy/scripts/gate-rules.mjs';
 import { recordGate, clearPause } from '../../skills/muffy/scripts/checkpoint.mjs';
 
-const CP = (status, profile = 'Full flow, feature lane.') =>
+const CP = (status, profile = 'lane: feature · skipped none') =>
   `# Checkpoint: t\n\nUpdated: step 3\n\n## Goal\n\nx\n\n## Run profile\n\n${profile}\n\n## Status\n\n${status}\n`;
 
 export function runGateEvals({ check, root }) {
@@ -41,7 +41,7 @@ export function runGateEvals({ check, root }) {
   check('gates: fix lane is never gated post-hoc', gateErrors(open, ['4'], { lane: 'fix' }).length === 0);
 
   /* fix lane: no step 4 before the audit confirms */
-  const FIXCP = (status) => CP(status, 'fix lane: skipped 1, 2, 3, 3b, 3c, 3d, 8');
+  const FIXCP = (status) => CP(status, 'lane: fix · skipped 1, 2, 2b, 3, 3b, 3c, 3d');
   const step4 = 'Task: t\nWrite: .worktrees/feature-t/.team/t/handoff/4-backend-dev-r1.json\n';
   const audit = (verdict, round = 1) => ({ step: '4b', round, audit: { verdict } });
   check('audit gate: a dev step-4 spawn with no audit is refused', auditMissing(FIXCP('- stage: fix'), 'backend-dev', step4, []) !== null);

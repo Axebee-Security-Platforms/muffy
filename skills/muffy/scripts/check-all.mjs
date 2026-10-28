@@ -2,16 +2,17 @@
 // The scripted half of references/quality-checks.md in one call, after any step. Runs, in order:
 //   handoff     every hand-off of this step and round validates and reports quality_checks.passed
 //   loop        next-action.mjs over all hand-offs of the task: what to do now (accept, fix:<owner>, retry, escalate, promote)
-//   gates       no hand-off past an open human gate (2b, 3c; gate-rules.mjs), feature lane only
+//   gates       no hand-off past an open human gate (2b, 3c; gate-rules.mjs), gated lanes only (feature, redesign)
 //   checkpoint  check-checkpoint.mjs
 //   artifacts   check-artifacts.mjs (sizes, links, traceability brief → AC → contract → qa-report)
 //   brain       each role of this step wrote <brain>/agents/<role>/<task>.md          (with --brain)
 //   runtime     the runtime in qa-report.md matches the deploy.md pin                  (when both exist)
-//   fix lane    from step 4 on: the 4a diagnosis is `known`, fix.md has ## Cause and ## Repro   (--profile fix)
+//   fix lane    from step 4 on: the 4a diagnosis is `known`, fix.md has ## Cause and ## Repro   (fix lane)
+// The lane comes from the checkpoint's `## Run profile` line (lanes.mjs); --profile overrides it.
 //   diff        diff-signals.mjs: the 3d decision, and from step 4 on the lane scope     (with --base)
 // The judgment half of quality-checks.md (plan phases, what the brain note says, gates the user answered) stays with you.
 //
-// Usage: node check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite] [--skip 3d,8] [--brain <dir>]
+// Usage: node check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign] [--skip 3d] [--brain <dir>]
 //                           [--base <ref> [--head <ref>] [--cwd <repo>]]
 // Hand-offs are ordered by round, then step order (steps.md), so a fix round (4 r2) comes after the review that sent it (6 r1).
 // Prints `next=<action>` first, then one `ok`/`FAIL` line per check and the failing lines.
@@ -21,15 +22,16 @@ import { join, basename, dirname, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validate } from './schema.mjs';
-import { simulate, GATED_STEPS, LANE_SKIPS } from './next-action.mjs';
+import { simulate, GATED_STEPS } from './next-action.mjs';
 import { checkTask as checkCheckpoint } from './check-checkpoint.mjs';
 import { checkTask as checkArtifacts } from './check-artifacts.mjs';
 import { classify, laneVerdict, smokeOnRecord } from './diff-signals.mjs';
 import { parseOwnership } from './ownership.mjs';
-import { gateErrors } from './gate-rules.mjs';
+import { gateErrors, gateState } from './gate-rules.mjs';
+import { STEP_ORDER, LANES, skipsOf, parseRunProfile } from './lanes.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4b', '4', '5', '5b', '6', '7', '10', '11', '12'];
+export { STEP_ORDER };
 const readIf = (p) => (existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);
 const section = (md, name) => md?.match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] ?? null;
 const version = (text) => text?.match(/\bRuntime:\s*[A-Za-z.]*\s*v?(\d+(?:\.\d+)*)/)?.[1];
@@ -45,8 +47,14 @@ function handoffs(taskDir) {
   }).filter(Boolean).sort((a, b) => a.round - b.round || STEP_ORDER.indexOf(a.step) - STEP_ORDER.indexOf(b.step));
 }
 
-export function checkAll(taskDir, { step, round, profile, skip = [], brain, base, head = 'HEAD', cwd } = {}) {
+export function checkAll(taskDir, { step, round, profile: given, skip = [], brain, base, head = 'HEAD', cwd } = {}) {
   const task = basename(resolve(taskDir));
+  const cpText = readIf(join(taskDir, 'checkpoint.md'));
+  // the lane: --profile when given, else the checkpoint's Run profile line; feature runs with no profile.
+  // Skips: the lane's own, plus --skip when given, else the steps the lane line lists (`checkpoint.mjs profile --skip 3d`)
+  const cp = parseRunProfile(cpText);
+  const run = given && given !== cp.lane ? { lane: given, scope: null, skipped: [] } : cp;
+  const profile = run.lane === 'feature' ? undefined : run.lane;
   const results = []; // [name, errors[]]
   const add = (name, errors) => results.push([name, errors]);
   const all = handoffs(taskDir);
@@ -61,21 +69,22 @@ export function checkAll(taskDir, { step, round, profile, skip = [], brain, base
   }) : [`no hand-off for step ${step} round ${round} in handoff/ (code-reviewer: save the block from its message)`]);
 
   // loop: gates the user answered are in the checkpoint, not in a hand-off
-  const status = section(readIf(join(taskDir, 'checkpoint.md')), 'Status') ?? '';
-  const passed = GATED_STEPS.filter((g) => new RegExp(`\\b${g}\\b[^\\n]*\\bpassed\\b`, 'i').test(status));
+  const status = section(cpText, 'Status') ?? '';
+  // the same reader as the gate guard, so `gate 3c not passed` never counts as passed
+  const passed = cpText === null ? [] : GATED_STEPS.filter((g) => gateState(cpText, g) === 'passed');
   // after an audit reject the user may accept the risk; the Orchestrator records `audit 4b: risk accepted` in ## Status
   const riskAccepted = /\baudit 4b\b[^\n]*\brisk accepted\b/i.test(status);
   if (riskAccepted) passed.push('4b');
-  const skips = [...(LANE_SKIPS[profile] ?? []), ...skip];
+  const skips = [...new Set([...skipsOf(profile, run.scope), ...(skip.length ? skip : run.skipped)])];
   const upTo = all.filter((h) => h.round < Number(round) || (h.round === Number(round) && STEP_ORDER.indexOf(h.step) <= STEP_ORDER.indexOf(String(step))));
   const loop = simulate({ task, profile, skip: skips, passed, events: upTo.map((h) => ({ handoff: h.data, step: h.step, role: h.role })) });
   const next = loop.outcome === 'invalid-profile' ? 'fix-run-profile' : loop.actions.at(-1) ?? 'none';
   add('loop', [...loop.violations, ...(['escalated', 'blocked', 'invalid-profile', 'promoted'].includes(loop.outcome) ? [`${next}${loop.trigger ? ` (${loop.trigger})` : ''}`] : [])]);
 
   // human gates (step-details 2b, 3c): a hand-off past an open gate is an error; fix and lite have no gates
-  add('gates', gateErrors(readIf(join(taskDir, 'checkpoint.md')), upTo.map((h) => h.step), {
+  add('gates', gateErrors(cpText, upTo.map((h) => h.step), {
     designExists: existsSync(join(taskDir, 'design.md')),
-    lane: profile === 'fix' || profile === 'lite' ? profile : undefined,
+    lane: run.lane,
   }));
 
   add('checkpoint', checkCheckpoint(taskDir));
@@ -107,7 +116,7 @@ export function checkAll(taskDir, { step, round, profile, skip = [], brain, base
       const c = classify(files, { ownershipRows: own ? parseOwnership(own) : [], smokeOnRecord: smokeOnRecord(brain) });
       const errs = [];
       if (c.smoke.required && skips.includes('3d') && profile !== 'fix') errs.push(`3d is skipped but a smoke trigger is true: ${c.smoke.reasons.join(', ')}`);
-      if (profile && STEP_ORDER.indexOf(String(step)) >= STEP_ORDER.indexOf('4')) errs.push(...laneVerdict(c, profile).reasons.map((r) => `promote:full-flow: ${r}`));
+      if (LANES[profile]?.maxFiles && STEP_ORDER.indexOf(String(step)) >= STEP_ORDER.indexOf('4')) errs.push(...laneVerdict(c, profile).reasons.map((r) => `promote:full-flow: ${r}`));
       add('diff', errs);
     }
   }
@@ -128,7 +137,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const pos = [];
   for (let i = 0; i < argv.length; i++) argv[i].startsWith('--') ? (o[argv[i].slice(2)] = argv[++i]) : pos.push(argv[i]);
   if (!pos[0] || !o.step || !o.round) {
-    console.error('usage: check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite] [--skip a,b] [--brain <dir>] [--base <ref> [--head <ref>] [--cwd <repo>]]');
+    console.error('usage: check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign] [--skip a,b] [--brain <dir>] [--base <ref> [--head <ref>] [--cwd <repo>]]');
     process.exit(2);
   }
   const r = checkAll(pos[0], { step: o.step, round: o.round, profile: o.profile, skip: (o.skip ?? '').split(',').filter(Boolean), brain: o.brain, base: o.base, head: o.head, cwd: o.cwd });

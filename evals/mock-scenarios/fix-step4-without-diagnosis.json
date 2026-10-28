@@ -9,8 +9,7 @@
     "3",
     "3b",
     "3c",
-    "3d",
-    "8"
+    "3d"
   ],
   "defaults": {
     "task": "fix-login-redirect",

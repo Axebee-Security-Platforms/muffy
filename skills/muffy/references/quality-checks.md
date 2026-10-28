@@ -5,7 +5,7 @@ After every step, two halves.
 ## 1. Run the script (one call)
 
 ```
-node .claude/skills/muffy/scripts/check-all.mjs .team/<task> --step <s> --round <n> [--profile fix|lite] [--skip <steps>] --brain <brain> [--base <feature or ops branch> --head <step branch>]
+node .claude/skills/muffy/scripts/check-all.mjs .team/<task> --step <s> --round <n> [--profile fix|lite|redesign] [--skip <steps>] --brain <brain> [--base <feature or ops branch> --head <step branch>]
 ```
 
 It prints `next=<action>` and one `ok`/`FAIL` line per check. Act on `next=` and do not re-check by hand what it covers:

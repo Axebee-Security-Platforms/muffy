@@ -25,7 +25,7 @@ One `AskUserQuestion` call of up to 3 questions:
 
 1. Name the task `redesign-<slug>`. Create `<brain>/tasks/<task>.md`; add it to `project.md` → `## Tasks`. Read `project.md` Lessons and Open issues
 2. Create the feature worktree from `<base>`: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it
-3. Write `checkpoint.md` with `## Run profile` = `redesign lane (<scope>): skipped <steps>`, where `<scope>` is `ui-only`, `ui+logic` or `logic-only` and the skipped steps are the ones the table below marks for it. `gate-rules.mjs` reads this line
+3. Write `checkpoint.md`, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> redesign --scope <scope>`, where `<scope>` is `ui-only`, `ui+logic` or `logic-only`; it adds the steps the table below skips for that scope (`--skip 3d` adds a run's own). `gate-rules.mjs` reads this line
 4. No `brief.md`: the prompt and the existing code are the brief
 
 ## Steps by scope
@@ -60,7 +60,7 @@ Rules for the table:
 A designer or frontend-dev who finds the design needs a field, endpoint or rule the backend lacks does not invent it and does not edit the backend. It returns a `blocker` with `owner: Architect` and a `problem` that starts `needs-logic:` followed by what is missing.
 
 1. Orchestrator saves `pause:scope-upgrade` and asks one `AskUserQuestion`: **add the logic** (becomes `ui+logic`) or **cut that part from the design** (stays `ui-only`)
-2. Add: keep the work done, record the new scope in the Run profile line, run `product-manager` to revise `ac.md`, ask gate 2b (it is no longer skipped), spawn `architect` for the contract, then `backend-dev` after the gate. Nothing is redone
+2. Add: keep the work done, record the new scope with `checkpoint.mjs profile .team/<task> redesign --scope ui+logic`, run `product-manager` to revise `ac.md`, ask gate 2b (it is no longer skipped), spawn `architect` for the contract, then `backend-dev` after the gate. Nothing is redone
 3. If the missing piece is a whole new capability (several endpoints or a new data model), say so in the question and offer the full flow as a third option
 4. At most once per task. A second `needs-logic:` stops the run and the user decides in chat
 
@@ -70,4 +70,4 @@ Defaults from [token-discipline.md](token-discipline.md); never downgrade `code-
 
 ## Prompt differences
 
-No `Profile:` header: this lane reads the usual `ac.md`, `design.md` and `contract.md`, minus `brief.md`. Add `Scope: ui-only | ui+logic | logic-only` to each prompt's `Goal:` line so no agent works outside it. `Read:` for `qa-tester` carries the touched paths and the `## Unchanged` rows.
+No `Profile:` header: this lane reads the usual `ac.md`, `design.md` and `contract.md`, minus `brief.md`. Build each prompt with `make-envelope.mjs --scope <scope>`, which puts `Scope: ui-only | ui+logic | logic-only` in the header, so no agent works outside it. `Read:` for `qa-tester` carries the touched paths and the `## Unchanged` rows.

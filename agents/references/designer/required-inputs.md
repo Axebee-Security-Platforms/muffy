@@ -7,3 +7,5 @@
 - `.team/<task>/contract.md` (once it exists, for field alignment)
 - `<brain>` path from the Orchestrator
 If the user doesn't need a UI (e.g. the MVP is API-only), produce only `design.md` covering the API consumer experience.
+
+`Scope:` in the prompt header (redesign lane only): the current screens are your starting point (running page, screenshots or component files); `design.md` shows before and after for each screen you change. With `Scope: ui-only`, a screen that needs a field, endpoint or rule the backend lacks is not designed around it: hand off a blocker with `owner: Architect` whose `problem` starts `needs-logic:` and names what is missing, and do not invent the API.

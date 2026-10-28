@@ -19,6 +19,7 @@
     "write": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
     "dont_touch": { "type": "array", "items": { "type": "string" } },
     "profile": { "enum": ["fix", "lite"], "description": "fix: fix.md replaces ac/contract/brief/design in Read. lite: ac.md (Orchestrator-written) and contract.md, no brief.md or design.md" },
+    "scope": { "enum": ["ui-only", "ui+logic", "logic-only"], "description": "Redesign lane only: the scope the user picked at pause:scope (lanes.mjs SCOPES); the agent works inside it" },
     "announcement": { "const": true, "description": "docs-writer only: the user opted in to a release announcement at pause:scope" },
     "pr_diagram": { "const": true, "description": "frontend-dev/backend-dev only: the user asked for the step-5b PR diagram" },
     "human_approved": { "type": "string", "minLength": 1, "description": "docs-writer step 11 only: date of the step-10 Human gate approval" },
