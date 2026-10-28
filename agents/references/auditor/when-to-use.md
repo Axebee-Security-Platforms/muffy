@@ -9,4 +9,5 @@ Use this agent when:
 Do not use this agent when:
 
 - The diagnosis is `unknown` or `needs-full-flow` (routed by the Orchestrator, nothing to audit)
+- A cosmetic fix (`lane: fix (cosmetic)`): 4b is skipped
 - A diff exists (that is `code-reviewer`, step 6)

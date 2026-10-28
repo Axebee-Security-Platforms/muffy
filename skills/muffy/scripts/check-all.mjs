@@ -77,8 +77,11 @@ export function checkAll(taskDir, { step, round, profile: given, skip = [], brai
   const riskAccepted = /\baudit 4b\b[^\n]*\brisk accepted\b/i.test(status);
   if (riskAccepted) passed.push('4b');
   const skips = [...new Set([...skipsOf(profile, run.scope), ...(skip.length ? skip : run.skipped)])];
-  const upTo = all.filter((h) => h.round < Number(round) || (h.round === Number(round) && STEP_ORDER.indexOf(h.step) <= STEP_ORDER.indexOf(String(step))));
-  const loop = simulate({ task, profile, skip: skips, passed, events: upTo.map((h) => ({ handoff: h.data, step: h.step, role: h.role })) });
+  // a task promoted out of the fix lane keeps its 4a/4b hand-offs in handoff/; they belong to the lane it left, so neither the
+  // loop (which would promote again) nor the gates (which would see a step past 2b) read them
+  const trail = run.lane === 'fix' ? all : all.filter((h) => !['4a', '4b'].includes(h.step));
+  const upTo = trail.filter((h) => h.round < Number(round) || (h.round === Number(round) && STEP_ORDER.indexOf(h.step) <= STEP_ORDER.indexOf(String(step))));
+  const loop = simulate({ task, profile, scope: run.scope, skip: skips, passed, events: upTo.map((h) => ({ handoff: h.data, step: h.step, role: h.role })) });
   const next = loop.outcome === 'invalid-profile' ? 'fix-run-profile' : loop.actions.at(-1) ?? 'none';
   add('loop', [...loop.violations, ...(['escalated', 'blocked', 'invalid-profile', 'promoted'].includes(loop.outcome) ? [`${next}${loop.trigger ? ` (${loop.trigger})` : ''}`] : [])]);
 
@@ -102,7 +105,9 @@ export function checkAll(taskDir, { step, round, profile: given, skip = [], brai
     const diag = all.filter((h) => h.step === '4a').at(-1)?.data?.diagnosis?.status;
     if (diag !== 'known') errs.push(`4a diagnosis is ${diag ?? 'missing'}, need known before step 4`);
     const verdict = all.filter((h) => h.step === '4b').at(-1)?.data?.audit?.verdict;
-    if (verdict !== 'confirm' && !riskAccepted) errs.push(`4b audit is ${verdict ?? 'missing'}, need confirm (or the user's accepted risk in checkpoint ## Status) before step 4`);
+    const severity = all.filter((h) => h.step === '4a').at(-1)?.data?.diagnosis?.severity;
+    if (skips.includes('4b') && severity && severity !== 'low') errs.push(`a cosmetic fix diagnosed with severity ${severity} is a bug: switch with checkpoint.mjs profile <dir> fix --scope bug and run the 4b audit`);
+    if (verdict !== 'confirm' && !riskAccepted && (!skips.includes('4b') || (severity && severity !== 'low'))) errs.push(`4b audit is ${verdict ?? 'missing'}, need confirm (or the user's accepted risk in checkpoint ## Status) before step 4`);
     const fix = readIf(join(taskDir, 'fix.md'));
     for (const s of ['Cause', 'Repro']) if (!section(fix, s)?.trim()) errs.push(`fix.md ## ${s} is missing or empty`);
     add('fix lane', errs);

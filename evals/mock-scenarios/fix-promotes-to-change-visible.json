@@ -1,0 +1,49 @@
+{
+  "id": "fix-promotes-to-change-visible",
+  "description": "Diagnosis outgrows the fix lane with promote_to change-visible: the next lane up is the change lane, not the full flow",
+  "task": "fix-invoice-totals",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d"
+  ],
+  "defaults": {
+    "task": "fix-invoice-totals",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "needs-full-flow",
+          "confidence": "high",
+          "reason": "the rounding rule users see on the invoice must change: a business rule, so the user approves the new rule",
+          "promote_to": "change-visible"
+        }
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "promoted",
+    "actions": [
+      "promote:change-visible"
+    ],
+    "trigger": "needs-full-flow"
+  }
+}

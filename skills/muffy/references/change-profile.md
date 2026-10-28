@@ -128,13 +128,14 @@ The internal scope signals a promote through a blocker owned by an agent it skip
 | Signal | Means | Restart at |
 |---|---|---|
 | Step 3 or 4 hand-off `status: blocked` with a blocker `owner: Researcher` | the change needs a new dependency, provider or stack fact | step 1 |
-| a blocker `owner: PM` | the change is visible to users or outside callers, or touches auth, permissions or personal data | step 2 |
-| a blocker `owner: Designer` | the change needs a new or changed screen, flow or component | step 2 (then 3 with the designer) |
+| a blocker `owner: PM` | the change is visible to users: **a visible scope**, asked (`logic-only` when only a rule or result changes) | step 2, as a visible change |
+| a blocker `owner: PM` | an outside caller sees it, or it touches auth, permissions or personal data | step 2, full flow |
+| a blocker `owner: Designer` | the change needs a changed screen, flow or component: **a visible scope** with a designer, `ui+logic` or `ui-only` (asked); a new one is the full flow | step 2 (then 3 with the designer) |
 | Step 4 changed more than 15 source files, a dependency, devops-owned files or auth files (`node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --profile change` exits 1) | the work outgrew the scope | step 2 |
 
 The owner alone does not promote. Read the blocker's `problem` and promote only when it names a failed triage condition (a visible change, an outside consumer, auth or personal data, a new dependency or stack fact, a new screen, flow or component). For the internal scope the Orchestrator wrote `ac.md`, so a `PM` blocker that only asks what an AC means is a clarification: ask the user one `AskUserQuestion`, update `ac.md`, and send the answer back to the same agent.
 
-A blocker `owner: Architect` at step 4 is not a promote: the architect is in this scope, so it goes back to step 3 through the normal loop ([loops.md](loops.md)). On a promote: stop, keep `ac.md` and `contract.md` as input for the restarted steps, switch the lane with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> feature` (never by editing the line by hand), and record the reason in the checkpoint and the vault task note.
+A blocker `owner: Architect` at step 4 is not a promote: the architect is in this scope, so it goes back to step 3 through the normal loop ([loops.md](loops.md)). On a promote: stop, keep `ac.md` and `contract.md` as input for the restarted steps, switch the lane with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> change --scope <visible scope>` for a visible change or `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> feature` for the full flow (never by editing the line by hand), and record the reason in the checkpoint and the vault task note. A visible scope keeps the gates, so the plan and design are approved before code goes on.
 
 ## When a UI-only run needs logic
 

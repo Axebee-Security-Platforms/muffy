@@ -1,0 +1,49 @@
+{
+  "id": "fix-promotes-to-change-internal",
+  "description": "Diagnosis outgrows the fix lane with promote_to change-internal: the next lane up is the change lane, not the full flow",
+  "task": "fix-invoice-totals",
+  "profile": "fix",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d"
+  ],
+  "defaults": {
+    "task": "fix-invoice-totals",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "needs-full-flow",
+          "confidence": "high",
+          "reason": "the totals module rounds per line; the contract for the internal pricing helper must change, nothing users see beyond the fix",
+          "promote_to": "change-internal"
+        }
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "promoted",
+    "actions": [
+      "promote:change-internal"
+    ],
+    "trigger": "needs-full-flow"
+  }
+}

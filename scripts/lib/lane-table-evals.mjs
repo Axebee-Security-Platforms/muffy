@@ -5,7 +5,7 @@
 //   - check-all reads gates with gateState: `gate 3c not passed` is not a pass
 //   - checkpoint.mjs profile replaces the lane line and keeps the others; make-envelope carries Scope:
 //   - each lane reference names the profile command and states the never-skip list the table holds
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -13,6 +13,8 @@ import { LANES, SCOPES, STEP_ORDER, skipsOf, neverSkipOf, laneSpec, formatRunPro
 import { laneOf, redesignScope, missingGates, auditMissing } from '../../skills/muffy/scripts/gate-rules.mjs';
 import { setProfile } from '../../skills/muffy/scripts/checkpoint.mjs';
 import { checkAll } from '../../skills/muffy/scripts/check-all.mjs';
+import { PROMOTE_ACTION } from '../../skills/muffy/scripts/next-action.mjs';
+import { validate } from '../../skills/muffy/scripts/schema.mjs';
 
 const CP = (profile, status = '- stage: x') =>
   `# Checkpoint: t\n\nUpdated: step 3\n\n## Goal\n\nx\n\n## Run profile\n\n${profile}\n\n## Status\n\n${status}\n`;
@@ -21,7 +23,7 @@ export function runLaneTableEvals({ check, root }) {
   const ref = (f) => readFileSync(join(root, 'skills/muffy/references', f), 'utf8').replace(/\r\n/g, '\n');
 
   /* the table */
-  check('lanes: every skipped step is a step id', Object.values(LANES).every((l) => [l.skips, ...Object.values(l.scopes ?? {}).map((s) => s.skips)].flat().every((s) => STEP_ORDER.includes(s))));
+  check('lanes: every skipped step is a step id', Object.values(LANES).every((l) => [l.skips, ...Object.values(l.scopes ?? {}).map((s) => s.skips ?? [])].flat().every((s) => STEP_ORDER.includes(s))));
   check('lanes: no lane or scope skips a step it must run', Object.keys(LANES).every((l) => [undefined, ...SCOPES].every((sc) => !skipsOf(l, sc).some((s) => neverSkipOf(l, sc).includes(s)))));
   check('lanes: the change lane has a skip list per scope', SCOPES.every((s) => LANES.change.scopes[s]?.skips));
   check('lanes: only the internal scope is ungated; a change line with no or an unknown scope fails closed (gated)', SCOPES.every((s) => laneSpec('change', s).gated === (s !== 'internal')) && laneSpec('change', null).gated && laneSpec('change', 'bogus').gated);
@@ -90,6 +92,37 @@ export function runLaneTableEvals({ check, root }) {
     writeFileSync(join(dir, 'checkpoint.md'), CP(fixLine, '- stage: fix'));
     const fixChecks = checkAll(dir, { step: '4', round: 1 }).results.find(([n]) => n === 'fix lane');
     check('check-all: the fix lane is read from the checkpoint when --profile is left out', !!fixChecks && fixChecks[1].some((e) => /4a diagnosis/.test(e)));
+    check('check-all: a bug fix needs the 4b audit before step 4', fixChecks[1].some((e) => /4b audit/.test(e)));
+    writeFileSync(join(dir, 'checkpoint.md'), CP(formatRunProfile('fix', { scope: 'cosmetic' }), '- stage: fix'));
+    const cosChecks = checkAll(dir, { step: '4', round: 1 }).results.find(([n]) => n === 'fix lane')?.[1] ?? [];
+    check('check-all: a cosmetic fix needs no 4b audit, still the 4a diagnosis', !cosChecks.some((e) => /4b audit/.test(e)) && cosChecks.some((e) => /4a diagnosis/.test(e)), cosChecks.join(' | '));
+
+    // after a promote, the fix lane's 4a hand-off stays in handoff/ but belongs to the lane the task left
+    const ok = { task: 't', round: 1, status: 'done', paths_written: ['src/pricing/round.ts'], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'done as asked' };
+    const dec = { decisions: [{ id: 'D-1', decision: 'Round once per invoice', why: 'The contract names it; per-line rounding was the cause' }] };
+    const diagnosis = (extra) => ({ ...ok, role: 'debugger', step: '4a', summary: 'diagnosed the cause', diagnosis: { confidence: 'high', ...extra } });
+    for (const to of ['change-internal', 'change-visible', 'full']) {
+      for (const f of readdirSync(join(dir, 'handoff'))) rmSync(join(dir, 'handoff', f));
+      writeFileSync(join(dir, 'handoff', '4a-debugger-r1.json'), JSON.stringify(diagnosis({ status: 'needs-full-flow', reason: 'the rounding rule in the contract', promote_to: to })));
+      const visible = to !== 'change-internal';
+      const lane = to === 'change-internal' ? formatRunProfile('change', { scope: 'internal', skip: ['3d'] }) : to === 'change-visible' ? formatRunProfile('change', { scope: 'logic-only' }) : formatRunProfile('feature');
+      writeFileSync(join(dir, 'checkpoint.md'), CP(lane, visible ? '- paused at pause:plan-review · resume when the user answers' : '- stage: build'));
+      if (visible) writeFileSync(join(dir, 'handoff', '2-product-manager-r2.json'), JSON.stringify({ ...ok, ...dec, role: 'product-manager', step: '2', round: 2, paths_written: ['.team/t/ac.md'] }));
+      else writeFileSync(join(dir, 'handoff', '4-backend-dev-r1.json'), JSON.stringify({ ...ok, ...dec, role: 'backend-dev', step: '4' }));
+      const r = checkAll(dir, visible ? { step: '2', round: 2 } : { step: '4', round: 1 });
+      const bad = r.results.filter(([n]) => n === 'loop' || n === 'gates').flatMap(([, e]) => e);
+      check(`check-all: after a promote to ${to}, the old 4a hand-off neither promotes again nor trips the gates`, !bad.length && !r.next.startsWith('promote:'), `${r.next} | ${bad.join(' | ')}`);
+    }
+
+    // a cosmetic fix whose diagnosis is above low is a bug: the audit is required again
+    for (const f of readdirSync(join(dir, 'handoff'))) rmSync(join(dir, 'handoff', f));
+    writeFileSync(join(dir, 'checkpoint.md'), CP(formatRunProfile('fix', { scope: 'cosmetic' }), '- stage: fix'));
+    writeFileSync(join(dir, 'handoff', '4a-debugger-r1.json'), JSON.stringify(diagnosis({ status: 'known', cause: 'the button hides when the cart is empty', files: ['src/ui/Submit.tsx'], repro: '/checkout with an empty cart', severity: 'medium', owner: 'FE' })));
+    const medChecks = checkAll(dir, { step: '4', round: 1 }).results.find(([n]) => n === 'fix lane')?.[1] ?? [];
+    check('check-all: a cosmetic fix diagnosed above low needs the audit and the bug scope', medChecks.some((e) => /is a bug/.test(e)) && medChecks.some((e) => /4b audit/.test(e)), medChecks.join(' | '));
+    const sev = (s) => [{ step: '4a', round: 1, diagnosis: { status: 'known', severity: s } }];
+    const cos = CP(formatRunProfile('fix', { scope: 'cosmetic' }));
+    check('fix scope: the guard lets a cosmetic dev skip 4b only on a low diagnosis', auditMissing(cos, 'frontend-dev', step4.replace('backend', 'frontend'), sev('low')) === null && /is a bug/.test(auditMissing(cos, 'frontend-dev', step4.replace('backend', 'frontend'), sev('medium')) ?? '') && auditMissing(cos, 'frontend-dev', step4.replace('backend', 'frontend'), [...sev('medium'), { step: '4b', round: 1, audit: { verdict: 'confirm' } }]) === null);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -121,5 +154,21 @@ export function runLaneTableEvals({ check, root }) {
   check('drift: change-profile.md internal skip list matches lanes.mjs', same(ids(change.match(/^Internal: Skipped: ([^\n]+?)\. Never/m)?.[1]), skipsOf('change', 'internal').filter((s) => s !== '2b')));
   check('drift: change-profile.md Steps by scope marks 3b/3e skipped exactly for the scopes lanes.mjs skips them', ['internal', 'ui-only', 'ui+logic', 'logic-only'].every((s, i) => /skipped/.test(change.match(/^\| 3b, 3e \|[^\n]*$/m)?.[0].split('|').slice(1, -1)[i + 2] ?? '') === skipsOf('change', s).includes('3b')));
   check('docs: resume reads every lane from the lane line', /change-profile\.md/.test(ref('resume.md')) && ref('resume.md').includes('lane:'));
+  /* the fix lane's scope: a cosmetic fix skips the 4b audit, a bug never does */
+  check('fix scope: cosmetic skips 4b and still runs 4a; bug and a missing or unknown scope run both', skipsOf('fix', 'cosmetic').includes('4b') && neverSkipOf('fix', 'cosmetic').includes('4a') && !neverSkipOf('fix', 'cosmetic').includes('4b') && ['bug', null, 'bogus'].every((s) => neverSkipOf('fix', s).includes('4b') && !skipsOf('fix', s).includes('4b')));
+  const cosLine = formatRunProfile('fix', { scope: 'cosmetic' });
+  check('fix scope: the audit guard lets a cosmetic dev start with no 4b, and still holds a bug', auditMissing(CP(cosLine), 'backend-dev', step4, []) === null && auditMissing(CP(formatRunProfile('fix', { scope: 'bug' })), 'backend-dev', step4, []) !== null && auditMissing(CP('lane: fix · skipped 1'), 'backend-dev', step4, []) !== null);
+  check('drift: fix-profile.md cosmetic never-skip list matches lanes.mjs', same(ids(ref('fix-profile.md').match(/Never skipped for cosmetic: ([^.]+)\./)?.[1]), neverSkipOf('fix', 'cosmetic')));
+  check('docs: fix-profile.md writes the fix scope with the profile command', ref('fix-profile.md').includes('checkpoint.mjs profile .team/<task> fix --scope <bug | cosmetic>'));
+
+  /* promote_to: the debugger names the smallest lane that fits */
+  const hs = JSON.parse(readFileSync(join(root, 'skills/muffy/schemas/handoff.schema.json'), 'utf8'));
+  const dx = (diagnosis) => ({ role: 'debugger', task: 't', step: '4a', round: 1, status: 'done', paths_written: ['x'], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'diagnosed', diagnosis });
+  check('promote_to: the schema and the loop agree on the targets', JSON.stringify(hs.properties.diagnosis.properties.promote_to.enum) === JSON.stringify(Object.keys(PROMOTE_ACTION)));
+  check('promote_to: a needs-full-flow diagnosis may name it, and only a known target', validate(hs, dx({ status: 'needs-full-flow', confidence: 'high', reason: 'a visible rounding rule', promote_to: 'change-visible' })).length === 0 && validate(hs, dx({ status: 'needs-full-flow', confidence: 'high', reason: 'a visible rounding rule', promote_to: 'lite' })).length > 0);
+  check('docs: fix-profile.md says what each promote_to target does, with the profile command', ['change-internal', 'change-visible', 'full'].every((t) => ref('fix-profile.md').includes(`\`${t}\``)) && ref('fix-profile.md').includes('checkpoint.mjs profile .team/<task> change --scope internal'));
+  check('docs: run-profile.md has the promotion ladder, up and one rung down', /^## Promotion ladder$/m.test(ref('run-profile.md')) && ref('run-profile.md').includes('one rung down'));
+  check('docs: the debugger is told to set promote_to', readFileSync(join(root, 'agents/references/debugger/output-format.md'), 'utf8').includes('promote_to'));
+  check('docs: an internal change that turns visible moves to a visible scope, not the full flow', /\*\*a visible scope\*\*/.test(ref('change-profile.md')));
   check('docs: the old lane references point at the change lane', ['lite-profile.md', 'redesign-profile.md'].every((f) => ref(f).includes('[change-profile.md](change-profile.md)')));
 }

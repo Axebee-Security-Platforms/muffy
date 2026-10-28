@@ -1,0 +1,77 @@
+{
+  "id": "fix-cosmetic-above-low-needs-audit",
+  "description": "Fix lane, cosmetic scope: a diagnosis above low severity is not only the look, so step 4 waits for the 4b audit again",
+  "task": "fix-checkout-button",
+  "profile": "fix",
+  "scope": "cosmetic",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "4b"
+  ],
+  "defaults": {
+    "task": "fix-checkout-button",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "round": 1,
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "the button hides when the cart is empty, not a token",
+          "files": [
+            "src/ui/checkout/SubmitButton.tsx"
+          ],
+          "repro": "/checkout at 375px in dark mode",
+          "severity": "medium",
+          "owner": "FE"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "frontend-dev",
+        "step": "4",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "paths_written": [
+          "src/ui/checkout/SubmitButton.tsx"
+        ],
+        "summary": "fixed",
+        "decisions": [
+          {
+            "id": "D-1",
+            "decision": "Used the dark-mode primary token from the design system",
+            "why": "The token exists; no new colour"
+          }
+        ]
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "blocked",
+    "actions": [
+      "accept",
+      "block:no-audit"
+    ]
+  }
+}

@@ -18,6 +18,20 @@ Effort follows the signals in [token-discipline.md](token-discipline.md), not th
 
 3c (including `pause:design-review`) is skipped only together with the designer. Never skip: review (6), QA (7), Human gate (10). Record skipped steps and why in `tasks/<task>.md`.
 
+## Promotion ladder
+
+A run that outgrows its lane moves up one rung at a time, to the smallest lane that fits, never straight to the full flow when a smaller one will do:
+
+| From | Signal | To |
+|---|---|---|
+| fix | 4a `needs-full-flow` with `promote_to` | `change-internal` → change, internal scope; `change-visible` → change, a visible scope; `full` (or missing) → full flow ([fix-profile.md](fix-profile.md#diagnose-budget-and-outcomes)) |
+| fix | step 4 over 5 source files, or an `Architect` blocker | full flow (the diff says nothing about who sees the cause) |
+| change, internal | a `PM` or `Designer` blocker naming a visible change | change, a visible scope ([change-profile.md](change-profile.md#promote-out-of-the-internal-scope)) |
+| change, internal | a `Researcher` blocker, auth, an outside caller, over 15 files | full flow |
+| change, `ui-only` | `needs-logic:` | change, `ui+logic` (`pause:scope-upgrade`) |
+
+And one rung down, offered once: when `product-manager` in the full flow reports that nothing a user or outside caller sees changes, ask whether to run it as an internal change instead (`checkpoint.mjs profile .team/<task> change --scope internal`, keep `ac.md`, start at step 3). Every move is written with `checkpoint.mjs profile` and recorded in the checkpoint and the vault task note.
+
 ## Named pauses
 
 A pause stops the flow on purpose. It has an id, a resume condition, and one line in checkpoint `## Status`: `paused at pause:<id> · resume when <condition>`, written by `node .claude/skills/muffy/scripts/checkpoint.mjs pause .team/<task> <id> --until "<condition>"` (it refuses an id not in this table) and removed by `node .claude/skills/muffy/scripts/checkpoint.mjs unpause .team/<task>` when the pause is answered (pause:plan-review and pause:design-review are cleared by `checkpoint.mjs gate`, and `unpause` refuses them while the gate is open). Only these exist:

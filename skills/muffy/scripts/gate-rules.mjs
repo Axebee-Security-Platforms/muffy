@@ -5,7 +5,7 @@
 //   checkpoint.mjs gate   records the user's answer (the only writer of the gate lines in ## Status)
 // A gate is passed when ## Status has `gate <id> passed`, or skipped when it has `gate <id> skipped`. Other lines
 // that name the gate (`not passed`, `rejected`) do not count. Which lanes are gated, and which gates a step needs, come from lanes.mjs.
-import { GATES, STEP_NEEDS, laneSpec, parseRunProfile } from './lanes.mjs';
+import { GATES, STEP_NEEDS, laneSpec, skipsOf, parseRunProfile } from './lanes.mjs';
 
 export { GATES };
 export const PAUSE_OF = { '2b': 'plan-review', '3c': 'design-review' };
@@ -56,16 +56,23 @@ export function gatesForSpawn(role, prompt = '', lane = 'feature', scope = null)
 }
 
 // fix lane: step 4 (a dev's fix) needs the auditor's `confirm` at 4b, or the user's accepted risk recorded in ## Status.
+// A cosmetic fix (`lane: fix (cosmetic)`) skips 4b while its 4a diagnosis says severity low; above that it is a bug and needs the audit.
 // The step comes from the hand-off path in the prompt's Write: line (make-envelope.mjs adds handoff/<step>-<role>-r<round>.json).
 // `handoffs` is the task's hand-offs as parsed JSON, in any order; returns the reason a spawn is refused, or null.
 const DEV_STEP4 = /handoff[\\/]4-(?:frontend|backend)-dev-r\d+\.json/;
 export function auditMissing(cpText, role, prompt = '', handoffs = []) {
   if (!['frontend-dev', 'backend-dev'].includes(role) || !DEV_STEP4.test(prompt)) return null;
-  if (cpText === null || laneOf(cpText) !== 'fix') return null;
+  if (cpText === null) return null;
+  const run = parseRunProfile(cpText);
+  if (run.lane !== 'fix') return null;
   if (/\baudit 4b\b[^\n]*\brisk accepted\b/i.test(section(cpText, 'Status') ?? '')) return null;
-  const latest = handoffs.filter((h) => h?.step === '4b').sort((a, b) => (a.round ?? 0) - (b.round ?? 0)).at(-1);
-  if (latest?.audit?.verdict === 'confirm') return null;
-  return `the fix lane needs the auditor's \`confirm\` at step 4b before step 4 (latest audit: ${latest?.audit?.verdict ?? 'none'}); on a reject the user may accept the risk, recorded as \`audit 4b: risk accepted\` in checkpoint ## Status`;
+  const byRound = (step) => handoffs.filter((h) => h?.step === step).sort((a, b) => (a.round ?? 0) - (b.round ?? 0)).at(-1);
+  const severity = byRound('4a')?.diagnosis?.severity;
+  const cosmetic = skipsOf(run.lane, run.scope).includes('4b');
+  if (cosmetic && (!severity || severity === 'low')) return null;
+  if (byRound('4b')?.audit?.verdict === 'confirm') return null;
+  if (cosmetic) return `a cosmetic fix skips the 4b audit only on a low-severity diagnosis; 4a says ${severity}, so it is a bug: switch with \`checkpoint.mjs profile <dir> fix --scope bug\` and run the auditor`;
+  return `the fix lane needs the auditor's \`confirm\` at step 4b before step 4 (latest audit: ${byRound('4b')?.audit?.verdict ?? 'none'}); on a reject the user may accept the risk, recorded as \`audit 4b: risk accepted\` in checkpoint ## Status`;
 }
 
 // gates still open for this spawn; a null checkpoint means setup has not written one, so every gate is open

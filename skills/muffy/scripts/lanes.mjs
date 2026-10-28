@@ -12,7 +12,8 @@
 export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4b', '4', '5', '5b', '6', '7', '10', '11', '12'];
 export const NEVER_SKIP = ['6', '7', '10']; // every lane: review, QA, Human gate
 export const GATES = ['2b', '3c']; // human gates; a lane either has both or none
-export const SCOPES = ['internal', 'ui-only', 'ui+logic', 'logic-only']; // change lane only, picked at pause:scope
+export const SCOPES = ['internal', 'ui-only', 'ui+logic', 'logic-only']; // change lane, picked at pause:scope
+export const FIX_SCOPES = ['bug', 'cosmetic']; // fix lane: `Kind:` in fix.md; a cosmetic fix (existing tokens) skips the 4b audit
 export const VISIBLE_SCOPES = SCOPES.filter((s) => s !== 'internal'); // a user or caller sees the change
 // older lane ids: lite is the internal scope; redesign is a visible scope, asked when the line names none
 export const ALIASES = { lite: { lane: 'change', scope: 'internal' }, redesign: { lane: 'change', scope: null } };
@@ -23,11 +24,14 @@ export const ALIASES = { lite: { lane: 'change', scope: 'internal' }, redesign: 
 // maxFiles: source files (tests and .team/ excluded) before the diff promotes the run to the full flow; null = no limit
 // profile: the `Profile:` header the prompt envelope carries (fix only; the change lane sends `Scope:` instead)
 // baseline: the onboard depth the lane needs before it starts (onboard.md → Depth): quick = stack, layout, commands; full = all of it
-// A scope overrides the fields it names. The change lane's own fields are the visible scopes' and apply when the scope is
-// missing or unknown, so a line with no scope fails closed: gated, full baseline.
+// A scope overrides the fields it names. A lane's own fields apply when the scope is missing or unknown, so a line with no
+// scope fails closed: the change lane's are the visible scopes' (gated, full baseline), the fix lane's are a bug's (4a and 4b).
 export const LANES = {
   feature: { skips: [], neverSkip: [], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'run-profile.md' },
-  fix: { skips: ['1', '2', '2b', '3', '3b', '3c', '3d'], neverSkip: ['4a', '4b'], gated: false, maxFiles: 5, profile: 'fix', baseline: 'quick', ref: 'fix-profile.md' },
+  fix: {
+    skips: ['1', '2', '2b', '3', '3b', '3c', '3d'], neverSkip: ['4a', '4b'], gated: false, maxFiles: 5, profile: 'fix', baseline: 'quick', ref: 'fix-profile.md',
+    scopes: { bug: {}, cosmetic: { skips: ['1', '2', '2b', '3', '3b', '3c', '3d', '4b'], neverSkip: ['4a'] } },
+  },
   change: {
     skips: ['1'], neverSkip: ['2', '3c', '11'], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'change-profile.md',
     scopes: {
@@ -40,14 +44,18 @@ export const LANES = {
 };
 
 const order = (steps) => [...new Set(steps)].sort((a, b) => STEP_ORDER.indexOf(a) - STEP_ORDER.indexOf(b));
-const scopeOf = (s) => (SCOPES.includes(String(s ?? '').trim().toLowerCase()) ? String(s).trim().toLowerCase() : null);
+// a scope the lane knows, lower-cased, or null
+const scopeIn = (lane, s) => {
+  const v = String(s ?? '').trim().toLowerCase();
+  return LANES[lane]?.scopes && Object.hasOwn(LANES[lane].scopes, v) ? v : null;
+};
 
 // { lane, scope } with the aliases resolved: lite → change (internal), redesign → change (its scope, or none)
 export function resolveLane(lane, scope) {
   const id = String(lane ?? '').toLowerCase();
   const alias = ALIASES[id];
-  if (alias) return { lane: alias.lane, scope: alias.scope ?? scopeOf(scope) };
-  return { lane: id, scope: LANES[id]?.scopes ? scopeOf(scope) : null };
+  if (alias) return { lane: alias.lane, scope: alias.scope ?? scopeIn(alias.lane, scope) };
+  return { lane: id, scope: scopeIn(id, scope) };
 }
 
 // the lane's fields with its scope's on top; null for an unknown lane
@@ -95,6 +103,10 @@ const LANE_WORDS = {
   fix: {
     th: 'แก้บั๊ก', en: 'fix a bug', why: { th: 'มีอาการและจุดที่เกิดชัดแล้ว', en: 'the symptom and where it happens are known' },
     labels: { '4': { th: 'แก้โค้ด + regression test', en: 'fix + regression test' }, ...DOCS_MAYBE },
+    scopes: {
+      bug: { th: 'บั๊ก', en: 'a bug' },
+      cosmetic: { th: 'หน้าตา จาก token เดิม', en: 'the look, existing tokens', labels: { '4': { th: 'แก้หน้าตา + เช็คด้วยตา', en: 'fix the look + visual check' } } },
+    },
   },
   change: {
     th: 'ปรับของที่มีอยู่', en: 'change what already exists', why: { th: 'ของนี้มีอยู่แล้ว', en: 'it already exists' },
@@ -151,7 +163,7 @@ export function formatRunProfile(lane, { scope, skip = [] } = {}) {
   const r = resolveLane(lane, scope);
   if (!LANES[r.lane]) throw new Error(`unknown lane: ${lane} (${Object.keys(LANES).join(', ')})`);
   if (r.lane === 'change' && !r.scope) throw new Error(`the change lane needs a scope (${SCOPES.join(', ')})`);
-  if (r.lane !== 'change' && scope) throw new Error(`only the change lane takes a scope, not ${lane}`);
+  if (scope && !r.scope) throw new Error(`${lane} has no scope ${scope}${LANES[r.lane].scopes ? ` (${Object.keys(LANES[r.lane].scopes).join(', ')})` : ''}`);
   const steps = skip.filter((s) => STEP_ORDER.includes(s));
   const other = skip.filter((s) => !STEP_ORDER.includes(s)); // roles a scope leaves out (designer, architect), kept as written
   const all = [...order([...skipsOf(r.lane, r.scope), ...steps]), ...new Set(other)];

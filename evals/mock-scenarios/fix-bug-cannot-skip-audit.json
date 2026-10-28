@@ -1,0 +1,34 @@
+{
+  "id": "fix-bug-cannot-skip-audit",
+  "description": "Fix lane, bug scope: skipping 4b is a run-profile violation (only a cosmetic fix skips it)",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "scope": "bug",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d",
+    "4b"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [],
+  "expect": {
+    "outcome": "invalid-profile",
+    "actions": []
+  }
+}

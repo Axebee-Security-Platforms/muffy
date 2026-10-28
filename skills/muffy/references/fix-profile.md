@@ -27,7 +27,7 @@ Read the signals from the request, then let `node .claude/skills/muffy/scripts/n
 | "Add a `phone` field to the signup form" | change | An existing form plus its schema and API contract; the scope is asked |
 | "Redesign the login page" / "make the dashboard look better" | change | Changes an existing screen or flow; needs design approval ([change-profile.md](change-profile.md)) |
 | "Search is slow" | full, or ask first | No symptom, location or repro; ask for a measurement before triage |
-| "Invoice totals are wrong" | fix → promoted | Starts as a fix; step 4a finds the cause is a rounding rule in the contract and returns `needs-full-flow` |
+| "Invoice totals are wrong" | fix → promoted | Starts as a fix; step 4a finds the cause is a rounding rule users see and returns `needs-full-flow` with `promote_to: change-visible` |
 | "Upgrade React to 19 and fix what breaks" | full | A dependency change |
 | "เจอบั๊ก แก้ไขให้หน่อย" | ask first | A bug report with no symptom, location or repro: ask for them before triage |
 | "Fix the typo in the footer" | none (main session) | One line, no behaviour risk |
@@ -38,13 +38,13 @@ When the request is borderline (for example a bug plus "while you are there, als
 
 1. Name the task `fix-<slug>` and run the common setup, [setup.md](setup.md) steps 1-4: brain and task note, the baseline check with `next-action.mjs baseline --lane fix`, then `project.md` Lessons and Open issues. Write the held `baseline` value into `## Status` with the checkpoint
 2. `pause:scope`, shortened, in one `AskUserQuestion` call of up to 4 questions (2-4 options each):
-   - **Plan**: the card from `next-action.mjs plan-card fix`, go / bigger ([route.md](route.md#say-the-plan))
+   - **Plan**: the card from `next-action.mjs plan-card fix --scope <bug | cosmetic>`, go / bigger ([route.md](route.md#say-the-plan))
    - **Kind + owner**: bug or cosmetic; FE, BE or both
    - **AC + out of scope**: the AC list drafted from the request and a quick read of the named files, with out of scope. Confirm / Change it
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
 3. Create the feature worktree from `<base>`, which holds the team folder: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>` (a baseline committed at the common setup on another branch is cherry-picked onto it first, [setup.md](setup.md) step 7), then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/fix.md` there (≤ 60 lines, below). The Orchestrator writes it from the same reads; no agent is spawned for it
 4. Commit `fix.md` to `feature/<task>` (never to `<base>`). The `debugger` (4a) and `auditor` (4b) work in the feature worktree and write nothing outside `.team/<task>/`. The dev worktrees are cut at step 4, after the audit, from the feature commit that holds the confirmed `## Cause`: `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> feature/<task>`, one per owner the debugger named. qa gets one at step 7 as usual
-5. Write `checkpoint.md` in the feature worktree, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> fix` (it writes `lane: fix · skipped 1, 2, 2b, 3, 3b, 3c, 3d`; never type the line by hand, the gate and audit guards read it)
+5. Write `checkpoint.md` in the feature worktree, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> fix --scope <bug | cosmetic>`, the `Kind:` of `fix.md` (it writes `lane: fix (bug) · skipped 1, 2, 2b, 3, 3b, 3c, 3d`, or with `4b` too for cosmetic; never type the line by hand, the gate and audit guards read it). A line with no scope reads as `bug`
 
 ## `fix.md`
 
@@ -70,7 +70,7 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 | # | Agent | Notes |
 |---|---|---|
 | 4a | `debugger` (one agent for FE and BE) | **Diagnose, no code.** Reproduce with a tight, shrunk repro, trace the failing path, test 2 or 3 falsifiable hypotheses against a second piece of evidence, rate the **severity**, name the **owner** (`FE`, `BE` or `both`), write `## Cause`, `## Repro` and `## Evidence` in `fix.md`. Hand-off carries `diagnosis` with `files`, and `owner_files` per side when the owner is `both` ([schema](../schemas/handoff.schema.json)) |
-| 4b | `auditor` (`opus`, a different model from the debugger) | **Audit the cause, no code.** Runs the `## Repro` once, grades `## Evidence` against the severity table below, opens the diagnosed files. Hand-off carries `audit`: `confirm`, `need-validation` or `reject`. Runs only on a `known` diagnosis. **Blocks step 4** |
+| 4b | `auditor` (`opus`, a different model from the debugger) | **Audit the cause, no code.** Runs the `## Repro` once, grades `## Evidence` against the severity table below, opens the diagnosed files. Hand-off carries `audit`: `confirm`, `need-validation` or `reject`. Runs only on a `known` diagnosis. **Blocks step 4**. Skipped for `Kind: cosmetic` (below) |
 | 4 | `frontend-dev` / `backend-dev` per the debugger's `owner` (FE ∥ BE if both), a fresh spawn | Fix + regression test that fails before and passes after. Cosmetic: the AC's visual check. Cold start: the prompt's `Read:` lists `fix.md` and the debugger's and auditor's hand-offs, so the dev reads only `diagnosis.files` plus tests |
 | 5 | Orchestrator | Merge into `feature/<task>` with `--no-ff`, as usual |
 | 6 | `code-reviewer` | Diff + `fix.md` (including Cause and Repro). Never skipped, never downgraded |
@@ -80,6 +80,8 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 | 12 | Orchestrator | [closing.md](closing.md) steps 2-6 in full, not abbreviated: `## Usage` from `spawns.tsv`, Lessons tally (step 4 marks the checkpoint `closed`, so a resume skips it); skip step 1 unless a decision or stack learning came out of the fix |
 
 Never skipped: 4a, 4b, 6, 7, 10. A fix with no diagnosis hand-off, or no `confirm` from the auditor (or the user's accepted risk, below), cannot start step 4.
+
+**Cosmetic** (`Kind: cosmetic`, `--scope cosmetic`): a look that reuses existing design-system tokens has no cause whose evidence needs grading, so 4b is skipped and step 4 starts after a `known` diagnosis of severity `low`. A higher severity means it is not only the look: switch with `checkpoint.mjs profile .team/<task> fix --scope bug` and run 4b (the guard, `check-all` and the loop refuse step 4 until then). Build the plan card from the Kind you drafted for `pause:scope`; if the user changes the Kind there, show the card again. 4a still runs (on `haiku`, below): it names the files, the owner and the visual check. Never skipped for cosmetic: 4a, 6, 7, 10. Any doubt that it is only the look (a condition, a state, data) makes it a bug.
 
 **The lane is silent.** No fix-lane agent talks to another and none is continued with `SendMessage`. The debugger, the auditor and the devs exchange only hand-off JSON: the Orchestrator validates each file in `handoff/` and puts its path in the next spawn's `Read:` line. Every round, including a re-diagnose, is a fresh spawn.
 
@@ -104,7 +106,7 @@ Read the `diagnosis` object in the 4a hand-off and route on it:
 |---|---|
 | `known` (confidence medium or high, with `cause`, `files`, `repro`, `severity`, `owner`; `owner_files` per side when `owner` is `both`) | Spawn the `auditor` (step 4b). Never go straight to step 4 |
 | `unknown` | Relay `reason` to the user via `AskUserQuestion` (more info, a log, a repro). Write the answer to `.team/<task>/evidence-r<n>.md` and spawn the `debugger` fresh with that path in `Read:` for **one** more diagnose round, pointing at its previous hand-off. A second `unknown` at the same point → escalate `loop-limit` ([loops.md](loops.md)) |
-| `needs-full-flow` | **Promote**: the cause is in the contract, a dependency, the stack or a design decision. Stop the lane, keep `fix.md` as the brief, switch the lane with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> feature` (never by editing the line: a hand-written "promoted from the fix lane" still reads as fix and leaves the gates off), and start the full flow at step 2 (PM) with `fix.md` + the diagnosis as input |
+| `needs-full-flow` | **Promote** to the smallest lane that fits, by `diagnosis.promote_to` (missing = `full`). Stop the lane, keep `fix.md` and the diagnosis as the input, and switch the lane with `checkpoint.mjs profile` (never by editing the line: a hand-written "promoted from the fix lane" still reads as fix and leaves the gates off):<br>`change-internal` (an internal contract or module; nothing a user sees changes beyond the fix) → `checkpoint.mjs profile .team/<task> change --scope internal`, the Orchestrator writes `ac.md` from `fix.md`, start at step 3 (architect) per [change-profile.md](change-profile.md)<br>`change-visible` (a rule, screen or flow users see must change) → ask the visible scope ([change-profile.md](change-profile.md#scope-question-pausescope-always-asked-for-a-visible-change-never-defaulted)), `checkpoint.mjs profile .team/<task> change --scope <scope>`, start at step 2 (PM)<br>`full` (a dependency, the stack, auth or a new capability) → `checkpoint.mjs profile .team/<task> feature`, start the full flow at step 2 (PM) |
 
 ### Audit outcomes (4b)
 
@@ -122,7 +124,7 @@ Read the `audit` object in the 4b hand-off and route on it:
 
 ## Model and effort
 
-Spawn the `debugger` (4a) with `model: haiku` only when the symptom already names the file and line. Otherwise keep the agent default (`sonnet`, effort `high`). The `auditor` (4b) always runs on its default, `opus`, so it stays a different model from the debugger; never downgrade it, `code-reviewer` or `devops`. QA re-running existing tests only may use `haiku`, as in [token-discipline.md](token-discipline.md).
+Spawn the `debugger` (4a) with `model: haiku` only for a cosmetic fix, or when the symptom already names the file and line. Otherwise keep the agent default (`sonnet`, effort `high`). The `auditor` (4b) always runs on its default, `opus`, so it stays a different model from the debugger; never downgrade it, `code-reviewer` or `devops`. QA re-running existing tests only may use `haiku`, as in [token-discipline.md](token-discipline.md).
 
 ## Prompt differences
 

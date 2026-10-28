@@ -54,6 +54,8 @@ export const LITE_MAX_FILES = laneSpec('change', 'internal').maxFiles; // same c
 const isSource = (p) => !/(^|[\\/])\.team[\\/]/.test(p) && !/(^|[\\/])(tests?|__tests__)[\\/]|\.(test|spec)\.[a-z]+$/i.test(p);
 
 const REJECTING = new Set(['Reject', 'Fail']);
+// the debugger's diagnosis.promote_to → what the Orchestrator does (fix-profile.md "Diagnose budget and outcomes")
+export const PROMOTE_ACTION = { 'change-internal': 'promote:change-internal', 'change-visible': 'promote:change-visible', full: 'promote:full-flow' };
 
 // scenario: { task, profile, skip, smoke_signals, events: [{ handoff, step?, role? }] }
 // Returns every action the Orchestrator must take, in order; the last one is what to do now.
@@ -134,7 +136,7 @@ export function simulate(scenario) {
       outcome = 'blocked';
       break;
     }
-    if (fix && String(h?.step ?? ev.step) === '4' && !passed.has('4b')) {
+    if (fix && String(h?.step ?? ev.step) === '4' && !passed.has('4b') && (!skipped.has('4b') || (diagSeverity && diagSeverity !== 'low'))) {
       actions.push('block:no-audit');
       outcome = 'blocked';
       break;
@@ -178,9 +180,10 @@ export function simulate(scenario) {
       continue;
     }
 
-    // 2b. fix lane: route on the diagnosis (fix-profile.md)
+    // 2b. fix lane: route on the diagnosis (fix-profile.md). needs-full-flow means the cause outgrows the fix lane; promote_to
+    // says how far up (the change lane's internal or a visible scope, or the full flow), the full flow when it says nothing
     if (h.diagnosis?.status === 'needs-full-flow') {
-      actions.push('promote:full-flow');
+      actions.push(PROMOTE_ACTION[h.diagnosis.promote_to ?? 'full']);
       outcome = 'promoted';
       trigger = 'needs-full-flow';
       break;
@@ -433,6 +436,7 @@ function runLoop(args) {
   const out = simulate({
     task: opt(args, '--task'),
     profile,
+    scope: opt(args, '--scope'),
     skip: [...skipsOf(profile, opt(args, '--scope')), ...(opt(args, '--skip') ?? '').split(',').filter(Boolean)],
     smoke_signals: smoke,
     events,
