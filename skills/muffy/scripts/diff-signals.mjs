@@ -15,7 +15,11 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { COVERED_FILE, MANIFEST_NAMES } from './repo-facts.mjs';
 import { parseOwnership, ownersOf } from './ownership.mjs';
-import { smokeRequired, FIX_MAX_FILES, LITE_MAX_FILES } from './next-action.mjs';
+import { smokeRequired } from './next-action.mjs';
+import { LANES } from './lanes.mjs';
+
+// lanes whose scope the diff can outgrow (a file limit in lanes.mjs)
+const SCOPED = Object.keys(LANES).filter((l) => LANES[l].maxFiles);
 
 const base = (p) => p.split('/').pop();
 export const isTest = (p) => /(^|\/)(tests?|__tests__)\//.test(p) || /\.(test|spec)\.[a-z]+$/i.test(p);
@@ -49,7 +53,8 @@ export function classify(files, { ownershipRows = [], smokeOnRecord = true } = {
 // The lane conditions that a diff can show. Conditions about intent (a new screen, an outside consumer) stay with the Orchestrator.
 export function laneVerdict(c, profile) {
   const reasons = [];
-  const max = profile === 'fix' ? FIX_MAX_FILES : LITE_MAX_FILES;
+  const max = LANES[profile]?.maxFiles;
+  if (!max) throw new Error(`laneVerdict: ${profile} has no lane limits (${SCOPED.join(', ')})`);
   if (c.source.length > max) reasons.push(`${c.source.length} source files changed (lane max ${max})`);
   if (c.deps.length) reasons.push(`dependency change: ${c.deps.join(', ')}`);
   if (c.devops.length) reasons.push(`devops-owned files: ${c.devops.join(', ')}`);
@@ -77,7 +82,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const pos = [];
   for (let i = 0; i < argv.length; i++) argv[i].startsWith('--') ? (o[argv[i].slice(2)] = argv[++i]) : pos.push(argv[i]);
   const [from, to = 'HEAD'] = pos;
-  if (!from || (o.profile && !['fix', 'lite'].includes(o.profile))) {
+  if (!from || (o.profile && !SCOPED.includes(o.profile))) {
     console.error('usage: diff-signals.mjs <base> [<head>] [--profile fix|lite] [--brain <dir>] [--team-dir .team/<task>] [--cwd <repo>]');
     process.exit(2);
   }

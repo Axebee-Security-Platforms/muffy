@@ -8,6 +8,7 @@
 //   spawn  append one spawns.tsv line, verdict read from the hand-off when one is given
 //   gate   the user's answer at a human gate (2b, 3c): approve (needs the pause saved and the gate summary ready),
 //          reject (keeps the pause), skip (needs --reason). Writes `gate <id> passed|not passed|skipped` to ## Status
+//   profile  the lane line first in ## Run profile (`lane: <id>[ (<scope>)] · skipped …`, lanes.mjs), replacing an older one
 // Every command runs check-checkpoint.mjs afterwards and fails with its errors.
 //
 // Usage:
@@ -20,6 +21,7 @@
 //   node checkpoint.mjs gate   <.team/<task>> 3c approve --by "<the user's reply>"
 //   node checkpoint.mjs gate   <.team/<task>> 2b|3c reject  --by "<the user's reply>"
 //   node checkpoint.mjs gate   <.team/<task>> 2b|3c skip    --reason "<why no gate>"
+//   node checkpoint.mjs profile <.team/<task>> feature|fix|lite|redesign [--scope ui-only|ui+logic|logic-only] [--skip 3d,designer]
 // Prints one verdict line. Exit 0 = written and checked, 1 = written but check-checkpoint failed, 2 = usage or input error.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -28,6 +30,7 @@ import { checkTask } from './check-checkpoint.mjs';
 import { LOOP_LIMIT } from './next-action.mjs';
 import { GATES, PAUSE_OF, laneOf, gateState, redesignScope } from './gate-rules.mjs';
 import { gate2b, gate3c } from './gate-summary.mjs';
+import { LANES, formatRunProfile, isLaneLine } from './lanes.mjs';
 
 export const PAUSES = ['scope', 'scope-upgrade', 'onboard-review', 'todo-review', 'plan-review', 'design-review', 'full-regression', 'human-gate'];
 const REJECTING = new Set(['Reject', 'Fail']);
@@ -138,7 +141,7 @@ export function clearPause(taskDir) {
   if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
   const text = readFileSync(cpPath, 'utf8');
   const status = parse(text).sections.find((s) => s.name === 'Status')?.body ?? [];
-  if (['feature', 'redesign'].includes(laneOf(text))) {
+  if (LANES[laneOf(text)].gated) {
     for (const gate of GATES) {
       if (status.some((l) => l.includes(`paused at pause:${PAUSE_OF[gate]}`)) && gateState(text, gate) === 'open') {
         throw new Error(`unpause: pause:${PAUSE_OF[gate]} waits on gate ${gate}, which has no recorded answer. Record it with checkpoint.mjs gate <dir> ${gate} approve|reject --by "<the user's reply>" (approve clears the pause)`);
@@ -171,6 +174,23 @@ export function logSpawn(taskDir, o) {
   const line = [o.step, o.role, o.model, o.effort, o.round, verdict, o.reruns ?? 0, `${note ? `${note} ` : ''}${tok}`].join('\t');
   appendFileSync(join(taskDir, 'spawns.tsv'), `${line}\n`);
   return line.replace(/\t/g, ' · ');
+}
+
+// The lane line, first in ## Run profile: the scripts read the lane from it (lanes.mjs), so it is never typed by hand.
+// Replaces an earlier lane line in any form and keeps the other lines (effort, test level).
+export function setProfile(taskDir, lane, { scope, skip = [] } = {}) {
+  const cpPath = join(taskDir, 'checkpoint.md');
+  if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
+  const line = formatRunProfile(lane, { scope, skip });
+  const cp = parse(readFileSync(cpPath, 'utf8'));
+  if (!cp.sections.some((s) => s.name === 'Run profile')) {
+    const at = cp.sections.findIndex((s) => s.name !== 'Goal');
+    cp.sections.splice(at < 0 ? cp.sections.length : at, 0, { name: 'Run profile', body: [] });
+  }
+  const kept = dropNone(body(cp, 'Run profile')).filter((l) => !isLaneLine(l));
+  replaceBody(cp, 'Run profile', [line, ...kept]);
+  writeFileSync(cpPath, render(cp));
+  return line;
 }
 
 // The user's answer at a human gate. `approve` needs the pause saved first (the question was asked) and a ready
@@ -231,13 +251,14 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const [cmd, ...rest] = process.argv.slice(2);
   const { o, pos } = opts(rest);
   const taskDir = pos[0];
-  if (!['round', 'pause', 'unpause', 'spawn', 'gate'].includes(cmd) || !taskDir) {
-    console.error('usage: checkpoint.mjs round|pause|unpause|spawn|gate <.team/<task>> ... (see the header of this file)');
+  if (!['round', 'pause', 'unpause', 'spawn', 'gate', 'profile'].includes(cmd) || !taskDir) {
+    console.error('usage: checkpoint.mjs round|pause|unpause|spawn|gate|profile <.team/<task>> ... (see the header of this file)');
     process.exit(2);
   }
   let said;
   try {
-    if (cmd === 'gate') said = recordGate(taskDir, pos[1], pos[2], { by: o.by, reason: o.reason, plan: typeof o.plan === 'string' ? o.plan : undefined });
+    if (cmd === 'profile') said = setProfile(taskDir, pos[1], { scope: typeof o.scope === 'string' ? o.scope : undefined, skip: typeof o.skip === 'string' ? o.skip.split(',').map((s) => s.trim()).filter(Boolean) : [] });
+    else if (cmd === 'gate') said = recordGate(taskDir, pos[1], pos[2], { by: o.by, reason: o.reason, plan: typeof o.plan === 'string' ? o.plan : undefined });
     else if (cmd === 'round') {
       if (!o.step || !o.round || !o.handoff || !o.summary) throw new Error('round: --step, --round, --handoff and --summary are required');
       const r = recordRound(taskDir, { step: o.step, round: o.round, handoff: o.handoff, summary: o.summary, notes: o.notes });

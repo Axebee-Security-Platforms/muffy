@@ -43,7 +43,7 @@ When the request is borderline (for example a bug plus "while you are there, als
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
 3. Create the feature worktree from `<base>`, which holds the team folder: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/fix.md` there (≤ 60 lines, below). The Orchestrator writes it from the same reads; no agent is spawned for it
 4. Commit `fix.md` to `feature/<task>` (never to `<base>`). The `debugger` (4a) and `auditor` (4b) work in the feature worktree and write nothing outside `.team/<task>/`. The dev worktrees are cut at step 4, after the audit, from the feature commit that holds the confirmed `## Cause`: `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> feature/<task>`, one per owner the debugger named. qa gets one at step 7 as usual
-5. Write `checkpoint.md` in the feature worktree with `## Run profile` = `fix: skipped 1, 2, 3, 3b, 3c, 3d`
+5. Write `checkpoint.md` in the feature worktree, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> fix` (it writes `lane: fix · skipped 1, 2, 2b, 3, 3b, 3c, 3d`; never type the line by hand, the gate and audit guards read it)
 
 ## `fix.md`
 
@@ -103,7 +103,7 @@ Read the `diagnosis` object in the 4a hand-off and route on it:
 |---|---|
 | `known` (confidence medium or high, with `cause`, `files`, `repro`, `severity`, `owner`; `owner_files` per side when `owner` is `both`) | Spawn the `auditor` (step 4b). Never go straight to step 4 |
 | `unknown` | Relay `reason` to the user via `AskUserQuestion` (more info, a log, a repro). Write the answer to `.team/<task>/evidence-r<n>.md` and spawn the `debugger` fresh with that path in `Read:` for **one** more diagnose round, pointing at its previous hand-off. A second `unknown` at the same point → escalate `loop-limit` ([loops.md](loops.md)) |
-| `needs-full-flow` | **Promote**: the cause is in the contract, a dependency, the stack or a design decision. Stop the lane, keep `fix.md` as the brief, rename the profile in `checkpoint.md`, and start the full flow at step 2 (PM) with `fix.md` + the diagnosis as input |
+| `needs-full-flow` | **Promote**: the cause is in the contract, a dependency, the stack or a design decision. Stop the lane, keep `fix.md` as the brief, switch the lane with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> feature` (never by editing the line: a hand-written "promoted from the fix lane" still reads as fix and leaves the gates off), and start the full flow at step 2 (PM) with `fix.md` + the diagnosis as input |
 
 ### Audit outcomes (4b)
 
@@ -117,7 +117,7 @@ Read the `audit` object in the 4b hand-off and route on it:
 
 `node .claude/skills/muffy/scripts/next-action.mjs loop <hand-offs…> --profile fix` computes this: `accept`, `revalidate:debugger`, `ask:reject-options`, `rediagnose:debugger`, `proceed:risk-accepted` or `escalate:loop-limit`. A user answer is an event `{ "answer": "more-info" | "accept-risk" | "cancel" }` in a scenario.
 
-**Promote** also when step 4 changed more than 5 source files, or reports a blocker owned by `Architect`. Count from the diff, not from the agent's `paths_written`: `node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --profile fix` exits 1 with `next=promote:full-flow` and one `reason:` line per broken limit (file count, dependency, devops-owned files, auth files, schema or migration). Record the reason in `checkpoint.md` and the vault task note.
+**Promote** also when step 4 changed more than 5 source files, or reports a blocker owned by `Architect`. Count from the diff, not from the agent's `paths_written`: `node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --profile fix` exits 1 with `next=promote:full-flow` and one `reason:` line per broken limit (file count, dependency, devops-owned files, auth files, schema or migration). Switch the lane with `checkpoint.mjs profile .team/<task> feature` and record the reason in checkpoint `## Status` and the vault task note.
 
 ## Model and effort
 

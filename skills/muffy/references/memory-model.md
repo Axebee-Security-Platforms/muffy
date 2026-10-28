@@ -32,7 +32,7 @@ The repo wins over the vault: an ADR overrides a vault note.
 Updated: step <n> · round <n>
 
 ## Goal                      pinned — copy verbatim from the request / brief.md, never summarize
-## Run profile               skipped steps + reasons
+## Run profile               first line: the lane (`checkpoint.mjs profile`, lanes.mjs); then skipped steps + reasons
 ## Status                    step reached; gates 2b (user-approved AC + plan)/3c (user-approved design)/3d passed|skipped; `paused at pause:plan-review` or `paused at pause:design-review` while waiting; canvas: <Claude Design Artifact URL> (set at 3b, updated on every republish); `diagrams: <n> published` (set at 3e; URLs live in the task note); `route: <name> · intake: <n> asked` (set at setup, from [route.md](route.md))
 ## Decisions in force        ADR ids, stack, runtime pin (from deploy.md)
 ## Loop counters             <step>:<owner> n/3, one line per point used

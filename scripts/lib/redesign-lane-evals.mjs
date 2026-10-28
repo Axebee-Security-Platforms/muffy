@@ -20,9 +20,9 @@ export function runRedesignLaneEvals({ check, root }) {
   const refs = (f) => read('skills/muffy/references', f);
 
   /* lane and scope come from the Run profile line */
-  const ui = 'redesign lane (ui-only): skipped 1, 2b, architect, 3d';
-  check('redesign: laneOf reads the redesign lane', laneOf(CP(ui)) === 'redesign' && laneOf(CP('fix lane: skipped 1')) === 'fix' && laneOf(CP('Full flow.')) === 'feature');
-  check('redesign: redesignScope reads all three scopes', redesignScope(CP(ui)) === 'ui-only' && redesignScope(CP('redesign lane (ui+logic): skipped 1')) === 'ui+logic' && redesignScope(CP('redesign lane (logic-only): skipped 1')) === 'logic-only' && redesignScope(CP('Full flow.')) === null);
+  const ui = 'lane: redesign (ui-only) · skipped 1, 2b, 3d, architect';
+  check('redesign: laneOf reads the redesign lane', laneOf(CP(ui)) === 'redesign' && laneOf(CP('lane: fix · skipped 1')) === 'fix' && laneOf(CP('lane: feature · skipped none')) === 'feature');
+  check('redesign: redesignScope reads all three scopes', redesignScope(CP(ui)) === 'ui-only' && redesignScope(CP('lane: redesign (ui+logic) · skipped 1')) === 'ui+logic' && redesignScope(CP('lane: redesign (logic-only) · skipped 1, 3b, 3e')) === 'logic-only' && redesignScope(CP('lane: feature · skipped none')) === null);
   check('redesign: gated like the feature lane', JSON.stringify(gatesForSpawn('frontend-dev', '', 'redesign')) === '["2b","3c"]' && gatesForSpawn('product-manager', '', 'redesign').length === 0);
   check('redesign: a step past an open gate is an error', gateErrors(CP(ui), ['4'], { lane: 'redesign' }).length === 2);
 

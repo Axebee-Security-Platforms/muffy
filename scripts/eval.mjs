@@ -15,6 +15,7 @@ import { runFixLaneEvals } from './lib/fix-lane-evals.mjs';
 import { runOwnershipEvals } from './lib/ownership-evals.mjs';
 import { runLiteLaneEvals } from './lib/lite-lane-evals.mjs';
 import { runRedesignLaneEvals } from './lib/redesign-lane-evals.mjs';
+import { runLaneTableEvals } from './lib/lane-table-evals.mjs';
 import { runPendingEvals } from './lib/pending-evals.mjs';
 import { runGateEvals } from './lib/gate-evals.mjs';
 import { runRouteEvals } from './lib/route-evals.mjs';
@@ -1109,6 +1110,7 @@ runFixLaneEvals({ check, root });
 runOwnershipEvals({ check, root });
 runLiteLaneEvals({ check, root });
 runRedesignLaneEvals({ check, root });
+runLaneTableEvals({ check, root });
 
 /* 8b. routing (references/route.md): decision order, Examples table, intake rows */
 runRouteEvals({ check, root });

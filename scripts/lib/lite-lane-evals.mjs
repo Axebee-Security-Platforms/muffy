@@ -40,7 +40,7 @@ export function runLiteLaneEvals({ check, root }) {
   check(`lite-doc: the ${LITE_MAX_FILES}-file limit is stated for triage and for promotion`, (doc.match(new RegExp(`${LITE_MAX_FILES} source files`, 'g')) ?? []).length >= 2);
 
   /* steps */
-  const skipped = (doc.match(/`lite: skipped ([^`]+)`/)?.[1] ?? '').split(/,\s*/);
+  const skipped = (doc.match(/`lane: lite · skipped ([^`]+)`/)?.[1] ?? '').split(/,\s*/);
   check('lite-doc: the run profile line names what the lane skips', skipped.length >= 4, skipped.join(','));
   check('lite-doc: the lane never skips review, QA, staging or the Human gate', NEVER_SKIP.every((s) => !skipped.includes(s)) && NEVER_SKIP.every((s) => new RegExp(`Never skipped:[^\\n]*\\b${s}\\b`).test(doc)));
   check('lite-doc: the architect step (3) is never skipped', !skipped.includes('3') && /Never skipped: 3,/.test(doc));

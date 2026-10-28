@@ -44,7 +44,7 @@ When a request is borderline (an internal endpoint plus "and show it on the sett
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
 3. Create the feature worktree from `<base>`: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/ac.md` there (format below). The Orchestrator writes it from the same reads; no `product-manager` is spawned for it
 4. Commit `ac.md` to `feature/<task>` (never to `<base>`)
-5. Write `checkpoint.md` in the feature worktree with `## Run profile` = `lite: skipped 1, 2, 3b, 3c` (add `3d` when no smoke trigger is true, [run-profile.md](run-profile.md))
+5. Write `checkpoint.md` in the feature worktree, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> lite` (add `--skip 3d` when no smoke trigger is true, [run-profile.md](run-profile.md)); it writes `lane: lite · skipped 1, 2, 2b, 3b, 3c`
 
 ## `ac.md` in this lane
 
@@ -86,7 +86,7 @@ The lane signals a promote through a blocker owned by an agent this lane skips, 
 
 The owner alone does not promote. Read the blocker's `problem` and promote only when it names a failed triage condition (a visible change, an outside consumer, auth or personal data, a new dependency or stack fact, a new screen, flow or component). In this lane the Orchestrator wrote `ac.md`, so a `PM` blocker that only asks what an AC means is a clarification: ask the user one `AskUserQuestion`, update `ac.md`, and send the answer back to the same agent.
 
-A blocker `owner: Architect` at step 4 is not a promote: the architect is in this lane, so it goes back to step 3 through the normal loop ([loops.md](loops.md)). On a promote: stop the lane, keep `ac.md` and `contract.md` as input for the restarted steps, change `## Run profile` in `checkpoint.md` to the full-flow profile, and record the reason in the checkpoint and the vault task note.
+A blocker `owner: Architect` at step 4 is not a promote: the architect is in this lane, so it goes back to step 3 through the normal loop ([loops.md](loops.md)). On a promote: stop the lane, keep `ac.md` and `contract.md` as input for the restarted steps, switch the lane with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> feature` (never by editing the line by hand), and record the reason in the checkpoint and the vault task note.
 
 ## Model and effort
 
