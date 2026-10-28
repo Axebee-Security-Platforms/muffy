@@ -16,10 +16,10 @@ import { fileURLToPath } from 'node:url';
 import { COVERED_FILE, MANIFEST_NAMES } from './repo-facts.mjs';
 import { parseOwnership, ownersOf } from './ownership.mjs';
 import { smokeRequired } from './next-action.mjs';
-import { LANES } from './lanes.mjs';
+import { laneSpec } from './lanes.mjs';
 
-// lanes whose scope the diff can outgrow (a file limit in lanes.mjs)
-const SCOPED = Object.keys(LANES).filter((l) => LANES[l].maxFiles);
+// lanes whose scope the diff can outgrow (a file limit in lanes.mjs); lite is the change lane's internal scope
+const SCOPED = ['fix', 'lite', 'change'];
 
 const base = (p) => p.split('/').pop();
 export const isTest = (p) => /(^|\/)(tests?|__tests__)\//.test(p) || /\.(test|spec)\.[a-z]+$/i.test(p);
@@ -51,15 +51,16 @@ export function classify(files, { ownershipRows = [], smokeOnRecord = true } = {
 }
 
 // The lane conditions that a diff can show. Conditions about intent (a new screen, an outside consumer) stay with the Orchestrator.
-export function laneVerdict(c, profile) {
+export function laneVerdict(c, profile, scope) {
   const reasons = [];
-  const max = LANES[profile]?.maxFiles;
+  const spec = laneSpec(profile, scope ?? (profile === 'change' ? 'internal' : null));
+  const max = spec?.maxFiles;
   if (!max) throw new Error(`laneVerdict: ${profile} has no lane limits (${SCOPED.join(', ')})`);
   if (c.source.length > max) reasons.push(`${c.source.length} source files changed (lane max ${max})`);
   if (c.deps.length) reasons.push(`dependency change: ${c.deps.join(', ')}`);
   if (c.devops.length) reasons.push(`devops-owned files: ${c.devops.join(', ')}`);
   if (c.auth.length) reasons.push(`auth or permission files: ${c.auth.join(', ')}`);
-  if (profile === 'fix' && c.schema.length) reasons.push(`schema or migration: ${c.schema.join(', ')}`); // lite allows a reversible migration
+  if (spec.lane === 'fix' && c.schema.length) reasons.push(`schema or migration: ${c.schema.join(', ')}`); // lite allows a reversible migration
   return { promote: reasons.length > 0, reasons };
 }
 

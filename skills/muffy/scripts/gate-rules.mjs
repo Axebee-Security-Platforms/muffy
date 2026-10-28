@@ -5,7 +5,7 @@
 //   checkpoint.mjs gate   records the user's answer (the only writer of the gate lines in ## Status)
 // A gate is passed when ## Status has `gate <id> passed`, or skipped when it has `gate <id> skipped`. Other lines
 // that name the gate (`not passed`, `rejected`) do not count. Which lanes are gated, and which gates a step needs, come from lanes.mjs.
-import { GATES, STEP_NEEDS, LANES, parseRunProfile } from './lanes.mjs';
+import { GATES, STEP_NEEDS, laneSpec, parseRunProfile } from './lanes.mjs';
 
 export { GATES };
 export const PAUSE_OF = { '2b': 'plan-review', '3c': 'design-review' };
@@ -16,18 +16,23 @@ export const MUFFY_ROLES = new Set(['architect', 'auditor', 'backend-dev', 'code
 const BEFORE_GATES = new Set(['product-manager', 'researcher', 'presenter']);
 // roles that run only after the design gate (step 4 on, and the code review of step 6)
 const AFTER_DESIGN = new Set(['backend-dev', 'frontend-dev', 'code-reviewer', 'qa-tester', 'docs-writer']);
-const gated = (lane) => LANES[lane]?.gated === true;
+const gated = (lane, scope) => laneSpec(lane, scope)?.gated === true;
 
 const norm = (text) => String(text ?? '').replace(/\r\n/g, '\n');
 export const section = (text, name) => norm(text).match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] ?? null;
 
-// feature unless the Run profile names the fix, lite or redesign lane (lanes.mjs parseRunProfile)
+// feature unless the Run profile names the fix or change lane (lanes.mjs parseRunProfile; lite and redesign read as change)
 export const laneOf = (cpText) => parseRunProfile(cpText).lane;
 
-// redesign lane scope the user picked at pause:scope: ui-only | ui+logic | logic-only, or null
-export const redesignScope = (cpText) => {
+// the change lane's scope the user picked at pause:scope (internal | ui-only | ui+logic | logic-only), or null
+export const changeScope = (cpText) => {
   const { lane, scope } = parseRunProfile(cpText);
-  return lane === 'redesign' ? scope : null;
+  return lane === 'change' ? scope : null;
+};
+// a visible change scope (ui-only | ui+logic | logic-only), or null: the scopes the redesign lane had
+export const redesignScope = (cpText) => {
+  const scope = changeScope(cpText);
+  return scope === 'internal' ? null : scope;
 };
 
 export function gateState(cpText, gate) {
@@ -43,8 +48,8 @@ export function gateState(cpText, gate) {
 }
 
 // the gates a spawn of `role` needs before it may start (prompt tells devops mode 2 from mode 1)
-export function gatesForSpawn(role, prompt = '', lane = 'feature') {
-  if (!gated(lane) || BEFORE_GATES.has(role)) return [];
+export function gatesForSpawn(role, prompt = '', lane = 'feature', scope = null) {
+  if (!gated(lane, scope) || BEFORE_GATES.has(role)) return [];
   const needs = ['2b'];
   if (AFTER_DESIGN.has(role) || (role === 'devops' && /\bmode\s*2\b/i.test(prompt))) needs.push('3c');
   return needs;
@@ -65,14 +70,14 @@ export function auditMissing(cpText, role, prompt = '', handoffs = []) {
 
 // gates still open for this spawn; a null checkpoint means setup has not written one, so every gate is open
 export function missingGates(cpText, role, prompt = '') {
-  const lane = cpText === null ? 'feature' : laneOf(cpText);
-  return gatesForSpawn(role, prompt, lane).filter((g) => cpText === null || gateState(cpText, g) === 'open');
+  const run = cpText === null ? { lane: 'feature', scope: null } : parseRunProfile(cpText);
+  return gatesForSpawn(role, prompt, run.lane, run.scope).filter((g) => cpText === null || gateState(cpText, g) === 'open');
 }
 
 // post-hoc: the steps of the hand-offs so far against the gates in the checkpoint
-export function gateErrors(cpText, steps, { designExists = false, lane } = {}) {
-  const l = lane ?? (cpText === null ? 'feature' : laneOf(cpText));
-  if (!gated(l)) return [];
+export function gateErrors(cpText, steps, { designExists = false, lane, scope } = {}) {
+  const run = cpText === null ? { lane: 'feature', scope: null } : parseRunProfile(cpText);
+  if (!gated(lane ?? run.lane, scope ?? run.scope)) return [];
   const errs = [];
   for (const step of [...new Set(steps.map(String))]) {
     for (const g of STEP_NEEDS[step] ?? []) {

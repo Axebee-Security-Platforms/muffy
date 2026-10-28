@@ -13,7 +13,7 @@ A request is a **fix** only if all hold; otherwise run the full flow:
 
 If the request says it is a bug or asks for a fix but gives no symptom and no location or repro, do not guess a lane and do not start the full flow: ask **one** `AskUserQuestion` for what happens (error text or wrong result), where (page, endpoint or file) and how to trigger it, then triage on the answer. The words "bug", "fix", "บั๊ก" or "แก้" never decide the lane on their own; the four conditions do.
 
-Read the signals from the request, then let `node .claude/skills/muffy/scripts/next-action.mjs triage fix '<json>'` decide (keys: `trivial_one_line`, `has_symptom`, `has_location`, `has_repro`, `changes_contract`, `adds_new_ui`, `expected_source_files`). If one fails, say which in one line and run the full flow. Internal work that is not a bug fix (an internal API, a refactor, a measured performance fix, an index) is triaged by [lite-profile.md](lite-profile.md) instead. Trivial edits with no behaviour risk (a typo, one line): do them in the main session, no muffy.
+Read the signals from the request, then let `node .claude/skills/muffy/scripts/next-action.mjs triage fix '<json>'` decide (keys: `trivial_one_line`, `has_symptom`, `has_location`, `has_repro`, `changes_contract`, `adds_new_ui`, `expected_source_files`). If one fails, say which in one line and run the full flow. Internal work that is not a bug fix (an internal API, a refactor, a measured performance fix, an index) is the change lane's internal scope, triaged by [change-profile.md](change-profile.md#the-internal-scope) instead. Trivial edits with no behaviour risk (a typo, one line): do them in the main session, no muffy.
 
 ### Examples
 
@@ -24,8 +24,8 @@ Read the signals from the request, then let `node .claude/skills/muffy/scripts/n
 | "Submit button on checkout is the wrong colour in dark mode" | fix (FE, cosmetic) | Existing tokens, no new component |
 | "Align the card padding on the pricing page with the design system spacing" | fix (FE, cosmetic) | Tokens already exist, no logic change |
 | "Date shows a day earlier for users in UTC-5" | fix | Symptom with a clear repro; likely 1-2 files |
-| "Add a `phone` field to the signup form" | redesign | An existing form plus its schema and API contract; the scope is asked |
-| "Redesign the login page" / "make the dashboard look better" | redesign | Changes an existing screen or flow; needs design approval ([redesign-profile.md](redesign-profile.md)) |
+| "Add a `phone` field to the signup form" | change | An existing form plus its schema and API contract; the scope is asked |
+| "Redesign the login page" / "make the dashboard look better" | change | Changes an existing screen or flow; needs design approval ([change-profile.md](change-profile.md)) |
 | "Search is slow" | full, or ask first | No symptom, location or repro; ask for a measurement before triage |
 | "Invoice totals are wrong" | fix → promoted | Starts as a fix; step 4a finds the cause is a rounding rule in the contract and returns `needs-full-flow` |
 | "Upgrade React to 19 and fix what breaks" | full | A dependency change |

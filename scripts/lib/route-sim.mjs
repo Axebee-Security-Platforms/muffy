@@ -9,17 +9,18 @@ export const MODES = ['menu', 'todo', 'onboard', 'present', 'diagram'];
 export const NON_CODE_ROUTES = ['research', 'plan', 'design', 'design-review', 'spec', 'arch-review', 'adr', 'review', 'qa', 'docs', 'docs-existing', 'ops'];
 // diagram.md "Kinds": the route a diagram of something not designed yet goes to, by kind.
 export const NOT_DESIGNED_ROUTE = { architecture: 'spec', deployment: 'spec', erd: 'spec', state: 'spec', flow: 'spec', screenmap: 'design', gantt: 'plan', 'story-map': 'plan' };
-export const ROUTES = ['resume', ...MODES, 'diagram-in-task', 'none', ...NON_CODE_ROUTES, 'fix', 'lite', 'redesign', 'full', 'ask'];
+export const ROUTES = ['resume', ...MODES, 'diagram-in-task', 'none', ...NON_CODE_ROUTES, 'fix', 'change', 'full', 'ask'];
 
-// s: { resume, command, mode, kind, open_task, not_designed, question, deploy, stop_point, outcome, ambiguous, missing_intake, text_only, bug, internal, change_existing, new_capability, fix: {...}, lite: {...} }
+// s: { bare, resume, command, mode, kind, open_task, not_designed, question, deploy, stop_point, outcome, ambiguous, missing_intake, text_only, bug, internal, change_existing, new_capability, fix: {...}, lite: {...} }
+// The change lane (change-profile.md) is one route; `internal` work goes through its triage, a visible change straight in (the scope is asked there).
 export function route(s = {}) {
   // resume with no task name is still resume (resume.md picks the task or shows the menu); a bare `/muffy` shows the menu
   if (s.resume === true) return { route: 'resume', step: 1 };
   if (s.bare === true) return { route: 'menu', step: 1 };
   // `/muffy feature <request>`: the requester forced the full flow; only this decision is skipped, intake and gates still run
   if (s.command === 'feature') return { route: 'full', step: 2 };
-  // `/muffy redesign <request>`: the lane is forced; its scope question (UI only, UI + logic, logic only) is still asked inside it
-  if (s.command === 'redesign') return { route: 'redesign', step: 2 };
+  // `/muffy redesign <request>`: the change lane is forced; its scope question (the look, the rules, or both) is still asked inside it
+  if (s.command === 'redesign') return { route: 'change', step: 2 };
   if (s.mode === 'diagram') {
     // diagram.md "Before the scope question": an open task takes it; a subject not designed yet is spec work
     if (s.open_task === true) return { route: 'diagram-in-task', step: 2 };
@@ -41,7 +42,7 @@ export function route(s = {}) {
     return { route: lane, step: 6 };
   }
   if (s.internal === true) return { route: triageLite(s.lite ?? {}).lane, step: 6 };
-  if (s.change_existing === true) return { route: 'redesign', step: 6 };
+  if (s.change_existing === true) return { route: 'change', step: 6 };
   // full flow is the last option: only a capability the product lacks reaches it; anything vaguer is asked until one route fits
   if (s.new_capability === true) return { route: 'full', step: 6 };
   return { route: 'ask', step: 7 };

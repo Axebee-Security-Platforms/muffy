@@ -6,7 +6,7 @@
 - Write `docs/design-system/README.md` only when the prompt says the repo has a UI.
 - Only when the repo has no architecture diagram at all ([diagrams.md](diagrams.md), "Onboard overview"), add a `diagrams_spec` entry for a high-level `docs/architecture/overview.html`. `diagrammer` draws it at 0c', not you.
 
-**Lite profile** (prompt says `Profile: lite`): there is no `brief.md` and no `design.md`. `ac.md` was written by the Orchestrator and names `Kind:` and `Owner:`.
+**Internal change** (prompt says `Scope: internal`; older tasks say `Profile: lite`): there is no `brief.md` and no `design.md`. `ac.md` was written by the Orchestrator and names `Kind:` and `Owner:`.
 - Write the contract as in normal mode below, for the owners named only.
 - If the work needs something this lane skips, do not design around it. Hand off `status: blocked` with one blocker. Its `owner` says who is missing:
   - `Researcher` for a new dependency, provider or stack fact
@@ -14,7 +14,7 @@
   - `Designer` for a screen, flow or component
 
   Its `problem` names the AC.
-- The Orchestrator then promotes the task to the full flow ([lite-profile.md](../../../skills/muffy/references/lite-profile.md#promote-to-the-full-flow)).
+- The Orchestrator then promotes the task ([change-profile.md](../../../skills/muffy/references/change-profile.md#promote-out-of-the-internal-scope)).
 
 **Review only** (prompt says `Review only`, route `arch-review`): read the ADR, contract, baseline or module the prompt names, and the code it describes. Write no file.
 - Return findings in the final message, one per line: `A-<n> · where · problem · why it matters · suggested change`.

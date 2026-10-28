@@ -12,7 +12,7 @@
 //   diff        diff-signals.mjs: the 3d decision, and from step 4 on the lane scope     (with --base)
 // The judgment half of quality-checks.md (plan phases, what the brain note says, gates the user answered) stays with you.
 //
-// Usage: node check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign] [--skip 3d] [--brain <dir>]
+// Usage: node check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign|change] [--skip 3d] [--brain <dir>]
 //                           [--base <ref> [--head <ref>] [--cwd <repo>]]
 // Hand-offs are ordered by round, then step order (steps.md), so a fix round (4 r2) comes after the review that sent it (6 r1).
 // Prints `next=<action>` first, then one `ok`/`FAIL` line per check and the failing lines.
@@ -28,7 +28,7 @@ import { checkTask as checkArtifacts } from './check-artifacts.mjs';
 import { classify, laneVerdict, smokeOnRecord } from './diff-signals.mjs';
 import { parseOwnership } from './ownership.mjs';
 import { gateErrors, gateState } from './gate-rules.mjs';
-import { STEP_ORDER, LANES, skipsOf, parseRunProfile } from './lanes.mjs';
+import { STEP_ORDER, laneSpec, resolveLane, skipsOf, parseRunProfile } from './lanes.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export { STEP_ORDER };
@@ -53,7 +53,8 @@ export function checkAll(taskDir, { step, round, profile: given, skip = [], brai
   // the lane: --profile when given, else the checkpoint's Run profile line; feature runs with no profile.
   // Skips: the lane's own, plus --skip when given, else the steps the lane line lists (`checkpoint.mjs profile --skip 3d`)
   const cp = parseRunProfile(cpText);
-  const run = given && given !== cp.lane ? { lane: given, scope: null, skipped: [] } : cp;
+  const g = given ? resolveLane(given) : null;
+  const run = g && (g.lane !== cp.lane || (g.scope && g.scope !== cp.scope)) ? { ...g, skipped: [] } : cp;
   const profile = run.lane === 'feature' ? undefined : run.lane;
   const results = []; // [name, errors[]]
   const add = (name, errors) => results.push([name, errors]);
@@ -116,7 +117,7 @@ export function checkAll(taskDir, { step, round, profile: given, skip = [], brai
       const c = classify(files, { ownershipRows: own ? parseOwnership(own) : [], smokeOnRecord: smokeOnRecord(brain) });
       const errs = [];
       if (c.smoke.required && skips.includes('3d') && profile !== 'fix') errs.push(`3d is skipped but a smoke trigger is true: ${c.smoke.reasons.join(', ')}`);
-      if (LANES[profile]?.maxFiles && STEP_ORDER.indexOf(String(step)) >= STEP_ORDER.indexOf('4')) errs.push(...laneVerdict(c, profile).reasons.map((r) => `promote:full-flow: ${r}`));
+      if (laneSpec(profile, run.scope)?.maxFiles && STEP_ORDER.indexOf(String(step)) >= STEP_ORDER.indexOf('4')) errs.push(...laneVerdict(c, profile, run.scope).reasons.map((r) => `promote:full-flow: ${r}`));
       add('diff', errs);
     }
   }
@@ -137,7 +138,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const pos = [];
   for (let i = 0; i < argv.length; i++) argv[i].startsWith('--') ? (o[argv[i].slice(2)] = argv[++i]) : pos.push(argv[i]);
   if (!pos[0] || !o.step || !o.round) {
-    console.error('usage: check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign] [--skip a,b] [--brain <dir>] [--base <ref> [--head <ref>] [--cwd <repo>]]');
+    console.error('usage: check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign|change] [--skip a,b] [--brain <dir>] [--base <ref> [--head <ref>] [--cwd <repo>]]');
     process.exit(2);
   }
   const r = checkAll(pos[0], { step: o.step, round: o.round, profile: o.profile, skip: (o.skip ?? '').split(',').filter(Boolean), brain: o.brain, base: o.base, head: o.head, cwd: o.cwd });

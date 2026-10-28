@@ -25,7 +25,7 @@ export function runRouteEvals({ check, root }) {
     const out = route(sc.signals);
     check(`route:${sc.id}`, out.route === sc.expect, `expected ${sc.expect}, got ${out.route} (step ${out.step})`);
   }
-  for (const r of ['none', 'fix', 'lite', 'full', 'ask', 'resume', 'diagram', 'diagram-in-task']) check(`route: "${r}" has a scenario`, scenarios.some((x) => x.expect === r));
+  for (const r of ['none', 'fix', 'change', 'full', 'ask', 'resume', 'diagram', 'diagram-in-task']) check(`route: "${r}" has a scenario`, scenarios.some((x) => x.expect === r));
   check('route: a Thai prompt exists for at least half the scenarios', scenarios.filter((x) => /[฀-๿]/.test(x.request)).length * 2 >= scenarios.length);
 
   /* doc Examples ↔ scenarios */

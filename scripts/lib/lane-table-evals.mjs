@@ -9,7 +9,7 @@ import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { LANES, SCOPES, STEP_ORDER, skipsOf, neverSkipOf, formatRunProfile, parseRunProfile, isLaneLine } from '../../skills/muffy/scripts/lanes.mjs';
+import { LANES, SCOPES, STEP_ORDER, skipsOf, neverSkipOf, laneSpec, formatRunProfile, parseRunProfile, isLaneLine } from '../../skills/muffy/scripts/lanes.mjs';
 import { laneOf, redesignScope, missingGates, auditMissing } from '../../skills/muffy/scripts/gate-rules.mjs';
 import { setProfile } from '../../skills/muffy/scripts/checkpoint.mjs';
 import { checkAll } from '../../skills/muffy/scripts/check-all.mjs';
@@ -22,33 +22,40 @@ export function runLaneTableEvals({ check, root }) {
 
   /* the table */
   check('lanes: every skipped step is a step id', Object.values(LANES).every((l) => [l.skips, ...Object.values(l.scopes ?? {}).map((s) => s.skips)].flat().every((s) => STEP_ORDER.includes(s))));
-  check('lanes: no lane skips a step it must run', Object.keys(LANES).every((l) => [undefined, ...SCOPES].every((sc) => !skipsOf(l, sc).some((s) => neverSkipOf(l).includes(s)))));
-  check('lanes: the redesign lane has a skip list per scope', SCOPES.every((s) => LANES.redesign.scopes[s]));
+  check('lanes: no lane or scope skips a step it must run', Object.keys(LANES).every((l) => [undefined, ...SCOPES].every((sc) => !skipsOf(l, sc).some((s) => neverSkipOf(l, sc).includes(s)))));
+  check('lanes: the change lane has a skip list per scope', SCOPES.every((s) => LANES.change.scopes[s]?.skips));
+  check('lanes: only the internal scope is ungated; a change line with no or an unknown scope fails closed (gated)', SCOPES.every((s) => laneSpec('change', s).gated === (s !== 'internal')) && laneSpec('change', null).gated && laneSpec('change', 'bogus').gated);
   check('lanes: steps 8 and 9 are gone', !STEP_ORDER.includes('8') && !STEP_ORDER.includes('9'));
 
   /* the Run profile line */
-  const pairs = [...Object.keys(LANES).filter((l) => l !== 'redesign').map((l) => [l, null]), ...SCOPES.map((s) => ['redesign', s])];
+  const pairs = [...Object.keys(LANES).filter((l) => l !== 'change').map((l) => [l, null]), ...SCOPES.map((s) => ['change', s])];
   for (const [lane, scope] of pairs) {
     const line = formatRunProfile(lane, { scope: scope ?? undefined });
     const back = parseRunProfile(CP(line));
     check(`lanes: "${line}" reads back as ${lane}${scope ? ` (${scope})` : ''}`, back.lane === lane && back.scope === scope, JSON.stringify(back));
   }
-  check('lanes: a run skip is merged in step order, a role is kept as written', formatRunProfile('redesign', { scope: 'ui-only', skip: ['3d', 'architect'] }) === 'lane: redesign (ui-only) · skipped 1, 2b, 3d, architect');
+  check('lanes: a run skip is merged in step order, a role is kept as written', formatRunProfile('change', { scope: 'ui-only', skip: ['3d', 'architect'] }) === 'lane: change (ui-only) · skipped 1, 2b, 3d, architect');
   let refused = '';
-  try { formatRunProfile('redesign'); } catch (e) { refused = e.message; }
-  check('lanes: a redesign line without a scope is refused', /needs a scope/.test(refused), refused);
+  try { formatRunProfile('change'); } catch (e) { refused = e.message; }
+  check('lanes: a change line without a scope is refused', /needs a scope/.test(refused), refused);
+  check('lanes: the old ids write the change lane line', formatRunProfile('lite') === formatRunProfile('change', { scope: 'internal' }) && formatRunProfile('redesign', { scope: 'logic-only' }) === formatRunProfile('change', { scope: 'logic-only' }));
 
   const legacy = [
     ['fix: skipped 1, 2, 3, 3b, 3c, 3d', 'fix', null],
-    ['lite: skipped 1, 2, 3b, 3c', 'lite', null],
-    ['redesign lane (ui+logic): skipped 1', 'redesign', 'ui+logic'],
+    ['lite: skipped 1, 2, 3b, 3c', 'change', 'internal'],
+    ['redesign lane (ui+logic): skipped 1', 'change', 'ui+logic'],
+    // what PR1-3 wrote with checkpoint.mjs profile, before lite and redesign became the change lane
+    ['lane: lite · skipped 1, 2, 2b, 3b, 3c, 3d', 'change', 'internal'],
+    ['lane: redesign (ui-only) · skipped 1, 2b', 'change', 'ui-only'],
+    ['lane: redesign (ui+logic) · skipped 1', 'change', 'ui+logic'],
+    ['lane: redesign (logic-only) · skipped 1, 3b, 3e', 'change', 'logic-only'],
     ['fix lane: skipped 1, 2, 3, 3b, 3c, 3d, 8', 'fix', null],
     ['Fix lane.', 'fix', null],
     ['Full flow, feature lane.', 'feature', null],
     ['Full run; nothing skipped.', 'feature', null],
   ];
   for (const [line, lane, scope] of legacy) {
-    check(`lanes: older line "${line}" still reads as ${lane}`, laneOf(CP(line)) === lane && redesignScope(CP(line)) === scope);
+    check(`lanes: older line "${line}" still reads as ${lane}${scope ? ` (${scope})` : ''}`, laneOf(CP(line)) === lane && parseRunProfile(CP(line)).scope === scope);
   }
   check('lanes: the skipped steps on the lane line are read back, roles and removed steps dropped', JSON.stringify(parseRunProfile(CP('redesign lane (ui-only): skipped 1, 2b, architect, 3d')).skipped) === '["1","2b","3d"]' && JSON.stringify(parseRunProfile(CP('fix lane: skipped 1, 3d, 8')).skipped) === '["1","3d"]');
 
@@ -56,7 +63,8 @@ export function runLaneTableEvals({ check, root }) {
   const fixLine = 'fix: skipped 1, 2, 3, 3b, 3c, 3d';
   const step4 = 'Task: t\nWrite: .worktrees/feature-t/.team/t/handoff/4-backend-dev-r1.json\n';
   check('lanes: a fix-lane dev waits on no plan or design gate', missingGates(CP(fixLine), 'backend-dev', step4).length === 0);
-  check('lanes: a lite-lane architect waits on no gate', missingGates(CP('lite: skipped 1, 2, 3b, 3c'), 'architect', '').length === 0);
+  check('lanes: a lite-lane architect waits on no gate', missingGates(CP('lite: skipped 1, 2, 3b, 3c'), 'architect', '').length === 0 && missingGates(CP('lane: lite · skipped 1, 2, 2b, 3b, 3c'), 'architect', '').length === 0);
+  check('lanes: an old redesign line still gates its devs', missingGates(CP('lane: redesign (ui-only) · skipped 1, 2b'), 'frontend-dev', '').length === 2 && missingGates(CP('lane: redesign · skipped 1'), 'frontend-dev', '').length === 2);
   check('lanes: the fix-lane audit guard applies to `fix:` lines', auditMissing(CP(fixLine), 'backend-dev', step4, []) !== null && auditMissing(CP(fixLine), 'backend-dev', step4, [{ step: '4b', round: 1, audit: { verdict: 'confirm' } }]) === null);
 
   /* checkpoint.mjs profile, check-all and make-envelope */
@@ -85,23 +93,33 @@ export function runLaneTableEvals({ check, root }) {
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
-  const env = spawnSync(process.execPath, [join(root, 'skills/muffy/scripts/make-envelope.mjs'), '--role', 'designer', '--step', '3', '--task', 't', '--brain', '.team/brain', '--goal', 'Redesign the login page', '--read', 'ac.md', '--write', 'design.md', '--scope', 'ui-only'], { encoding: 'utf8' });
-  check('make-envelope: --scope puts Scope: in the header', env.status === 0 && /^Task: t .*Scope: ui-only/m.test(env.stdout), env.stderr);
+  const head = (...extra) => {
+    const r = spawnSync(process.execPath, [join(root, 'skills/muffy/scripts/make-envelope.mjs'), '--role', 'architect', '--step', '3', '--task', 't', '--brain', '.team/brain', '--goal', 'Write the contract for the change', '--read', 'ac.md', '--write', 'contract.md', ...extra], { encoding: 'utf8' });
+    return r.status === 0 ? r.stdout.split('\n')[0] : `ERR ${r.stderr}`;
+  };
+  // one header scheme: fix → Profile: fix; change → Scope: <scope>; the older --profile lite → Scope: internal
+  check('make-envelope: each scope gets exactly its Scope: header and no Profile:', ['internal', 'ui-only', 'ui+logic', 'logic-only'].every((s) => head('--scope', s).endsWith(`Scope: ${s}`) && !head('--scope', s).includes('Profile:')));
+  check('make-envelope: --profile lite becomes Scope: internal; --profile fix stays Profile: fix', head('--profile', 'lite').endsWith('Scope: internal') && !head('--profile', 'lite').includes('Profile:') && head('--profile', 'fix').endsWith('Profile: fix'));
+  const agentRef = (p) => readFileSync(join(root, 'agents/references', p), 'utf8');
+  check('agents: the internal-scope refs key on Scope: internal, none on Profile: lite alone', ['architect/required-inputs.md', 'architect/workflow.md', 'devops/required-inputs.md', 'frontend-dev/required-inputs.md', 'qa-tester/required-inputs.md'].every((p) => agentRef(p).includes('Scope: internal')) && !['architect/required-inputs.md', 'devops/required-inputs.md', 'frontend-dev/required-inputs.md', 'qa-tester/required-inputs.md'].some((p) => agentRef(p).includes('Profile: lite')));
 
   /* the references name the command and the lists the table holds */
-  for (const [f, cmd] of [['setup.md', 'feature'], ['fix-profile.md', 'fix'], ['lite-profile.md', 'lite'], ['redesign-profile.md', 'redesign --scope']]) {
+  for (const [f, cmd] of [['setup.md', 'feature'], ['fix-profile.md', 'fix'], ['change-profile.md', 'change --scope']]) {
     check(`docs: ${f} writes the lane line with checkpoint.mjs profile`, ref(f).includes(`checkpoint.mjs profile .team/<task> ${cmd}`));
   }
   // a promotion switches the lane with the command too: a hand-written "promoted from the fix lane" still reads as fix
-  for (const f of ['fix-profile.md', 'lite-profile.md']) {
+  for (const f of ['fix-profile.md', 'change-profile.md']) {
     const doc = ref(f);
     check(`docs: ${f} switches a promoted run with checkpoint.mjs profile … feature`, doc.includes('checkpoint.mjs profile .team/<task> feature') && !/rename the profile|change `## Run profile`/.test(doc));
   }
   const ids = (text) => [...new Set((text ?? '').match(/\b\d+[a-z]?\b/g) ?? [])].filter((s) => STEP_ORDER.includes(s));
   const same = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
   check('drift: fix-profile.md never-skip list matches lanes.mjs', same(ids(ref('fix-profile.md').match(/^Never skipped: ([^.]+)\./m)?.[1]), neverSkipOf('fix')));
-  check('drift: lite-profile.md never-skip list matches lanes.mjs', same(ids(ref('lite-profile.md').match(/Never skipped: ([^.]+)\./)?.[1]), neverSkipOf('lite')));
-  check('drift: redesign-profile.md never-skip list matches lanes.mjs', same(ids(ref('redesign-profile.md').match(/\*\*Never skipped:\*\* ([^\n]+)/)?.[1]), neverSkipOf('redesign')));
-  check('drift: lite-profile.md skip list matches lanes.mjs', same(ids(ref('lite-profile.md').match(/^Skipped: ([^\n]+?)\. Never/m)?.[1]), skipsOf('lite').filter((s) => s !== '2b')));
-  check('docs: resume reads every lane from the lane line', /redesign-profile\.md/.test(ref('resume.md')) && ref('resume.md').includes('lane:'));
+  const change = ref('change-profile.md');
+  check('drift: change-profile.md internal never-skip list matches lanes.mjs', same(ids(change.match(/^Internal: Skipped: [^\n]*?Never skipped: ([^.]+)\./m)?.[1]), neverSkipOf('change', 'internal')));
+  check('drift: change-profile.md visible never-skip list matches lanes.mjs', ['ui-only', 'ui+logic', 'logic-only'].every((s) => same(ids(change.match(/\*\*Never skipped:\*\* ([^\n]+)/)?.[1]), neverSkipOf('change', s))));
+  check('drift: change-profile.md internal skip list matches lanes.mjs', same(ids(change.match(/^Internal: Skipped: ([^\n]+?)\. Never/m)?.[1]), skipsOf('change', 'internal').filter((s) => s !== '2b')));
+  check('drift: change-profile.md Steps by scope marks 3b/3e skipped exactly for the scopes lanes.mjs skips them', ['internal', 'ui-only', 'ui+logic', 'logic-only'].every((s, i) => /skipped/.test(change.match(/^\| 3b, 3e \|[^\n]*$/m)?.[0].split('|').slice(1, -1)[i + 2] ?? '') === skipsOf('change', s).includes('3b')));
+  check('docs: resume reads every lane from the lane line', /change-profile\.md/.test(ref('resume.md')) && ref('resume.md').includes('lane:'));
+  check('docs: the old lane references point at the change lane', ['lite-profile.md', 'redesign-profile.md'].every((f) => ref(f).includes('[change-profile.md](change-profile.md)')));
 }

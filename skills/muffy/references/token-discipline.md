@@ -3,7 +3,7 @@
 - **Prompt template**: every subagent prompt is only this, no pasted file contents (parsed shape: [prompt-envelope.schema.json](../schemas/prompt-envelope.schema.json)). Team-folder paths in `Read:` and `Write:` go under the feature worktree (`.worktrees/feature-<task>/.team/<task>/…`), never bare `.team/<task>/…`, which resolves in the main checkout:
   Order is fixed so the prefix stays cacheable across rounds: constant lines first, per-spawn lines after `Final message:`, `Hand-off shape:` last ([spawn-prompt.md](spawn-prompt.md)). Shown here in that order:
   ```
-  Task: <task>  Brain: <brain>  [Vault: <vault> — researcher only]  [Mode: 1 | 2 | 3 — devops; onboard | stack-note — researcher; onboard — architect]  [Profile: fix — fix lane only; Read: fix.md replaces ac/contract/brief/design | lite — lite lane; Read: ac.md + contract.md, no brief/design]  [Scope: ui-only | ui+logic | logic-only — redesign lane only, `--scope`]
+  Task: <task>  Brain: <brain>  [Vault: <vault> — researcher only]  [Mode: 1 | 2 | 3 — devops; onboard | stack-note — researcher; onboard — architect]  [Profile: fix — fix lane only; Read: fix.md replaces ac/contract/brief/design]  [Scope: internal | ui-only | ui+logic | logic-only — change lane only, `--scope`; internal: Read ac.md + contract.md, no brief/design]
   [Worktree: <path> · Branch: <branch> — frontend-dev, backend-dev, qa-tester, devops mode 2; created by the Orchestrator (setup.md step 7)]
   Don't touch: <paths/scope>
   Commit trailer: <verbatim attribution line the harness gave the Orchestrator for this session — never typed from the skill, never a model name taken from a file — passed to every agent; every commit ends with it>

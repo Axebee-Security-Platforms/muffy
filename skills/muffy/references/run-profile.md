@@ -1,6 +1,6 @@
 # Run profile: skip what the feature doesn't need
 
-A small bug or cosmetic fix does not use the table below: it runs the fix lane ([fix-profile.md](fix-profile.md)), which skips 1, 2, 3, 3b, 3c and 3d, adds steps 4a (diagnose) and 4b (audit the cause), and still never skips 6, 7 and 10. If the fix grows past the lane's limits it is promoted to the full flow. Internal work with a known shape (internal API, refactor, measured performance, reversible DB change) runs the lite lane ([lite-profile.md](lite-profile.md)), which skips 1, 2, 3b and 3c and starts at the architect. A change to an existing screen, UX/UI or business-logic flow runs the redesign lane ([redesign-profile.md](redesign-profile.md)), whose scope the user picks at `pause:scope`.
+A small bug or cosmetic fix does not use the table below: it runs the fix lane ([fix-profile.md](fix-profile.md)), which skips 1, 2, 3, 3b, 3c and 3d, adds steps 4a (diagnose) and 4b (audit the cause), and still never skips 6, 7 and 10. If the fix grows past the lane's limits it is promoted to the full flow. A change to something the product already has runs the change lane ([change-profile.md](change-profile.md)). Internal work with a known shape (internal API, refactor, measured performance, reversible DB change) runs its internal scope, which skips 1, 2, 3b and 3c and starts at the architect. A change to an existing screen, UX/UI or business-logic flow runs a visible scope, which the user picks at `pause:scope`.
 
 | Condition | Skip |
 |---|---|
@@ -25,7 +25,7 @@ A pause stops the flow on purpose. It has an id, a resume condition, and one lin
 | Pause | Where | Stop until |
 |---|---|---|
 | `pause:scope` | setup, after scope confirmation (fix lane: one short question with the classification and AC list) | the user confirms scope (or edits it) |
-| `pause:scope-upgrade` | redesign lane, when a UI-only run reports `needs-logic` ([redesign-profile.md](redesign-profile.md)) | the user adds the logic work, or cuts that part from the design. At most once per task |
+| `pause:scope-upgrade` | change lane, when a `ui-only` run reports `needs-logic` ([change-profile.md](change-profile.md)) | the user adds the logic work, or cuts that part from the design. At most once per task |
 | `pause:onboard-review` | onboard step 0d ([onboard.md](onboard.md)) | the user approves or edits `baseline.md` and the ADR |
 | `pause:todo-review` | todo step 6 ([todo.md](todo.md)) | the user picks which unfinished task to continue; the pick hands off to resume |
 | `pause:plan-review` | step 2b, after `product-manager` returns `ac.md` and the plan (not on `needs-input`, which is an interview) | the user approves the AC and plan (Approve), or asks for changes and then approves the revision. Nothing goes to step 3 before this. Skipped when step 2 is skipped (fix and lite lanes) |

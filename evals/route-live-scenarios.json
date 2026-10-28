@@ -84,7 +84,7 @@
   {
    "id": "h17",
    "prompt": "ย้าย logic คำนวณภาษีออกจาก controller ไปไว้ใน service แยก ผลลัพธ์ต้องเหมือนเดิม (src/tax/)",
-   "expect": "lite"
+   "expect": "change"
   },
   {
    "id": "h18",
@@ -124,7 +124,7 @@
   {
    "id": "h25",
    "prompt": "เพิ่ม field เบอร์โทรในฟอร์มสมัครสมาชิก",
-   "expect": "redesign"
+   "expect": "change"
   },
   {
    "id": "h26",
