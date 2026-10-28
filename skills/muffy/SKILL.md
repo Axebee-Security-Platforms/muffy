@@ -34,7 +34,7 @@ Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup
 
 - **Route**: first, on a free-text request; say the entry in one line before spawning: [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | redesign | feature`). The command is the route, so say `Route: <mode>` and open that mode's reference instead
 - **Todo** (`/muffy todo`): tasks in `.team` that are not done, read-only: [todo.md](references/todo.md)
-- **Onboard** (`/muffy onboard`): existing codebase, first run: [onboard.md](references/onboard.md)
+- **Onboard**: started by setup step 3 when a task finds no usable baseline (asked once, depth by lane, then the task carries on), or by hand with `/muffy onboard`: [onboard.md](references/onboard.md)
 - **Present** (`/muffy present`): client deck outside the team flow: [present.md](references/present.md), missing documents: [doc-request.md](references/doc-request.md)
 - **Diagram** (`/muffy diagram`, or a standalone "draw a diagram"): route facts to the owning agent, then always `diagrammer`: [diagram.md](references/diagram.md); PNG/SVG only on request: [diagram-export.md](references/diagram-export.md)
 - **Setup**: folders and task note: [setup.md](references/setup.md)
@@ -43,7 +43,7 @@ Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup
 - **Platforms**: when the contract's `Platform:` is not `web`, or the request names an app or CLI: [platforms.md](references/platforms.md)
 - **Publishing diagrams** (3e): [diagram-publish.md](references/diagram-publish.md) · **Design review** (3c): [design-review.md](references/design-review.md)
 - **Requirements interview** (steps 1 and 2, `needs-input`): [requirements.md](references/requirements.md)
-- **Stack learning**: [stack-learning.md](references/stack-learning.md) · **Baseline freshness** (yellow/red only): [baseline-freshness.md](references/baseline-freshness.md) · **ADR ownership**: [adr.md](references/adr.md)
+- **Stack learning**: [stack-learning.md](references/stack-learning.md) · **Baseline freshness** (red only; yellow is refreshed without a question): [baseline-freshness.md](references/baseline-freshness.md) · **ADR ownership**: [adr.md](references/adr.md)
 - **Loops**: only when a reject/fail happens: [loops.md](references/loops.md)
 - **Token discipline** (prompt envelope script, report cap, quiet Bash, turn budget, compact points) and **Memory model**: each once at setup: [token-discipline.md](references/token-discipline.md), [memory-model.md](references/memory-model.md)
 - **Test levels**: before step 7 (fix lane: before step 4): [test-levels.md](references/test-levels.md)

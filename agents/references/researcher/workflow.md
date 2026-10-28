@@ -3,6 +3,7 @@
 **Onboard mode** (prompt says `mode: onboard`): skip this workflow. Follow [onboard.md](../../../skills/muffy/references/onboard.md) 0b:
 - Read `.team/onboard/scan.json`, confirm and extend it from the code, and write `docs/architecture/baseline.md`.
 - Mark anything unconfirmed `[verify]`.
+- If the prompt has `depth: quick`, write only `## Read this first`, Stack, Layout, Commands and the `[verify]` list, with `depth: quick` in the frontmatter (onboard.md → Depth). On a quick baseline without `depth: quick` in the prompt, keep its sections and add the rest; drop the `depth: quick` line.
 - If the prompt has `refresh: delta` (it carries `baseline-delta.mjs` output with `mode: refresh`), follow onboard.md → Refresh: explore only the delta's folders, `Edit` the existing baseline in place, and never re-Glob the whole repo.
 - Record facts, not recommendations. Never run the build or tests.
 

@@ -38,7 +38,7 @@ The installer copies the agents to `.claude/agents/` and the skill to `.claude/s
 |---|---|
 | `--dry-run` | Preview every change without writing |
 | `--clean` | Update: remove the previous install first, including agent files a newer version dropped |
-| `--scan` | Scan an existing repo and write `.team/onboard/scan.json` for `/muffy onboard` |
+| `--no-scan` | Skip the repo scan (by default the installer writes `.team/onboard/scan.json`, the input for onboarding) |
 | `--with-guard` | Merge the env, Bash-allowlist, full-regression, test-level, write-scope, git and gate guards into `hooks.PreToolUse` |
 
 The checkpoint and artifact size hooks are opt-in and added by hand; team-flow rules 1–4 are Orchestrator rules, not hooks. Full steps: [INSTALL.md](INSTALL.md).
@@ -51,13 +51,9 @@ The checkpoint and artifact size hooks are opt-in and added by hand; team-flow r
 
 Lists the tasks in `.team/` that are not done (checkpoint status is not `closed`), then asks which to continue with `/muffy resume`. Read-only. It does not look at git branches or trackers. Details: [todo](skills/muffy/references/todo.md).
 
-### Onboard an existing codebase (once)
+### Onboarding an existing codebase (automatic)
 
-```text
-/muffy onboard
-```
-
-The researcher and architect record the current stack as `docs/architecture/baseline.md` and an ADR. You review the baseline at a Human gate. After approval, onboard adds a short muffy block to `CLAUDE.md` / `AGENTS.md` (created if missing, never touching other lines). Skip this for a new, empty repo.
+You don't run it yourself. The first request on a repo with code but no `docs/architecture/baseline.md` asks once to look around first, then carries on with that request. A bug fix or internal change gets a quick baseline (stack, layout, commands; no review); a redesign or a new feature gets the full one (baseline, stack ADR, design-system README) and you review it at a Human gate, answering the `[verify]` items one by one. After approval, onboard adds a short muffy block to `CLAUDE.md` / `AGENTS.md` (created if missing, never touching other lines). When the code has moved on (baseline yellow), the next task refreshes it without asking. `/muffy onboard` still runs it by hand. Details: [onboard](skills/muffy/references/onboard.md).
 
 ### Ask for a feature
 

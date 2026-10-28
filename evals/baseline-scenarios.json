@@ -1,0 +1,13 @@
+[
+  { "id": "no-code-any-lane", "colour": "missing", "depth": null, "has_code": false, "lane": "feature", "expect": "continue" },
+  { "id": "missing-fix-quick", "colour": "missing", "depth": null, "has_code": true, "lane": "fix", "expect": "ask:onboard-quick" },
+  { "id": "missing-lite-quick", "colour": "missing", "depth": null, "has_code": true, "lane": "lite", "expect": "ask:onboard-quick" },
+  { "id": "missing-redesign-full", "colour": "missing", "depth": null, "has_code": true, "lane": "redesign", "expect": "ask:onboard-full" },
+  { "id": "missing-feature-full", "colour": "missing", "depth": null, "has_code": true, "lane": "feature", "expect": "ask:onboard-full" },
+  { "id": "quick-enough-for-fix", "colour": "green", "depth": "quick", "has_code": true, "lane": "fix", "expect": "continue" },
+  { "id": "quick-upgraded-for-feature", "colour": "green", "depth": "quick", "has_code": true, "lane": "feature", "expect": "ask:onboard-full" },
+  { "id": "green-full", "colour": "green", "depth": "full", "has_code": true, "lane": "redesign", "expect": "continue" },
+  { "id": "yellow-refreshed-silently", "colour": "yellow", "depth": "full", "has_code": true, "lane": "feature", "expect": "refresh:silent" },
+  { "id": "yellow-quick-fix-refreshed", "colour": "yellow", "depth": "quick", "has_code": true, "lane": "fix", "expect": "refresh:silent" },
+  { "id": "red-asks", "colour": "red", "depth": "full", "has_code": true, "lane": "lite", "expect": "ask:red" }
+]
