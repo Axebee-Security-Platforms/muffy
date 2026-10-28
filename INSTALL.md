@@ -73,7 +73,7 @@ Caveats:
 
    Team-flow rules 1–4 (merge, commit, push, temporary stack) are Orchestrator rules, not hooks: Claude Code has no merge/commit/push hook event. See [hooks-enforcement.md](skills/muffy/references/hooks-enforcement.md).
 2. Check `SECOND_BRAIN_VAULT` in `.claude/settings.local.json`.
-3. Existing codebase: run `/muffy onboard` once (add `--scan` to the installer to pre-generate its input). It writes `docs/architecture/baseline.md` and an ADR for the stack you already have, and waits for your review. See [onboard.md](skills/muffy/references/onboard.md).
+3. Existing codebase: nothing to run. The installer scans the repo (`--no-scan` skips it), and the first `/muffy` request asks once to look around first, then carries on. See [onboard.md](skills/muffy/references/onboard.md).
 4. Add the repo's own docs the flow uses: `docs/plan/`, `docs/adr/`, `docs/design-system/`, and `.nvmrc` if devops should check the runtime.
 5. Start a feature from the main Claude Code session: `/muffy <feature request>` with a kebab-case task name. For a small bug or cosmetic fix use `/muffy fix <description>` (see [fix-profile.md](skills/muffy/references/fix-profile.md)).
 

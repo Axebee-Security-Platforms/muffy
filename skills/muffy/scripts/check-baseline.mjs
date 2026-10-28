@@ -8,6 +8,7 @@
 //   red     a runtime or dependency in the baseline differs (by major version) from the manifest, or `red` or more covered files changed,
 //           or five or more cited paths are missing
 // "Covered" = manifests, lockfiles, infra and CI files, files the baseline cites, and files under directories it cites.
+// --json adds `depth`: quick (frontmatter `depth: quick`, onboard.md → Depth) or full. A missing baseline prints {"baseline":"missing"}.
 // Exit 0 green, 1 yellow, 2 red, 3 baseline missing or bad usage.
 import { basename } from 'node:path';
 import { COVERED_FILE, inSkippedDir, loadExtensions, repoHelpers } from './repo-facts.mjs';
@@ -24,7 +25,9 @@ const { has, readText: read, git } = repoHelpers(root);
 const extManifests = loadExtensions(root).manifests;
 const baselinePath = flag('--baseline') ?? 'docs/architecture/baseline.md';
 const baseline = read(baselinePath);
-if (baseline === null) { console.log('baseline: missing'); process.exit(3); }
+if (baseline === null) { console.log(asJson ? JSON.stringify({ baseline: 'missing', depth: null, reasons: [] }) : 'baseline: missing'); process.exit(3); }
+// a quick baseline (onboard.md → Depth) has only Read this first, Stack, Layout and Commands; a lane that needs more upgrades it
+const depth = /^depth:\s*quick\b/im.test(baseline) ? 'quick' : 'full';
 
 let limits = { yellow: 10, red: 40 };
 try { limits = { ...limits, ...JSON.parse(read('.team/baseline-thresholds.json') ?? '{}') }; } catch { /* keep defaults */ }
@@ -89,6 +92,6 @@ else {
 }
 
 const color = ['green', 'yellow', 'red'][level];
-if (asJson) console.log(JSON.stringify({ baseline: color, reasons, limits }));
-else console.log([`baseline: ${color}`, ...reasons.slice(0, 5).map((r) => `- ${r}`)].join('\n'));
+if (asJson) console.log(JSON.stringify({ baseline: color, depth, reasons, limits }));
+else console.log([`baseline: ${color}${depth === 'quick' ? ' (quick)' : ''}`, ...reasons.slice(0, 5).map((r) => `- ${r}`)].join('\n'));
 process.exit(level);

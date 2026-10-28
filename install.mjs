@@ -26,7 +26,7 @@ const clean = flag('--clean');
 const force = flag('--force') || clean; // --clean always replaces the files it installs
 const vault = valueOf('--vault');
 const withGuard = flag('--with-guard');
-const scan = flag('--scan');
+const scan = !flag('--no-scan'); // on by default; --scan is still accepted
 
 const log = (msg) => console.log(`${dryRun ? '[dry-run] ' : ''}${msg}`);
 const warn = (msg) => console.warn(`warning: ${msg}`);
@@ -47,12 +47,12 @@ if (major < 18) die(`Node 18+ required, found ${process.versions.node}`);
 if (flag('--help') || positional.length === 0) {
   console.log(`muffy ${pkg.version} installer
 
-usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean] [--with-guard] [--scan]
+usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean] [--with-guard] [--no-scan]
 
   --vault       path to the Obsidian vault (written to .claude/settings.local.json)
   --with-guard  merge the guards (guard-env.mjs, guard-bash-allowlist.mjs, guard-full-regression.mjs, guard-test-level.mjs, guard-write-scope.mjs, guard-git.mjs, guard-gates.mjs) into hooks.PreToolUse of .claude/settings.local.json
                 never overwrites other keys; skipped with a message if PreToolUse already exists
-  --scan        scan the target repo and write .team/onboard/scan.json, the input for /muffy onboard
+  --no-scan     skip the repo scan (by default it writes .team/onboard/scan.json, the input for onboarding)
   --dry-run     print what would change (incl. the hook JSON to merge), write nothing
   --force    overwrite .claude/agents and .claude/skills/muffy if they already exist
   --clean    update: remove the previous muffy install first (files from its MANIFEST.json,
@@ -180,7 +180,7 @@ if (settingsChanged && !dryRun) {
   writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
 }
 
-// 4b. optional scan of an existing codebase (facts for /muffy onboard)
+// 4b. scan of an existing codebase (facts for onboarding), unless --no-scan
 let scanSummary = '';
 if (scan) {
   const scanOut = join(target, '.team', 'onboard', 'scan.json');
@@ -219,6 +219,5 @@ Done${dryRun ? ' (dry run, nothing written)' : ''}. Remaining manual steps:
    - Team-flow rules 1–4 (merge, commit, push, temporary stack) are Orchestrator rules, not hooks: see skills/muffy/references/hooks-enforcement.md.
 2. Set SECOND_BRAIN_VAULT in .claude/settings.local.json if it still shows the placeholder.
 3. Make sure the repo has docs/plan/, docs/adr/, docs/design-system/ (where the flow needs them) and .nvmrc if devops checks the runtime.
-4. Existing codebase? Run /muffy onboard once before the first feature${scan ? ' (scan.json is ready).' : '; add --scan to this installer to pre-generate its input.'}${scanSummary ? ' ' + scanSummary : ''}
-   It writes docs/architecture/baseline.md and an ADR for the stack you already have, then waits for your review.
-5. Start a feature from the main session: /muffy <feature request> with a kebab-case <task> name.`);
+4. Start from the main session: /muffy <what you want done>, in your own words. muffy picks the route and says it before starting.
+   On an existing codebase the first request asks once to look around the project first (onboarding), then carries on with it.${scanSummary ? ' ' + scanSummary : ''}`);

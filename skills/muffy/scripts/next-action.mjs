@@ -10,8 +10,10 @@
 //   node next-action.mjs effort --role <role> [--mode production|prototype] [--high-impact] [--assumed] [--exact-fix] [--stalled <n>]
 //   node next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke]
 //   node next-action.mjs triage fix|lite '<signals json>'
+//   node next-action.mjs baseline --lane <lane> [--repo .] [--no-code]      (setup step 3: continue | refresh:silent | ask:*)
 // Prints one verdict line (`next=<action> ...`), then detail lines. Exit 0 = proceed, 1 = escalate / blocked / invalid, 2 = usage error.
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { validate } from './schema.mjs';
@@ -372,6 +374,22 @@ export function triageLite(s = {}) {
   return reasons.length ? { lane: 'full', reasons } : { lane: 'lite', reasons: [] };
 }
 
+/* ---------- baseline before a run (setup.md step 3, baseline-freshness.md, onboard.md → Depth) ---------- */
+
+// What setup does about docs/architecture/baseline.md before the lane starts. The user is asked only when there is no usable
+// baseline (once, with the depth the lane needs) or when it is red; yellow is refreshed without a question.
+//   colour: check-baseline.mjs --json `baseline` (green | yellow | red | missing); depth: its `depth` (quick | full)
+export function baselineAction({ colour, depth, hasCode = true, lane = 'feature' } = {}) {
+  const need = LANES[lane]?.baseline ?? 'full';
+  if (!hasCode) return { next: 'continue', reason: 'no source files: nothing to onboard' };
+  if (colour === 'missing') return { next: `ask:onboard-${need}`, reason: `no baseline; the ${lane} lane needs a ${need} one` };
+  if (depth === 'quick' && need === 'full') return { next: 'ask:onboard-full', reason: `the baseline is quick; the ${lane} lane needs a full one` };
+  if (colour === 'green') return { next: 'continue', reason: 'baseline green' };
+  if (colour === 'yellow') return { next: 'refresh:silent', reason: 'baseline yellow: refresh from the delta, no question' };
+  if (colour === 'red') return { next: 'ask:red', reason: 'baseline red: refresh now or continue with the code as the only truth' };
+  throw new Error(`baselineAction: unknown colour ${colour}`);
+}
+
 /* ---------- CLI ---------- */
 
 const SMOKE_FLAGS = {
@@ -382,7 +400,7 @@ const SMOKE_FLAGS = {
 
 function usage(msg) {
   if (msg) console.error(msg);
-  console.error('usage: next-action.mjs loop <handoff...> | effort --role <role> | smoke [flags] | triage fix|lite <json>');
+  console.error('usage: next-action.mjs loop <handoff...> | effort --role <role> | smoke [flags] | triage fix|lite <json> | baseline --lane <lane> [--repo .] [--no-code]');
   process.exit(2);
 }
 
@@ -454,6 +472,20 @@ function runSmoke(args) {
   return 0;
 }
 
+function runBaseline(args) {
+  const lane = opt(args, '--lane') ?? 'feature';
+  if (!LANES[lane]) usage(`baseline: unknown lane ${lane}`);
+  const repo = opt(args, '--repo') ?? '.';
+  const r = spawnSync(process.execPath, [join(here, 'check-baseline.mjs'), repo, '--json'], { encoding: 'utf8' });
+  let facts;
+  try { facts = JSON.parse(r.stdout); } catch { usage(`baseline: check-baseline.mjs gave no JSON: ${r.stderr.trim()}`); }
+  const out = baselineAction({ colour: facts.baseline, depth: facts.depth, hasCode: !args.includes('--no-code'), lane });
+  console.log(`next=${out.next} baseline=${facts.baseline}${facts.depth ? ` depth=${facts.depth}` : ''} lane=${lane}`);
+  console.log(`reason: ${out.reason}`);
+  for (const x of facts.reasons ?? []) console.log(`- ${x}`);
+  return 0;
+}
+
 function runTriage(args) {
   const [lane, json] = args;
   if (!['fix', 'lite'].includes(lane) || !json) usage('triage: fix|lite and a signals JSON object');
@@ -467,7 +499,7 @@ function runTriage(args) {
 
 if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const [cmd, ...args] = process.argv.slice(2);
-  const run = { loop: runLoop, effort: runEffort, smoke: runSmoke, triage: runTriage }[cmd];
+  const run = { loop: runLoop, effort: runEffort, smoke: runSmoke, triage: runTriage, baseline: runBaseline }[cmd];
   if (!run) usage(cmd ? `unknown command: ${cmd}` : undefined);
   try { process.exit(run(args)); } catch (e) { console.error(`next-action: ${e.message}`); process.exit(2); }
 }

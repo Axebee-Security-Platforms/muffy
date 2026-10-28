@@ -16,12 +16,13 @@ export const SCOPES = ['ui-only', 'ui+logic', 'logic-only']; // redesign only, p
 // gated: 2b and 3c apply (the redesign ui-only scope still skips 2b, recorded with `checkpoint.mjs gate 2b skip`)
 // maxFiles: source files (tests and .team/ excluded) before the diff promotes the run to the full flow; null = no limit
 // profile: the `Profile:` header the prompt envelope carries (agents load their lane reference on it)
+// baseline: the onboard depth the lane needs before it starts (onboard.md → Depth): quick = stack, layout, commands; full = all of it
 export const LANES = {
-  feature: { skips: [], neverSkip: [], gated: true, maxFiles: null, profile: null, ref: 'run-profile.md' },
-  fix: { skips: ['1', '2', '2b', '3', '3b', '3c', '3d'], neverSkip: ['4a', '4b'], gated: false, maxFiles: 5, profile: 'fix', ref: 'fix-profile.md' },
-  lite: { skips: ['1', '2', '2b', '3b', '3c'], neverSkip: ['3'], gated: false, maxFiles: 15, profile: 'lite', ref: 'lite-profile.md' },
+  feature: { skips: [], neverSkip: [], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'run-profile.md' },
+  fix: { skips: ['1', '2', '2b', '3', '3b', '3c', '3d'], neverSkip: ['4a', '4b'], gated: false, maxFiles: 5, profile: 'fix', baseline: 'quick', ref: 'fix-profile.md' },
+  lite: { skips: ['1', '2', '2b', '3b', '3c'], neverSkip: ['3'], gated: false, maxFiles: 15, profile: 'lite', baseline: 'quick', ref: 'lite-profile.md' },
   redesign: {
-    skips: ['1'], neverSkip: ['2', '3c', '11'], gated: true, maxFiles: null, profile: null, ref: 'redesign-profile.md',
+    skips: ['1'], neverSkip: ['2', '3c', '11'], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'redesign-profile.md',
     scopes: { 'ui-only': { skips: ['1', '2b'] }, 'ui+logic': { skips: ['1'] }, 'logic-only': { skips: ['1', '3b', '3e'] } },
   },
 };

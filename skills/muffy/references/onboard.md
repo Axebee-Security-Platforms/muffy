@@ -1,21 +1,33 @@
 # Onboard (step 0)
 
-Run once per repo that already has a codebase, before the first feature: `/muffy onboard`. Task name is fixed: `onboard`. It records what the repo already is, so later steps reuse it instead of rediscovering it or guessing a stack.
+Runs once per repo that already has a codebase. Nobody has to remember it: the first task that needs a baseline asks once at setup step 3 ([setup.md](setup.md)) and runs it at the depth that lane needs, then carries on with that task. `/muffy onboard` runs it by hand (full depth). Task name is fixed: `onboard`. It records what the repo already is, so later steps reuse it instead of rediscovering it or guessing a stack.
 
 If `.team/` already holds tasks that are not done, run [todo.md](todo.md) first so they are resumed instead of surprising you.
 
-Not for a new, empty repo (nothing to record) or when `docs/architecture/baseline.md` exists and is fresh (`check-baseline.mjs` prints green; see [baseline-freshness.md](baseline-freshness.md)). Refresh = run it again; it rewrites the baseline and appends a new ADR only if the stack changed.
+Not for a new, empty repo (nothing to record) or when `docs/architecture/baseline.md` exists and is fresh (`check-baseline.mjs` prints green; see [baseline-freshness.md](baseline-freshness.md)). Refresh = run it again; it rewrites the baseline and appends a new ADR only if the stack changed. A yellow baseline is refreshed by setup without a question ([Refresh](#refresh)).
+
+## Depth
+
+Setup picks the depth from the lane (`next-action.mjs baseline` → `ask:onboard-quick | ask:onboard-full`, from `baseline` in `lanes.mjs`):
+
+| Depth | For | Runs | Writes | Gate |
+|---|---|---|---|---|
+| `quick` | fix and lite lanes | 0a, 0b with `depth: quick` in the prompt, then [Commit](#commit-without-0d), then 0f | `baseline.md` with frontmatter `depth: quick` and only `## Read this first`, Stack, Layout, Commands and `[verify]` | none: every line cites `path:line`, and the `[verify]` items are listed in the text of that task's AC question at `pause:scope` (not asked one by one: that call is capped at 4 questions) |
+| `full` | redesign and the full flow, `/muffy onboard` | 0a to 0e below, then 0f | the whole baseline, the ADR, the design system README (UI only), the agent-context block | 0d |
+
+A lane that needs `full` on a `quick` baseline (`next=ask:onboard-full`) runs the full flow below; the researcher keeps the quick sections (they are facts with citations) and adds the rest, so nothing is explored twice.
 
 ## Flow
 
 | # | Who | Does | Output |
 |---|---|---|---|
-| 0a | Orchestrator | Setup as in [setup.md](setup.md) (skip setup step 3 baseline check, the scope pause and worktrees). Run `node .claude/skills/muffy/scripts/scan-repo.mjs . --out .team/onboard/scan.json` unless `install.mjs --scan` already did, and, when a baseline exists, `node .claude/skills/muffy/scripts/baseline-delta.mjs` (see [Refresh](#refresh)) | `scan.json`: facts only |
+| 0a | Orchestrator | Setup as in [setup.md](setup.md) (skip setup step 3 baseline check, the scope pause and worktrees). Run `node .claude/skills/muffy/scripts/scan-repo.mjs . --out .team/onboard/scan.json` unless the installer already did (it scans by default), and, when a baseline exists, `node .claude/skills/muffy/scripts/baseline-delta.mjs` (see [Refresh](#refresh)) | `scan.json`: facts only |
 | 0b | `researcher` (onboard mode) | Reads `scan.json`, then the code to confirm and fill it (entrypoints, patterns in use, auth, data access, error handling, naming, test style, build/test/lint commands). On a refresh, follows [Refresh](#refresh) instead of re-exploring the repo | `docs/architecture/baseline.md` |
 | 0c | `architect` (onboard mode) | Reads `baseline.md`; records the stack in force; adds `docs/design-system/` only when `scan.json` → `ui.likely`; specs `docs/architecture/overview.html` (only if the repo has no architecture diagram) as a `diagrams_spec` entry, never writes the file itself | `docs/adr/NNNN-existing-stack.md`, `docs/design-system/README.md` (UI only), `diagrams_spec` (0 or 1 entries) |
 | 0c' | `diagrammer`, only if 0c's hand-off carries a `diagrams_spec` | Draws `docs/architecture/overview.html` from that spec, per [diagram-style.md](../../../agents/references/shared/diagram-style.md) | `docs/architecture/overview.html` |
-| 0d | **Human gate** `pause:onboard-review` | `AskUserQuestion` with the baseline summary, the overview diagram link if 0c' drew one (published first, [diagram-publish.md](diagram-publish.md)), the ADR, the `[verify]` list, and the proposed agent-context change (see below). Approve / Edit / Reject | approved baseline |
+| 0d | **Human gate** `pause:onboard-review` | Keep it short. Each `[verify]` item is its own question ("right / wrong", up to 4 per `AskUserQuestion` round; a wrong one goes back to its owner). Then one question: the stack in one line, the overview diagram link if 0c' drew one (published first, [diagram-publish.md](diagram-publish.md)), and the ADR and agent-context block (see below) shown as the diff they add. Approve / Edit / Reject | approved baseline |
 | 0e | Orchestrator | Seed `<brain>/project.md` (Lessons, Open issues) from the baseline's open issues; apply the approved agent-context change; commit the docs | `project.md`, `CLAUDE.md` / `AGENTS.md` |
+| 0f | Orchestrator, **only if `.team/onboard/pending-request.md` exists** | Setup sent the user here from a task. Say one line ("สำรวจเสร็จ ทำงานต่อ / onboarded, carrying on"), delete the file, and go back to setup step 3 of that request with the route it records; the baseline now passes. Never ask the user to type the request again | the original task, resumed |
 
 0b then 0c run in sequence (0c reads 0b's output), then 0c' if 0c spec'd a diagram. A Reject at 0d goes back to the owner of the point the user names, the facts owner (`architect`) for a wrong fact, `diagrammer` for a layout-only complaint, under the normal fix-loop limits in [loops.md](loops.md).
 
@@ -31,6 +43,15 @@ On `mode: refresh` the researcher:
 5. Reports in the hand-off which sections changed
 
 The architect (0c) reads the same delta and adds an ADR only when the Stack section changed.
+
+**Silent refresh** (setup's `next=refresh:silent`, a yellow baseline): run 0a and 0b only, with no `pause:scope` question. When the researcher's hand-off says the Stack section did not change, skip 0c, 0c' and 0d: [commit](#commit-without-0d) the edited baseline files and report one line. When Stack changed, the baseline is really red: run 0c and 0d as above before the task continues. A quick baseline stays quick after a refresh.
+
+## Commit without 0d
+
+A quick baseline and a silent refresh have no human answer to wait for, so the Orchestrator commits right after 0b, before setup goes on:
+- Only the researcher's files: `docs/architecture/baseline.md` and `docs/architecture/baseline/`. Nothing else is staged
+- On the branch the main checkout is on, before any worktree of the task is cut (setup step 3 runs before step 7). Message `docs(baseline): quick onboard` or `docs(baseline): refresh from <old sha>`, with the run's commit trailer
+- Note `baseline-commit: <sha>` in the pending request (or hold it for the task's `## Status`). Setup step 7 checks it: when the `<base>` picked at step 5 is not the branch it was committed on, cherry-pick that commit onto `feature/<task>` right after the worktree is cut, so the agents read the same baseline
 
 ## baseline.md
 
@@ -78,12 +99,14 @@ Do not restate baseline content in the block: it goes stale, the baseline carrie
 
 ## Done when
 
-- `baseline.md` has every section above and a `commit` that matches HEAD
+- `baseline.md` has every section above (quick: the sections in [Depth](#depth), and `depth: quick`) and a `commit` that matches HEAD
 - Each Commands entry exists in a manifest or CI file
+- Full depth only, the next three:
 - If the repo had no architecture diagram, `overview.html` shows only components that exist, with `[verify]` on anything unconfirmed; if it had one, there is no new diagram
 - The ADR lists the stack, matches `baseline.md`, and has no recommendations
 - Every existing `CLAUDE.md` / `AGENTS.md` has the muffy block (or `CLAUDE.md` was created), with nothing outside the markers changed
-- The user approved at 0d, and the approval is in `checkpoint.md` → `## Status`
+- The user approved at 0d, and the approval is in `checkpoint.md` → `## Status` (full depth only; a quick baseline and a silent refresh with an unchanged Stack have no 0d)
+- A pending request (0f) was carried on, and `.team/onboard/pending-request.md` is gone
 
 ## Later runs
 

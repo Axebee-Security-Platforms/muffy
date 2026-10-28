@@ -23,8 +23,8 @@ One `AskUserQuestion` call of up to 3 questions:
 
 ## Setup-lite (replaces [setup.md](setup.md))
 
-1. Name the task `redesign-<slug>`. Create `<brain>/tasks/<task>.md`; add it to `project.md` → `## Tasks`. Read `project.md` Lessons and Open issues
-2. Create the feature worktree from `<base>`: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it
+1. Name the task `redesign-<slug>` and run the common setup, [setup.md](setup.md) steps 1-4: brain and task note, the baseline check with `next-action.mjs baseline --lane redesign`, then `project.md` Lessons and Open issues. Write the held `baseline` value into `## Status` with the checkpoint
+2. Create the feature worktree from `<base>`: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>` (a baseline committed at the common setup on another branch is cherry-picked onto it first, [setup.md](setup.md) step 7), then `.team/<task>/`, `handoff/` and `rounds/` inside it
 3. Write `checkpoint.md`, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> redesign --scope <scope>`, where `<scope>` is `ui-only`, `ui+logic` or `logic-only`; it adds the steps the table below skips for that scope (`--skip 3d` adds a run's own). `gate-rules.mjs` reads this line
 4. No `brief.md`: the prompt and the existing code are the brief
 

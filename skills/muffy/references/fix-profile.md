@@ -36,12 +36,12 @@ When the request is borderline (for example a bug plus "while you are there, als
 
 ## Setup-lite (replaces [setup.md](setup.md))
 
-1. Name the task `fix-<slug>`. Create the vault task note `<brain>/tasks/<task>.md`; add it to `project.md` → `## Tasks`. Read `project.md` Lessons and Open issues
+1. Name the task `fix-<slug>` and run the common setup, [setup.md](setup.md) steps 1-4: brain and task note, the baseline check with `next-action.mjs baseline --lane fix`, then `project.md` Lessons and Open issues. Write the held `baseline` value into `## Status` with the checkpoint
 2. `pause:scope`, shortened, in one `AskUserQuestion` call of up to 4 questions (2-4 options each):
    - **Kind + owner**: bug or cosmetic; FE, BE or both
    - **AC + out of scope**: the AC list drafted from the request and a quick read of the named files, with out of scope. Confirm / Change it
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
-3. Create the feature worktree from `<base>`, which holds the team folder: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/fix.md` there (≤ 60 lines, below). The Orchestrator writes it from the same reads; no agent is spawned for it
+3. Create the feature worktree from `<base>`, which holds the team folder: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>` (a baseline committed at the common setup on another branch is cherry-picked onto it first, [setup.md](setup.md) step 7), then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/fix.md` there (≤ 60 lines, below). The Orchestrator writes it from the same reads; no agent is spawned for it
 4. Commit `fix.md` to `feature/<task>` (never to `<base>`). The `debugger` (4a) and `auditor` (4b) work in the feature worktree and write nothing outside `.team/<task>/`. The dev worktrees are cut at step 4, after the audit, from the feature commit that holds the confirmed `## Cause`: `git worktree add .worktrees/<fe|be>-<task> -b <fe|be>/<task> feature/<task>`, one per owner the debugger named. qa gets one at step 7 as usual
 5. Write `checkpoint.md` in the feature worktree, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> fix` (it writes `lane: fix · skipped 1, 2, 2b, 3, 3b, 3c, 3d`; never type the line by hand, the gate and audit guards read it)
 

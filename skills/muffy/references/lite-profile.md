@@ -37,12 +37,12 @@ When a request is borderline (an internal endpoint plus "and show it on the sett
 
 ## Setup-lite (replaces [setup.md](setup.md))
 
-1. Name the task `lite-<slug>`. Create the vault task note `<brain>/tasks/<task>.md`; add it to `project.md` → `## Tasks`. Read `project.md` Lessons and Open issues
+1. Name the task `lite-<slug>` and run the common setup, [setup.md](setup.md) steps 1-4: brain and task note, the baseline check with `next-action.mjs baseline --lane lite`, then `project.md` Lessons and Open issues. Write the held `baseline` value into `## Status` with the checkpoint
 2. `pause:scope`, shortened, in one `AskUserQuestion` call of up to 4 questions (2-4 options each):
    - **Kind + owner**: internal-api, refactor, perf or db; FE, BE or both
    - **AC + out of scope**: the AC list drafted from the request and a quick read of the named area. Perf AC name the before-number, the target and the measuring command; refactor AC say "behaviour unchanged" and name the tests that prove it. Confirm / Change it
    - **Base** (only when `main` and the current branch differ; never assume `main`): recorded as `base:` in checkpoint `## Status`
-3. Create the feature worktree from `<base>`: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/ac.md` there (format below). The Orchestrator writes it from the same reads; no `product-manager` is spawned for it
+3. Create the feature worktree from `<base>`: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>` (a baseline committed at the common setup on another branch is cherry-picked onto it first, [setup.md](setup.md) step 7), then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/ac.md` there (format below). The Orchestrator writes it from the same reads; no `product-manager` is spawned for it
 4. Commit `ac.md` to `feature/<task>` (never to `<base>`)
 5. Write `checkpoint.md` in the feature worktree, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> lite` (add `--skip 3d` when no smoke trigger is true, [run-profile.md](run-profile.md)); it writes `lane: lite · skipped 1, 2, 2b, 3b, 3c`
 
