@@ -1,6 +1,6 @@
 # Todo
 
-`/muffy todo` lists the tasks in `.team/` that are not done. Nothing else: no git branches, stashes, TODO markers, skipped tests or trackers. It reports and asks. It does not fix, resume, close or edit anything.
+`/muffy todo` shows the menu ([menu.md](menu.md)); this file is how the menu lists the tasks in `.team/` that are not done. Nothing else: no git branches, stashes, TODO markers, skipped tests or trackers. It reports and asks. It does not fix, resume, close or edit anything.
 
 (The wider scan, git leftovers and tracker import via `scripts/scan-pending.mjs`, is parked for a later phase and is not part of `/muffy todo` now.)
 

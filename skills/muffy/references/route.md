@@ -1,6 +1,6 @@
 # Route: pick the entry and the agents from the prompt
 
-Runs first on a free-text request, before any other reference. A request that starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | redesign | feature`) is already routed: skip this file. The Orchestrator reads the requester's prompt and picks the smallest route that delivers the outcome they asked for. It then says the route in one line before spawning anything: `Route: <name> → <agents>. Because: <the words in the prompt that decided it>.` The requester can override it.
+Runs first on a free-text request, before any other reference. A request that starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | redesign | feature`) is already routed: skip this file. The Orchestrator reads the requester's prompt and picks the smallest route that delivers the outcome they asked for. It then shows the plan before spawning anything ([Say the plan](#say-the-plan)), in the words of the work, never a lane name alone. The requester can override it.
 
 The route is decided by the **outcome asked for**, not by a single keyword. "Bug" alone does not make a fix, "review" alone does not make a review-only run, "ออกแบบ" alone does not make a design run; the decision order below decides.
 
@@ -8,7 +8,7 @@ The route is decided by the **outcome asked for**, not by a single keyword. "Bug
 
 Walk it top to bottom and stop at the first step that answers. The fix, lite and redesign lanes keep their own triage; this order only decides which triage runs.
 
-1. **Continue earlier work** ("continue", "resume", ทำต่อ) → resume
+1. **Continue earlier work** ("continue", "resume", ทำต่อ) → resume. **A bare `/muffy`** (no request) or `/muffy todo` → menu ([menu.md](menu.md)). `/muffy resume` with no task is resume: one unfinished task goes straight in, several or none show the menu
 2. **`/muffy redesign <request>`** → the redesign lane; its scope question is still asked.
    **`/muffy feature <request>`** → full flow, with no fix or lite triage and no Examples read. It skips only this decision; minimum intake, `pause:scope` and every gate still run. When the request is plainly a typo or a one-line text edit, say so once ("`/muffy fix` is cheaper") and carry on as asked
    **A named mode** (`/muffy todo | onboard | present | diagram`, or a request that can only mean one of them: "find what is half done", "make a deck for the client", "draw the deployment diagram") → that mode. A diagram request first passes the two checks in [diagram.md](diagram.md#before-the-scope-question): the subject has an open task → **diagram-in-task**; the subject is not designed yet → the kind's own route (**spec** for architecture, deployment, erd, state and flow; **design** for a screen map; **plan** for a gantt or story map), with the diagram as its stop point ([kinds table](diagram.md#kinds-fixed-never-ask-the-user-to-pick-an-agent))
@@ -22,9 +22,34 @@ Walk it top to bottom and stop at the first step that answers. The fix, lite and
    4. A change to a screen, UX flow or business-logic rule the product already has, not a bug and not a new capability → redesign ([redesign-profile.md](redesign-profile.md)); its scope (UI only, UI + logic, logic only) is always asked
    5. A new capability the product lacks ("build X", "add X") → full flow
    6. Anything else → step 7
-7. **Two routes fit, or the prompt is too vague to tell** → ask in rounds of one `AskUserQuestion` until one route fits. Each question cuts the candidates; options run smallest route first, full flow last. "ทำเลย" or "แล้วแต่" means the smallest route that fits, never full flow. Never guess a route that writes code
+7. **Two routes fit, or the prompt is too vague to tell** → ask in rounds of one `AskUserQuestion` until one route fits. Each question cuts the candidates; options run smallest route first, full flow last. "ทำเลย" or "แล้วแต่" means the smallest route that fits, never full flow. Never guess a route that writes code. For a code change, ask in the requester's words, never with lane names, in this order, stopping once one fits:
+   1. "มีอะไรพังหรือทำงานผิดอยู่ไหม / Is something broken or wrong?" yes → fix triage
+   2. "ของนี้มีอยู่แล้ว หรือเป็นของใหม่ / Does this exist already, or is it new?" new → full flow
+   3. "ผู้ใช้จะเห็นอะไรเปลี่ยนไหม / Will a user see anything change?" nothing → lite triage; the screens → redesign, scope `ui-only` or `ui+logic`; only the rules or results → redesign, scope `logic-only`
 
 After the route is picked, check its minimum intake (below). A missing fact is asked before any spawn.
+
+## Say the plan
+
+The requester sees what will happen before the first spawn:
+
+- **A lane** (fix, lite, redesign, full flow): `node .claude/skills/muffy/scripts/next-action.mjs plan-card <lane> [--scope <scope>] [--until <step>] [--skip 3d] [--lang en]` prints the card from `lanes.mjs`: what is being done, the steps in order, what is skipped and why, where it stops. Thai by default; `--lang en` for an English request. Redesign: its scope is asked first, on its own ([redesign-profile.md](redesign-profile.md)), then the card with `--scope`
+- The card's question rides in the lane's `pause:scope` call as its first question, so it costs no extra round: **go (recommended)** / **bigger or smaller** (the next route up or down: fix ↔ lite or redesign ↔ full flow), and on the full-flow card **stop earlier** (the plan or the design route: [Stop points](#stop-points)). Any pick but go re-routes before anything is spawned: drop the task's row from `project.md` → `## Tasks` and its task note, then run the new route's setup
+- **A single-step route or a mode**: one line in the same shape, from its Routes row: what, who in plain words, where it stops ("รีวิว PR #42: code-reviewer อย่างเดียว · หยุดที่: ผลรีวิวในแชท"). No question; the requester can still override
+- `route: <name>` still goes in checkpoint `## Status` ([memory-model.md](memory-model.md#checkpoint))
+
+## Stop points
+
+A stated stop point (decision order step 4) picks the route, a single-step route that runs only its own agents, so its card is the one line from its Routes row. The requester never has to know the route's name. "Stop earlier" on a full-flow card re-routes to one of these.
+
+| The requester says | Stops at | Route | Card |
+|---|---|---|---|
+| แค่วางแผน / plan it, don't build | the AC and plan, approved | plan | one line |
+| แค่ออกแบบหน้าจอ / just the screens | the design, approved | design | one line |
+| ยังไม่ต้องเขียนโค้ด / no code yet | the design or the contract, approved, by what the request names | design or spec | one line |
+| แค่ API / schema | `contract.md` | spec | one line |
+| แค่วิจัย / research only | the research brief | research | one line |
+| แค่รีวิว / just review it | the review verdict | review or design-review | one line |
 
 ## Words that point to more than one route
 

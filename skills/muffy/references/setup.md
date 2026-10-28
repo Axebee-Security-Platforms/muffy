@@ -11,6 +11,7 @@ Steps 1-4 are the **common setup**: every lane runs them first, the fix, lite an
    - `ask:red`: read [baseline-freshness.md](baseline-freshness.md) and ask as it says (the question goes in the second `pause:scope` call, step 5)
 4. Read `project.md` (Lessons, Open issues, backlog). Resuming: follow [resume.md](resume.md) instead
 5. **Confirm scope** (`pause:scope`): state the feature slice in one or two lines and the explicit out-of-scope list. Multi-feature requests are cut to one slice here, never inside a step. Ask with `AskUserQuestion`, which takes at most 4 questions per call and 2-4 options per question. Call 1, one question each, skipping any that `project.md` or `deploy.md` already answers:
+   - **Plan**: the card from `next-action.mjs plan-card feature`, go / stop earlier / smaller ([route.md](route.md#say-the-plan))
    - **Scope**: confirm the slice (Confirm / Change it)
    - **Base branch** (only when `main` and the current branch differ): the current branch / `main`. Record it as `base: <branch>` in checkpoint `## Status`
 
