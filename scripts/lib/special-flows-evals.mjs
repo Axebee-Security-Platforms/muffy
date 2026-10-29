@@ -8,6 +8,7 @@
 //   - the references and the route name each flow where the router and the lane table look for it
 import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { LANES, STEP_LABELS, skipsOf, neverSkipOf, formatRunProfile, planCard } from '../../skills/muffy/scripts/lanes.mjs';
 import { gateState, missingGates } from '../../skills/muffy/scripts/gate-rules.mjs';
@@ -79,6 +80,10 @@ export function runSpecialFlowsEvals({ check, root }) {
     writeFileSync(join(dir, 'handoff', '6-code-reviewer-r1.json'), JSON.stringify({ role: 'code-reviewer', task: 't', step: '6', round: 1, status: 'done', verdict: 'Reject', paths_written: [], blockers: [{ id: 'B-1', problem: 'empty exports have no header row', file: 'src/a.ts:12', owner: 'BE' }], quality_checks: { passed: true, failed: [] }, summary: 'one blocker' }));
     const r = checkAll(dir, { step: '6', round: 1 });
     check('verify: check-all answers ask:verify-fix on a reject, not fix:<owner>', r.next === 'ask:verify-fix', r.next);
+    // the loop CLI as loops.md calls it reads the lane from the checkpoint beside the hand-offs, as check-all does
+    const loop = (...a) => spawnSync(process.execPath, [join(root, 'skills/muffy/scripts/next-action.mjs'), 'loop', join(dir, 'handoff'), ...a], { encoding: 'utf8' }).stdout.split('\n')[0];
+    check('verify: next-action loop with no --profile reads the lane from the checkpoint and asks first', /^next=ask:verify-fix /.test(loop()), loop());
+    check('verify: next-action loop --profile overrides the checkpoint lane', /^next=fix:BE /.test(loop('--profile', 'feature')), loop('--profile', 'feature'));
     check('verify: check-artifacts accepts the Orchestrator-written ac.md with no contract', checkArtifacts(dir).length === 0, checkArtifacts(dir).join(' | '));
   } finally {
     rmSync(tmp, { recursive: true, force: true });

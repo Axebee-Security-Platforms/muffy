@@ -12,7 +12,7 @@
 //   diff        diff-signals.mjs: the 3d decision, and from step 4 on the lane scope     (with --base)
 // The judgment half of quality-checks.md (plan phases, what the brain note says, gates the user answered) stays with you.
 //
-// Usage: node check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign|change] [--skip 3d] [--brain <dir>]
+// Usage: node check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|change|verify|upgrade] [--skip 3d] [--brain <dir>]
 //                           [--base <ref> [--head <ref>] [--cwd <repo>]]
 // Hand-offs are ordered by round, then step order (steps.md), so a fix round (4 r2) comes after the review that sent it (6 r1).
 // Prints `next=<action>` first, then one `ok`/`FAIL` line per check and the failing lines.
@@ -143,7 +143,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const pos = [];
   for (let i = 0; i < argv.length; i++) argv[i].startsWith('--') ? (o[argv[i].slice(2)] = argv[++i]) : pos.push(argv[i]);
   if (!pos[0] || !o.step || !o.round) {
-    console.error('usage: check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign|change] [--skip a,b] [--brain <dir>] [--base <ref> [--head <ref>] [--cwd <repo>]]');
+    console.error('usage: check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|change|verify|upgrade] [--skip a,b] [--brain <dir>] [--base <ref> [--head <ref>] [--cwd <repo>]]');
     process.exit(2);
   }
   const r = checkAll(pos[0], { step: o.step, round: o.round, profile: o.profile, skip: (o.skip ?? '').split(',').filter(Boolean), brain: o.brain, base: o.base, head: o.head, cwd: o.cwd });

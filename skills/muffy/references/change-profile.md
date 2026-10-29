@@ -13,7 +13,7 @@ It is not a new capability (that is the full flow) and not a bug (that is the fi
 
 [lite-profile.md](lite-profile.md) and [redesign-profile.md](redesign-profile.md) are kept as pointers here, for links and tasks written before the merge.
 
-A bug with a symptom is triaged by [fix-profile.md](fix-profile.md) first, and goes to fix or full. A fix promoted out of its lane goes to the full flow, as the fix profile says.
+A bug with a symptom is triaged by [fix-profile.md](fix-profile.md) first, and goes to fix or full. A fix promoted out of its lane moves one rung up the [promotion ladder](run-profile.md#promotion-ladder) by its diagnosis's `promote_to`: to this lane's internal scope, a visible scope, or the full flow ([fix-profile.md](fix-profile.md#diagnose-budget-and-outcomes)).
 
 ## Triage (Orchestrator, no agent)
 
