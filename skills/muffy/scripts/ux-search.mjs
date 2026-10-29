@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Read-only BM25 search over the UX/UI rule tables in skills/muffy/data/ux/ (the designer agent's lookup).
-// Ported from the ui-ux-pro-max skill's search.py (MIT, see data/ux/LICENSE). It reads CSV and prints; it writes nothing.
+// Ported from the ui-ux-pro-max skill's search.py (MIT, notice in THIRD_PARTY_NOTICES.md at the skill root). It reads CSV and prints; it writes nothing.
 //   node .claude/skills/muffy/scripts/ux-search.mjs "<query>" [--domain <domain> | --stack <stack>] [-n 3] [--json] [--full]
 //   node .claude/skills/muffy/scripts/ux-search.mjs --info [--json]     (data counts, snapshot hash check, stale records)
 //   domains: ux web chart typography reasoning style color landing product icons gsap react google-fonts phosphor; stacks: see STACKS below

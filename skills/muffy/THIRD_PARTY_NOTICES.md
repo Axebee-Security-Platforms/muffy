@@ -1,3 +1,12 @@
+# Third-party notices
+
+Material in this skill that comes from other projects, and the notices their licences require to travel with it.
+
+## ui-ux-pro-max
+
+Used in: `data/ux/` (the CSV tables and stack files), `scripts/ux-search.mjs` (a Node port of its `search.py`), and the priority model adapted in `agents/references/designer/ux-ui-rules.md`.
+
+```
 MIT License
 
 Copyright (c) 2024 Next Level Builder
@@ -19,3 +28,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
