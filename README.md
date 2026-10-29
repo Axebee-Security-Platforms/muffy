@@ -256,7 +256,7 @@ One lane for changing something the product already has. Its scope says what cha
 | The look and the rules | `product-manager` → `architect` ∥ `designer` → `frontend-dev` ∥ `backend-dev` → review → QA → Human gate → `docs-writer` |
 | The rules only | `product-manager` → `architect` → `backend-dev` → review → QA → Human gate → `docs-writer` |
 
-The internal scope needs all of: a goal and a named area (and a measured before-number for performance work), nothing a user or outside caller sees changes, no new dependency or stack change, no auth or personal-data change, no migration that drops data, and at most 15 source files. If its architect or a dev reports a blocker owned by `Researcher`, `PM` or `Designer`, or the work passes 15 source files, the run is promoted to the full flow. A look-only run that needs a backend change stops at `pause:scope-upgrade` and asks once. Older tasks written as the lite or redesign lane resume as this lane.
+The internal scope needs all of: a goal and a named area (and a measured before-number for performance work), nothing a user or outside caller sees changes, no new dependency or stack change, no auth or personal-data change, no migration that drops data, and at most 15 source files. If its architect or a dev reports a `PM` or `Designer` blocker that names a visible change, the run moves to a visible scope (asked); a `Researcher` blocker, an outside caller, auth, or more than 15 source files promote it to the full flow ([promotion ladder](skills/muffy/references/run-profile.md#promotion-ladder)). A look-only run that needs a backend change stops at `pause:scope-upgrade` and asks once. Older tasks written as the lite or redesign lane resume as this lane.
 
 ### Verify lane
 

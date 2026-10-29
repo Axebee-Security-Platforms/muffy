@@ -7,7 +7,7 @@
 - **Design review: changes requested (3c)** → reasons to `designer` (+ `architect` if the contract is affected) → republish canvas → Definition of done again → ask the user again. FE/BE stay blocked
 - **Plan review: changes requested (2b)** → reasons to `product-manager` → revised `ac.md` + plan → ask the user again. Step 3 stays blocked. Counts at loop point `2b:product-manager`
 - **Human reject** → reasons to the relevant agents → redo review + QA
-- **Diagnose unknown (4a, fix lane)** → ask the user for more evidence → one more diagnose round with a fresh `debugger` spawn (every flow listed in [spawn-prompt.md](spawn-prompt.md) is silent); a second `unknown` escalates `loop-limit`. A `needs-full-flow` diagnosis is not a loop: promote to the full flow ([fix-profile.md](fix-profile.md))
+- **Diagnose unknown (4a, fix lane)** → ask the user for more evidence → one more diagnose round with a fresh `debugger` spawn (every flow listed in [spawn-prompt.md](spawn-prompt.md) is silent); a second `unknown` escalates `loop-limit`. A `needs-full-flow` diagnosis is not a loop: promote by its `promote_to`, one rung up the ladder ([run-profile.md](run-profile.md#promotion-ladder), [fix-profile.md](fix-profile.md#diagnose-budget-and-outcomes))
 - **Audit need-validation (4b, fix lane)** → the auditor's `audit.missing` goes to a fresh `debugger` spawn through the hand-off file → the `auditor` checks again. One round; an unresolved second `need-validation` counts as `reject` → the user chooses more information / accept the risk / cancel. A `reject` after the user gave more information escalates `loop-limit`. Counts at loop point `4b:auditor`
 - More than 3 loops at one point → stop and ask the user (see Fallback ladder)
 
@@ -21,7 +21,7 @@
 
 ## Fallback ladder
 
-**Compute it, don't count by hand**: `node .claude/skills/muffy/scripts/next-action.mjs loop <hand-off files in the order they came back> [--profile fix|change [--scope <scope>]] [--skip <steps>] --task <task> [--escalation-out .team/<task>/escalation-<n>.json]` applies this file (loop budget, repeated `B-`/`V-` ids, gates 3c/3d, fix-lane promotion) and prints `next=<action>` plus the counters to copy into `## Loop counters`. On `escalate:*` it drafts the escalation file: add the recommendation, then validate.
+**Compute it, don't count by hand**: `node .claude/skills/muffy/scripts/next-action.mjs loop <hand-off files in the order they came back> [--profile fix|change|verify|upgrade [--scope <scope>]] [--skip <steps>] --task <task> [--escalation-out .team/<task>/escalation-<n>.json]` applies this file (loop budget, repeated `B-`/`V-` ids, gates 3c/3d, fix-lane promotion, the verify lane's `ask:verify-fix`) and prints `next=<action>` plus the counters to copy into `## Loop counters`. On `escalate:*` it drafts the escalation file: add the recommendation, then validate. With no `--profile` it reads the lane, scope, stop point and skips from the checkpoint beside the hand-offs (`.team/<task>/checkpoint.md`), as `check-all.mjs` does; `--profile` overrides it.
 
 Apply in order. Each rung applies to one loop point; the validator is `node .claude/skills/muffy/scripts/validate-handoff.mjs <file>`.
 

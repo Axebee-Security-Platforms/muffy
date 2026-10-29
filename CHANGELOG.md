@@ -29,6 +29,10 @@
 
 ### Fixed
 
+- **A verify reject went straight to a dev from the loop call `loops.md` gives.** `next-action.mjs loop` took the lane only from `--profile`, and the documented flags listed `fix|change`, so a verify task answered `fix:<owner>` instead of `ask:verify-fix` (and an upgrade task ran as the feature lane). With no `--profile` it now reads the lane, scope, stop point and skips from the checkpoint beside the hand-offs, as `check-all` does; `loops.md`, `quality-checks.md` and the script usage lines list `verify|upgrade`. New evals in `scripts/lib/special-flows-evals.mjs`.
+- **The description named no trigger for the upgrade and verify lanes** ("bump", อัปเกรด, "review and test before merge", ตรวจให้ครบ), so such a request might never reach the router. Added within the 1024-character limit.
+- **Promotion text from before the ladder.** `SKILL.md`, `loops.md`, `change-profile.md`, `run-profile.md` and the README said a fix (or an internal change with a `PM`/`Designer` blocker) goes to the full flow, and `SKILL.md` said 4b is never skipped; they now point at the promotion ladder and the cosmetic 4b skip.
+
 - **Third-party notices in one place.** The ui-ux-pro-max MIT notice moved from `skills/muffy/data/ux/LICENSE` to `skills/muffy/THIRD_PARTY_NOTICES.md`, which ships with the skill and names what the notice covers (the `data/ux/` tables, `ux-search.mjs`, the designer's priority model). The ux-search eval checks the notice is there.
 - **A gate line's free text answered another gate.** `gateState` read any status line naming the gate, so `gate 2b skipped · the ADR is approved at 3c` counted as 3c skipped. A line recorded for one gate (`gate <id> …`) now answers that gate only.
 - **The audit guard never saw a cosmetic fix's severity.** `guard-gates.mjs` loaded only `4b-*.json`, so the rule "a cosmetic fix skips 4b only on a low diagnosis" passed every cosmetic dev spawn; it now loads the 4a hand-off too. `gate-summary.mjs` also reads AC rows in the `AC-<n> | … |` format the Orchestrator writes.
