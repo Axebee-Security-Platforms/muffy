@@ -48,7 +48,7 @@ const cp = dir ? readFileSync(join(dir, 'checkpoint.md'), 'utf8') : null;
 
 const handoffs = [];
 if (dir && existsSync(join(dir, 'handoff'))) {
-  for (const f of readdirSync(join(dir, 'handoff')).filter((n) => /^4b-.*\.json$/.test(n))) {
+  for (const f of readdirSync(join(dir, 'handoff')).filter((n) => /^4[ab]-.*\.json$/.test(n))) {
     try { handoffs.push(JSON.parse(readFileSync(join(dir, 'handoff', f), 'utf8'))); } catch { /* an unreadable hand-off is no confirm */ }
   }
 }

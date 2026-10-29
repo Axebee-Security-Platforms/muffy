@@ -108,7 +108,7 @@
   {
     "id": "upgrade-react",
     "request": "Upgrade React to 19 and fix what breaks",
-    "doc_lane": "full",
+    "doc_lane": "upgrade",
     "signals": {
       "has_symptom": true,
       "has_location": true,

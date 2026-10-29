@@ -61,6 +61,9 @@ The first form does the work; a bare `/muffy` shows the menu: unfinished tasks t
 | `/muffy ออกแบบหน้าจอให้ก่อน ยังไม่ต้องเขียนโค้ด` | Screens only, stops at the design you approve | design |
 | `/muffy ช่วยรีวิว PR #42 ก่อน merge หน่อย` | Code review only; the verdict in chat | review |
 | `/muffy ทำสไลด์สรุปฟีเจอร์ login ให้ลูกค้า` | Asks who the audience is, then a deck you review | present |
+| `/muffy หาสาเหตุให้หน่อยว่าทำไมหน้า login redirect กลับหน้าเดิมหลัง reset password ยังไม่ต้องแก้` | Finds the cause, a second model checks it, then stops: no code, the cause and repro in `fix.md` | fix |
+| `/muffy ช่วยรีวิวและเทส branch feature/export-csv ให้ครบก่อน merge หน่อย` | Reviews and tests your branch on a copy, reports, and asks before fixing anything; your branch is never edited or merged | verify |
+| `/muffy อัปเกรด React เป็น 19 แล้วแก้ส่วนที่พังให้หน่อย` | Reads the changelog, an upgrade ADR you approve, a stack smoke, the fixes, review, QA with full regression offered | upgrade |
 | `/muffy ทำต่อจากเมื่อวาน` | Picks up the unfinished task where it stopped | resume |
 | `/muffy เจอบั๊ก แก้ไขให้หน่อย` | Asks what happens and where first: nothing starts on a guess | ask |
 
@@ -120,7 +123,7 @@ Shortcuts, when you already know the route (each still shows its plan and keeps 
 | `/muffy onboard` | Look at the project again now (it also happens on its own) |
 | `/muffy todo` | Same as the menu |
 
-Single-step requests (research, plan, screens, API or schema, code or design review, tests, docs) are routed to the one agent that owns them. A stop point in your words ("แค่วางแผน", "ยังไม่ต้องเขียนโค้ด", "แค่รีวิว") picks where the run ends. Details: [route](skills/muffy/references/route.md).
+Single-step requests (research, plan, screens, API or schema, code or design review, tests, docs) are routed to the one agent that owns them. A stop point in your words ("แค่วางแผน", "ยังไม่ต้องเขียนโค้ด", "แค่รีวิว", "แค่หาสาเหตุ") picks where the run ends. Details: [route](skills/muffy/references/route.md).
 
 ## How muffy works
 
@@ -254,6 +257,14 @@ One lane for changing something the product already has. Its scope says what cha
 | The rules only | `product-manager` → `architect` → `backend-dev` → review → QA → Human gate → `docs-writer` |
 
 The internal scope needs all of: a goal and a named area (and a measured before-number for performance work), nothing a user or outside caller sees changes, no new dependency or stack change, no auth or personal-data change, no migration that drops data, and at most 15 source files. If its architect or a dev reports a blocker owned by `Researcher`, `PM` or `Designer`, or the work passes 15 source files, the run is promoted to the full flow. A look-only run that needs a backend change stops at `pause:scope-upgrade` and asks once. Older tasks written as the lite or redesign lane resume as this lane.
+
+### Verify lane
+
+For a branch someone already wrote: review, QA on docker local, the Human gate and docs, on a copy `verify/<task>`. Your branch is never edited or merged. A reject or a QA failure is reported first; the team fixes it on the copy only if you say so. Details: [verify-profile](skills/muffy/references/verify-profile.md).
+
+### Upgrade lane
+
+For a version bump of a dependency or runtime the project already uses (a new dependency is the full flow). `researcher` reads the changelog, `architect` writes the upgrade ADR and you approve it, the stack smoke always runs, then the fixes, review and QA with a full regression offered. Details: [upgrade-profile](skills/muffy/references/upgrade-profile.md).
 
 ### Gates and pauses
 

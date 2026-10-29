@@ -180,6 +180,21 @@
    "id": "h36",
    "prompt": "วาด deployment ของระบบใหม่ที่จะย้ายไป Kubernetes ซึ่งยังไม่ได้ออกแบบ",
    "expect": "spec"
+  },
+  {
+   "id": "h-diagnose-only",
+   "prompt": "ช่วยดูหน่อยว่าทำไมยอดรวมในใบแจ้งหนี้ถึงคลาดไปหนึ่งสตางค์ ขอแค่รู้ต้นเหตุ ยังไม่ต้องลงมือแก้",
+   "expect": "fix"
+  },
+  {
+   "id": "h-verify-branch",
+   "prompt": "เพื่อนเขียน branch fix/coupon-rounding มาแล้ว ช่วยตรวจทั้งโค้ดและเทสให้ครบ แล้วบอกว่า merge ได้ไหม",
+   "expect": "verify"
+  },
+  {
+   "id": "h-upgrade-prisma",
+   "prompt": "ขอยก Prisma ที่ใช้อยู่ขึ้นเวอร์ชัน 6 พร้อมแก้จุดที่ใช้ API เก่า",
+   "expect": "upgrade"
   }
  ]
 }

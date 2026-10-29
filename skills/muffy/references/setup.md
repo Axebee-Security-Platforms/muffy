@@ -1,6 +1,6 @@
 # Setup
 
-Steps 1-4 are the **common setup**: every lane runs them first, the fix and change lanes too. Those lanes then follow their own setup-lite ([fix-profile.md](fix-profile.md), [change-profile.md](change-profile.md)) instead of steps 5-8. Values steps 1-4 produce (`baseline`) are held and written into `## Status` when the lane writes its checkpoint.
+Steps 1-4 are the **common setup**: every lane runs them first, the fix, change, verify and upgrade lanes too. Those lanes then follow their own setup-lite ([fix-profile.md](fix-profile.md), [change-profile.md](change-profile.md), [verify-profile.md](verify-profile.md), [upgrade-profile.md](upgrade-profile.md)) instead of steps 5-8. Values steps 1-4 produce (`baseline`) are held and written into `## Status` when the lane writes its checkpoint.
 
 1. `<brain>` = `<vault>/Projects/<repo-name>/`, or `.team/brain/` when there is no vault; create `project.md`, `tasks/`, `agents/<role>/` (one per agent) if missing. The task's `.team/` folders come at step 7, inside the feature worktree
 2. Create `<brain>/tasks/<task>.md` (frontmatter `project`, `task`, `date`, `status` + `[[agents/<role>/<task>]]` links); add the task to `project.md` → `## Tasks` as `in progress`

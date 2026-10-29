@@ -14,7 +14,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkTask } from './check-artifacts.mjs';
-import { redesignScope } from './gate-rules.mjs';
+import { redesignScope, laneOf } from './gate-rules.mjs';
 
 const readIf = (p) => (p && existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);
 const section = (md, name) => md?.match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'mi'))?.[1]?.trim() ?? null;
@@ -30,7 +30,8 @@ const markers = (text, tag) => (text ?? '').split('\n').filter((l) => l.includes
 });
 
 function acList(ac) {
-  return (ac ?? '').split('\n').map((l) => l.match(/\*\*(AC-\d+)\*\*\s*(.*)$/) ?? l.match(/^\s*[-*]\s*(AC-\d+)[:\s]+(.*)$/)).filter(Boolean).map((m) => [m[1], short(m[2])]);
+  // `- **AC-1** …` (product-manager), `- AC-1: …`, or `AC-1 | result | check` (the Orchestrator-written ac.md of the internal scope, verify, upgrade)
+  return (ac ?? '').split('\n').map((l) => l.match(/\*\*(AC-\d+)\*\*\s*(.*)$/) ?? l.match(/^\s*[-*]\s*(AC-\d+)[:\s]+(.*)$/) ?? l.match(/^\s*\|?\s*(AC-\d+)\s*\|\s*([^|]+?)\s*(?:\||$)/)).filter(Boolean).map((m) => [m[1], short(m[2])]);
 }
 function latest(taskDir, re) {
   const dir = join(taskDir, 'handoff');
@@ -74,13 +75,13 @@ export function gate2b(taskDir, { plan } = {}) {
   return { lines: out, notReady };
 }
 
-// logic-only redesign: no designer ran, so the gate asks the user to approve the architect's contract with the AC
+// logic-only change or upgrade: no designer ran, so the gate asks the user to approve the architect's contract (and ADR) with the AC
 function gate3cContract(taskDir, ac) {
   const contract = readIf(join(taskDir, 'contract.md'));
   if (!contract) return { lines: [], notReady: ['contract.md is missing'] };
   const heads = contract.split('\n').filter((l) => /^#{1,3} /.test(l)).map((l) => `- ${short(l.replace(/^#+ /, ''), 80)}`);
   const verify = markers(contract, 'verify');
-  const out = ['**Contract (logic-only redesign, no design.md)**', ...heads.slice(0, 16), '', '**Acceptance criteria**', ...acList(ac).map(([id, t]) => `- ${id} ${t}`), '', `**[verify] items (${verify.length}):** ${verify.length ? '' : 'none'}`, ...verify.map((v) => `- ${v}`)];
+  const out = ['**Contract (no design.md: a logic-only change or an upgrade ADR)**', ...heads.slice(0, 16), '', '**Acceptance criteria**', ...acList(ac).map(([id, t]) => `- ${id} ${t}`), '', `**[verify] items (${verify.length}):** ${verify.length ? '' : 'none'}`, ...verify.map((v) => `- ${v}`)];
   return { lines: out, notReady: acList(ac).length ? [] : ['ac.md lists no AC'] };
 }
 
@@ -91,7 +92,7 @@ export function gate3c(taskDir) {
   const notReady = [];
   const checkpoint = readIf(join(taskDir, 'checkpoint.md'));
   const scope = checkpoint ? redesignScope(checkpoint) : null;
-  if (scope === 'logic-only') return gate3cContract(taskDir, ac);
+  if (scope === 'logic-only' || (checkpoint && laneOf(checkpoint) === 'upgrade')) return gate3cContract(taskDir, ac);
   if (!design) return { lines: [], notReady: ['design.md is missing'] };
   if (scope === 'ui-only') out.push('**Acceptance criteria** (approved together with the design)', ...acList(ac).map(([id, t]) => `- ${id} ${t}`), '');
   const canvas = design.match(/https?:\/\/\S+/)?.[0] ?? checkpoint?.match(/canvas:\s*(https?:\/\/\S+)/)?.[1];

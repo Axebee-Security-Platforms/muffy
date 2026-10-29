@@ -18,6 +18,7 @@ import { runRedesignLaneEvals } from './lib/redesign-lane-evals.mjs';
 import { runLaneTableEvals } from './lib/lane-table-evals.mjs';
 import { runOnboardEvals } from './lib/onboard-evals.mjs';
 import { runEntryEvals } from './lib/entry-evals.mjs';
+import { runSpecialFlowsEvals } from './lib/special-flows-evals.mjs';
 import { runPendingEvals } from './lib/pending-evals.mjs';
 import { runGateEvals } from './lib/gate-evals.mjs';
 import { runRouteEvals } from './lib/route-evals.mjs';
@@ -883,7 +884,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   const skill = readFileSync(rel('skills/muffy/SKILL.md'), 'utf8');
   const route = readFileSync(rel('skills/muffy/references/route.md'), 'utf8');
   check('route-skip: SKILL.md says a mode command skips route.md, and route.md says the same', /Skip it when the request starts with a mode command/.test(skill) && /already routed: skip this file/.test(route));
-  check('route-skip: every mode command named in SKILL.md has a reference file', ['menu', 'todo', 'onboard', 'present', 'diagram', 'resume', 'fix-profile', 'change-profile', 'lite-profile', 'redesign-profile'].every((m) => existsSync(rel('skills/muffy/references', `${m}.md`))));
+  check('route-skip: every mode command named in SKILL.md has a reference file', ['menu', 'todo', 'onboard', 'present', 'diagram', 'resume', 'fix-profile', 'change-profile', 'verify-profile', 'upgrade-profile', 'lite-profile', 'redesign-profile'].every((m) => existsSync(rel('skills/muffy/references', `${m}.md`))));
 }
 
 /* 7f. learning a stack (references/stack-learning.md): stale notes, guard entries, project extensions */
@@ -1115,6 +1116,7 @@ runRedesignLaneEvals({ check, root });
 runLaneTableEvals({ check, root });
 runOnboardEvals({ check, root });
 runEntryEvals({ check, root });
+runSpecialFlowsEvals({ check, root });
 
 /* 8b. routing (references/route.md): decision order, Examples table, intake rows */
 runRouteEvals({ check, root });

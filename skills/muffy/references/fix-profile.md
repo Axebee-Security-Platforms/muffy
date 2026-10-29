@@ -28,7 +28,7 @@ Read the signals from the request, then let `node .claude/skills/muffy/scripts/n
 | "Redesign the login page" / "make the dashboard look better" | change | Changes an existing screen or flow; needs design approval ([change-profile.md](change-profile.md)) |
 | "Search is slow" | full, or ask first | No symptom, location or repro; ask for a measurement before triage |
 | "Invoice totals are wrong" | fix → promoted | Starts as a fix; step 4a finds the cause is a rounding rule users see and returns `needs-full-flow` with `promote_to: change-visible` |
-| "Upgrade React to 19 and fix what breaks" | full | A dependency change |
+| "Upgrade React to 19 and fix what breaks" | upgrade | A version bump of a dependency already used ([upgrade-profile.md](upgrade-profile.md)); not a fix |
 | "เจอบั๊ก แก้ไขให้หน่อย" | ask first | A bug report with no symptom, location or repro: ask for them before triage |
 | "Fix the typo in the footer" | none (main session) | One line, no behaviour risk |
 
@@ -121,6 +121,15 @@ Read the `audit` object in the 4b hand-off and route on it:
 `node .claude/skills/muffy/scripts/next-action.mjs loop <hand-offs…> --profile fix` computes this: `accept`, `revalidate:debugger`, `ask:reject-options`, `rediagnose:debugger`, `proceed:risk-accepted` or `escalate:loop-limit`. A user answer is an event `{ "answer": "more-info" | "accept-risk" | "cancel" }` in a scenario.
 
 **Promote** also when step 4 changed more than 5 source files, or reports a blocker owned by `Architect`. Count from the diff, not from the agent's `paths_written`: `node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --profile fix` exits 1 with `next=promote:full-flow` and one `reason:` line per broken limit (file count, dependency, devops-owned files, auth files, schema or migration). Switch the lane with `checkpoint.mjs profile .team/<task> feature` and record the reason in checkpoint `## Status` and the vault task note.
+
+## Diagnose only
+
+For "find out why, don't fix it yet" ("แค่หาสาเหตุ", "หาสาเหตุให้ก่อน ยังไม่ต้องแก้", "why does X happen?" about a symptom): the fix lane with a stop point. The plan card is `plan-card fix --scope bug --until 4b` (`--until 4a` for a cosmetic look, which has no 4b).
+
+- Setup as above, but the lane line carries the stop: `checkpoint.mjs profile .team/<task> fix --scope bug --until 4b`. No dev worktrees are cut
+- 4a and 4b run as usual, with every loop and audit outcome. A `needs-full-flow` diagnosis is not promoted: `check-all` answers `close:stop-point` and its `promote_to` goes in the report as advice ("the fix belongs in …")
+- When the `until` step is accepted, `check-all` and the loop answer `next=close:stop-point`, and the guard refuses a step-4 dev spawn. Close per [closing.md](closing.md#stopped-at-a-stop-point): the deliverable is `fix.md` (Symptom, Cause, Repro, Evidence) and the audit verdict
+- To go on and fix it later: `checkpoint.mjs profile .team/<task> fix --scope bug` (no `--until`), then step 4
 
 ## Model and effort
 

@@ -1,0 +1,94 @@
+{
+  "id": "verify-fix-on-copy",
+  "description": "Verify: the user lets the team fix on the copy branch; the blocker owner fixes, the review runs again",
+  "task": "verify-export-csv",
+  "profile": "verify",
+  "skip": [
+    "1",
+    "2",
+    "2b",
+    "3",
+    "3b",
+    "3e",
+    "3c",
+    "3d",
+    "4a",
+    "4b",
+    "4",
+    "5",
+    "5b"
+  ],
+  "defaults": {
+    "task": "verify-export-csv",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "code-reviewer",
+        "step": "6",
+        "verdict": "Reject",
+        "summary": "one blocker",
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "empty exports have no header row",
+            "file": "src/export/csv.ts:12",
+            "owner": "BE"
+          }
+        ]
+      }
+    },
+    {
+      "answer": "fix-on-copy"
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "round": 2,
+        "paths_written": [
+          "src/export/csv.ts"
+        ],
+        "summary": "fixed on the copy",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "decisions": [
+          {
+            "id": "D-1",
+            "decision": "Write the header before the rows",
+            "why": "The reviewer blocker B-1"
+          }
+        ]
+      }
+    },
+    {
+      "handoff": {
+        "role": "code-reviewer",
+        "step": "6",
+        "round": 2,
+        "verdict": "Approve",
+        "summary": "approved"
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "ask:verify-fix",
+      "fix:BE",
+      "accept",
+      "accept"
+    ]
+  }
+}

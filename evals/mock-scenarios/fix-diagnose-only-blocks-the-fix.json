@@ -1,0 +1,91 @@
+{
+  "id": "fix-diagnose-only-blocks-the-fix",
+  "description": "Diagnose only: a step-4 hand-off past the stop point is refused",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "scope": "bug",
+  "until": "4b",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "round": 1,
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "redirect reads stale returnTo from session",
+          "files": [
+            "src/auth/redirect.ts"
+          ],
+          "repro": "test/auth/redirect.test.ts fails",
+          "severity": "medium",
+          "owner": "BE"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "auditor",
+        "step": "4b",
+        "round": 1,
+        "summary": "audited",
+        "audit": {
+          "verdict": "confirm",
+          "evidence_level": "medium",
+          "repro_rerun": "red"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "backend-dev",
+        "step": "4",
+        "paths_written": [
+          "src/auth/redirect.ts"
+        ],
+        "summary": "fixed",
+        "ac_ids_done": [
+          "AC-1"
+        ],
+        "decisions": [
+          {
+            "id": "D-1",
+            "decision": "Clear returnTo after reset",
+            "why": "The cause is the stale session value"
+          }
+        ]
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "blocked",
+    "actions": [
+      "accept",
+      "accept",
+      "block:past-stop-point"
+    ]
+  }
+}

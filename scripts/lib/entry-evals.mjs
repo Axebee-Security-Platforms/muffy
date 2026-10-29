@@ -38,7 +38,10 @@ export function runEntryEvals({ check, root }) {
   check('docs: a visible change asks the scope alone, then the card', /the \*\*Scope\*\* question alone, then one call with the plan card/.test(ref('change-profile.md')));
   const stops = (routeDoc.split(/^## Stop points$/m)[1] ?? '').split(/^## /m)[0].split('\n').filter((l) => /^\| (?!The requester|---)/.test(l)).map((l) => l.split('|').slice(1, -1).map((c) => c.trim()));
   check('docs: the Stop points table has a row per stop', stops.length >= 5, `rows=${stops.length}`);
-  check('docs: every stop point is a known single-step route shown as one line, never a lane card it would not run', stops.every(([, , r, card]) => r.split(/ or /).every((x) => ROUTES.includes(x.trim()) && NON_CODE_ROUTES.includes(x.trim())) && card === 'one line'), JSON.stringify(stops.map((s) => [s[2], s[3]])));
+  // a single-step route shows one line; a stop inside a lane is that lane's card with --until at a step the lane runs
+  const laneStop = (r, card) => { const m = card.match(/^(\w+) `--until (\w+)`$/); return !!m && m[1] === r && !!LANES[r] && !skipsOf(r).includes(m[2]) && !!STEP_LABELS[m[2]]; };
+  check('docs: every stop point is a single-step route shown as one line, or a lane stopped at a step it runs, never a card it would not run', stops.every(([, , r, card]) => (r.split(/ or /).every((x) => NON_CODE_ROUTES.includes(x.trim())) && card === 'one line') || laneStop(r.trim(), card)), JSON.stringify(stops.map((s) => [s[2], s[3]])));
+  check('docs: the Stop points table has the diagnose-only stop', stops.some(([, , r, card]) => r === 'fix' && card === 'fix `--until 4b`'));
   check('docs: fix and internal-change cards offer no stop earlier (no stop point exists inside them)', /plan-card fix --scope <bug \| cosmetic>`, go \/ bigger \(/.test(ref('fix-profile.md')) && /plan-card change --scope internal`, go \/ bigger \(/.test(ref('change-profile.md')));
 
   /* the menu */

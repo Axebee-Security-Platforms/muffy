@@ -1,0 +1,58 @@
+{
+  "id": "verify-reject-asks-first",
+  "description": "Verify: a review reject is reported and the user is asked before any dev touches the code",
+  "task": "verify-export-csv",
+  "profile": "verify",
+  "skip": [
+    "1",
+    "2",
+    "2b",
+    "3",
+    "3b",
+    "3e",
+    "3c",
+    "3d",
+    "4a",
+    "4b",
+    "4",
+    "5",
+    "5b"
+  ],
+  "defaults": {
+    "task": "verify-export-csv",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "code-reviewer",
+        "step": "6",
+        "verdict": "Reject",
+        "summary": "one blocker",
+        "blockers": [
+          {
+            "id": "B-1",
+            "problem": "empty exports have no header row",
+            "file": "src/export/csv.ts:12",
+            "owner": "BE"
+          }
+        ]
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "completed",
+    "actions": [
+      "ask:verify-fix"
+    ]
+  }
+}

@@ -107,5 +107,13 @@
   { "id": "bare-resume-th", "request": "/muffy resume",
     "signals": { "bare": true, "resume": true }, "expect": "resume", "note": "resume with no task name is resume: one open task goes straight in, otherwise resume.md shows the menu" },
   { "id": "stop-plan-th", "request": "แค่วางแผนระบบสมาชิกก่อน ยังไม่ต้องทำ",
-    "signals": { "stop_point": "plan", "outcome": "code", "new_capability": true }, "expect": "plan", "note": "a stop point in the requester's words beats the full flow" }
+    "signals": { "stop_point": "plan", "outcome": "code", "new_capability": true }, "expect": "plan", "note": "a stop point in the requester's words beats the full flow" },
+  { "id": "stop-diagnose-th", "request": "หาสาเหตุให้หน่อยว่าทำไมหน้า login redirect กลับหน้าเดิมหลัง reset password ยังไม่ต้องแก้",
+    "signals": { "stop_point": "diagnose", "outcome": "code", "bug": true, "fix": { "has_symptom": true, "has_location": true, "expected_source_files": 1 } }, "expect": "fix", "note": "a stop point inside the fix lane: diagnose and audit, then close (--until 4b)" },
+  { "id": "verify-branch-th", "request": "ช่วยรีวิวและเทส branch feature/export-csv ให้ครบก่อน merge หน่อย",
+    "signals": { "outcome": "verify" }, "expect": "verify", "note": "review and test before merge is verify; just the review is the review route" },
+  { "id": "upgrade-react-th", "request": "อัปเกรด React เป็น 19 แล้วแก้ส่วนที่พังให้หน่อย",
+    "signals": { "outcome": "code", "upgrade": true }, "expect": "upgrade", "note": "a version bump of a dependency already in the manifest" },
+  { "id": "upgrade-node-en", "request": "Bump Node from 20 to 22 and fix whatever breaks",
+    "signals": { "outcome": "code", "upgrade": true }, "expect": "upgrade", "note": "the runtime pin is already there" }
 ]

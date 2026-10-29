@@ -81,7 +81,7 @@ export function checkAll(taskDir, { step, round, profile: given, skip = [], brai
   // loop (which would promote again) nor the gates (which would see a step past 2b) read them
   const trail = run.lane === 'fix' ? all : all.filter((h) => !['4a', '4b'].includes(h.step));
   const upTo = trail.filter((h) => h.round < Number(round) || (h.round === Number(round) && STEP_ORDER.indexOf(h.step) <= STEP_ORDER.indexOf(String(step))));
-  const loop = simulate({ task, profile, scope: run.scope, skip: skips, passed, events: upTo.map((h) => ({ handoff: h.data, step: h.step, role: h.role })) });
+  const loop = simulate({ task, profile, scope: run.scope, until: run.until, skip: skips, passed, events: upTo.map((h) => ({ handoff: h.data, step: h.step, role: h.role })) });
   const next = loop.outcome === 'invalid-profile' ? 'fix-run-profile' : loop.actions.at(-1) ?? 'none';
   add('loop', [...loop.violations, ...(['escalated', 'blocked', 'invalid-profile', 'promoted'].includes(loop.outcome) ? [`${next}${loop.trigger ? ` (${loop.trigger})` : ''}`] : [])]);
 

@@ -19,7 +19,7 @@ The Orchestrator writes the picked level to `.team/<task>/test-level` (for examp
 The Orchestrator picks it, in this order, and records it in `checkpoint.md` `## Run profile`:
 
 1. Fix lane and no behaviour change → **L0**. Fix lane with a logic fix in one function or component → **L1**. The fix reaches across an API, DB or module boundary → **L2**
-2. Full flow → **L3**. Internal change (change lane, `Scope: internal`, [change-profile.md](change-profile.md)): refactor, perf and db → **L2**, internal-api with new AC → **L3**. A visible change → **L3** on the touched paths
+2. Full flow → **L3**. Internal change (change lane, `Scope: internal`, [change-profile.md](change-profile.md)): refactor, perf and db → **L2**, internal-api with new AC → **L3**. A visible change → **L3** on the touched paths. Verify → **L3** on the paths the branch touched; upgrade → **L3**, with `pause:full-regression` offered first
 3. Offer **L4** at `pause:full-regression` (the user decides, default no) only when one of these holds: the contract changes auth, payments, a migration, a runtime or a dependency; a shared module used by many features changed; a release the user calls out as high risk; the user asks for it. Say which trigger fired in the question
 4. Unsure between two levels → the lower one; a hand-off blocker can ask for more, and the Orchestrator decides
 
