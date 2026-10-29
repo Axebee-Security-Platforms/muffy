@@ -25,16 +25,16 @@ Every row is also a scenario in `evals/route-scenarios.json`; change both togeth
 | "ออกแบบหน้าจอให้ก่อน ยังไม่ต้องเขียนโค้ด" | design | Stop point: design, no code |
 | "ออกแบบ API กับ schema สำหรับระบบคืนสินค้า" | spec | ออกแบบ + API/schema |
 | "ออกแบบระบบแจ้งเตือนให้หน่อย" | ask first | ออกแบบระบบ with no stop point: screens, API or build |
-| "ออกแบบหน้า dashboard ใหม่ให้หน่อย" | redesign | Changes a page that exists, no stop point; the scope is asked inside the lane |
-| "ปรับ flow การใช้คูปองให้ซ้อนกันได้ และคำนวณยอดรวมใหม่" | redesign | Changes a rule and screens that exist; scope UI + logic is picked by the user |
+| "ออกแบบหน้า dashboard ใหม่ให้หน่อย" | change | Changes a page that exists, no stop point; the scope is asked inside the lane |
+| "ปรับ flow การใช้คูปองให้ซ้อนกันได้ และคำนวณยอดรวมใหม่" | change | Changes a rule and screens that exist; scope UI + logic is picked by the user |
 | "รีวิวดีไซน์หน้า checkout ใน canvas นี้หน่อย https://claude.ai/artifact/abc" | design-review | รีวิว + ดีไซน์, the canvas is named |
 | "ช่วยรีวิว ADR 0007 เรื่องเลือก queue หน่อย" | arch-review | รีวิว + ADR |
 | "เขียน ADR ว่าเราเลือก Postgres แทน Mongo" | adr | A technical decision to record |
 | "เขียน README ให้โมดูล billing ที่มีอยู่ สำหรับ dev ใหม่" | docs-existing | Docs for code as it is; reader named |
 | "ปุ่ม Submit หน้า checkout สีผิดใน dark mode" | fix | A look that is wrong, existing tokens |
-| "แยกไฟล์ src/billing/service.ts เป็นหลายโมดูล พฤติกรรมเหมือนเดิม" | lite | Refactor of a named area, nothing visible |
+| "แยกไฟล์ src/billing/service.ts เป็นหลายโมดูล พฤติกรรมเหมือนเดิม" | change | Refactor of a named area, nothing visible |
 | "ทำให้ API เร็วขึ้นหน่อย" | ask first | No area and no measurement |
-| "query หน้า orders ช้า p95 1.8 วิ ช่วยเพิ่ม index ให้หน่อย (แนบ EXPLAIN ANALYZE)" | lite | Named query with a before-number |
+| "query หน้า orders ช้า p95 1.8 วิ ช่วยเพิ่ม index ให้หน่อย (แนบ EXPLAIN ANALYZE)" | change | Named query with a before-number |
 | "วางแผน roadmap ไตรมาสหน้าให้หน่อย" | plan | Outcome is a plan |
 | "ทำต่อจากเมื่อวาน" | resume | Continue earlier work |
 | "ทำสไลด์สรุปฟีเจอร์ login ให้ลูกค้า" | present | A deck for a client |

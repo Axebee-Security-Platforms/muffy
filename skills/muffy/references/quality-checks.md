@@ -5,7 +5,7 @@ After every step, two halves.
 ## 1. Run the script (one call)
 
 ```
-node .claude/skills/muffy/scripts/check-all.mjs .team/<task> --step <s> --round <n> [--profile fix|lite|redesign] [--skip <steps>] --brain <brain> [--base <feature or ops branch> --head <step branch>]
+node .claude/skills/muffy/scripts/check-all.mjs .team/<task> --step <s> --round <n> [--profile fix|change] [--skip <steps>] --brain <brain> [--base <feature or ops branch> --head <step branch>]
 ```
 
 It prints `next=<action>` and one `ok`/`FAIL` line per check. Act on `next=` and do not re-check by hand what it covers:
@@ -13,7 +13,7 @@ It prints `next=<action>` and one `ok`/`FAIL` line per check. Act on `next=` and
 - **handoff**: every hand-off of this step and round validates and has `quality_checks.passed` true (code-reviewer: save its block first)
 - **loop**: the [loops.md](loops.md) rules over all the task's hand-offs, with gates 3c/3d read from checkpoint `## Status` (`Gates 3c and 3d passed`). `next=fix:<owner>`, `retry:*`, `ask:*`, `escalate:*` or `block:*` → follow [loops.md](loops.md)
 - **checkpoint**: `check-checkpoint.mjs`. Checkpoint ≤ 40 lines outside `## Goal`, `rounds/*.md` ≤ 100, labels defined, `spawns.tsv` well formed
-- **artifacts**: `check-artifacts.mjs`. Sizes, links, and traceability `brief.md` → `ac.md` → `contract.md` → `qa-report.md` (lite lane starts at `ac.md`; fix lane: `fix.md` → `qa-report.md`) ([memory-model.md](memory-model.md#splitting-large-artifacts))
+- **artifacts**: `check-artifacts.mjs`. Sizes, links, and traceability `brief.md` → `ac.md` → `contract.md` → `qa-report.md` (an internal change starts at `ac.md`; fix lane: `fix.md` → `qa-report.md`) ([memory-model.md](memory-model.md#splitting-large-artifacts))
 - **brain**: each role of the step wrote `<brain>/agents/<role>/<task>.md`
 - **runtime**: the `Runtime:` in `qa-report.md` matches the `deploy.md` pin
 - **fix lane** (from step 4): the 4a diagnosis is `known` (with `severity` and `owner`) and the 4b audit is `confirm` (or `audit 4b: risk accepted` is in checkpoint `## Status`); `fix.md` has `## Cause` and `## Repro` ([fix-profile.md](fix-profile.md))

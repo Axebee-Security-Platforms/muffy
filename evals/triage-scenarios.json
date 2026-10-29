@@ -57,7 +57,7 @@
   {
     "id": "add-phone-field",
     "request": "Add a `phone` field to the signup form",
-    "doc_lane": "redesign",
+    "doc_lane": "change",
     "signals": {
       "has_symptom": true,
       "has_location": true,
@@ -69,7 +69,7 @@
   {
     "id": "redesign-login",
     "request": "Redesign the login page / make the dashboard look better",
-    "doc_lane": "redesign",
+    "doc_lane": "change",
     "signals": {
       "has_symptom": true,
       "has_location": true,

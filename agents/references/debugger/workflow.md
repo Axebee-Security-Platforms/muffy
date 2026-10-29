@@ -24,5 +24,5 @@
    - Run `node .claude/skills/muffy/scripts/check-diagram.mjs` and `check-diagram-render.mjs` on it, and fix a layout FAIL before hand-off.
    - Draw it from the code you traced, never from memory. Mark anything unconfirmed `verify: true`.
    - Link it from `## Cause` and list it in `paths_written`.
-8. Hand off with one of: `known`, `unknown` or `needs-full-flow`. Use `needs-full-flow` when the cause is in the contract, a dependency, the stack or a design decision; do not work around it.
+8. Hand off with one of: `known`, `unknown` or `needs-full-flow`. Use `needs-full-flow` when the cause is in the contract, a dependency, the stack or a design decision; do not work around it. Set `promote_to` to the smallest lane that can fix it (see output-format.md); when unsure between two, take the bigger one. In a cosmetic run (`Kind: cosmetic` in `fix.md`), rate a cause that is not only the look (a condition, a state, data, a wrong token on purpose elsewhere) above `low` and say so in `reason`-style words in the summary: the Orchestrator then runs it as a bug, with the audit.
 9. Record in `<brain>/agents/debugger/<task>.md` (≤ 5 lines): date, cause, severity, hypotheses dropped, open issues.

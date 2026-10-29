@@ -9,8 +9,8 @@
 //        hand-offs in the order they came back; a directory is read in file-time order
 //   node next-action.mjs effort --role <role> [--mode production|prototype] [--high-impact] [--assumed] [--exact-fix] [--stalled <n>]
 //   node next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke]
-//   node next-action.mjs triage fix|lite '<signals json>'
-//   node next-action.mjs baseline --lane <lane> [--repo .] [--no-code]      (setup step 3: continue | refresh:silent | ask:*)
+//   node next-action.mjs triage fix|change '<signals json>'      (`lite` = change: the internal scope)
+//   node next-action.mjs baseline --lane <lane> [--scope s] [--repo .] [--no-code]      (setup step 3: continue | refresh:silent | ask:*)
 //   node next-action.mjs plan-card <lane> [--scope s] [--until step] [--skip 3d] [--lang th|en]   (route.md: the plan shown before spawning)
 // Prints one verdict line (`next=<action> ...`), then detail lines. Exit 0 = proceed, 1 = escalate / blocked / invalid, 2 = usage error.
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
@@ -18,7 +18,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { validate } from './schema.mjs';
-import { LANES, NEVER_SKIP, skipsOf, neverSkipOf, planCard } from './lanes.mjs';
+import { LANES, NEVER_SKIP, laneSpec, skipsOf, neverSkipOf, planCard } from './lanes.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const schema = (kind) => JSON.parse(readFileSync(join(here, '..', 'schemas', `${kind}.schema.json`), 'utf8'));
@@ -50,10 +50,12 @@ export const SEVERITIES = ['low', 'medium', 'high', 'critical']; // impact of th
 export const EVIDENCE_LEVELS = ['none', ...SEVERITIES]; // the highest severity tier whose minimum evidence a diagnosis meets
 export const AUDIT_ROUNDS = 1; // need-validation rounds allowed before the auditor's verdict counts as reject
 export const FIX_MAX_FILES = LANES.fix.maxFiles; // source files (tests and .team/ excluded) before a fix is promoted to the full flow
-export const LITE_MAX_FILES = LANES.lite.maxFiles; // same count for the lite lane (references/lite-profile.md)
+export const LITE_MAX_FILES = laneSpec('change', 'internal').maxFiles; // same count for the change lane's internal scope (references/change-profile.md)
 const isSource = (p) => !/(^|[\\/])\.team[\\/]/.test(p) && !/(^|[\\/])(tests?|__tests__)[\\/]|\.(test|spec)\.[a-z]+$/i.test(p);
 
 const REJECTING = new Set(['Reject', 'Fail']);
+// the debugger's diagnosis.promote_to → what the Orchestrator does (fix-profile.md "Diagnose budget and outcomes")
+export const PROMOTE_ACTION = { 'change-internal': 'promote:change-internal', 'change-visible': 'promote:change-visible', full: 'promote:full-flow' };
 
 // scenario: { task, profile, skip, smoke_signals, events: [{ handoff, step?, role? }] }
 // Returns every action the Orchestrator must take, in order; the last one is what to do now.
@@ -76,7 +78,7 @@ export function simulate(scenario) {
   const fix = scenario.profile === 'fix';
 
   const violations = NEVER_SKIP.filter((s) => skipped.has(s)).map((s) => `never-skip step ${s} was skipped`);
-  if (LANES[scenario.profile]) violations.push(...neverSkipOf(scenario.profile).filter((s) => !NEVER_SKIP.includes(s) && skipped.has(s)).map((s) => `${scenario.profile} lane: step ${s} was skipped`));
+  if (laneSpec(scenario.profile, scenario.scope)) violations.push(...neverSkipOf(scenario.profile, scenario.scope).filter((s) => !NEVER_SKIP.includes(s) && skipped.has(s)).map((s) => `${scenario.profile} lane: step ${s} was skipped`));
   if (skipped.has('3d')) {
     const { required, reasons } = smokeRequired(scenario.smoke_signals);
     if (required) violations.push(`3d skipped although a smoke trigger is true: ${reasons.join(', ')}`);
@@ -134,7 +136,7 @@ export function simulate(scenario) {
       outcome = 'blocked';
       break;
     }
-    if (fix && String(h?.step ?? ev.step) === '4' && !passed.has('4b')) {
+    if (fix && String(h?.step ?? ev.step) === '4' && !passed.has('4b') && (!skipped.has('4b') || (diagSeverity && diagSeverity !== 'low'))) {
       actions.push('block:no-audit');
       outcome = 'blocked';
       break;
@@ -178,9 +180,10 @@ export function simulate(scenario) {
       continue;
     }
 
-    // 2b. fix lane: route on the diagnosis (fix-profile.md)
+    // 2b. fix lane: route on the diagnosis (fix-profile.md). needs-full-flow means the cause outgrows the fix lane; promote_to
+    // says how far up (the change lane's internal or a visible scope, or the full flow), the full flow when it says nothing
     if (h.diagnosis?.status === 'needs-full-flow') {
-      actions.push('promote:full-flow');
+      actions.push(PROMOTE_ACTION[h.diagnosis.promote_to ?? 'full']);
       outcome = 'promoted';
       trigger = 'needs-full-flow';
       break;
@@ -348,7 +351,7 @@ function listJson(dir) {
   try { return readdirSync(dir).filter((f) => f.endsWith('.json')).map((f) => { try { return JSON.parse(readIf(join(dir, f))); } catch { return null; } }).filter(Boolean); } catch { return []; }
 }
 
-/* ---------- fix and lite triage (fix-profile.md, lite-profile.md) ---------- */
+/* ---------- fix and change triage (fix-profile.md, change-profile.md) ---------- */
 
 // A request is a fix only if every condition holds; otherwise it runs the full flow.
 export function triage(s = {}) {
@@ -361,7 +364,7 @@ export function triage(s = {}) {
   return reasons.length ? { lane: 'full', reasons } : { lane: 'fix', reasons: [] };
 }
 
-// Internal work that is not a bug fix.
+// Internal work that is not a bug fix: the change lane's internal scope (was the lite lane). triageChange is the same.
 export function triageLite(s = {}) {
   if (s.has_goal !== true || s.has_area !== true) return { lane: 'ask', reasons: ['no goal or no named area: ask before triage'] };
   if (s.kind === 'perf' && s.has_measurement !== true) return { lane: 'ask', reasons: ['performance work with no measured before-number: ask first'] };
@@ -372,16 +375,17 @@ export function triageLite(s = {}) {
   if (s.changes_auth === true) reasons.push('changes auth, permissions or personal data');
   if (s.irreversible_migration === true) reasons.push('a migration that drops data or has no down path');
   if ((s.expected_source_files ?? 1) > LITE_MAX_FILES) reasons.push(`expected to touch more than ${LITE_MAX_FILES} source files`);
-  return reasons.length ? { lane: 'full', reasons } : { lane: 'lite', reasons: [] };
+  return reasons.length ? { lane: 'full', reasons } : { lane: 'change', scope: 'internal', reasons: [] };
 }
+export const triageChange = triageLite;
 
 /* ---------- baseline before a run (setup.md step 3, baseline-freshness.md, onboard.md → Depth) ---------- */
 
 // What setup does about docs/architecture/baseline.md before the lane starts. The user is asked only when there is no usable
 // baseline (once, with the depth the lane needs) or when it is red; yellow is refreshed without a question.
 //   colour: check-baseline.mjs --json `baseline` (green | yellow | red | missing); depth: its `depth` (quick | full)
-export function baselineAction({ colour, depth, hasCode = true, lane = 'feature' } = {}) {
-  const need = LANES[lane]?.baseline ?? 'full';
+export function baselineAction({ colour, depth, hasCode = true, lane = 'feature', scope } = {}) {
+  const need = laneSpec(lane, scope)?.baseline ?? 'full';
   if (!hasCode) return { next: 'continue', reason: 'no source files: nothing to onboard' };
   if (colour === 'missing') return { next: `ask:onboard-${need}`, reason: `no baseline; the ${lane} lane needs a ${need} one` };
   if (depth === 'quick' && need === 'full') return { next: 'ask:onboard-full', reason: `the baseline is quick; the ${lane} lane needs a full one` };
@@ -401,7 +405,7 @@ const SMOKE_FLAGS = {
 
 function usage(msg) {
   if (msg) console.error(msg);
-  console.error('usage: next-action.mjs loop <handoff...> | effort --role <role> | smoke [flags] | triage fix|lite <json> | baseline --lane <lane> [--repo .] [--no-code] | plan-card <lane> [--scope s] [--until step] [--skip a,b] [--lang th|en]');
+  console.error('usage: next-action.mjs loop <handoff...> | effort --role <role> | smoke [flags] | triage fix|change <json> | baseline --lane <lane> [--scope s] [--repo .] [--no-code] | plan-card <lane> [--scope s] [--until step] [--skip a,b] [--lang th|en]');
   process.exit(2);
 }
 
@@ -432,6 +436,7 @@ function runLoop(args) {
   const out = simulate({
     task: opt(args, '--task'),
     profile,
+    scope: opt(args, '--scope'),
     skip: [...skipsOf(profile, opt(args, '--scope')), ...(opt(args, '--skip') ?? '').split(',').filter(Boolean)],
     smoke_signals: smoke,
     events,
@@ -475,12 +480,12 @@ function runSmoke(args) {
 
 function runBaseline(args) {
   const lane = opt(args, '--lane') ?? 'feature';
-  if (!LANES[lane]) usage(`baseline: unknown lane ${lane}`);
+  if (!laneSpec(lane)) usage(`baseline: unknown lane ${lane}`);
   const repo = opt(args, '--repo') ?? '.';
   const r = spawnSync(process.execPath, [join(here, 'check-baseline.mjs'), repo, '--json'], { encoding: 'utf8' });
   let facts;
   try { facts = JSON.parse(r.stdout); } catch { usage(`baseline: check-baseline.mjs gave no JSON: ${r.stderr.trim()}`); }
-  const out = baselineAction({ colour: facts.baseline, depth: facts.depth, hasCode: !args.includes('--no-code'), lane });
+  const out = baselineAction({ colour: facts.baseline, depth: facts.depth, hasCode: !args.includes('--no-code'), lane, scope: opt(args, '--scope') });
   console.log(`next=${out.next} baseline=${facts.baseline}${facts.depth ? ` depth=${facts.depth}` : ''} lane=${lane}`);
   console.log(`reason: ${out.reason}`);
   for (const x of facts.reasons ?? []) console.log(`- ${x}`);
@@ -489,7 +494,7 @@ function runBaseline(args) {
 
 function runPlanCard(args) {
   const lane = args[0];
-  if (!LANES[lane]) usage(`plan-card: give a lane (${Object.keys(LANES).join(', ')})`);
+  if (!laneSpec(lane)) usage(`plan-card: give a lane (${Object.keys(LANES).join(', ')})`);
   const lines = planCard(lane, { scope: opt(args, '--scope'), until: opt(args, '--until'), skip: (opt(args, '--skip') ?? '').split(',').filter(Boolean), lang: opt(args, '--lang') ?? 'th' });
   for (const l of lines) console.log(l);
   return 0;
@@ -497,11 +502,11 @@ function runPlanCard(args) {
 
 function runTriage(args) {
   const [lane, json] = args;
-  if (!['fix', 'lite'].includes(lane) || !json) usage('triage: fix|lite and a signals JSON object');
+  if (!['fix', 'lite', 'change'].includes(lane) || !json) usage('triage: fix|change (lite) and a signals JSON object');
   let s;
   try { s = JSON.parse(json); } catch (e) { usage(`triage: bad JSON: ${e.message}`); }
   const out = lane === 'fix' ? triage(s) : triageLite(s);
-  console.log(`next=lane:${out.lane}`);
+  console.log(`next=lane:${out.lane}${out.scope ? ` scope=${out.scope}` : ''}`);
   for (const r of out.reasons) console.log(`reason: ${r}`);
   return 0;
 }

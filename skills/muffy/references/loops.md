@@ -21,7 +21,7 @@
 
 ## Fallback ladder
 
-**Compute it, don't count by hand**: `node .claude/skills/muffy/scripts/next-action.mjs loop <hand-off files in the order they came back> [--profile fix|lite|redesign [--scope <scope>]] [--skip <steps>] --task <task> [--escalation-out .team/<task>/escalation-<n>.json]` applies this file (loop budget, repeated `B-`/`V-` ids, gates 3c/3d, fix-lane promotion) and prints `next=<action>` plus the counters to copy into `## Loop counters`. On `escalate:*` it drafts the escalation file: add the recommendation, then validate.
+**Compute it, don't count by hand**: `node .claude/skills/muffy/scripts/next-action.mjs loop <hand-off files in the order they came back> [--profile fix|change [--scope <scope>]] [--skip <steps>] --task <task> [--escalation-out .team/<task>/escalation-<n>.json]` applies this file (loop budget, repeated `B-`/`V-` ids, gates 3c/3d, fix-lane promotion) and prints `next=<action>` plus the counters to copy into `## Loop counters`. On `escalate:*` it drafts the escalation file: add the recommendation, then validate.
 
 Apply in order. Each rung applies to one loop point; the validator is `node .claude/skills/muffy/scripts/validate-handoff.mjs <file>`.
 

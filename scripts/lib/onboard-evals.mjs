@@ -41,7 +41,7 @@ export function runOnboardEvals({ check, root }) {
     const cb = () => JSON.parse(spawnSync(process.execPath, [S('check-baseline.mjs'), repo, '--json'], { encoding: 'utf8' }).stdout);
     const cli = (lane) => spawnSync(process.execPath, [S('next-action.mjs'), 'baseline', '--lane', lane, '--repo', repo], { encoding: 'utf8' }).stdout;
     check('check-baseline --json: a missing baseline is JSON with baseline "missing"', cb().baseline === 'missing');
-    check('next-action baseline: no baseline asks for the depth the lane needs', /^next=ask:onboard-quick /.test(cli('fix')) && /^next=ask:onboard-full /.test(cli('redesign')));
+    check('next-action baseline: no baseline asks for the depth the lane needs', /^next=ask:onboard-quick /.test(cli('fix')) && /^next=ask:onboard-full /.test(cli('redesign')) && /^next=ask:onboard-quick /.test(cli('lite')));
     put('docs/architecture/baseline.md', `---\ncommit: ${git('rev-parse', 'HEAD')}\ndepth: quick\n---\n## Read this first\nTests: npm test.\n## Stack\nTypeScript. Entry \`src/a.ts:1\`.\n`);
     git('add', '-A'); git('commit', '-qm', 'quick baseline');
     const q = cb();
@@ -52,13 +52,13 @@ export function runOnboardEvals({ check, root }) {
   }
 
   /* every lane runs the common setup; onboard comes back to the request */
-  for (const [f, lane] of [['fix-profile.md', 'fix'], ['lite-profile.md', 'lite'], ['redesign-profile.md', 'redesign']]) {
+  for (const [f, lane] of [['fix-profile.md', 'fix'], ['change-profile.md', 'change']]) {
     check(`docs: ${f} runs the common setup with the baseline check for its lane`, ref(f).includes('[setup.md](setup.md) steps 1-4') && ref(f).includes(`next-action.mjs baseline --lane ${lane}`));
   }
   check('docs: setup.md step 3 uses next-action.mjs baseline for every lane', setup.includes('next-action.mjs baseline --lane <lane>') && /common setup[^\n]*every lane/.test(setup));
   check('docs: setup saves the request and onboard 0f resumes it', setup.includes('.team/onboard/pending-request.md') && /^\| 0f \|[^\n]*pending-request\.md/m.test(onboard));
   check('docs: every onboard depth commits the baseline and reaches 0f, so the request resumes', ['quick', 'full'].every((d) => /0f/.test(depthRow(d).split(' | ')[2] ?? '')) && /\[Commit\]\(#commit-without-0d\)/.test(depthRow('quick')) && /^## Commit without 0d$/m.test(onboard));
-  check('docs: a baseline committed at setup reaches the feature worktree on another base', setup.includes('cherry-pick <sha>') && ['fix-profile.md', 'lite-profile.md', 'redesign-profile.md'].every((f) => ref(f).includes('cherry-picked onto it first')));
+  check('docs: a baseline committed at setup reaches the feature worktree on another base', setup.includes('cherry-pick <sha>') && ['fix-profile.md', 'change-profile.md'].every((f) => ref(f).includes('cherry-picked onto it first')));
   check('docs: a silent refresh with the Stack unchanged has no 0d', /\*\*Silent refresh\*\*[^\n]*skip 0c, 0c' and 0d/.test(onboard));
   check('docs: the researcher writes a quick baseline when asked', read('agents/references/researcher/workflow.md').includes('depth: quick'));
 

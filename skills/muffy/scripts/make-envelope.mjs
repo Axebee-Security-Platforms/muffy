@@ -9,7 +9,7 @@
 //   node make-envelope.mjs --json envelope.json --role qa-tester --step 7 --round 1     (envelope fields from a file)
 //
 // Flags: --role --step --round --task --brain --goal --done-when --read --write --dont-touch (comma lists)
-//        --vault --mode --worktree --branch --profile fix|lite --scope ui-only|ui+logic|logic-only (redesign) --test-level L0..L4 --checkpoint --human-approved
+//        --vault --mode --worktree --branch --profile fix --scope internal|ui-only|ui+logic|logic-only (change lane; --profile lite = --scope internal) --test-level L0..L4 --checkpoint --human-approved
 //        --trailer --announcement --pr-diagram --full-regression --team-dir <dir>   (booleans take no value)
 // A bare file name ending in .md/.json/.csv/.html in --read/--write is placed under --team-dir (default
 // .worktrees/feature-<task>/.team/<task>); anything with a slash is used as given. The hand-off file is added to Write
@@ -49,7 +49,9 @@ const set = (key, flag, f = (x) => x) => { if (args[flag] !== undefined) env[key
 set('goal', 'goal'); set('done_when', 'done-when'); set('task', 'task'); set('brain', 'brain'); set('vault', 'vault');
 set('mode', 'mode', (m) => (/^[123]$/.test(m) ? Number(m) : m)); set('worktree', 'worktree'); set('branch', 'branch');
 set('read', 'read', list); set('write', 'write', list); set('dont_touch', 'dont-touch', list);
-set('profile', 'profile'); set('scope', 'scope'); set('test_level', 'test-level'); set('checkpoint', 'checkpoint');
+set('profile', 'profile'); set('scope', 'scope'); set('test_level', 'test-level');
+// one header scheme: the fix lane sends `Profile: fix`, the change lane `Scope: <scope>`; `--profile lite` (older tasks) is `Scope: internal`
+if (env.profile === 'lite') { delete env.profile; env.scope ??= 'internal'; } set('checkpoint', 'checkpoint');
 set('human_approved', 'human-approved'); set('commit_trailer', 'trailer');
 if (args.announcement) env.announcement = true;
 if (args['pr-diagram']) env.pr_diagram = true;

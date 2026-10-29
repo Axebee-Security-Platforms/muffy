@@ -14,7 +14,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkTask } from './check-artifacts.mjs';
-import { laneOf, redesignScope } from './gate-rules.mjs';
+import { redesignScope } from './gate-rules.mjs';
 
 const readIf = (p) => (p && existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);
 const section = (md, name) => md?.match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'mi'))?.[1]?.trim() ?? null;
@@ -50,7 +50,7 @@ export function gate2b(taskDir, { plan } = {}) {
   const oos = section(ac, 'Out of scope');
   out.push('', `**Out of scope:** ${none(oos) ? 'none' : short(oos.replace(/\n/g, '; '), 160)}`);
   const cpText = readIf(join(taskDir, 'checkpoint.md'));
-  const noPlan = cpText && laneOf(cpText) === 'redesign'; // the redesign lane writes no plan phases (redesign-profile.md)
+  const noPlan = !!(cpText && redesignScope(cpText)); // a visible change writes no plan phases (change-profile.md)
   const planText = readIf(plan);
   if (noPlan && !planText) {
     // nothing to show: the AC and out of scope above are the whole question
@@ -90,7 +90,7 @@ export function gate3c(taskDir) {
   const out = [];
   const notReady = [];
   const checkpoint = readIf(join(taskDir, 'checkpoint.md'));
-  const scope = checkpoint && laneOf(checkpoint) === 'redesign' ? redesignScope(checkpoint) : null;
+  const scope = checkpoint ? redesignScope(checkpoint) : null;
   if (scope === 'logic-only') return gate3cContract(taskDir, ac);
   if (!design) return { lines: [], notReady: ['design.md is missing'] };
   if (scope === 'ui-only') out.push('**Acceptance criteria** (approved together with the design)', ...acList(ac).map(([id, t]) => `- ${id} ${t}`), '');

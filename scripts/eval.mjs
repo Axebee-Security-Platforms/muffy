@@ -260,18 +260,18 @@ check('effort-doc: scenarios cover every role', roles.every((r) => scenarios.som
 /* 4d. constants vs docs: a number changed on one side only is caught here */
 {
   const doc = (f) => readFileSync(rel('skills/muffy/references', f), 'utf8').replace(/\r\n/g, '\n');
-  const loopsDoc = doc('loops.md'), fixDoc = doc('fix-profile.md'), liteDoc = doc('lite-profile.md'), runDoc = doc('run-profile.md'), tokDoc = doc('token-discipline.md');
+  const loopsDoc = doc('loops.md'), fixDoc = doc('fix-profile.md'), liteDoc = doc('change-profile.md'), runDoc = doc('run-profile.md'), tokDoc = doc('token-discipline.md');
   check('drift: loops.md states LOOP_LIMIT fix loops per point', loopsDoc.includes(`${LOOP_LIMIT} fix loops are allowed per point`));
   check('drift: loops.md states the 4th rejection stops the flow', loopsDoc.includes(`**${['', '', '', '', '4th', '5th', '6th'][LOOP_LIMIT + 1]} rejection stops the flow**`));
   check('drift: loops.md states REPEAT_LIMIT consecutive rejects', loopsDoc.includes(`open in ${REPEAT_LIMIT} consecutive rejects`));
   check('drift: fix-profile.md states FIX_MAX_FILES', fixDoc.includes(`≤ ${FIX_MAX_FILES} source files`));
-  check('drift: lite-profile.md states LITE_MAX_FILES', liteDoc.includes(`≤ ${LITE_MAX_FILES} source files`));
+  check('drift: change-profile.md states LITE_MAX_FILES for the internal scope', liteDoc.includes(`≤ ${LITE_MAX_FILES} source files`));
   const neverSkip = runDoc.match(/Never skip: ([^.]+)\./)?.[1] ?? '';
   check('drift: run-profile.md never-skip list matches NEVER_SKIP', JSON.stringify([...neverSkip.matchAll(/\((\d+)\)/g)].map((m) => m[1])) === JSON.stringify(NEVER_SKIP), neverSkip);
   const laneSkips = (re) => (runDoc.match(re)?.[1] ?? '').split(/, | and /).map((s) => s.trim());
   const noGate = (l) => l.filter((s) => s !== '2b'); // 2b runs only when step 2 ran, so the doc leaves it out
   check('drift: run-profile.md fix-lane skips match LANE_SKIPS.fix', JSON.stringify(laneSkips(/fix lane .*?which skips (.+?), adds/)) === JSON.stringify(noGate(LANE_SKIPS.fix)));
-  check('drift: run-profile.md lite-lane skips match LANE_SKIPS.lite', JSON.stringify(laneSkips(/lite lane .*?which skips (.+?) and starts/)) === JSON.stringify(noGate(LANE_SKIPS.lite)));
+  check('drift: run-profile.md internal-scope skips match LANE_SKIPS.lite', JSON.stringify(laneSkips(/internal scope, which skips (.+?) and starts/)) === JSON.stringify(noGate(LANE_SKIPS.lite)));
   check('drift: token-discipline.md allows exactly MODELS', tokDoc.includes(`only \`${MODELS[0]}\` and \`${MODELS[1]}\` are allowed`));
   check('drift: negative control, a changed number is caught', !fixDoc.includes(`≤ ${FIX_MAX_FILES + 1} source files`));
 }
@@ -883,7 +883,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   const skill = readFileSync(rel('skills/muffy/SKILL.md'), 'utf8');
   const route = readFileSync(rel('skills/muffy/references/route.md'), 'utf8');
   check('route-skip: SKILL.md says a mode command skips route.md, and route.md says the same', /Skip it when the request starts with a mode command/.test(skill) && /already routed: skip this file/.test(route));
-  check('route-skip: every mode command named in SKILL.md has a reference file', ['menu', 'todo', 'onboard', 'present', 'diagram', 'resume', 'fix-profile', 'lite-profile', 'redesign-profile'].every((m) => existsSync(rel('skills/muffy/references', `${m}.md`))));
+  check('route-skip: every mode command named in SKILL.md has a reference file', ['menu', 'todo', 'onboard', 'present', 'diagram', 'resume', 'fix-profile', 'change-profile', 'lite-profile', 'redesign-profile'].every((m) => existsSync(rel('skills/muffy/references', `${m}.md`))));
 }
 
 /* 7f. learning a stack (references/stack-learning.md): stale notes, guard entries, project extensions */

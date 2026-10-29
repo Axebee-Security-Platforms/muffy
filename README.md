@@ -55,8 +55,8 @@ The first form does the work; a bare `/muffy` shows the menu: unfinished tasks t
 | You type | What happens | Under the hood |
 |---|---|---|
 | `/muffy ปุ่ม Submit หน้า checkout สีผิดใน dark mode` | Finds the cause first (no code), a second model checks it, then the fix with a regression test, review, QA and your approval | fix |
-| `/muffy ปรับ flow การใช้คูปองให้ซ้อนกันได้ และคำนวณยอดรวมใหม่` | Asks whether the look, the rules or both change, then AC, design or contract for you to approve, build, review, QA | redesign |
-| `/muffy query หน้า orders ช้า p95 1.8 วิ ช่วยเพิ่ม index ให้หน่อย (แนบ EXPLAIN ANALYZE)` | Contract for the change, the index, before and after numbers at your approval | lite |
+| `/muffy ปรับ flow การใช้คูปองให้ซ้อนกันได้ และคำนวณยอดรวมใหม่` | Asks whether the look, the rules or both change, then AC, design or contract for you to approve, build, review, QA | change |
+| `/muffy query หน้า orders ช้า p95 1.8 วิ ช่วยเพิ่ม index ให้หน่อย (แนบ EXPLAIN ANALYZE)` | Contract for the change, the index, before and after numbers at your approval | change |
 | `/muffy ทำระบบรีเซ็ตรหัสผ่านให้หน่อย` | Research, user stories and plan (you approve), design (you approve), build, review, QA, your approval, docs | full flow |
 | `/muffy ออกแบบหน้าจอให้ก่อน ยังไม่ต้องเขียนโค้ด` | Screens only, stops at the design you approve | design |
 | `/muffy ช่วยรีวิว PR #42 ก่อน merge หน่อย` | Code review only; the verdict in chat | review |
@@ -111,8 +111,8 @@ Shortcuts, when you already know the route (each still shows its plan and keeps 
 | Shortcut | Goes straight to |
 |---|---|
 | `/muffy fix <request>` | The [fix lane](#fix-lane): a bug or cosmetic fix with a symptom |
-| `/muffy lite <request>` | The [lite lane](#lite-lane): internal work nothing a user sees |
-| `/muffy redesign <request>` | The [redesign lane](#redesign-lane): change a screen, UX flow or business rule that exists |
+| `/muffy lite <request>` | The [change lane](#change-lane), internal scope: work nothing a user sees |
+| `/muffy redesign <request>` | The [change lane](#change-lane), a visible scope: a screen, UX flow or business rule that exists |
 | `/muffy feature <request>` | The full flow, no triage |
 | `/muffy resume <task>` | That task, from its checkpoint (`/muffy resume` alone goes into the only unfinished task, or shows the menu) |
 | `/muffy present <request>` | A client or end-user deck |
@@ -240,32 +240,20 @@ Research, product, design and architecture are skipped. The cause may be unknown
 
 ### Feature command
 
-`/muffy feature <description>` forces the full flow: research through a QA-passed branch, with no fix or lite triage and no route read (mode commands skip `route.md` entirely). Use it when you already know the work is a feature. It skips only the choice of route; the intake question, `pause:scope`, review, QA and the Human gate still run. For a small bug `/muffy fix` costs far less, and the Orchestrator says so once before carrying on as asked.
+`/muffy feature <description>` forces the full flow: research through a QA-passed branch, with no fix or change triage and no route read (mode commands skip `route.md` entirely). Use it when you already know the work is a feature. It skips only the choice of route; the intake question, `pause:scope`, review, QA and the Human gate still run. For a small bug `/muffy fix` costs far less, and the Orchestrator says so once before carrying on as asked.
 
-### Lite lane
+### Change lane
 
-`/muffy lite <description>` is for internal work whose shape you already know: an internal API, a refactor, a measured performance fix, an index or a reversible migration. The triage needs all of: a goal and a named area (and a measured before-number for performance work), nothing a user or outside caller sees changes, no new dependency or stack change, no auth or personal-data change, no migration that drops data, and at most 15 source files. Otherwise it runs the full flow. Examples are in [lite-profile](skills/muffy/references/lite-profile.md#examples).
-
-| Step | Owner | What happens |
-|---|---|---|
-| Setup-lite | Orchestrator | Writes `ac.md` (kind, owner, AC); one confirmation at `pause:scope` |
-| 3 | `architect` (+ `devops` for a migration) | Contract |
-| 4–7 | devs, `code-reviewer`, `qa-tester` | As in the full flow; QA at L2 (L3 for an internal API with new AC) |
-| 10, 11 | Human gate, `docs-writer` | Your approval, then the changelog and a Deploy hand-off (migration, rollback, numbers) |
-
-Research, product and design are skipped. If the architect or a dev reports a blocker owned by `Researcher`, `PM` or `Designer`, or the work passes 15 source files, the run is promoted to the full flow.
-
-### Redesign lane
-
-`/muffy redesign <description>` (or a request that changes a screen, UX flow or business rule the product already has) runs only the agents the change needs. It always asks the scope at `pause:scope`:
+One lane for changing something the product already has. Its scope says what changes, and only that scope's agents run. `/muffy lite <description>` starts it with the internal scope, `/muffy redesign <description>` with a visible scope it asks you for; a free-text request reaches it through the route. Details: [change-profile](skills/muffy/references/change-profile.md).
 
 | Scope | Agents |
 |---|---|
-| UI only | `product-manager` → `designer` → (you approve the AC and design together) → `frontend-dev` → `code-reviewer` → `qa-tester` (touched pages only) → Human gate → `docs-writer` |
-| UI + logic | `product-manager` → `architect` ∥ `designer` → `frontend-dev` ∥ `backend-dev` → review → QA → Human gate → `docs-writer` |
-| Logic only | `product-manager` → `architect` → `backend-dev` → review → QA → Human gate → `docs-writer` |
+| Internal (nothing a user sees: an internal API, a refactor, a measured performance fix, an index or a reversible migration) | Orchestrator writes `ac.md` → `architect` (+ `devops` for a migration) → devs → `code-reviewer` → `qa-tester` (L2; L3 for an internal API with new AC) → Human gate → `docs-writer` if anything needs writing. No plan or design gate |
+| The look only | `product-manager` → `designer` → (you approve the AC and design together) → `frontend-dev` → `code-reviewer` → `qa-tester` (touched pages only) → Human gate → `docs-writer` |
+| The look and the rules | `product-manager` → `architect` ∥ `designer` → `frontend-dev` ∥ `backend-dev` → review → QA → Human gate → `docs-writer` |
+| The rules only | `product-manager` → `architect` → `backend-dev` → review → QA → Human gate → `docs-writer` |
 
-No researcher and no devops unless the stack changes. If a UI-only run finds it needs a backend change, it stops at `pause:scope-upgrade` and asks once. Details: [redesign-profile](skills/muffy/references/redesign-profile.md).
+The internal scope needs all of: a goal and a named area (and a measured before-number for performance work), nothing a user or outside caller sees changes, no new dependency or stack change, no auth or personal-data change, no migration that drops data, and at most 15 source files. If its architect or a dev reports a blocker owned by `Researcher`, `PM` or `Designer`, or the work passes 15 source files, the run is promoted to the full flow. A look-only run that needs a backend change stops at `pause:scope-upgrade` and asks once. Older tasks written as the lite or redesign lane resume as this lane.
 
 ### Gates and pauses
 
@@ -276,7 +264,7 @@ No researcher and no devops unless the stack changes. If a UI-only run finds it 
 | `pause:plan-review` (2b) | After the product-manager writes the AC and plan | You approve the AC, plan phases and out of scope (or request changes and approve the revision). Nothing goes to `designer` / `architect` / `devops` before this |
 | `pause:design-review` (3c) | After design, once the designer's definition of done is fully checked | You approve the design (or request changes and approve the revision). Nothing goes to `frontend-dev` / `backend-dev` before this |
 | Smoke build (3d) | After devops mode 1, only when the stack changes (new runtime, dependency or devops-owned file) or no smoke has passed yet | Real dependencies run in one process. Feature-only changes skip it; QA on docker local still runs |
-| `pause:scope-upgrade` | Redesign lane, when a UI-only run needs logic | You add the logic or cut that part from the design |
+| `pause:scope-upgrade` | Change lane, when a look-only run needs logic | You add the logic or cut that part from the design |
 | `pause:human-gate` | Step 10 | You answer Approve or Reject |
 
 You approve the design before any code is written and the branch before it is handed over. No agent deploys.

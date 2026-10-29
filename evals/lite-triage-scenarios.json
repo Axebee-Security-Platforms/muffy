@@ -2,30 +2,30 @@
   {
     "id": "internal-endpoint-with-migration",
     "request": "Add an internal `GET /internal/jobs/:id/status` for the worker dashboard in this repo, with a `status` column migration",
-    "doc_lane": "lite (BE)",
+    "doc_lane": "internal (BE)",
     "signals": { "kind": "internal-api", "has_goal": true, "has_area": true, "expected_source_files": 5 },
-    "expect": "lite"
+    "expect": "change"
   },
   {
     "id": "measured-index",
     "request": "Add an index on `orders(customer_id, created_at)`; the orders list query is 1.8 s at p95 (`EXPLAIN ANALYZE` attached)",
-    "doc_lane": "lite (BE, perf)",
+    "doc_lane": "internal (BE, perf)",
     "signals": { "kind": "perf", "has_goal": true, "has_area": true, "has_measurement": true, "expected_source_files": 2 },
-    "expect": "lite"
+    "expect": "change"
   },
   {
     "id": "split-billing-service",
     "request": "Split `src/billing/service.ts` (1,200 lines) into modules, no behaviour change",
-    "doc_lane": "lite (BE, refactor)",
+    "doc_lane": "internal (BE, refactor)",
     "signals": { "kind": "refactor", "has_goal": true, "has_area": true, "expected_source_files": 8 },
-    "expect": "lite"
+    "expect": "change"
   },
   {
     "id": "fe-hooks-refactor",
     "request": "Move the dashboard's data fetching into hooks; nothing on screen changes",
-    "doc_lane": "lite (FE, refactor)",
+    "doc_lane": "internal (FE, refactor)",
     "signals": { "kind": "refactor", "has_goal": true, "has_area": true, "expected_source_files": 6 },
-    "expect": "lite"
+    "expect": "change"
   },
   {
     "id": "make-api-faster",
@@ -74,7 +74,7 @@
     "request": "(boundary) refactor expected to touch exactly 15 source files",
     "doc_lane": null,
     "signals": { "kind": "refactor", "has_goal": true, "has_area": true, "expected_source_files": 15 },
-    "expect": "lite"
+    "expect": "change"
   },
   {
     "id": "visible-change-is-full",

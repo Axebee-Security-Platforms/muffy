@@ -68,4 +68,4 @@ The long form of the rows in [steps.md](steps.md) that need more than one line. 
 
 **Check:** there is no `code-reviewer` pass. Before the hand-off the docs-writer traces every endpoint, field, rule and number it wrote to a file in the diff, `contract.md` or `qa-report.md`, and lists those sources in its hand-off. A failed check is fixed in this step; it never reopens the Human gate or the code approval.
 
-**Skip:** the fix and lite lanes may skip it when the diff changes nothing a user sees, runs no migration, adds no config and no doc mentions the changed part; record `docs skipped: <reason>` in `tasks/<task>.md`. The redesign lane never skips it. The full flow skips it under the rule in [run-profile.md](run-profile.md).
+**Skip:** the fix lane and an internal change may skip it when the diff changes nothing a user sees, runs no migration, adds no config and no doc mentions the changed part; record `docs skipped: <reason>` in `tasks/<task>.md`. The redesign lane never skips it. The full flow skips it under the rule in [run-profile.md](run-profile.md).

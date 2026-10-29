@@ -12,8 +12,8 @@ Setup picks the depth from the lane (`next-action.mjs baseline` → `ask:onboard
 
 | Depth | For | Runs | Writes | Gate |
 |---|---|---|---|---|
-| `quick` | fix and lite lanes | 0a, 0b with `depth: quick` in the prompt, then [Commit](#commit-without-0d), then 0f | `baseline.md` with frontmatter `depth: quick` and only `## Read this first`, Stack, Layout, Commands and `[verify]` | none: every line cites `path:line`, and the `[verify]` items are listed in the text of that task's AC question at `pause:scope` (not asked one by one: that call is capped at 4 questions) |
-| `full` | redesign and the full flow, `/muffy onboard` | 0a to 0e below, then 0f | the whole baseline, the ADR, the design system README (UI only), the agent-context block | 0d |
+| `quick` | the fix lane and an internal change | 0a, 0b with `depth: quick` in the prompt, then [Commit](#commit-without-0d), then 0f | `baseline.md` with frontmatter `depth: quick` and only `## Read this first`, Stack, Layout, Commands and `[verify]` | none: every line cites `path:line`, and the `[verify]` items are listed in the text of that task's AC question at `pause:scope` (not asked one by one: that call is capped at 4 questions) |
+| `full` | a visible change and the full flow, `/muffy onboard` | 0a to 0e below, then 0f | the whole baseline, the ADR, the design system README (UI only), the agent-context block | 0d |
 
 A lane that needs `full` on a `quick` baseline (`next=ask:onboard-full`) runs the full flow below; the researcher keeps the quick sections (they are facts with citations) and adds the rest, so nothing is explored twice.
 

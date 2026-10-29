@@ -1,42 +1,76 @@
 // The lanes in one table, so the scripts, the evals and the references cannot disagree about which lane a task runs
-// or what that lane skips (references/run-profile.md, fix-profile.md, lite-profile.md, redesign-profile.md).
+// or what that lane skips (references/run-profile.md, fix-profile.md, change-profile.md).
+// Three lanes: feature (the full flow), fix, and change, whose scope says what changes: internal (nothing a user
+// sees; was the lite lane), ui-only, ui+logic or logic-only (was the redesign lane). `lite` and `redesign` are aliases.
 // A task's lane is read back from the first line of its checkpoint `## Run profile`, written by
 // `checkpoint.mjs profile` in the form `lane: <id>[ (<scope>)] · skipped <steps>`. Older checkpoints wrote
-// `fix: skipped …`, `lite: skipped …`, `redesign lane (<scope>): …` or `fix lane …`; those still parse.
+// `lane: lite …`, `lane: redesign (<scope>) …`, `fix: skipped …`, `lite: skipped …`, `redesign lane (<scope>): …`
+// or `fix lane …`; those still parse, to the lane and scope they mean now.
 // Change a lane here and in its reference in the same commit: `npm test` compares the two.
 
 // Execution order of the step ids (references/steps.md). 8 and 9 were removed with docs review and staging.
 export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4b', '4', '5', '5b', '6', '7', '10', '11', '12'];
 export const NEVER_SKIP = ['6', '7', '10']; // every lane: review, QA, Human gate
 export const GATES = ['2b', '3c']; // human gates; a lane either has both or none
-export const SCOPES = ['ui-only', 'ui+logic', 'logic-only']; // redesign only, picked at pause:scope
+export const SCOPES = ['internal', 'ui-only', 'ui+logic', 'logic-only']; // change lane, picked at pause:scope
+export const FIX_SCOPES = ['bug', 'cosmetic']; // fix lane: `Kind:` in fix.md; a cosmetic fix (existing tokens) skips the 4b audit
+export const VISIBLE_SCOPES = SCOPES.filter((s) => s !== 'internal'); // a user or caller sees the change
+// older lane ids: lite is the internal scope; redesign is a visible scope, asked when the line names none
+export const ALIASES = { lite: { lane: 'change', scope: 'internal' }, redesign: { lane: 'change', scope: null } };
 
 // skips: step ids the lane skips by definition (a run adds its own, such as 3d with no smoke trigger)
 // neverSkip: steps on top of NEVER_SKIP that this lane must run
-// gated: 2b and 3c apply (the redesign ui-only scope still skips 2b, recorded with `checkpoint.mjs gate 2b skip`)
+// gated: 2b and 3c apply (the ui-only scope still skips 2b, recorded with `checkpoint.mjs gate 2b skip`)
 // maxFiles: source files (tests and .team/ excluded) before the diff promotes the run to the full flow; null = no limit
-// profile: the `Profile:` header the prompt envelope carries (agents load their lane reference on it)
+// profile: the `Profile:` header the prompt envelope carries (fix only; the change lane sends `Scope:` instead)
 // baseline: the onboard depth the lane needs before it starts (onboard.md → Depth): quick = stack, layout, commands; full = all of it
+// A scope overrides the fields it names. A lane's own fields apply when the scope is missing or unknown, so a line with no
+// scope fails closed: the change lane's are the visible scopes' (gated, full baseline), the fix lane's are a bug's (4a and 4b).
 export const LANES = {
   feature: { skips: [], neverSkip: [], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'run-profile.md' },
-  fix: { skips: ['1', '2', '2b', '3', '3b', '3c', '3d'], neverSkip: ['4a', '4b'], gated: false, maxFiles: 5, profile: 'fix', baseline: 'quick', ref: 'fix-profile.md' },
-  lite: { skips: ['1', '2', '2b', '3b', '3c'], neverSkip: ['3'], gated: false, maxFiles: 15, profile: 'lite', baseline: 'quick', ref: 'lite-profile.md' },
-  redesign: {
-    skips: ['1'], neverSkip: ['2', '3c', '11'], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'redesign-profile.md',
-    scopes: { 'ui-only': { skips: ['1', '2b'] }, 'ui+logic': { skips: ['1'] }, 'logic-only': { skips: ['1', '3b', '3e'] } },
+  fix: {
+    skips: ['1', '2', '2b', '3', '3b', '3c', '3d'], neverSkip: ['4a', '4b'], gated: false, maxFiles: 5, profile: 'fix', baseline: 'quick', ref: 'fix-profile.md',
+    scopes: { bug: {}, cosmetic: { skips: ['1', '2', '2b', '3', '3b', '3c', '3d', '4b'], neverSkip: ['4a'] } },
+  },
+  change: {
+    skips: ['1'], neverSkip: ['2', '3c', '11'], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'change-profile.md',
+    scopes: {
+      internal: { skips: ['1', '2', '2b', '3b', '3c'], neverSkip: ['3'], gated: false, maxFiles: 15, baseline: 'quick' },
+      'ui-only': { skips: ['1', '2b'] },
+      'ui+logic': { skips: ['1'] },
+      'logic-only': { skips: ['1', '3b', '3e'] },
+    },
   },
 };
 
 const order = (steps) => [...new Set(steps)].sort((a, b) => STEP_ORDER.indexOf(a) - STEP_ORDER.indexOf(b));
+// a scope the lane knows, lower-cased, or null
+const scopeIn = (lane, s) => {
+  const v = String(s ?? '').trim().toLowerCase();
+  return LANES[lane]?.scopes && Object.hasOwn(LANES[lane].scopes, v) ? v : null;
+};
 
-// the steps a lane (and scope) skips by definition, in execution order
-export function skipsOf(lane, scope) {
-  const l = LANES[lane];
-  if (!l) return [];
-  return order(l.scopes?.[scope]?.skips ?? l.skips);
+// { lane, scope } with the aliases resolved: lite → change (internal), redesign → change (its scope, or none)
+export function resolveLane(lane, scope) {
+  const id = String(lane ?? '').toLowerCase();
+  const alias = ALIASES[id];
+  if (alias) return { lane: alias.lane, scope: alias.scope ?? scopeIn(alias.lane, scope) };
+  return { lane: id, scope: scopeIn(id, scope) };
 }
 
-export const neverSkipOf = (lane) => [...NEVER_SKIP, ...(LANES[lane]?.neverSkip ?? [])];
+// the lane's fields with its scope's on top; null for an unknown lane
+export function laneSpec(lane, scope) {
+  const r = resolveLane(lane, scope);
+  const l = LANES[r.lane];
+  if (!l) return null;
+  const { scopes, ...own } = l;
+  return { ...own, ...(scopes?.[r.scope] ?? {}), lane: r.lane, scope: r.scope };
+}
+
+// the steps a lane (and scope) skips by definition, in execution order
+export const skipsOf = (lane, scope) => order(laneSpec(lane, scope)?.skips ?? []);
+
+export const neverSkipOf = (lane, scope) => [...NEVER_SKIP, ...(laneSpec(lane, scope)?.neverSkip ?? [])];
 
 // gates each step's hand-off needs: past 2b needs 2b, past 3c needs 3c too
 export const STEP_NEEDS = Object.fromEntries(STEP_ORDER.flatMap((s, i) => {
@@ -63,20 +97,25 @@ export const STEP_LABELS = {
   '10': { th: 'คุณอนุมัติ branch', en: 'you accept the branch' },
   '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off' },
 };
+const DOCS_MAYBE = { '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off', maybe: true } };
 const LANE_WORDS = {
-  feature: { th: 'ทำฟีเจอร์ใหม่', en: 'build something new', why: { th: '', en: '' }, labels: { '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off', maybe: true } } },
+  feature: { th: 'ทำฟีเจอร์ใหม่', en: 'build something new', why: { th: '', en: '' }, labels: DOCS_MAYBE },
   fix: {
     th: 'แก้บั๊ก', en: 'fix a bug', why: { th: 'มีอาการและจุดที่เกิดชัดแล้ว', en: 'the symptom and where it happens are known' },
-    labels: { '4': { th: 'แก้โค้ด + regression test', en: 'fix + regression test' }, '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off', maybe: true } },
+    labels: { '4': { th: 'แก้โค้ด + regression test', en: 'fix + regression test' }, ...DOCS_MAYBE },
+    scopes: {
+      bug: { th: 'บั๊ก', en: 'a bug' },
+      cosmetic: { th: 'หน้าตา จาก token เดิม', en: 'the look, existing tokens', labels: { '4': { th: 'แก้หน้าตา + เช็คด้วยตา', en: 'fix the look + visual check' } } },
+    },
   },
-  lite: {
-    th: 'ปรับภายใน (ผู้ใช้ไม่เห็น)', en: 'internal change (nothing a user sees)', why: { th: 'ผู้ใช้มองไม่เห็นการเปลี่ยนแปลง', en: 'nothing a user sees changes' },
-    labels: { '3': { th: 'ออกแบบ API / โครงสร้าง', en: 'design the API or structure' }, '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off', maybe: true } },
-  },
-  redesign: {
+  change: {
     th: 'ปรับของที่มีอยู่', en: 'change what already exists', why: { th: 'ของนี้มีอยู่แล้ว', en: 'it already exists' },
     labels: { '2': { th: 'เขียน AC ของการเปลี่ยนแปลง', en: 'acceptance criteria for the change' } },
     scopes: {
+      internal: {
+        th: 'ปรับภายใน (ผู้ใช้ไม่เห็น)', en: 'internal (nothing a user sees)', why: { th: 'ผู้ใช้มองไม่เห็นการเปลี่ยนแปลง', en: 'nothing a user sees changes' },
+        labels: { '3': { th: 'ออกแบบ API / โครงสร้าง', en: 'design the API or structure' }, ...DOCS_MAYBE },
+      },
       'ui-only': { th: 'เปลี่ยนแค่หน้าตา', en: 'look only', labels: { '3': { th: 'ออกแบบหน้าจอใหม่', en: 'design the new screens' }, '3c': { th: 'คุณอนุมัติ AC และดีไซน์', en: 'you approve the AC and design' } } },
       'ui+logic': { th: 'เปลี่ยนหน้าตาและกฎ', en: 'look and rules', labels: { '3': { th: 'ออกแบบหน้าจอและ API', en: 'design the screens and API' } } },
       'logic-only': { th: 'เปลี่ยนแค่กฎเบื้องหลัง', en: 'rules only', labels: { '3': { th: 'ออกแบบกฎ / API', en: 'design the rules or API' }, '3c': { th: 'คุณอนุมัติ contract', en: 'you approve the contract' } } },
@@ -88,15 +127,17 @@ const STOP_DEFAULT = { th: 'branch ที่ผ่าน QA บน docker local 
 // The card the Orchestrator shows before spawning, from the lane table: steps that run, steps skipped and why, where it stops.
 // until: stop after this step (a stated stop point: "แค่วางแผน" → 2b, "ยังไม่ต้องเขียนโค้ด" → 3c)
 export function planCard(lane, { scope, until, skip = [], lang = 'th' } = {}) {
-  const words = LANE_WORDS[lane];
+  const r = resolveLane(lane, scope);
+  const words = LANE_WORDS[r.lane];
   if (!words) throw new Error(`unknown lane: ${lane} (${Object.keys(LANES).join(', ')})`);
-  if (lane === 'redesign' && !scopeOf(scope)) throw new Error(`the redesign card needs a scope (${SCOPES.join(', ')}): ask it first`);
+  if (r.lane === 'change' && !r.scope) throw new Error(`the change card needs a scope (${SCOPES.join(', ')}): ask it first`);
   if (until && !STEP_LABELS[until]) throw new Error(`--until ${until} is not a step the user sees (${Object.keys(STEP_LABELS).join(', ')})`);
-  const sw = scope ? words.scopes[scopeOf(scope)] : null;
+  const sw = r.scope ? words.scopes[r.scope] : null;
+  const why = sw?.why ?? words.why;
   const label = (s) => ({ ...STEP_LABELS[s], ...(words.labels?.[s] ?? {}), ...(sw?.labels?.[s] ?? {}) });
-  const skipped = new Set([...skipsOf(lane, scopeOf(scope)), ...skip]);
+  const skipped = new Set([...skipsOf(r.lane, r.scope), ...skip]);
   const shown = STEP_ORDER.filter((s) => STEP_LABELS[s]);
-  const kept = shown.filter((s) => !skipped.has(s) && (lane === 'fix' || !['4a', '4b'].includes(s)));
+  const kept = shown.filter((s) => !skipped.has(s) && (r.lane === 'fix' || !['4a', '4b'].includes(s)));
   const cut = until ? kept.slice(0, kept.indexOf(until) + 1) : kept;
   const maybe = lang === 'th' ? ' (ถ้าจำเป็น)' : ' (if needed)';
   const steps = cut.map((s) => `${label(s)[lang]}${label(s).maybe ? maybe : ''}`);
@@ -107,7 +148,7 @@ export function planCard(lane, { scope, until, skip = [], lang = 'th' } = {}) {
   return [
     `${T.plan}: ${words[lang]}${sw ? ` · ${sw[lang]}` : ''}`,
     `${T.steps}: ${steps.join(' → ')}`,
-    ...(left.length ? [`${T.skip}: ${left.join(', ')}${words.why[lang] ? ` (${words.why[lang]})` : ''}`] : []),
+    ...(left.length ? [`${T.skip}: ${left.join(', ')}${why[lang] ? ` (${why[lang]})` : ''}`] : []),
     `${T.stop}: ${until ? label(until)[lang] : STOP_DEFAULT[lang]}`,
   ];
 }
@@ -116,20 +157,20 @@ export function planCard(lane, { scope, until, skip = [], lang = 'th' } = {}) {
 
 const norm = (text) => String(text ?? '').replace(/\r\n/g, '\n');
 const runProfile = (cpText) => norm(cpText).match(/^## Run profile[^\n]*\n([\s\S]*?)(?=^## |(?![\s\S]))/m)?.[1] ?? '';
-const scopeOf = (s) => (SCOPES.includes(s?.toLowerCase()) ? s.toLowerCase() : null);
 
-// `lane: fix · skipped 1, 2, 2b, 3, 3b, 3c, 3d` / `lane: redesign (ui-only) · skipped 1, 2b, 3d`
+// `lane: fix · skipped 1, 2, 2b, 3, 3b, 3c, 3d` / `lane: change (ui-only) · skipped 1, 2b, 3d`
 export function formatRunProfile(lane, { scope, skip = [] } = {}) {
-  if (!LANES[lane]) throw new Error(`unknown lane: ${lane} (${Object.keys(LANES).join(', ')})`);
-  if (lane === 'redesign' && !scopeOf(scope)) throw new Error(`the redesign lane needs a scope (${SCOPES.join(', ')})`);
-  if (lane !== 'redesign' && scope) throw new Error(`only the redesign lane takes a scope, not ${lane}`);
+  const r = resolveLane(lane, scope);
+  if (!LANES[r.lane]) throw new Error(`unknown lane: ${lane} (${Object.keys(LANES).join(', ')})`);
+  if (r.lane === 'change' && !r.scope) throw new Error(`the change lane needs a scope (${SCOPES.join(', ')})`);
+  if (scope && !r.scope) throw new Error(`${lane} has no scope ${scope}${LANES[r.lane].scopes ? ` (${Object.keys(LANES[r.lane].scopes).join(', ')})` : ''}`);
   const steps = skip.filter((s) => STEP_ORDER.includes(s));
   const other = skip.filter((s) => !STEP_ORDER.includes(s)); // roles a scope leaves out (designer, architect), kept as written
-  const all = [...order([...skipsOf(lane, scopeOf(scope)), ...steps]), ...new Set(other)];
-  return `lane: ${lane}${scope ? ` (${scopeOf(scope)})` : ''} · skipped ${all.length ? all.join(', ') : 'none'}`;
+  const all = [...order([...skipsOf(r.lane, r.scope), ...steps]), ...new Set(other)];
+  return `lane: ${r.lane}${r.scope ? ` (${r.scope})` : ''} · skipped ${all.length ? all.join(', ') : 'none'}`;
 }
 
-// lines a lane line may have been written as, newest first; the first match decides
+// lines a lane line may have been written as, newest first; the first match decides (lite and redesign resolve to change)
 const LEGACY = [
   [/^[-*\s]*redesign lane\s*\(([^)]+)\)/im, 'redesign'],
   [/\bredesign lane\b|\/muffy redesign\b/i, 'redesign'],
@@ -147,13 +188,15 @@ const skippedOn = (rp, end) => {
 
 // { lane, scope, skipped } of a checkpoint; feature when the Run profile names no other lane.
 // `skipped` is every step id the lane line lists, so a run's own skip (3d with no smoke trigger) is read back too.
+// A lane line written before the merge (`lane: lite`, `lane: redesign (ui-only)`) reads as the change lane and scope it is now.
 export function parseRunProfile(cpText) {
   const rp = runProfile(cpText);
   const m = rp.match(/^[-*\s]*lane:\s*(\w+)(?:\s*\(([^)]+)\))?/im);
-  if (m && LANES[m[1].toLowerCase()]) return { lane: m[1].toLowerCase(), scope: scopeOf(m[2]), skipped: skippedOn(rp, m.index + m[0].length) };
+  const id = m?.[1].toLowerCase();
+  if (m && (LANES[id] || ALIASES[id])) return { ...resolveLane(id, m[2]), skipped: skippedOn(rp, m.index + m[0].length) };
   for (const [re, lane] of LEGACY) {
     const hit = rp.match(re);
-    if (hit) return { lane, scope: lane === 'redesign' ? scopeOf(hit[1]) : null, skipped: skippedOn(rp, hit.index + hit[0].length) };
+    if (hit) return { ...resolveLane(lane, lane === 'redesign' ? hit[1] : null), skipped: skippedOn(rp, hit.index + hit[0].length) };
   }
   return { lane: 'feature', scope: null, skipped: [] };
 }

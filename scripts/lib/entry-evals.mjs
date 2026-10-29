@@ -5,7 +5,7 @@
 //   - every README example is a route scenario with the same route, so the README never promises a route the order does not give
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { LANES, SCOPES, STEP_LABELS, skipsOf, planCard } from '../../skills/muffy/scripts/lanes.mjs';
+import { LANES, SCOPES, VISIBLE_SCOPES, STEP_LABELS, skipsOf, planCard } from '../../skills/muffy/scripts/lanes.mjs';
 import { route, ROUTES, NON_CODE_ROUTES } from './route-sim.mjs';
 
 export function runEntryEvals({ check, root }) {
@@ -13,7 +13,7 @@ export function runEntryEvals({ check, root }) {
   const ref = (f) => read('skills/muffy/references', f);
 
   /* the plan card */
-  const pairs = [...Object.keys(LANES).filter((l) => l !== 'redesign').map((l) => [l, undefined]), ...SCOPES.map((s) => ['redesign', s])];
+  const pairs = [...Object.keys(LANES).filter((l) => l !== 'change').map((l) => [l, undefined]), ...SCOPES.map((s) => ['change', s])];
   for (const [lane, scope] of pairs) {
     for (const lang of ['th', 'en']) {
       const card = planCard(lane, { scope, lang });
@@ -32,14 +32,14 @@ export function runEntryEvals({ check, root }) {
   /* where the card is shown */
   const routeDoc = ref('route.md');
   check('docs: route.md shows the plan, not a `Route:` line', /^## Say the plan$/m.test(routeDoc) && routeDoc.includes('next-action.mjs plan-card') && !routeDoc.includes('`Route: <name> → <agents>'));
-  for (const [f, lane] of [['setup.md', 'feature'], ['fix-profile.md', 'fix'], ['lite-profile.md', 'lite']]) {
+  for (const [f, lane] of [['setup.md', 'feature'], ['fix-profile.md', 'fix --scope <bug | cosmetic>'], ['change-profile.md', 'change --scope internal']]) {
     check(`docs: ${f} asks the plan card first at pause:scope`, ref(f).includes(`**Plan**: the card from \`next-action.mjs plan-card ${lane}\``));
   }
-  check('docs: the redesign lane asks the scope alone, then the card', /the \*\*Scope\*\* question alone, then one call with the plan card/.test(ref('redesign-profile.md')));
+  check('docs: a visible change asks the scope alone, then the card', /the \*\*Scope\*\* question alone, then one call with the plan card/.test(ref('change-profile.md')));
   const stops = (routeDoc.split(/^## Stop points$/m)[1] ?? '').split(/^## /m)[0].split('\n').filter((l) => /^\| (?!The requester|---)/.test(l)).map((l) => l.split('|').slice(1, -1).map((c) => c.trim()));
   check('docs: the Stop points table has a row per stop', stops.length >= 5, `rows=${stops.length}`);
   check('docs: every stop point is a known single-step route shown as one line, never a lane card it would not run', stops.every(([, , r, card]) => r.split(/ or /).every((x) => ROUTES.includes(x.trim()) && NON_CODE_ROUTES.includes(x.trim())) && card === 'one line'), JSON.stringify(stops.map((s) => [s[2], s[3]])));
-  check('docs: fix and lite cards offer no stop earlier (no stop point exists inside them)', ['fix-profile.md', 'lite-profile.md'].every((f) => /plan-card \w+`, go \/ bigger \(/.test(ref(f))));
+  check('docs: fix and internal-change cards offer no stop earlier (no stop point exists inside them)', /plan-card fix --scope <bug \| cosmetic>`, go \/ bigger \(/.test(ref('fix-profile.md')) && /plan-card change --scope internal`, go \/ bigger \(/.test(ref('change-profile.md')));
 
   /* the menu */
   check('menu: menu.md exists and SKILL.md, resume.md and todo.md send to it', existsSync(join(root, 'skills/muffy/references/menu.md')) && read('skills/muffy/SKILL.md').includes('[menu.md](references/menu.md)') && ref('resume.md').includes('[menu.md](menu.md)') && ref('todo.md').includes('[menu.md](menu.md)'));
@@ -60,6 +60,6 @@ export function runEntryEvals({ check, root }) {
   }
   const sample = (readme.split(/^Before anything starts you see the plan, for example:$/m)[1] ?? '').match(/```text\n([\s\S]*?)\n```/)?.[1];
   check('readme: the sample card is what planCard("fix") prints today', sample === planCard('fix').join('\n'), sample);
-  check('plan card: step 11 is "if needed" exactly where the lane may skip docs (not redesign)', ['feature', 'fix', 'lite'].every((l) => planCard(l)[1].endsWith('(ถ้าจำเป็น)')) && SCOPES.every((s) => !planCard('redesign', { scope: s })[1].endsWith('(ถ้าจำเป็น)')));
+  check('plan card: step 11 is "if needed" exactly where the lane may skip docs (not redesign)', ['feature', 'fix', 'lite'].every((l) => planCard(l)[1].endsWith('(ถ้าจำเป็น)')) && VISIBLE_SCOPES.every((s) => !planCard('redesign', { scope: s })[1].endsWith('(ถ้าจำเป็น)')));
   check('readme: the commands table leads with /muffy <request> and a bare /muffy', /\| `\/muffy <request>` \|[^\n]*\n\| `\/muffy` \|/.test(readme));
 }

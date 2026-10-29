@@ -98,6 +98,7 @@
         "files": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "repro": { "type": "string", "minLength": 3, "maxLength": 200, "description": "Failing test, command, URL + viewport or log line that shows the problem" },
         "reason": { "type": "string", "minLength": 3, "maxLength": 300, "description": "Why the cause is unknown, or why the fix needs the full flow" },
+        "promote_to": { "enum": ["change-internal", "change-visible", "full"], "description": "needs-full-flow only: the smallest lane that can fix the cause. change-internal: an internal contract or module, nothing a user sees changes beyond the fix; change-visible: a rule, screen or flow users see must change; full: a dependency, the stack, auth or a new capability. Missing = full" },
         "severity": { "enum": ["low", "medium", "high", "critical"], "description": "Impact of the bug (not the effort to fix it); sets the evidence the auditor requires (references/fix-profile.md)" },
         "owner": { "enum": ["FE", "BE", "both"], "description": "Who fixes it at step 4; the Orchestrator spawns that dev" },
         "owner_files": {
