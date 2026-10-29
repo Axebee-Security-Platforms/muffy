@@ -5,7 +5,7 @@
 //   checkpoint.mjs gate   records the user's answer (the only writer of the gate lines in ## Status)
 // A gate is passed when ## Status has `gate <id> passed`, or skipped when it has `gate <id> skipped`. Other lines
 // that name the gate (`not passed`, `rejected`) do not count. Which lanes are gated, and which gates a step needs, come from lanes.mjs.
-import { GATES, STEP_NEEDS, laneSpec, skipsOf, parseRunProfile } from './lanes.mjs';
+import { GATES, STEP_NEEDS, STEP_ORDER, laneSpec, skipsOf, parseRunProfile } from './lanes.mjs';
 
 export { GATES };
 export const PAUSE_OF = { '2b': 'plan-review', '3c': 'design-review' };
@@ -37,8 +37,10 @@ export const redesignScope = (cpText) => {
 
 export function gateState(cpText, gate) {
   const status = section(cpText, 'Status') ?? '';
-  // the latest line about the gate decides: a rejection, then a later approval, is passed
-  const lines = norm(status).split('\n').filter((l) => new RegExp(`\\b${gate}\\b`).test(l)).reverse();
+  // the latest line about the gate decides: a rejection, then a later approval, is passed. A line recorded for another gate
+  // (`gate 2b skipped · … approved at 3c`) is that gate's, whatever its free text names
+  const own = (l) => { const id = l.match(/\bgate\s+(2b|3c)\b/i)?.[1]; return !id || id.toLowerCase() === gate; };
+  const lines = norm(status).split('\n').filter((l) => new RegExp(`\\b${gate}\\b`).test(l) && own(l)).reverse();
   for (const l of lines) {
     if (/\bnot passed\b|\brejected\b/i.test(l)) return 'open';
     if (/\bpassed\b/i.test(l)) return 'passed';
@@ -64,6 +66,7 @@ export function auditMissing(cpText, role, prompt = '', handoffs = []) {
   if (!['frontend-dev', 'backend-dev'].includes(role) || !DEV_STEP4.test(prompt)) return null;
   if (cpText === null) return null;
   const run = parseRunProfile(cpText);
+  if (run.until && STEP_ORDER.indexOf('4') > STEP_ORDER.indexOf(run.until)) return `this run stops at step ${run.until} (lane line \`until ${run.until}\`): close it per closing.md "Stopped at a stop point", or switch the lane with checkpoint.mjs profile to go on`;
   if (run.lane !== 'fix') return null;
   if (/\baudit 4b\b[^\n]*\brisk accepted\b/i.test(section(cpText, 'Status') ?? '')) return null;
   const byRound = (step) => handoffs.filter((h) => h?.step === step).sort((a, b) => (a.round ?? 0) - (b.round ?? 0)).at(-1);

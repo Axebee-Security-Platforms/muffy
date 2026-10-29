@@ -154,6 +154,14 @@ export function runLaneTableEvals({ check, root }) {
   check('drift: change-profile.md internal skip list matches lanes.mjs', same(ids(change.match(/^Internal: Skipped: ([^\n]+?)\. Never/m)?.[1]), skipsOf('change', 'internal').filter((s) => s !== '2b')));
   check('drift: change-profile.md Steps by scope marks 3b/3e skipped exactly for the scopes lanes.mjs skips them', ['internal', 'ui-only', 'ui+logic', 'logic-only'].every((s, i) => /skipped/.test(change.match(/^\| 3b, 3e \|[^\n]*$/m)?.[0].split('|').slice(1, -1)[i + 2] ?? '') === skipsOf('change', s).includes('3b')));
   check('docs: resume reads every lane from the lane line', /change-profile\.md/.test(ref('resume.md')) && ref('resume.md').includes('lane:'));
+  /* a stop point on the lane line (diagnose only: fix --until 4b) */
+  const stopLine = formatRunProfile('fix', { scope: 'bug', until: '4b' });
+  check('until: the lane line carries the stop and reads it back, apart from the skips', parseRunProfile(CP(stopLine)).until === '4b' && !parseRunProfile(CP(stopLine)).skipped.includes('4b') && parseRunProfile(CP(formatRunProfile('fix'))).until === null);
+  let badUntil = '';
+  try { formatRunProfile('fix', { until: '3' }); } catch (e) { badUntil = e.message; }
+  check('until: a step the lane skips cannot be its stop', /not a step this lane runs/.test(badUntil), badUntil);
+  check('until: the guard refuses a dev spawn past the stop, even with a confirmed audit', /stops at step 4b/.test(auditMissing(CP(stopLine), 'backend-dev', step4, [{ step: '4b', round: 1, audit: { verdict: 'confirm' } }]) ?? ''));
+
   /* the fix lane's scope: a cosmetic fix skips the 4b audit, a bug never does */
   check('fix scope: cosmetic skips 4b and still runs 4a; bug and a missing or unknown scope run both', skipsOf('fix', 'cosmetic').includes('4b') && neverSkipOf('fix', 'cosmetic').includes('4a') && !neverSkipOf('fix', 'cosmetic').includes('4b') && ['bug', null, 'bogus'].every((s) => neverSkipOf('fix', s).includes('4b') && !skipsOf('fix', s).includes('4b')));
   const cosLine = formatRunProfile('fix', { scope: 'cosmetic' });

@@ -1,6 +1,7 @@
 // The lanes in one table, so the scripts, the evals and the references cannot disagree about which lane a task runs
 // or what that lane skips (references/run-profile.md, fix-profile.md, change-profile.md).
-// Three lanes: feature (the full flow), fix, and change, whose scope says what changes: internal (nothing a user
+// Five lanes: feature (the full flow), fix, verify (review, QA and the gate on a branch someone already wrote), upgrade
+// (bump a dependency or runtime already in the manifest), and change, whose scope says what changes: internal (nothing a user
 // sees; was the lite lane), ui-only, ui+logic or logic-only (was the redesign lane). `lite` and `redesign` are aliases.
 // A task's lane is read back from the first line of its checkpoint `## Run profile`, written by
 // `checkpoint.mjs profile` in the form `lane: <id>[ (<scope>)] · skipped <steps>`. Older checkpoints wrote
@@ -41,6 +42,10 @@ export const LANES = {
       'logic-only': { skips: ['1', '3b', '3e'] },
     },
   },
+  // verify-profile.md: the code exists; review, QA, the Human gate and docs run on a copy of the requester's branch
+  verify: { skips: ['1', '2', '2b', '3', '3b', '3e', '3c', '4a', '4b', '4', '5', '5b'], neverSkip: [], gated: false, maxFiles: null, profile: null, baseline: 'quick', ref: 'verify-profile.md' },
+  // upgrade-profile.md: researcher reads the changelog, architect writes the upgrade ADR, the user approves it at 3c, 3d always runs
+  upgrade: { skips: ['2', '2b', '3b'], neverSkip: ['1', '3', '3c', '3d'], gated: true, maxFiles: null, profile: null, baseline: 'quick', ref: 'upgrade-profile.md' },
 };
 
 const order = (steps) => [...new Set(steps)].sort((a, b) => STEP_ORDER.indexOf(a) - STEP_ORDER.indexOf(b));
@@ -122,6 +127,20 @@ const LANE_WORDS = {
     },
   },
 };
+LANE_WORDS.verify = {
+  th: 'ตรวจ branch ที่เขียนเสร็จแล้ว', en: 'check a branch that is already written', why: { th: 'โค้ดเขียนเสร็จแล้ว', en: 'the code is already written' }, labels: DOCS_MAYBE,
+  stop: { th: 'ผลรีวิวและผลเทสบน docker local ของ branch คุณ (ไม่แก้และไม่ merge branch ของคุณ)', en: 'review and QA results on docker local for your branch (never edited or merged)' },
+};
+LANE_WORDS.upgrade = {
+  th: 'อัปเกรด dependency หรือ runtime', en: 'upgrade a dependency or runtime', why: { th: 'อัปเกรดของที่มีอยู่ ไม่ได้สร้างของใหม่', en: 'it bumps something already there, nothing new is built' },
+  labels: {
+    '1': { th: 'สรุป changelog และ breaking changes', en: 'read the changelog and breaking changes' },
+    '3': { th: 'เขียน ADR การอัปเกรดและสิ่งที่ต้องแก้', en: 'the upgrade ADR and what must change' },
+    '3c': { th: 'คุณอนุมัติ ADR', en: 'you approve the ADR' },
+    '3d': { th: 'ทดสอบ stack บน docker', en: 'stack smoke on docker', maybe: false },
+    '7': { th: 'เทสบน docker local (เสนอ full regression)', en: 'QA on docker local (full regression offered)' },
+  },
+};
 const STOP_DEFAULT = { th: 'branch ที่ผ่าน QA บน docker local (ไม่ deploy ให้)', en: 'a QA-passed branch on docker local (never deployed)' };
 
 // The card the Orchestrator shows before spawning, from the lane table: steps that run, steps skipped and why, where it stops.
@@ -149,7 +168,7 @@ export function planCard(lane, { scope, until, skip = [], lang = 'th' } = {}) {
     `${T.plan}: ${words[lang]}${sw ? ` · ${sw[lang]}` : ''}`,
     `${T.steps}: ${steps.join(' → ')}`,
     ...(left.length ? [`${T.skip}: ${left.join(', ')}${why[lang] ? ` (${why[lang]})` : ''}`] : []),
-    `${T.stop}: ${until ? label(until)[lang] : STOP_DEFAULT[lang]}`,
+    `${T.stop}: ${until ? label(until)[lang] : (words.stop ?? STOP_DEFAULT)[lang]}`,
   ];
 }
 
@@ -158,8 +177,9 @@ export function planCard(lane, { scope, until, skip = [], lang = 'th' } = {}) {
 const norm = (text) => String(text ?? '').replace(/\r\n/g, '\n');
 const runProfile = (cpText) => norm(cpText).match(/^## Run profile[^\n]*\n([\s\S]*?)(?=^## |(?![\s\S]))/m)?.[1] ?? '';
 
-// `lane: fix · skipped 1, 2, 2b, 3, 3b, 3c, 3d` / `lane: change (ui-only) · skipped 1, 2b, 3d`
-export function formatRunProfile(lane, { scope, skip = [] } = {}) {
+// `lane: fix · skipped 1, 2, 2b, 3, 3b, 3c, 3d` / `lane: change (ui-only) · skipped 1, 2b, 3d` / `lane: fix (bug) · skipped … · until 4b`
+// until: the run stops once that step is accepted (a stated stop point, route.md "Stop points"); it must be a step the lane runs
+export function formatRunProfile(lane, { scope, skip = [], until } = {}) {
   const r = resolveLane(lane, scope);
   if (!LANES[r.lane]) throw new Error(`unknown lane: ${lane} (${Object.keys(LANES).join(', ')})`);
   if (r.lane === 'change' && !r.scope) throw new Error(`the change lane needs a scope (${SCOPES.join(', ')})`);
@@ -167,7 +187,8 @@ export function formatRunProfile(lane, { scope, skip = [] } = {}) {
   const steps = skip.filter((s) => STEP_ORDER.includes(s));
   const other = skip.filter((s) => !STEP_ORDER.includes(s)); // roles a scope leaves out (designer, architect), kept as written
   const all = [...order([...skipsOf(r.lane, r.scope), ...steps]), ...new Set(other)];
-  return `lane: ${r.lane}${r.scope ? ` (${r.scope})` : ''} · skipped ${all.length ? all.join(', ') : 'none'}`;
+  if (until && (!STEP_ORDER.includes(until) || all.includes(until))) throw new Error(`until ${until}: not a step this lane runs`);
+  return `lane: ${r.lane}${r.scope ? ` (${r.scope})` : ''} · skipped ${all.length ? all.join(', ') : 'none'}${until ? ` · until ${until}` : ''}`;
 }
 
 // lines a lane line may have been written as, newest first; the first match decides (lite and redesign resolve to change)
@@ -181,24 +202,24 @@ const LEGACY = [
 ];
 
 // the step ids after `skipped` on the line where a match ends at `end` (roles such as designer are dropped)
-const skippedOn = (rp, end) => {
-  const line = rp.slice(rp.lastIndexOf('\n', end - 1) + 1).split('\n')[0];
-  return (line.match(/\bskipped\b(.*)$/i)?.[1] ?? '').split(/[,\s]+/).filter((s) => STEP_ORDER.includes(s));
-};
+const lineAt = (rp, end) => rp.slice(rp.lastIndexOf('\n', end - 1) + 1).split('\n')[0];
+const skippedOn = (rp, end) => (lineAt(rp, end).match(/\bskipped\b(.*?)(?:·\s*until\b.*)?$/i)?.[1] ?? '').split(/[,\s]+/).filter((s) => STEP_ORDER.includes(s));
+// the stop point on the lane line (`· until 4b`), or null
+const untilOn = (rp, end) => { const u = lineAt(rp, end).match(/·\s*until\s+(\w+)/i)?.[1]; return STEP_ORDER.includes(u) ? u : null; };
 
-// { lane, scope, skipped } of a checkpoint; feature when the Run profile names no other lane.
+// { lane, scope, skipped, until } of a checkpoint; feature when the Run profile names no other lane.
 // `skipped` is every step id the lane line lists, so a run's own skip (3d with no smoke trigger) is read back too.
 // A lane line written before the merge (`lane: lite`, `lane: redesign (ui-only)`) reads as the change lane and scope it is now.
 export function parseRunProfile(cpText) {
   const rp = runProfile(cpText);
   const m = rp.match(/^[-*\s]*lane:\s*(\w+)(?:\s*\(([^)]+)\))?/im);
   const id = m?.[1].toLowerCase();
-  if (m && (LANES[id] || ALIASES[id])) return { ...resolveLane(id, m[2]), skipped: skippedOn(rp, m.index + m[0].length) };
+  if (m && (LANES[id] || ALIASES[id])) { const end = m.index + m[0].length; return { ...resolveLane(id, m[2]), skipped: skippedOn(rp, end), until: untilOn(rp, end) }; }
   for (const [re, lane] of LEGACY) {
     const hit = rp.match(re);
-    if (hit) return { ...resolveLane(lane, lane === 'redesign' ? hit[1] : null), skipped: skippedOn(rp, hit.index + hit[0].length) };
+    if (hit) return { ...resolveLane(lane, lane === 'redesign' ? hit[1] : null), skipped: skippedOn(rp, hit.index + hit[0].length), until: null };
   }
-  return { lane: 'feature', scope: null, skipped: [] };
+  return { lane: 'feature', scope: null, skipped: [], until: null };
 }
 
 // true for a Run profile line that names a lane in any form (checkpoint.mjs profile replaces it)

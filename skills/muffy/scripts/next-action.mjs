@@ -18,7 +18,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { validate } from './schema.mjs';
-import { LANES, NEVER_SKIP, laneSpec, skipsOf, neverSkipOf, planCard } from './lanes.mjs';
+import { LANES, NEVER_SKIP, STEP_ORDER, laneSpec, skipsOf, neverSkipOf, planCard } from './lanes.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const schema = (kind) => JSON.parse(readFileSync(join(here, '..', 'schemas', `${kind}.schema.json`), 'utf8'));
@@ -57,7 +57,8 @@ const REJECTING = new Set(['Reject', 'Fail']);
 // the debugger's diagnosis.promote_to → what the Orchestrator does (fix-profile.md "Diagnose budget and outcomes")
 export const PROMOTE_ACTION = { 'change-internal': 'promote:change-internal', 'change-visible': 'promote:change-visible', full: 'promote:full-flow' };
 
-// scenario: { task, profile, skip, smoke_signals, events: [{ handoff, step?, role? }] }
+// scenario: { task, profile, scope, until, skip, smoke_signals, events: [{ handoff, step?, role? }] }
+// until: a stated stop point (lane line `· until <step>`): the run closes once that step is accepted, and no later step may start
 // Returns every action the Orchestrator must take, in order; the last one is what to do now.
 export function simulate(scenario) {
   const actions = [];
@@ -68,6 +69,8 @@ export function simulate(scenario) {
   let diagSeverity = null; // severity of the latest known diagnosis
   let pendingAsk = false; // a reject is waiting for the user's answer
   let moreInfoUsed = false; // the user already gave more information once
+  let verifyAsk = null; // verify lane: owners of the reject waiting on the user's answer (fix on a copy branch, or report)
+  let verifyFix = false; // verify lane: the user said the team may fix on the copy branch
   let auditRetries = 0; // confirms sent back for evidence below the severity (not reset by the generic retry counter)
   const retries = {}; // point -> invalid / not-ready retries used this round
   const passed = new Set(scenario.passed ?? []); // gates already passed outside the hand-offs (3c is a user approval, read from the checkpoint)
@@ -105,6 +108,13 @@ export function simulate(scenario) {
   for (const ev of scenario.events) {
     if (outcome === 'escalated') break;
     if (ev.answer) {
+      // verify lane (verify-profile.md): fix-on-copy | report
+      if (verifyAsk) {
+        if (ev.answer === 'fix-on-copy') { verifyFix = true; actions.push(`fix:${verifyAsk}`); verifyAsk = null; continue; }
+        outcome = 'stopped';
+        actions.push('close:report');
+        break;
+      }
       // the user's answer to an audit reject (fix-profile.md): more-info | accept-risk | cancel
       if (!pendingAsk) { actions.push('ignore:answer-without-question'); continue; }
       pendingAsk = false;
@@ -124,6 +134,11 @@ export function simulate(scenario) {
     }
     const h = ev.handoff;
     const point = `${h?.step ?? ev.step ?? '?'}:${h?.role ?? ev.role ?? '?'}`;
+    if (scenario.until && STEP_ORDER.indexOf(String(h?.step ?? ev.step)) > STEP_ORDER.indexOf(scenario.until)) {
+      actions.push('block:past-stop-point');
+      outcome = 'blocked';
+      break;
+    }
 
     if (GATED_STEPS.length && String(h?.step ?? ev.step).match(/^4/) && GATED_STEPS.some((g) => !passed.has(g) && !skipped.has(g))) {
       actions.push('block:gate-not-passed');
@@ -182,6 +197,13 @@ export function simulate(scenario) {
 
     // 2b. fix lane: route on the diagnosis (fix-profile.md). needs-full-flow means the cause outgrows the fix lane; promote_to
     // says how far up (the change lane's internal or a visible scope, or the full flow), the full flow when it says nothing
+    if (h.diagnosis?.status === 'needs-full-flow' && scenario.until) {
+      // diagnose only: the requester asked for the cause, not the fix; the promote target is advice in the closing report
+      actions.push('close:stop-point');
+      outcome = 'stopped';
+      trigger = `advice:${PROMOTE_ACTION[h.diagnosis.promote_to ?? 'full']}`;
+      break;
+    }
     if (h.diagnosis?.status === 'needs-full-flow') {
       actions.push(PROMOTE_ACTION[h.diagnosis.promote_to ?? 'full']);
       outcome = 'promoted';
@@ -228,6 +250,9 @@ export function simulate(scenario) {
         escalate(point, 'repeated-blocker', h.blockers.filter((b) => repeated.includes(b.id)), h.blockers[0].owner);
       } else if (loops[point] > LOOP_LIMIT) {
         escalate(point, 'loop-limit', h.blockers, h.blockers[0].owner);
+      } else if (scenario.profile === 'verify' && !verifyFix) {
+        verifyAsk = [...new Set(h.blockers.map((b) => b.owner))].sort().join('+');
+        actions.push('ask:verify-fix');
       } else {
         actions.push(`fix:${[...new Set(h.blockers.map((b) => b.owner))].sort().join('+')}`);
       }
@@ -238,6 +263,12 @@ export function simulate(scenario) {
     actions.push('accept');
   }
 
+  // a stop point: the last event was the `until` step and it was accepted
+  const lastStep = String(scenario.events.at(-1)?.handoff?.step ?? scenario.events.at(-1)?.step ?? '');
+  if (outcome === 'in-progress' && scenario.until && lastStep === scenario.until && actions.at(-1) === 'accept') {
+    actions.push('close:stop-point');
+    outcome = 'stopped';
+  }
   if (outcome === 'in-progress') outcome = 'completed';
   if (escalation) {
     const e = validate(escalationSchema, escalation);
@@ -425,7 +456,7 @@ function handoffFiles(paths) {
 }
 
 function runLoop(args) {
-  const valued = new Set(['--profile', '--scope', '--skip', '--smoke', '--task', '--escalation-out']);
+  const valued = new Set(['--profile', '--scope', '--until', '--skip', '--smoke', '--task', '--escalation-out']);
   const paths = args.filter((a, i) => !a.startsWith('--') && !valued.has(args[i - 1]));
   if (!paths.length) usage('loop: give at least one hand-off file or directory');
   const events = handoffFiles(paths).map((f) => {
@@ -437,6 +468,7 @@ function runLoop(args) {
     task: opt(args, '--task'),
     profile,
     scope: opt(args, '--scope'),
+    until: opt(args, '--until'),
     skip: [...skipsOf(profile, opt(args, '--scope')), ...(opt(args, '--skip') ?? '').split(',').filter(Boolean)],
     smoke_signals: smoke,
     events,

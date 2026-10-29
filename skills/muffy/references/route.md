@@ -14,9 +14,10 @@ Walk it top to bottom and stop at the first step that answers. The fix and chang
    **A named mode** (`/muffy todo | onboard | present | diagram`, or a request that can only mean one of them: "find what is half done", "make a deck for the client", "draw the deployment diagram") → that mode. A diagram request first passes the two checks in [diagram.md](diagram.md#before-the-scope-question): the subject has an open task → **diagram-in-task**; the subject is not designed yet → the kind's own route (**spec** for architecture, deployment, erd, state and flow; **design** for a screen map; **plan** for a gantt or story map), with the diagram as its stop point ([kinds table](diagram.md#kinds-fixed-never-ask-the-user-to-pick-an-agent))
 3. **A question** about the code or the repo ("how does X work?", "X ทำงานยังไง") → none
 4. **A stated stop point** ("just the design", "plan it, don't build", "research, no code", "ยังไม่ต้องเขียนโค้ด", "แค่รีวิว") → the route for that stop point, even when the request also names a feature
-5. **The outcome is not a code change** (a brief, a plan, a design, a design review, a contract, an architecture review, an ADR, a review verdict, tests, docs, a deployment) → that route from the table below
+5. **The outcome is not a code change** (a brief, a plan, a design, a design review, a contract, an architecture review, an ADR, a review verdict, tests, a branch reviewed and tested before merge, docs, a deployment) → that route from the table below
 6. **The outcome is a code change:**
    1. Text only, one line, nothing renders or behaves differently (typo, comment, a copy string) → none
+   1b. A version bump of a dependency or runtime already in the manifest ("อัปเกรด React เป็น 19", "bump Node to 22") → upgrade ([upgrade-profile.md](upgrade-profile.md)); a dependency the project does not have yet goes on down this list (full flow)
    2. A bug report (something that worked or should work does not) → fix triage ([fix-profile.md](fix-profile.md)): fix, full, or ask first
    3. Internal work, nothing a user or outside caller sees except speed → change triage, `internal` scope ([change-profile.md](change-profile.md#the-internal-scope)): change, full, or ask first
    4. A change to a screen, UX flow or business-logic rule the product already has, not a bug and not a new capability → change ([change-profile.md](change-profile.md)); its visible scope (the look, the look and the rules, the rules only) is always asked
@@ -33,14 +34,14 @@ After the route is picked, check its minimum intake (below). A missing fact is a
 
 The requester sees what will happen before the first spawn:
 
-- **A lane** (fix, change, full flow): `node .claude/skills/muffy/scripts/next-action.mjs plan-card <lane> [--scope <scope>] [--until <step>] [--skip 3d] [--lang en]` prints the card from `lanes.mjs`: what is being done, the steps in order, what is skipped and why, where it stops. Thai by default; `--lang en` for an English request. Change: an internal triage has its scope; a visible change asks its scope first, on its own ([change-profile.md](change-profile.md)), then the card with `--scope`
-- The card's question rides in the lane's `pause:scope` call as its first question, so it costs no extra round: **go (recommended)** / **bigger or smaller** (the next route up or down: fix ↔ change ↔ full flow), and on the full-flow card **stop earlier** (the plan or the design route: [Stop points](#stop-points)). Any pick but go re-routes before anything is spawned: drop the task's row from `project.md` → `## Tasks` and its task note, then run the new route's setup
+- **A lane** (fix, change, verify, upgrade, full flow): `node .claude/skills/muffy/scripts/next-action.mjs plan-card <lane> [--scope <scope>] [--until <step>] [--skip 3d] [--lang en]` prints the card from `lanes.mjs`: what is being done, the steps in order, what is skipped and why, where it stops. Thai by default; `--lang en` for an English request. Change: an internal triage has its scope; a visible change asks its scope first, on its own ([change-profile.md](change-profile.md)), then the card with `--scope`
+- The card's question rides in the lane's `pause:scope` call as its first question, so it costs no extra round: **go (recommended)** / **bigger or smaller** (the next route up or down: fix ↔ change ↔ full flow; upgrade ↔ full flow; verify ↔ review or qa), and on the full-flow card **stop earlier** (the plan or the design route: [Stop points](#stop-points)). Any pick but go re-routes before anything is spawned: drop the task's row from `project.md` → `## Tasks` and its task note, then run the new route's setup
 - **A single-step route or a mode**: one line in the same shape, from its Routes row: what, who in plain words, where it stops ("รีวิว PR #42: code-reviewer อย่างเดียว · หยุดที่: ผลรีวิวในแชท"). No question; the requester can still override
 - `route: <name>` still goes in checkpoint `## Status` ([memory-model.md](memory-model.md#checkpoint))
 
 ## Stop points
 
-A stated stop point (decision order step 4) picks the route, a single-step route that runs only its own agents, so its card is the one line from its Routes row. The requester never has to know the route's name. "Stop earlier" on a full-flow card re-routes to one of these.
+A stated stop point (decision order step 4) picks the route. Most are single-step routes that run only their own agents, so their card is the one line from their Routes row; a stop inside a lane (diagnose only) is that lane's card with `--until`, and the lane line carries it (`checkpoint.mjs profile … --until <step>`). The requester never has to know the route's name. "Stop earlier" on a full-flow card re-routes to one of these.
 
 | The requester says | Stops at | Route | Card |
 |---|---|---|---|
@@ -50,6 +51,7 @@ A stated stop point (decision order step 4) picks the route, a single-step route
 | แค่ API / schema | `contract.md` | spec | one line |
 | แค่วิจัย / research only | the research brief | research | one line |
 | แค่รีวิว / just review it | the review verdict | review or design-review | one line |
+| แค่หาสาเหตุ / just find the cause, don't fix it | the audited cause in `fix.md` | fix | fix `--until 4b` |
 
 ## Words that point to more than one route
 
@@ -61,14 +63,16 @@ The verb alone never decides. Read the object of the verb, then use the tie-brea
 | ออกแบบ / design | API, schema, ฐานข้อมูล, data model | spec | — |
 | ออกแบบระบบ / design the system | a whole feature, no stop point | ask | Ask: "screens, API/schema, or build it?" with design, spec, full flow as options |
 | redesign / ออกแบบใหม่ / ปรับหน้า / แก้ flow | an existing page, flow or rule | change | Scope is always asked. Stop point "just the design" → design |
-| รีวิว / review / เช็ค / check | PR, branch, diff, โค้ด | review | No PR or branch named → ask for it |
+| รีวิว / review / เช็ค / check | PR, branch, diff, โค้ด | review | No PR or branch named → ask for it. Review **and test** it before merge ("ตรวจให้ครบ", "รีวิวและเทส") → verify |
+| ตรวจให้ครบ / รีวิวและเทส / review and test / check before merge | a branch someone wrote | verify | Just the review → review; just tests → qa |
+| อัปเกรด / upgrade / bump / update | a package, runtime or image version already in the manifest | upgrade | Not in the manifest yet → full flow (a new dependency) |
 | รีวิว / review | ดีไซน์, หน้าจอ, canvas, UX | design-review | No URL, canvas or screen named → ask for it |
 | รีวิว / review | architecture, ADR, contract, สถาปัตยกรรม | arch-review | — |
 | แก้ / fix / ปรับ | something broken, an error, a wrong result | fix triage | No symptom or no place → ask (fix triage) |
 | แก้ / ปรับ / change | wording only (typo, label text) | none | — |
 | แก้ / ปรับ / change | look (colour, spacing) with existing tokens | fix triage (cosmetic) | — |
 | ปรับ / refactor / แยก / split | a named module, nothing visible changes | change triage (internal) | — |
-| ทำให้เร็วขึ้น / faster / optimise | a named query, endpoint or page | change triage (internal) | No before-number → ask for the measurement |
+| ทำให้เร็วขึ้น / faster / optimise | a named query, endpoint or page | change triage (internal) | No before-number → ask for the measurement, offering to measure it first ([change-profile.md](change-profile.md#the-internal-scope)) |
 | เขียน / write | test, เทสต์ | qa | — |
 | เขียน / write | docs, README, คู่มือ | docs (a change) or docs-existing (code as it is) | Ask: "for a recent change, or the code as it is?" |
 | เขียน / write | ADR, บันทึกการตัดสินใจ | adr | — |
@@ -97,8 +101,10 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | spec | the feature and who consumes the API or schema | the consumer |
 | arch-review | the document or area: an ADR, `contract.md`, `baseline.md`, or a module path | which document or area |
 | adr | the decision and whether it is product or technical ([adr.md](adr.md)) | the decision |
-| ops | the local infra file or area (Dockerfile, compose, runtime pin, CI) and the change | the file or area |
+| ops | the local infra file or area (Dockerfile, compose, runtime pin, CI) and the change, or "does the stack still boot" (a smoke on this branch) | the file or area, or the branch |
 | review | the diff: branch, PR or file list | the branch or PR |
+| verify | the branch, its base, and what it should do (PR description or the request) | the branch, or what it should do |
+| upgrade | the package or runtime, and the target version ("latest" if the requester accepts it) | the target version |
 | qa | the branch and what to test | the branch |
 | docs | the shipped change or its diff, and whether the diff is approved | the change |
 | docs-existing | the area to document and the reader (user, developer, operator) | the reader |
@@ -121,7 +127,9 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | API, schema, contract or data model only | spec | `architect` | `contract.md`. No code |
 | A review of an architecture, an ADR, a contract or a module's design | arch-review | `architect`, read-only ("Review only" in the prompt) | findings in chat. A changed decision is a new ADR only if the requester then asks for one |
 | Write or supersede an ADR | adr | `architect` (technical) or `product-manager` (product), per [adr.md](adr.md) | the new `docs/adr/NNNN-*.md`, committed on the requester's go-ahead |
-| Local infra files: Dockerfile, compose, runtime pin, CI config | ops | `devops` (local only) | the infra change, checked on docker local. It never deploys; a deploy request is answered with the Deploy hand-off |
+| Bump a dependency or runtime already in the manifest, and fix what breaks | upgrade ([upgrade-profile.md](upgrade-profile.md)) | `researcher` (changelog), `architect` (upgrade ADR) ∥ `devops`, the user approves the ADR, 3d smoke, devs, `code-reviewer`, `qa-tester` (full regression offered), `docs-writer` after the gate | Human gate |
+| Review and test a branch someone already wrote, and accept it before merge | verify ([verify-profile.md](verify-profile.md)) | `code-reviewer`, `qa-tester`, Human gate, `docs-writer`, on a copy `verify/<task>`; a reject is reported and fixed on the copy only if the requester says so | Human gate |
+| Local infra files: Dockerfile, compose, runtime pin, CI config; or "does the stack boot on this branch" | ops | `devops` (local only; for a smoke on a branch: mode 1 writes or checks `deploy.md`, then mode 2 in an `ops/<task>` worktree cut from that branch) | the infra change, checked on docker local. It never deploys; a deploy request is answered with the Deploy hand-off |
 | Review an existing diff, branch or PR, "is this safe", "check my change" | review | `code-reviewer` (read-only) | the verdict in chat, saved as `review-<n>.md` only inside a task. No fixes |
 | Write or run tests, QA, regression on a branch | qa | `qa-tester` | `qa-report.md`. No production code change. Whole-system run needs `pause:full-regression` |
 | API docs or release notes for a change | docs | `docs-writer`, then `code-reviewer` on the docs | the reviewed docs. If the diff is not yet approved, route to review first |

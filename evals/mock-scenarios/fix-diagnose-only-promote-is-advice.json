@@ -1,0 +1,51 @@
+{
+  "id": "fix-diagnose-only-promote-is-advice",
+  "description": "Diagnose only: a cause that outgrows the fix lane is reported with its promote target, not promoted",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "scope": "bug",
+  "until": "4b",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "needs-full-flow",
+          "confidence": "high",
+          "reason": "the rounding rule users see must change",
+          "promote_to": "change-visible"
+        }
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "stopped",
+    "actions": [
+      "close:stop-point"
+    ],
+    "trigger": "advice:promote:change-visible"
+  }
+}

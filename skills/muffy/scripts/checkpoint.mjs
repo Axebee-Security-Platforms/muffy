@@ -21,7 +21,8 @@
 //   node checkpoint.mjs gate   <.team/<task>> 3c approve --by "<the user's reply>"
 //   node checkpoint.mjs gate   <.team/<task>> 2b|3c reject  --by "<the user's reply>"
 //   node checkpoint.mjs gate   <.team/<task>> 2b|3c skip    --reason "<why no gate>"
-//   node checkpoint.mjs profile <.team/<task>> feature|fix|change [--scope internal|ui-only|ui+logic|logic-only] [--skip 3d,designer]
+//   node checkpoint.mjs profile <.team/<task>> feature|fix|change [--scope <scope>] [--until <step>]   (scopes: fix bug|cosmetic; change internal|ui-only|ui+logic|logic-only)
+//                               [--skip 3d,designer]
 // Prints one verdict line. Exit 0 = written and checked, 1 = written but check-checkpoint failed, 2 = usage or input error.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -30,7 +31,7 @@ import { checkTask } from './check-checkpoint.mjs';
 import { LOOP_LIMIT } from './next-action.mjs';
 import { GATES, PAUSE_OF, gateState } from './gate-rules.mjs';
 import { gate2b, gate3c } from './gate-summary.mjs';
-import { laneSpec, formatRunProfile, isLaneLine, parseRunProfile } from './lanes.mjs';
+import { laneSpec, skipsOf, neverSkipOf, formatRunProfile, isLaneLine, parseRunProfile } from './lanes.mjs';
 
 export const PAUSES = ['scope', 'scope-upgrade', 'onboard-review', 'todo-review', 'plan-review', 'design-review', 'full-regression', 'human-gate'];
 const REJECTING = new Set(['Reject', 'Fail']);
@@ -179,10 +180,10 @@ export function logSpawn(taskDir, o) {
 
 // The lane line, first in ## Run profile: the scripts read the lane from it (lanes.mjs), so it is never typed by hand.
 // Replaces an earlier lane line in any form and keeps the other lines (effort, test level).
-export function setProfile(taskDir, lane, { scope, skip = [] } = {}) {
+export function setProfile(taskDir, lane, { scope, skip = [], until } = {}) {
   const cpPath = join(taskDir, 'checkpoint.md');
   if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
-  const line = formatRunProfile(lane, { scope, skip });
+  const line = formatRunProfile(lane, { scope, skip, until });
   const cp = parse(readFileSync(cpPath, 'utf8'));
   if (!cp.sections.some((s) => s.name === 'Run profile')) {
     const at = cp.sections.findIndex((s) => s.name !== 'Goal');
@@ -213,7 +214,8 @@ export function recordGate(taskDir, gate, action, { by, reason, plan } = {}) {
   if (action === 'skip') {
     if (!reason?.trim()) throw new Error('gate skip: --reason is required');
     if (gate === '2b' && lane === 'feature') throw new Error('gate 2b cannot be skipped in the feature lane (only fix, the internal change scope and the ui-only change scope skip it)');
-    if (gate === '2b' && lane === 'change' && laneSpec(lane, scope).gated && scope !== 'ui-only') throw new Error('gate 2b can be skipped only in a ui-only change, where the AC are approved with the design at 3c');
+    if (gate === '2b' && laneSpec(lane, scope).gated && lane !== 'feature' && !skipsOf(lane, scope).includes('2b')) throw new Error('gate 2b can be skipped only where the lane skips it: a ui-only change (the AC are approved with the design at 3c) or an upgrade (the ADR is approved at 3c)');
+    if (gate === '3c' && neverSkipOf(lane, scope).includes('3c') && laneSpec(lane, scope).gated && lane !== 'change') throw new Error(`gate 3c cannot be skipped in the ${lane} lane: the user approves its ADR or contract there`);
     if (gate === '3c' && existsSync(join(taskDir, 'design.md'))) throw new Error('gate 3c cannot be skipped: design.md exists, so a designer ran');
     if (gate === '3c' && lane === 'change' && laneSpec(lane, scope).gated && existsSync(join(taskDir, 'contract.md'))) throw new Error('gate 3c cannot be skipped: contract.md exists, so the user approves the contract here');
     line = `gate ${gate} skipped · ${reason.trim()}`;
@@ -258,7 +260,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   }
   let said;
   try {
-    if (cmd === 'profile') said = setProfile(taskDir, pos[1], { scope: typeof o.scope === 'string' ? o.scope : undefined, skip: typeof o.skip === 'string' ? o.skip.split(',').map((s) => s.trim()).filter(Boolean) : [] });
+    if (cmd === 'profile') said = setProfile(taskDir, pos[1], { scope: typeof o.scope === 'string' ? o.scope : undefined, until: typeof o.until === 'string' ? o.until : undefined, skip: typeof o.skip === 'string' ? o.skip.split(',').map((s) => s.trim()).filter(Boolean) : [] });
     else if (cmd === 'gate') said = recordGate(taskDir, pos[1], pos[2], { by: o.by, reason: o.reason, plan: typeof o.plan === 'string' ? o.plan : undefined });
     else if (cmd === 'round') {
       if (!o.step || !o.round || !o.handoff || !o.summary) throw new Error('round: --step, --round, --handoff and --summary are required');

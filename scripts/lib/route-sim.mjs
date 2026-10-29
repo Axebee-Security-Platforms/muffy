@@ -6,10 +6,10 @@ import { triage, triageLite } from '../../skills/muffy/scripts/next-action.mjs';
 
 export const MODES = ['menu', 'todo', 'onboard', 'present', 'diagram'];
 // Routes whose outcome is not a code change (decision order steps 4 and 5).
-export const NON_CODE_ROUTES = ['research', 'plan', 'design', 'design-review', 'spec', 'arch-review', 'adr', 'review', 'qa', 'docs', 'docs-existing', 'ops'];
+export const NON_CODE_ROUTES = ['research', 'plan', 'design', 'design-review', 'spec', 'arch-review', 'adr', 'review', 'qa', 'verify', 'docs', 'docs-existing', 'ops'];
 // diagram.md "Kinds": the route a diagram of something not designed yet goes to, by kind.
 export const NOT_DESIGNED_ROUTE = { architecture: 'spec', deployment: 'spec', erd: 'spec', state: 'spec', flow: 'spec', screenmap: 'design', gantt: 'plan', 'story-map': 'plan' };
-export const ROUTES = ['resume', ...MODES, 'diagram-in-task', 'none', ...NON_CODE_ROUTES, 'fix', 'change', 'full', 'ask'];
+export const ROUTES = ['resume', ...MODES, 'diagram-in-task', 'none', ...NON_CODE_ROUTES, 'fix', 'change', 'upgrade', 'full', 'ask'];
 
 // s: { bare, resume, command, mode, kind, open_task, not_designed, question, deploy, stop_point, outcome, ambiguous, missing_intake, text_only, bug, internal, change_existing, new_capability, fix: {...}, lite: {...} }
 // The change lane (change-profile.md) is one route; `internal` work goes through its triage, a visible change straight in (the scope is asked there).
@@ -31,12 +31,16 @@ export function route(s = {}) {
   // the skill never deploys: a deploy or rollback request is answered with the task's Deploy hand-off
   if (s.deploy === true) return { route: 'none', step: 5 };
   if (s.ambiguous === true) return { route: 'ask', step: 7 };
+  // "just find the cause": the fix lane with a stop after the audit (fix-profile.md "Diagnose only"), when fix triage takes it
+  if (s.stop_point === 'diagnose') return { route: s.missing_intake === true ? 'ask' : triage(s.fix ?? {}).lane, step: 4, until: '4b' };
   const target = s.stop_point ?? s.outcome;
   if (target && target !== 'code') {
     if (!NON_CODE_ROUTES.includes(target)) return { route: 'ask', step: 7 };
     return { route: s.missing_intake === true ? 'ask' : target, step: s.stop_point ? 4 : 5 };
   }
   if (s.text_only === true) return { route: 'none', step: 6 };
+  // bump a dependency or runtime already in the manifest (upgrade-profile.md); a new dependency stays with the full flow
+  if (s.upgrade === true) return { route: 'upgrade', step: 6 };
   if (s.bug === true) {
     const lane = triage(s.fix ?? {}).lane;
     return { route: lane, step: 6 };

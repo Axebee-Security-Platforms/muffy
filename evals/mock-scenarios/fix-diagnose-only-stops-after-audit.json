@@ -1,0 +1,71 @@
+{
+  "id": "fix-diagnose-only-stops-after-audit",
+  "description": "Diagnose only (until 4b): the run closes once the auditor confirms the cause",
+  "task": "fix-login-redirect",
+  "profile": "fix",
+  "scope": "bug",
+  "until": "4b",
+  "skip": [
+    "1",
+    "2",
+    "3",
+    "3b",
+    "3c",
+    "3d"
+  ],
+  "defaults": {
+    "task": "fix-login-redirect",
+    "round": 1,
+    "status": "done",
+    "paths_written": [
+      "x"
+    ],
+    "blockers": [],
+    "quality_checks": {
+      "passed": true,
+      "failed": []
+    }
+  },
+  "events": [
+    {
+      "handoff": {
+        "role": "debugger",
+        "step": "4a",
+        "round": 1,
+        "summary": "diagnosed",
+        "diagnosis": {
+          "status": "known",
+          "confidence": "high",
+          "cause": "redirect reads stale returnTo from session",
+          "files": [
+            "src/auth/redirect.ts"
+          ],
+          "repro": "test/auth/redirect.test.ts fails",
+          "severity": "medium",
+          "owner": "BE"
+        }
+      }
+    },
+    {
+      "handoff": {
+        "role": "auditor",
+        "step": "4b",
+        "round": 1,
+        "summary": "audited",
+        "audit": {
+          "verdict": "confirm",
+          "evidence_level": "medium",
+          "repro_rerun": "red"
+        }
+      }
+    }
+  ],
+  "expect": {
+    "outcome": "stopped",
+    "actions": [
+      "accept",
+      "accept",
+      "close:stop-point"
+    ]
+  }
+}
