@@ -21,8 +21,9 @@ Test files are code, so all work happens in a dedicated git worktree on the revi
 1. Use the worktree path the Orchestrator gives (convention: `.worktrees/qa-<task>`). If none is given, do not create one: stop and hand off `status: blocked` with `blockers: []` and the missing `Worktree:` line named in `summary`. The Orchestrator creates every worktree from the right base; an agent never does. Use that worktree for every round.
 2. Before the first edit, confirm `git rev-parse --show-toplevel` prints the worktree path. If it does not, stop and report to the Orchestrator.
 3. Write, run and commit tests only inside the worktree. Never edit or commit in the main checkout.
-4. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator removes the worktree.
-5. Leave the worktree in place and put its path in the final message.
+4. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator removes the worktree after the Human gate approves.
+5. Before every hand-off, leave the worktree ready for that: commit all your work so `git status --short` is empty (gitignored files aside), and stop every process you started from it (dev servers, watchers, docker stacks). Name anything you could not commit or stop in `summary`.
+6. Leave the worktree in place and put its path in the final message.
 
 - [Principles](references/qa-tester/principles.md): test rigor, find bugs early, regression responsibility, severity discipline
 - [Purpose](references/qa-tester/purpose.md) - goal and Orchestrator-only communication

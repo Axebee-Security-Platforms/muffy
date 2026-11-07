@@ -22,8 +22,9 @@ Mode 2 edits infra files, so it runs in a dedicated git worktree on `ops/<task>`
 1. Use the worktree path the Orchestrator gives (convention: `.worktrees/ops-<task>`). If none is given, do not create one: stop and hand off `status: blocked` with `blockers: []` and the missing `Worktree:` line named in `summary`. The Orchestrator creates every worktree from the right base; an agent never does.
 2. Before the first edit, confirm `git rev-parse --show-toplevel` prints the worktree path. If it does not, stop and report to the Orchestrator.
 3. Edit, build and smoke-test only inside the worktree. Never edit or commit in the main checkout.
-4. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator merges and removes the worktree.
-5. Leave the worktree in place and put its path and branch in the final message.
+4. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator merges, and removes the worktree after the Human gate approves.
+5. Before every hand-off, leave the worktree ready for that: commit all your work so `git status --short` is empty (gitignored files aside), and stop every process you started from it (dev servers, watchers, docker stacks). Name anything you could not commit or stop in `summary`.
+6. Leave the worktree in place and put its path and branch in the final message.
 
 - [Principles](references/devops/principles.md): reliability first, observability precedes ops, deploy small/often, incidents learning
 - [Purpose](references/devops/purpose.md): What devops is for and the three modes

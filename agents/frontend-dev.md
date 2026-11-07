@@ -22,8 +22,9 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 2. Before the first edit, confirm `git rev-parse --show-toplevel` prints the worktree path. If it does not, stop and report to the Orchestrator.
 3. Read, edit, test and commit only inside the worktree, using paths under it. Never edit or commit in the main checkout.
 4. Fix rounds reuse the same worktree. Do not create a second one.
-5. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator merges and removes the worktree.
-6. Leave the worktree in place and put its path and branch in the final message.
+5. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator merges, and removes the worktree after the Human gate approves.
+6. Before every hand-off, leave the worktree ready for that: commit all your work so `git status --short` is empty (gitignored files aside), and stop every process you started from it (dev servers, watchers, docker stacks). Name anything you could not commit or stop in `summary`.
+7. Leave the worktree in place and put its path and branch in the final message.
 
 - [Principles](references/frontend-dev/principles.md): measurable UX, accessibility mandatory, design system binding, explicit state
 - [Purpose](references/frontend-dev/purpose.md) - role, branch, and reporting line

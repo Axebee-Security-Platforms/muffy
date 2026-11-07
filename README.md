@@ -145,7 +145,7 @@ flowchart LR
   H -->|approve| DW[docs-writer + Deploy hand-off]
 ```
 
-Every agent ends with a JSON block checked against `handoff.schema.json`; an invalid block is sent back, and invalid twice escalates. Spawn prompts are built with `make-envelope.mjs`, and `sync-worktree.mjs` copies the main checkout's muffy skill files into a task worktree so it runs the same scripts. Instructions load per step from `skills/muffy/references/`, so no agent carries the whole brief.
+Every agent ends with a JSON block checked against `handoff.schema.json`; an invalid block is sent back, and invalid twice escalates. Spawn prompts are built with `make-envelope.mjs`, and `sync-worktree.mjs` copies the main checkout's muffy skill files into a task worktree so it runs the same scripts; `remove-worktrees.mjs` removes a task's worktrees when the Human gate approves and at closing, keeping any that would lose work. Instructions load per step from `skills/muffy/references/`, so no agent carries the whole brief.
 
 ### With and without the skill
 
