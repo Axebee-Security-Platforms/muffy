@@ -18,8 +18,8 @@ For a branch the requester (or someone else) wrote by hand: "ตรวจ branch
 |---|---|---|
 | 3d | `devops` mode 1 then 2 | Only on a smoke trigger ([run-profile.md](run-profile.md)): the branch bumps a dependency, a runtime or devops-owned files. In an `ops/<task>` worktree cut from `verify/<task>`; otherwise `--skip 3d` on the lane line |
 | 6 | `code-reviewer` | The diff `<base>...verify/<task>` against `ac.md`; there is no `contract.md`, so the reviewer judges against the AC and the codebase's own conventions (`baseline.md`) |
-| 7 | `qa-tester` | On docker local, worktree cut from `verify/<task>` at step 7 as usual. Level **L3** on the paths the diff touched (map them as [change-profile.md](change-profile.md#steps-by-scope) says for a visible change); offer `pause:full-regression` when the diff touches a shared module |
-| 10 | Human gate | The review verdict and `qa-report.md`. Approve means "this branch is ready to merge", not "deploy"; the requester merges their own branch |
+| 7 | `qa-tester` | On docker local, worktree cut from `verify/<task>` at step 7: `git worktree add .worktrees/qa-<task> -b qa/<task> verify/<task>`. Level **L3** on the paths the diff touched (map them as [change-profile.md](change-profile.md#steps-by-scope) says for a visible change); offer `pause:full-regression` when the diff touches a shared module |
+| 10 | Human gate | The review verdict and `qa-report.md`. Approve means "this branch is ready to merge", not "deploy"; the requester merges their own branch. On Approve, remove the role worktrees as [step-details.md](step-details.md#step-10) says |
 | 11 | `docs-writer`, after the gate approves | Changelog or release notes for the diff and a Deploy hand-off, only when the diff changes something a user sees, a migration or config; otherwise `docs skipped: <reason>` |
 | 12 | Orchestrator | [closing.md](closing.md) in full |
 

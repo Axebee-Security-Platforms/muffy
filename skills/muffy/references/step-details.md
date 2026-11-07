@@ -58,6 +58,10 @@ The long form of the rows in [steps.md](steps.md) that need more than one line. 
 
 **Output:** (1) Publish the PR diagrams as one Claude Artifact (not the prlens.dev canvas): `node .claude/skills/muffy/scripts/build-diagram-page.mjs <scratchpad>/pr-diagrams.html <fe render dir> <be render dir>`, then publish that file with the Artifact tool (icon `diagram`); keep the URL for `review-<n>.md`, the Human gate and the closing report. (2) Copy each `drawn.graph.json` to `.team/<task>/diagrams/fe.graph.json` / `be.graph.json` (the reviewer is read-only and cannot open a URL; step 6 reads these files). Missing diagram → skip, never block. Details: [pr-diagram.md](../../../agents/references/frontend-dev/pr-diagram.md)
 
+## Step 10
+
+**On Approve:** no fix round can reach the role worktrees any more, so remove them. Stop any docker stack started from one, then from the main checkout run `node .claude/skills/muffy/scripts/remove-worktrees.mjs <task> --stage roles`. `kept=<path>:<reason>` names a worktree it would not remove: report it at closing, never force it. `unmerged: <branch>` goes in the final message too. On Reject nothing is removed: the fix round reuses them.
+
 ## Step 11
 
 **Agent:** `docs-writer`, spawned only after the Human gate (step 10) approves; the prompt carries `Human approved: <date>`.

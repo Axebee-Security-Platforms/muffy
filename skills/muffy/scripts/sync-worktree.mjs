@@ -19,12 +19,18 @@ const walk = (dir) => readdirSync(dir).flatMap((n) => {
   return statSync(p).isDirectory() ? walk(p) : [p];
 });
 
+// the main checkout is always the first entry of `git worktree list`, from any worktree of the repo
+export function mainCheckout(cwd) {
+  const list = execFileSync('git', ['-C', cwd, 'worktree', 'list', '--porcelain'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  const main = list.split('\n').find((l) => l.startsWith('worktree '))?.slice(9).trim();
+  if (!main) throw new Error('cannot find the main checkout (git worktree list)');
+  return main;
+}
+
 export function syncWorktree(worktree, { check = false } = {}) {
   const wt = resolve(worktree);
   if (!existsSync(join(wt, '.git'))) throw new Error(`${wt} is not a git worktree`);
-  const list = execFileSync('git', ['-C', wt, 'worktree', 'list', '--porcelain'], { encoding: 'utf8' });
-  const main = list.split('\n').find((l) => l.startsWith('worktree '))?.slice(9).trim();
-  if (!main) throw new Error('cannot find the main checkout (git worktree list)');
+  const main = mainCheckout(wt);
   if (resolve(main) === wt) throw new Error('that is the main checkout, not a task worktree');
   const src = join(main, SKILL);
   if (!existsSync(src)) throw new Error(`no ${SKILL} in the main checkout ${main}`);

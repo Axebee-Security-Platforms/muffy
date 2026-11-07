@@ -56,7 +56,7 @@ Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup
 - `.team/<task>/`: the hand-off files, `checkpoint.md`, `handoff/`, `spawns.tsv`, `rounds/`, `canvas/`, `diagrams/`; the full list and the split rules are in [memory-model.md](references/memory-model.md)
 - Repo: `docs/plan/<task>.md`, `docs/adr/NNNN-*.md`, `docs/design-system/` (if changed), merged `feature/<task>`
 - Vault: `tasks/<task>.md`, consolidated `project.md`
-- Final message to the user: [closing.md](references/closing.md) step 5
+- Final message to the user: [closing.md](references/closing.md) step 6
 
 ## Rules and Guardrails
 
@@ -73,7 +73,7 @@ Critical rules (Orchestrator rules 1 to 4, plus the opt-in hooks): [references/h
 - Never Read, grep or print `.env*` files in full; check that a variable exists and its prefix is right, by name only ([hooks-enforcement.md](references/hooks-enforcement.md) §6). A key shown or pasted in chat → rotate it; log the rotation in checkpoint `## Open blockers`
 - Every commit by every agent ends with the run's `Commit trailer`, passed in the prompt envelope. The Orchestrator copies it verbatim from the attribution line its harness provides; no model name is hard-coded in this skill. If the harness gives none, ask once at setup
 - Pauses are named (`pause:<id>`) and only the ones in [run-profile.md](references/run-profile.md); each records its resume condition in checkpoint `## Status`
-- Worktrees are created by the Orchestrator, never on the fly: feature at setup; ops at 3d, cut from the planning commit on `feature/<task>`; fe/be from `ops/<task>` right after 3d passes (from `feature/<task>` when 3d is skipped); qa at step 7 ([setup.md](references/setup.md))
+- Worktrees are created by the Orchestrator, never on the fly: feature at setup; ops at 3d, cut from the planning commit on `feature/<task>`; fe/be from `ops/<task>` right after 3d passes (from `feature/<task>` when 3d is skipped); qa at step 7 ([setup.md](references/setup.md)). Only the Orchestrator removes them, with `remove-worktrees.mjs`: ops, fe, be and qa when the Human gate approves, feature at closing, never forced; branches stay
 
 ## Quality Checks
 
