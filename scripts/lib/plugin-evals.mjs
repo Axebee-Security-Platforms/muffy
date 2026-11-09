@@ -48,7 +48,8 @@ export function runPluginEvals({ check, root }) {
     const bash = (agent_type, command) => run('guard-bash-allowlist.mjs', { tool_name: 'Bash', agent_type, tool_input: { command } });
     const abs = scripts.replace(/\\/g, '/');
     check('guard-bash: the plugin path in quotes is allowed', bash('muffy:architect', `node "${abs}/validate-handoff.mjs" .team/x/h.json`) === 0);
-    check('guard-bash: the plugin path with backslashes is allowed', bash('muffy:architect', `node "${scripts.replace(/\//g, '\\')}\\check-diagram.mjs" a.html`) === 0);
+    // backslashes are path separators only on Windows (the path Claude Code fills in there); on Linux and macOS they are file-name characters
+    if (process.platform === 'win32') check('guard-bash: the plugin path with backslashes is allowed (Windows)', bash('muffy:architect', `node "${scripts.replace(/\//g, '\\')}\\check-diagram.mjs" a.html`) === 0);
     check('guard-bash: a look-alike script in another folder is blocked', ['node "C:/x/skills/muffy/scripts/validate-handoff.mjs" a', 'node docs/skills/muffy/scripts/check-artifacts.mjs a', `node "${abs}/../scripts/validate-handoff.mjs" a`].every((c) => bash('muffy:designer', c) === 2));
     check('guard-bash: a plugin script that is not a check stays blocked', bash('muffy:architect', `node "${abs}/run-quiet.mjs" -- npm test`) === 2);
     check('guard-bash: ux-search through the plugin path is the designer\'s only', bash('muffy:designer', `node "${abs}/ux-search.mjs" "focus ring" --domain ux -n 3`) === 0 && bash('muffy:architect', `node "${abs}/ux-search.mjs" "x"`) === 2);
