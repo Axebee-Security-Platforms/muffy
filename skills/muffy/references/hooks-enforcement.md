@@ -69,7 +69,7 @@ Install (persistent config: the user approves it; never add it silently):
 **Rule:** `qa-tester` runs no whole-system suite (a bare `npm test`, `pytest`, `playwright test`, `go test ./...`, or a script named `test:all`, `test:e2e`, `ci`, `regression`) until the user approves it at `pause:full-regression` ([run-profile.md](run-profile.md#named-pauses)). Enforced by [scripts/guard-full-regression.mjs](../scripts/guard-full-regression.mjs) (exit 2 = block); only calls whose payload has `agent_type: qa-tester` are checked.
 - **Approval is a file.** After the user says yes, the Orchestrator writes `.team/<task>/full-regression.approved` (one line: the approved command and the date) and deletes it when the QA round ends. The guard looks for it from the hook's cwd upwards, so a qa worktree finds the repo's `.team/`
 - **Project commands:** list extra whole-system commands as regex strings in `.team/regression-commands.json`, e.g. `["^make e2e-all$"]`. The Orchestrator adds the `Whole-suite:` command of each new stack note there ([stack-learning.md](stack-learning.md))
-- **Known limits:** a runner behind a wrapper script the patterns don't know, `node -e`, and a flag's value mistaken for a test path (fails open). A run with a path, name or filter is scoped and always allowed
+- **Known limits:** a runner behind a wrapper script the patterns don't know (muffy's own `run-quiet.mjs` is unwrapped: the command after `--` is judged), `node -e`, and a flag's value mistaken for a test path (fails open). A run with a path, name or filter is scoped and always allowed
 Installed with the other guards by `install.mjs --with-guard`.
 ```json
 "PreToolUse": [
@@ -83,7 +83,7 @@ Installed with the other guards by `install.mjs --with-guard`.
 - **L0:** no test run at all (build and lint pass), and no creating or editing test files
 - **L1:** unit runs only (an integration or e2e run is blocked), and no new files under `e2e/`, `integration/`, `playwright/`, `cypress/` or their runner config
 - **L2 and L3:** nothing extra here; scoping and whole-suite approval stay with rule 10. **L4** is the approval marker of rule 10
-- **Known limits:** a runner behind a wrapper script, `node -e`, and a test file written through the shell are not seen; a file's level is guessed from its path and runner (`e2e`, `integration`, `playwright`, `cypress`, plus `integration_test`, `androidTest`, `*UITests`, `.maestro`, `detox` for mobile and desktop apps)
+- **Known limits:** a runner behind a wrapper script other than `run-quiet.mjs`, `node -e`, and a test file written through the shell are not seen; a file's level is guessed from its path and runner (`e2e`, `integration`, `playwright`, `cypress`, plus `integration_test`, `androidTest`, `*UITests`, `.maestro`, `detox` for mobile and desktop apps)
 Installed with the other guards by `install.mjs --with-guard`.
 ```json
 "PreToolUse": [
