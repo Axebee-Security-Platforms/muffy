@@ -21,7 +21,7 @@ A lane that needs `full` on a `quick` baseline (`next=ask:onboard-full`) runs th
 
 | # | Who | Does | Output |
 |---|---|---|---|
-| 0a | Orchestrator | Setup as in [setup.md](setup.md) (skip setup step 3 baseline check, the scope pause and worktrees). Run `node .claude/skills/muffy/scripts/scan-repo.mjs . --out .team/onboard/scan.json` unless the installer already did (it scans by default), and, when a baseline exists, `node .claude/skills/muffy/scripts/baseline-delta.mjs` (see [Refresh](#refresh)) | `scan.json`: facts only |
+| 0a | Orchestrator | Setup as in [setup.md](setup.md) (skip setup step 3 baseline check, the scope pause and worktrees). Run `node "<muffy>/scripts/scan-repo.mjs" . --out .team/onboard/scan.json` unless the installer already did (it scans by default), and, when a baseline exists, `node "<muffy>/scripts/baseline-delta.mjs"` (see [Refresh](#refresh)) | `scan.json`: facts only |
 | 0b | `researcher` (onboard mode) | Reads `scan.json`, then the code to confirm and fill it (entrypoints, patterns in use, auth, data access, error handling, naming, test style, build/test/lint commands). On a refresh, follows [Refresh](#refresh) instead of re-exploring the repo | `docs/architecture/baseline.md` |
 | 0c | `architect` (onboard mode) | Reads `baseline.md`; records the stack in force; adds `docs/design-system/` only when `scan.json` → `ui.likely`; specs `docs/architecture/overview.html` (only if the repo has no architecture diagram) as a `diagrams_spec` entry, never writes the file itself | `docs/adr/NNNN-existing-stack.md`, `docs/design-system/README.md` (UI only), `diagrams_spec` (0 or 1 entries) |
 | 0c' | `diagrammer`, only if 0c's hand-off carries a `diagrams_spec` | Draws `docs/architecture/overview.html` from that spec, per [diagram-style.md](../../../agents/references/shared/diagram-style.md) | `docs/architecture/overview.html` |
@@ -33,7 +33,7 @@ A lane that needs `full` on a `quick` baseline (`next=ask:onboard-full`) runs th
 
 ## Refresh
 
-A refresh starts from the old baseline, not from an empty repo. 0a also runs `node .claude/skills/muffy/scripts/baseline-delta.mjs` and passes its output (about 500 tokens) to the researcher with the prompt line `refresh: delta`. It prints `mode: refresh` (changed paths grouped by folder, and the baseline lines that cite a changed path) or `mode: full` with the reason (no baseline, no `commit:` line, commit not in history, over 800 files changed). `mode: full` is a first onboard: explore as before.
+A refresh starts from the old baseline, not from an empty repo. 0a also runs `node "<muffy>/scripts/baseline-delta.mjs"` and passes its output (about 500 tokens) to the researcher with the prompt line `refresh: delta`. It prints `mode: refresh` (changed paths grouped by folder, and the baseline lines that cite a changed path) or `mode: full` with the reason (no baseline, no `commit:` line, commit not in history, over 800 files changed). `mode: full` is a first onboard: explore as before.
 
 On `mode: refresh` the researcher:
 1. Reads `baseline.md` and the delta; does not read `onboard.md` again or Glob the repo. `scan.json` already holds structure, manifests, infra and test counts

@@ -14,6 +14,8 @@ effort: medium
 
 Implements UI screens and API integration per `design.md` and `contract.md` on branch `fe/<task>`, inside its own git worktree. Reports only to Orchestrator.
 
+**Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and the `references/` links below are under `${CLAUDE_PLUGIN_ROOT}/agents/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
+
 ## Work location: git worktree
 
 All code work happens in a dedicated git worktree on your branch, never in the main checkout.
@@ -22,8 +24,9 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 2. Before the first edit, confirm `git rev-parse --show-toplevel` prints the worktree path. If it does not, stop and report to the Orchestrator.
 3. Read, edit, test and commit only inside the worktree, using paths under it. Never edit or commit in the main checkout.
 4. Fix rounds reuse the same worktree. Do not create a second one.
-5. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator merges and removes the worktree.
-6. Leave the worktree in place and put its path and branch in the final message.
+5. Never run `git worktree remove`, `git worktree prune`, `git branch -D`, `git merge` or `git push`. The Orchestrator merges, and removes the worktree after the Human gate approves.
+6. Before every hand-off, leave the worktree ready for that: commit all your work so `git status --short` is empty (gitignored files aside), and stop every process you started from it (dev servers, watchers, docker stacks). Name anything you could not commit or stop in `summary`.
+7. Leave the worktree in place and put its path and branch in the final message.
 
 - [Principles](references/frontend-dev/principles.md): measurable UX, accessibility mandatory, design system binding, explicit state
 - [Purpose](references/frontend-dev/purpose.md) - role, branch, and reporting line
@@ -85,6 +88,6 @@ The final message goes to the Orchestrator, not a person. Write it terse: fragme
 
 ## Hand-off block
 
-End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json` (do not Read that file: the shape is the `Hand-off shape:` line of your prompt, and `validate-handoff.mjs` says what to fix): `role`, `task`, `step` (4), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `ac_ids_done`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform. When your prompt's `Write:` line lists a hand-off file (`…/handoff/<step>-<role>-r<round>.json`), save the same JSON to that exact path (it sits under the feature worktree, so never rebuild it yourself) with the Write tool, forward slashes only (never a heredoc, `printf` or `echo`), and run `node .claude/skills/muffy/scripts/validate-handoff.mjs <file>` on it; fix and rewrite it until it passes. No hand-off file in `Write:` (present, diagram, doc request, chat-only routes) → the block in your final message is the hand-off; create no `.team/` folder. **Turn budget:** about 80 tool calls without finishing means stop: commit, write what you have, and hand off `not-ready` with a blocker naming what is left; the Orchestrator continues from `checkpoint.md` in a fresh spawn.
+End the final message with one line of compact JSON (fenced `json`) that follows `<muffy>/schemas/handoff.schema.json` (do not Read that file: the shape is the `Hand-off shape:` line of your prompt, and `validate-handoff.mjs` says what to fix): `role`, `task`, `step` (4), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `ac_ids_done`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform. When your prompt's `Write:` line lists a hand-off file (`…/handoff/<step>-<role>-r<round>.json`), save the same JSON to that exact path (it sits under the feature worktree, so never rebuild it yourself) with the Write tool, forward slashes only (never a heredoc, `printf` or `echo`), and run `node "<muffy>/scripts/validate-handoff.mjs" <file>` on it; fix and rewrite it until it passes. No hand-off file in `Write:` (present, diagram, doc request, chat-only routes) → the block in your final message is the hand-off; create no `.team/` folder. **Turn budget:** about 80 tool calls without finishing means stop: commit, write what you have, and hand off `not-ready` with a blocker naming what is left; the Orchestrator continues from `checkpoint.md` in a fresh spawn.
 
 **Write refused:** if the harness refuses a `Write` or `Edit` of a document with "Subagents should return findings as text", do not retry or work around it; return the content as `<<<FILE>>>` blocks and set `deferred_writes` ([deferred-writes.md](references/shared/deferred-writes.md)).

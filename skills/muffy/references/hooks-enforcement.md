@@ -1,6 +1,10 @@
 # Hooks Enforcement for Team Flow
 
-Rules 1-4 are **Orchestrator rules**, not hooks: Claude Code has no merge, commit or push hook event, so the Orchestrator checks them itself before each merge, commit and push. Rules 6-13 are real `PreToolUse` / `PostToolUse` hooks in `.claude/settings.local.json`. There is no rule 5.
+Rules 1-4 are **Orchestrator rules**, not hooks: Claude Code has no merge, commit or push hook event, so the Orchestrator checks them itself before each merge, commit and push. Rules 6-13 are real `PreToolUse` / `PostToolUse` hooks. There is no rule 5.
+
+Where the guards come from depends on the install:
+- **Plugin install:** the plugin's `hooks/hooks.json` ships the seven guards (env, Bash allowlist, full regression, test level, write scope, git, gates). They stay off in a project until it sets env `MUFFY_GUARD` to `"1"` in `.claude/settings.local.json` or `.claude/settings.json`; `/muffy:setup --with-guard` writes it. Nothing below needs to be added by hand.
+- **Copied install** (`install.mjs`): the JSON blocks below go into `.claude/settings.local.json`; `install.mjs --with-guard` merges the seven guards.
 
 ## 1. Merge: only the Orchestrator
 Only the Orchestrator merges branches and saves reviews as `review-<n>.md`. A subagent hand-off that reports a merge is reverted, and the agent gets its rule again.
@@ -54,7 +58,7 @@ Install (persistent config: the user approves it; never add it silently):
 ## 9. Bash allowlist for doc agents: optional, needs user approval
 *Not covered:* the fix-lane `debugger` and `auditor` also have Bash, to run the repro, so the allowlist below cannot fit them (the command is whatever `## Repro` says). Their limits are written rules only: the auditor runs the one `## Repro` command and read-only git, writes nothing but its hand-off and brain note, and checks `git status --short` before and after. Neither has `SendMessage`; `npm run lint` fails if an agent file lists it.
 
-**Rule:** `architect`, `designer`, `diagrammer`, `product-manager`, `docs-writer` and `researcher` use Bash only for `node .claude/skills/muffy/scripts/{validate-handoff,check-artifacts,check-checkpoint,check-diagram,check-diagram-render,check-stack-notes,check-presentation}.mjs`, `diagram-import.mjs` without `--html` (it only prints a digest and a draft) and read-only `git status|diff|log|show`, one command at a time (no `;`, `&&`, pipes, redirects, substitution or `..`). The `designer` alone may also run `node .claude/skills/muffy/scripts/ux-search.mjs "<query>" --domain <d>`, a read-only lookup in `skills/muffy/data/ux/*.csv`; every other guarded role is refused. Enforced by [scripts/guard-bash-allowlist.mjs](../scripts/guard-bash-allowlist.mjs) (exit 2 = block). It reads `agent_type` from the hook payload: calls with no `agent_type` (the Orchestrator) and other roles pass untouched. Without the hook the same rule stands as text in each agent's guardrails. Installed together with the env guard by `install.mjs --with-guard`; add it by hand otherwise.
+**Rule:** `architect`, `designer`, `diagrammer`, `product-manager`, `docs-writer` and `researcher` use Bash only for `node "<muffy>/scripts/{validate-handoff,check-artifacts,check-checkpoint,check-diagram,check-diagram-render,check-stack-notes,check-presentation}.mjs"`, `diagram-import.mjs` without `--html` (it only prints a digest and a draft) and read-only `git status|diff|log|show`, one command at a time (no `;`, `&&`, pipes, redirects, substitution or `..`). The `designer` alone may also run `node "<muffy>/scripts/ux-search.mjs" "<query>" --domain <d>`, a read-only lookup in `skills/muffy/data/ux/*.csv`; every other guarded role is refused. Enforced by [scripts/guard-bash-allowlist.mjs](../scripts/guard-bash-allowlist.mjs) (exit 2 = block). It reads `agent_type` from the hook payload: calls with no `agent_type` (the Orchestrator) and other roles pass untouched. Without the hook the same rule stands as text in each agent's guardrails. Installed together with the env guard by `install.mjs --with-guard`; add it by hand otherwise.
 ```json
 "PreToolUse": [
   { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }
@@ -65,7 +69,7 @@ Install (persistent config: the user approves it; never add it silently):
 **Rule:** `qa-tester` runs no whole-system suite (a bare `npm test`, `pytest`, `playwright test`, `go test ./...`, or a script named `test:all`, `test:e2e`, `ci`, `regression`) until the user approves it at `pause:full-regression` ([run-profile.md](run-profile.md#named-pauses)). Enforced by [scripts/guard-full-regression.mjs](../scripts/guard-full-regression.mjs) (exit 2 = block); only calls whose payload has `agent_type: qa-tester` are checked.
 - **Approval is a file.** After the user says yes, the Orchestrator writes `.team/<task>/full-regression.approved` (one line: the approved command and the date) and deletes it when the QA round ends. The guard looks for it from the hook's cwd upwards, so a qa worktree finds the repo's `.team/`
 - **Project commands:** list extra whole-system commands as regex strings in `.team/regression-commands.json`, e.g. `["^make e2e-all$"]`. The Orchestrator adds the `Whole-suite:` command of each new stack note there ([stack-learning.md](stack-learning.md))
-- **Known limits:** a runner behind a wrapper script the patterns don't know, `node -e`, and a flag's value mistaken for a test path (fails open). A run with a path, name or filter is scoped and always allowed
+- **Known limits:** a runner behind a wrapper script the patterns don't know (muffy's own `run-quiet.mjs` is unwrapped: the command after `--` is judged), `node -e`, and a flag's value mistaken for a test path (fails open). A run with a path, name or filter is scoped and always allowed
 Installed with the other guards by `install.mjs --with-guard`.
 ```json
 "PreToolUse": [
@@ -79,7 +83,7 @@ Installed with the other guards by `install.mjs --with-guard`.
 - **L0:** no test run at all (build and lint pass), and no creating or editing test files
 - **L1:** unit runs only (an integration or e2e run is blocked), and no new files under `e2e/`, `integration/`, `playwright/`, `cypress/` or their runner config
 - **L2 and L3:** nothing extra here; scoping and whole-suite approval stay with rule 10. **L4** is the approval marker of rule 10
-- **Known limits:** a runner behind a wrapper script, `node -e`, and a test file written through the shell are not seen; a file's level is guessed from its path and runner (`e2e`, `integration`, `playwright`, `cypress`, plus `integration_test`, `androidTest`, `*UITests`, `.maestro`, `detox` for mobile and desktop apps)
+- **Known limits:** a runner behind a wrapper script other than `run-quiet.mjs`, `node -e`, and a test file written through the shell are not seen; a file's level is guessed from its path and runner (`e2e`, `integration`, `playwright`, `cypress`, plus `integration_test`, `androidTest`, `*UITests`, `.maestro`, `detox` for mobile and desktop apps)
 Installed with the other guards by `install.mjs --with-guard`.
 ```json
 "PreToolUse": [

@@ -23,6 +23,8 @@ import { runPendingEvals } from './lib/pending-evals.mjs';
 import { runGateEvals } from './lib/gate-evals.mjs';
 import { runRouteEvals } from './lib/route-evals.mjs';
 import { runReviewBenchEvals } from './lib/review-bench-evals.mjs';
+import { runWorktreeEvals } from './lib/worktree-evals.mjs';
+import { runPluginEvals } from './lib/plugin-evals.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -563,10 +565,15 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('guard-regression: whole-system runs are blocked for qa-tester', ['npm test', 'npx vitest run', 'pytest', 'go test ./...', 'cd app && npm run test:e2e', 'flutter test', 'xcodebuild test -scheme App', './gradlew :app:testDebugUnitTest', 'dotnet test', 'maestro test'].every((c) => guard(F, 'qa-tester', c) === 2));
   check('guard-regression: scoped runs are allowed', ['npm test -- src/a.test.ts', 'npx vitest run src/a.test.ts', 'pytest tests/a.py -k login', 'npx playwright test e2e/a.spec.ts', 'go test ./pkg/auth', 'flutter test test/a_test.dart', './gradlew :app:testDebugUnitTest --tests Foo', 'xcodebuild -scheme App test -only-testing:AppTests/Foo', 'dotnet test --filter Login'].every((c) => guard(F, 'qa-tester', c) === 0));
   check('guard-regression: other roles are not checked', guard(F, 'backend-dev', 'npm test') === 0);
+  // run-quiet.mjs runs whatever follows `--`: the guards judge that command, whichever folder the wrapper is in
+  const RQ = ['node .claude/skills/muffy/scripts/run-quiet.mjs', `node "${rel('skills/muffy/scripts/run-quiet.mjs').replace(/\\/g, '/')}"`, `node "${rel('skills/muffy/scripts/run-quiet.mjs')}" --tail 30 --out .team/x/logs/t.log`];
+  check('guard-regression: a whole-suite run inside run-quiet.mjs is blocked, any path form', RQ.every((w) => ['npx vitest run', 'npm test', '"npm test"'].every((c) => guard(F, 'qa-tester', `${w} -- ${c}`) === 2)));
+  check('guard-regression: a scoped run or a non-test command inside run-quiet.mjs passes', RQ.every((w) => guard(F, 'qa-tester', `${w} -- npx vitest run src/a.test.ts`) === 0 && guard(F, 'qa-tester', `${w} -- git log -5`) === 0));
   const L = 'guard-test-level.mjs';
   const lvlIn = (lvl, tool, arg) => { writeFileSync(join(tmp, '.team', 'x', 'test-level'), lvl); return spawnSync('node', [rel('skills/muffy/scripts', L)], { input: JSON.stringify({ tool_name: tool, agent_type: 'qa-tester', cwd: tmp, tool_input: tool === 'Bash' ? { command: arg } : { file_path: arg } }), encoding: 'utf8' }).status; };
   check('guard-level: L0 blocks any test run and test files but allows build', lvlIn('L0', 'Bash', 'npm test -- src/a.test.ts') === 2 && lvlIn('L0', 'Write', 'src/a.test.ts') === 2 && lvlIn('L0', 'Bash', 'npm run build') === 0);
   check('guard-level: L1 allows a scoped unit run, blocks integration and e2e', lvlIn('L1', 'Bash', 'npm test -- src/a.test.ts') === 0 && lvlIn('L1', 'Bash', 'npx playwright test e2e/a.spec.ts') === 2 && lvlIn('L1', 'Bash', 'npx vitest run tests/integration/a.test.ts') === 2 && lvlIn('L1', 'Write', 'e2e/new.spec.ts') === 2);
+  check('guard-level: L1 blocks e2e inside run-quiet.mjs too', RQ.every((w) => lvlIn('L1', 'Bash', `${w} -- npx playwright test e2e/a.spec.ts`) === 2) && lvlIn('L1', 'Bash', `${RQ[1]} -- npm test -- src/a.test.ts`) === 0);
   check('guard-level: L2 and L3 allow scoped integration and e2e', ['L2', 'L3'].every((l) => lvlIn(l, 'Bash', 'npx playwright test e2e/a.spec.ts') === 0 && lvlIn(l, 'Write', 'e2e/new.spec.ts') === 0));
   rmSync(join(tmp, '.team', 'x', 'test-level'));
   check('guard-level: no level file means no ceiling', spawnSync('node', [rel('skills/muffy/scripts', L)], { input: JSON.stringify({ tool_name: 'Bash', agent_type: 'qa-tester', cwd: tmp, tool_input: { command: 'npx playwright test e2e/a.spec.ts' } }), encoding: 'utf8' }).status === 0);
@@ -1127,6 +1134,10 @@ runPendingEvals({ check, root });
 
 /* 10. human gates (step-details 2b, 3c; hooks-enforcement §14): spawn rules, recorded answers, guard-gates */
 runGateEvals({ check, root });
+
+/* 11. worktree removal (step-details.md Step 10, closing.md step 5b): remove-worktrees.mjs on a temp git repo */
+await runWorktreeEvals({ check, root });
+runPluginEvals({ check, root });
 
 console.log(`eval: ${pass} passed, ${failures.length} failed`);
 if (failures.length) { console.error(failures.map((x) => `  FAIL ${x}`).join('\n')); process.exit(1); }

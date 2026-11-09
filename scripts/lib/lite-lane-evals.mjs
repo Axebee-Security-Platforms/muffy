@@ -45,7 +45,7 @@ export function runLiteLaneEvals({ check, root }) {
   check('lite-doc: the internal scope names what it skips', skipped.length >= 4, skipped.join(','));
   check('lite-doc: the internal scope never skips review, QA or the Human gate', NEVER_SKIP.every((s) => !skipped.some((x) => x.startsWith(s))) && NEVER_SKIP.every((s) => new RegExp(`Never skipped:[^\\n]*\\b${s}\\b`).test(internal)));
   check('lite-doc: the architect step (3) is never skipped', !skipped.includes('3') && /Never skipped: 3,/.test(internal));
-  check('lite-doc: the setup writes the internal lane line with the profile command', doc.includes('checkpoint.mjs profile .team/<task> change --scope <scope>') && /^\| 2 \| `product-manager` \| skipped: the Orchestrator wrote `ac.md`/m.test(doc));
+  check('lite-doc: the setup writes the internal lane line with the profile command', doc.includes('checkpoint.mjs" profile .team/<task> change --scope <scope>') && /^\| 2 \| `product-manager` \| skipped: the Orchestrator wrote `ac.md`/m.test(doc));
 
   /* promote signals use existing hand-off fields */
   const owners = readJson('skills/muffy/schemas/handoff.schema.json').properties.blockers.items.properties.owner.enum;

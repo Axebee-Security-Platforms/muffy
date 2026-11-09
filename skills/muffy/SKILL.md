@@ -2,23 +2,26 @@
 name: muffy
 display_name: Earl Grey
 description: >
-  Run a subagent team (main session = Orchestrator) from research to a QA-passed branch, on the smallest route. Never deploys.
-  Use to build a new capability (ทำฟีเจอร์, `/muffy feature`); for a bug with a symptom (เจอบั๊ก, พัง, error) via
-  the fix lane (`/muffy fix`); for an internal API, refactor, perf fix or migration (`/muffy lite`, ทำให้เร็วขึ้น);
-  for changing an existing screen, UX/UI or logic flow (`/muffy redesign`, ออกแบบใหม่, ปรับหน้า, แก้ flow); and for a
-  single-step request: research (วิจัย), plan or user stories (วางแผน), screens (ออกแบบหน้าจอ), API or schema,
-  a UX/UI review (รีวิวดีไซน์), an architecture or ADR review, a new ADR, a PR review (รีวิว PR), tests,
-  docs or README (ทำเอกสาร), local infra files.
-  Also: bare `/muffy` for a menu of unfinished tasks (งานค้าง, ทำต่อ, `/muffy resume`), `/muffy onboard`,
-  `/muffy present` for a client deck (ทำสไลด์), `/muffy diagram` for a standalone diagram.
-  Not for a question about the code, a text-only one-line edit, or step-by-step work in main session.
+  Run a subagent team from research to a QA-passed branch, on the smallest route. Never deploys.
+  Use to build a new capability (ทำฟีเจอร์, `/muffy feature`); for a bug (เจอบั๊ก, พัง, error,
+  `/muffy fix`); for an internal API, refactor, perf fix or migration (`/muffy lite`, ทำให้เร็วขึ้น); for changing
+  an existing screen, UX/UI or logic flow (`/muffy redesign`, ออกแบบใหม่, ปรับหน้า, แก้ flow); to bump a dependency
+  or runtime (อัปเกรด, bump); to review and test a branch before merge (ตรวจให้ครบ, รีวิวและเทส); and for
+  a single-step request: research (วิจัย), plan or user stories (วางแผน), screens (ออกแบบหน้าจอ), API or schema,
+  a UX/UI review (รีวิวดีไซน์), an architecture or ADR review, a new ADR, a PR review (รีวิว PR), tests, docs or
+  README (ทำเอกสาร), local infra files.
+  Also: bare `/muffy` for unfinished tasks (งานค้าง, ทำต่อ, `/muffy resume`), `/muffy onboard`,
+  `/muffy present` (client deck, ทำสไลด์), `/muffy diagram`.
+  Not for a code question, a one-line text edit, or step-by-step work in main session.
 ---
 
 # Muffy: Feature Development Team
 
 ## Purpose
 
-Orchestrate the subagents in `.claude/agents/` from research to deploy for one feature. The main session is the **Orchestrator**. Subagents never talk to each other. Everything goes through the Orchestrator, and work is handed off as files in `.team/<task>/`.
+Orchestrate muffy's subagents from research to deploy for one feature. The main session is the **Orchestrator**. Subagents never talk to each other. Everything goes through the Orchestrator, and work is handed off as files in `.team/<task>/`.
+
+**Paths.** `<muffy>` in this file and every reference is `${CLAUDE_SKILL_DIR}`, this skill's folder (in the plugin cache for a plugin install, `.claude/skills/muffy` for a copied one). Write it out in full with forward slashes, and in double quotes in a command: `node "<muffy>/scripts/check-all.mjs" …`. The agent definitions and their `references/` are in `<muffy>/../../agents/`. **Agent names:** spawn `muffy:<role>` when the Agent tool lists it (plugin install), otherwise `<role>`; the rest of this skill writes the bare role.
 
 ## Inputs
 
@@ -55,7 +58,7 @@ Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup
 - `.team/<task>/`: the hand-off files, `checkpoint.md`, `handoff/`, `spawns.tsv`, `rounds/`, `canvas/`, `diagrams/`; the full list and the split rules are in [memory-model.md](references/memory-model.md)
 - Repo: `docs/plan/<task>.md`, `docs/adr/NNNN-*.md`, `docs/design-system/` (if changed), merged `feature/<task>`
 - Vault: `tasks/<task>.md`, consolidated `project.md`
-- Final message to the user: [closing.md](references/closing.md) step 5
+- Final message to the user: [closing.md](references/closing.md) step 6
 
 ## Rules and Guardrails
 
@@ -65,18 +68,18 @@ Critical rules (Orchestrator rules 1 to 4, plus the opt-in hooks): [references/h
 - An agent's hand-off carries `deferred_writes` (the harness refused its document write): you write those files from its `<<<FILE>>>` blocks, then validate ([token-discipline.md](references/token-discipline.md))
 - A loop point that is rejected 4 times, or keeps the same blocker id open for 3 consecutive rejects, stops and asks the user: [references/loops.md](references/loops.md)
 - Only the Orchestrator merges branches and saves reviews as `review-<n>.md`
-- Run only the phases the plan marks for this run. In the fix lane, steps 4a (diagnose) and 4b (audit the cause) are never skipped. The lane is silent (hand-off JSON between agents, no `SendMessage`). A fix that outgrows the lane is promoted to the full flow, never patched on
+- Run only the phases the plan marks for this run. In the fix lane, step 4a (diagnose) is never skipped, and 4b (audit the cause) is skipped only for a cosmetic fix diagnosed `low` ([fix-profile.md](references/fix-profile.md)). The lane is silent (hand-off JSON between agents, no `SendMessage`). A run that outgrows its lane moves up the [promotion ladder](references/run-profile.md#promotion-ladder) to the smallest lane that fits, never patched on
 - FE/BE report a temporary stack → stop, send to architect (+ ADR) before coding continues
 - An agent writes outside its vault folder → revert it and resend its rule; an agent can't find `<brain>` → `AskUserQuestion`
 - No agent deploys, rolls back or touches staging or production: work ends on docker local at the Human gate. The user deploys from the Deploy hand-off
 - Never Read, grep or print `.env*` files in full; check that a variable exists and its prefix is right, by name only ([hooks-enforcement.md](references/hooks-enforcement.md) §6). A key shown or pasted in chat → rotate it; log the rotation in checkpoint `## Open blockers`
 - Every commit by every agent ends with the run's `Commit trailer`, passed in the prompt envelope. The Orchestrator copies it verbatim from the attribution line its harness provides; no model name is hard-coded in this skill. If the harness gives none, ask once at setup
 - Pauses are named (`pause:<id>`) and only the ones in [run-profile.md](references/run-profile.md); each records its resume condition in checkpoint `## Status`
-- Worktrees are created by the Orchestrator, never on the fly: feature at setup; ops at 3d, cut from the planning commit on `feature/<task>`; fe/be from `ops/<task>` right after 3d passes (from `feature/<task>` when 3d is skipped); qa at step 7 ([setup.md](references/setup.md))
+- Worktrees are created by the Orchestrator, never on the fly: feature at setup; ops at 3d, cut from the planning commit on `feature/<task>`; fe/be from `ops/<task>` right after 3d passes (from `feature/<task>` when 3d is skipped); qa at step 7 ([setup.md](references/setup.md)). Only the Orchestrator removes them, with `remove-worktrees.mjs`: ops, fe, be and qa when the Human gate approves, feature at closing, never forced; branches stay
 
 ## Quality Checks
 
-Verify after every step: run `node .claude/skills/muffy/scripts/check-all.mjs .team/<task> --step <s> --round <n>` and act on its `next=` line, then the judgment checks: [references/quality-checks.md](references/quality-checks.md)
+Verify after every step: run `node "<muffy>/scripts/check-all.mjs" .team/<task> --step <s> --round <n>` and act on its `next=` line, then the judgment checks: [references/quality-checks.md](references/quality-checks.md)
 
 ---
 

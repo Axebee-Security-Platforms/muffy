@@ -15,6 +15,9 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import { parseSegment, splitCommand } from './test-runners.mjs';
+import { guardOff } from './plugin-gate.mjs';
+
+if (guardOff()) process.exit(0); // plugin install without MUFFY_GUARD=1: the project did not opt in
 
 const block = (seg) => {
   console.error(

@@ -2,10 +2,11 @@
 // Reads the real diff, not an agent's own report, for two decisions:
 //   smoke  whether 3d runs: a manifest or lockfile changed, a devops-owned file changed, no passing smoke is on record in
 //          <brain>/agents/devops/ (references/run-profile.md "Smoke triggers"; rules in next-action.mjs)
-//   scope  with --profile fix|lite: whether the change still fits its lane (fix-profile.md / lite-profile.md), counting source
+//   scope  with --profile fix|change: whether the change still fits its lane (fix-profile.md / change-profile.md, the internal
+//          scope; `lite` is the same), counting source
 //          files (tests and .team/ excluded) and flagging schema/migration, auth, dependency and devops-owned paths
 //
-// Usage: node diff-signals.mjs <base> [<head>] [--profile fix|lite] [--brain <dir>] [--team-dir .team/<task>] [--cwd <repo>]
+// Usage: node diff-signals.mjs <base> [<head>] [--profile fix|change] [--brain <dir>] [--team-dir .team/<task>] [--cwd <repo>]
 //   <head> defaults to HEAD; the diff is <base>...<head> (what <head> added since it left <base>).
 // Prints `next=run-3d|skip-3d …`, and with --profile `next=stay:<lane>|promote:full-flow …`.
 // Exit 0 = proceed (3d decision made, lane kept), 1 = promote to the full flow, 2 = usage or git error.
@@ -84,7 +85,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   for (let i = 0; i < argv.length; i++) argv[i].startsWith('--') ? (o[argv[i].slice(2)] = argv[++i]) : pos.push(argv[i]);
   const [from, to = 'HEAD'] = pos;
   if (!from || (o.profile && !SCOPED.includes(o.profile))) {
-    console.error('usage: diff-signals.mjs <base> [<head>] [--profile fix|lite] [--brain <dir>] [--team-dir .team/<task>] [--cwd <repo>]');
+    console.error('usage: diff-signals.mjs <base> [<head>] [--profile fix|change] [--brain <dir>] [--team-dir .team/<task>] [--cwd <repo>]');
     process.exit(2);
   }
   let files;

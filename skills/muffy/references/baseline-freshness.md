@@ -3,7 +3,7 @@
 `docs/architecture/baseline.md` records what the code was at one commit. Code moves; this decides when the baseline can still be trusted. Read this only when `next-action.mjs baseline` printed `ask:red`, or to change the thresholds.
 
 ## The check (setup step 3, once per run)
-`node .claude/skills/muffy/scripts/check-baseline.mjs` prints a colour and at most five reason lines (about 100 to 300 tokens). It reads git and the manifests only; it does not read source files, never opens `.env*`, and costs the model nothing. It is run once at setup, in every lane, not before every step; setup calls it through `node .claude/skills/muffy/scripts/next-action.mjs baseline --lane <lane>`, which turns the colour into what to do (`continue`, `refresh:silent`, `ask:onboard-quick | ask:onboard-full`, `ask:red`).
+`node "<muffy>/scripts/check-baseline.mjs"` prints a colour and at most five reason lines (about 100 to 300 tokens). It reads git and the manifests only; it does not read source files, never opens `.env*`, and costs the model nothing. It is run once at setup, in every lane, not before every step; setup calls it through `node "<muffy>/scripts/next-action.mjs" baseline --lane <lane>`, which turns the colour into what to do (`continue`, `refresh:silent`, `ask:onboard-quick | ask:onboard-full`, `ask:red`).
 
 | Colour | When | What you do |
 |---|---|---|

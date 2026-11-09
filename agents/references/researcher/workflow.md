@@ -8,7 +8,7 @@
 - Record facts, not recommendations. Never run the build or tests.
 
 **Stack-note mode** (prompt says `mode: stack-note` with a framework and version): skip the rest of this workflow and skip the brain reads.
-- If `docs/stacks/<framework>.md` already exists, run `node .claude/skills/muffy/scripts/check-stack-notes.mjs <framework>`:
+- If `docs/stacks/<framework>.md` already exists, run `node "<muffy>/scripts/check-stack-notes.mjs" <framework>`:
   - `fresh` or `unchecked` → stop and say so.
   - `stale` → rewrite it for the new version.
 - Otherwise, stay at L1 and use official docs only: at most 5 page fetches in total, and no search beyond locating the official docs site.

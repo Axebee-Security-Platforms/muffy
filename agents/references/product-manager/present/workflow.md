@@ -16,7 +16,7 @@
 9. **Build `<output>/deck.json`**: the slides array per [slide-types.md](slide-types.md). Comparing numbers → follow [data-compare.md](data-compare.md)
 10. **Content only.** The designer builds the deck from `deck.json`; you mark the content cues ([slide-types.md](slide-types.md) "Content cues") and nothing about how it looks
 11. **Write the editable outline** `<output>/outline.md` (final text per slide + speaker notes) and, if the deck has `chart`, `comparison` or `roadmap` slides, `<output>/data.csv` with their rows
-12. **Check:** `node .claude/skills/muffy/scripts/check-presentation.mjs --content <output>` (deck.json and outline; run it from the repo root so source paths resolve). Fix every FAIL before hand-off
+12. **Check:** `node "<muffy>/scripts/check-presentation.mjs" --content <output>` (deck.json and outline; run it from the repo root so source paths resolve). Fix every FAIL before hand-off
 13. Hand off with status `done`; the Orchestrator sends the folder to the designer, then publishes the designed `deck.html` for the requester
 
 ## Revision rounds

@@ -138,12 +138,12 @@ export function runLaneTableEvals({ check, root }) {
 
   /* the references name the command and the lists the table holds */
   for (const [f, cmd] of [['setup.md', 'feature'], ['fix-profile.md', 'fix'], ['change-profile.md', 'change --scope']]) {
-    check(`docs: ${f} writes the lane line with checkpoint.mjs profile`, ref(f).includes(`checkpoint.mjs profile .team/<task> ${cmd}`));
+    check(`docs: ${f} writes the lane line with checkpoint.mjs profile`, ref(f).includes(`checkpoint.mjs" profile .team/<task> ${cmd}`));
   }
   // a promotion switches the lane with the command too: a hand-written "promoted from the fix lane" still reads as fix
   for (const f of ['fix-profile.md', 'change-profile.md']) {
     const doc = ref(f);
-    check(`docs: ${f} switches a promoted run with checkpoint.mjs profile … feature`, doc.includes('checkpoint.mjs profile .team/<task> feature') && !/rename the profile|change `## Run profile`/.test(doc));
+    check(`docs: ${f} switches a promoted run with checkpoint.mjs profile … feature`, /checkpoint\.mjs"? profile \.team\/<task> feature/.test(doc) && !/rename the profile|change `## Run profile`/.test(doc));
   }
   const ids = (text) => [...new Set((text ?? '').match(/\b\d+[a-z]?\b/g) ?? [])].filter((s) => STEP_ORDER.includes(s));
   const same = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
@@ -167,7 +167,7 @@ export function runLaneTableEvals({ check, root }) {
   const cosLine = formatRunProfile('fix', { scope: 'cosmetic' });
   check('fix scope: the audit guard lets a cosmetic dev start with no 4b, and still holds a bug', auditMissing(CP(cosLine), 'backend-dev', step4, []) === null && auditMissing(CP(formatRunProfile('fix', { scope: 'bug' })), 'backend-dev', step4, []) !== null && auditMissing(CP('lane: fix · skipped 1'), 'backend-dev', step4, []) !== null);
   check('drift: fix-profile.md cosmetic never-skip list matches lanes.mjs', same(ids(ref('fix-profile.md').match(/Never skipped for cosmetic: ([^.]+)\./)?.[1]), neverSkipOf('fix', 'cosmetic')));
-  check('docs: fix-profile.md writes the fix scope with the profile command', ref('fix-profile.md').includes('checkpoint.mjs profile .team/<task> fix --scope <bug | cosmetic>'));
+  check('docs: fix-profile.md writes the fix scope with the profile command', ref('fix-profile.md').includes('checkpoint.mjs" profile .team/<task> fix --scope <bug | cosmetic>'));
 
   /* promote_to: the debugger names the smallest lane that fits */
   const hs = JSON.parse(readFileSync(join(root, 'skills/muffy/schemas/handoff.schema.json'), 'utf8'));

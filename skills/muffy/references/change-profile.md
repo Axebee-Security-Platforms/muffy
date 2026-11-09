@@ -13,7 +13,7 @@ It is not a new capability (that is the full flow) and not a bug (that is the fi
 
 [lite-profile.md](lite-profile.md) and [redesign-profile.md](redesign-profile.md) are kept as pointers here, for links and tasks written before the merge.
 
-A bug with a symptom is triaged by [fix-profile.md](fix-profile.md) first, and goes to fix or full. A fix promoted out of its lane goes to the full flow, as the fix profile says.
+A bug with a symptom is triaged by [fix-profile.md](fix-profile.md) first, and goes to fix or full. A fix promoted out of its lane moves one rung up the [promotion ladder](run-profile.md#promotion-ladder) by its diagnosis's `promote_to`: to this lane's internal scope, a visible scope, or the full flow ([fix-profile.md](fix-profile.md#diagnose-budget-and-outcomes)).
 
 ## Triage (Orchestrator, no agent)
 
@@ -37,7 +37,7 @@ A request is `internal` only if all hold:
 6. Schema changes only through a reversible migration. Dropping data, or a migration with no down path, runs the full flow
 7. Expected to touch ≤ 15 source files (tests and `.team/` excluded)
 
-If the goal or the area is missing, or performance work has no before-number, ask **one** `AskUserQuestion` for what is missing (for the number, offer **measure it first**: the Orchestrator runs the read-only measuring command the requester agrees to (`EXPLAIN ANALYZE`, a benchmark script the repo already has), or asks the requester to run it, and records the number; then triage on it), then triage on the answer. Read the signals from the request, then let `node .claude/skills/muffy/scripts/next-action.mjs triage change '<json>'` decide (`triage lite` is the same; keys: `has_goal`, `has_area`, `kind` (`perf`), `has_measurement`, `user_visible`, `outside_consumers`, `adds_dependency`, `changes_auth`, `irreversible_migration`, `expected_source_files`). If a condition fails, say which in one line and run the full flow. A visible change is not held to these seven: its scope question, the plan and design gates and the contract do that work.
+If the goal or the area is missing, or performance work has no before-number, ask **one** `AskUserQuestion` for what is missing (for the number, offer **measure it first**: the Orchestrator runs the read-only measuring command the requester agrees to (`EXPLAIN ANALYZE`, a benchmark script the repo already has), or asks the requester to run it, and records the number; then triage on it), then triage on the answer. Read the signals from the request, then let `node "<muffy>/scripts/next-action.mjs" triage change '<json>'` decide (`triage lite` is the same; keys: `has_goal`, `has_area`, `kind` (`perf`), `has_measurement`, `user_visible`, `outside_consumers`, `adds_dependency`, `changes_auth`, `irreversible_migration`, `expected_source_files`). If a condition fails, say which in one line and run the full flow. A visible change is not held to these seven: its scope question, the plan and design gates and the contract do that work.
 
 ### Examples
 
@@ -75,7 +75,7 @@ An `internal` triage needs no scope question: the scope is `internal`. Otherwise
 
    **Visible**: the [Scope question](#scope-question-pausescope-always-asked-for-a-visible-change-never-defaulted) above
 3. Create the feature worktree from `<base>`: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>` (a baseline committed at the common setup on another branch is cherry-picked onto it first, [setup.md](setup.md) step 7), then `.team/<task>/`, `handoff/` and `rounds/` inside it. **Internal**: write `.team/<task>/ac.md` there (format below) and commit it to `feature/<task>` (never to `<base>`); the Orchestrator writes it from the same reads, no `product-manager` is spawned for it. **Visible**: no `brief.md`; the prompt and the existing code are the brief, and `product-manager` writes `ac.md` at step 2
-4. Write `checkpoint.md` in the feature worktree, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> change --scope <scope>` (add `--skip 3d` when no smoke trigger is true, [run-profile.md](run-profile.md)); it writes `lane: change (<scope>) · skipped …` with the steps the table below skips for that scope. `gate-rules.mjs` reads this line
+4. Write `checkpoint.md` in the feature worktree, then its lane line with `node "<muffy>/scripts/checkpoint.mjs" profile .team/<task> change --scope <scope>` (add `--skip 3d` when no smoke trigger is true, [run-profile.md](run-profile.md)); it writes `lane: change (<scope>) · skipped …` with the steps the table below skips for that scope. `gate-rules.mjs` reads this line
 
 ## `ac.md`
 
@@ -131,11 +131,11 @@ The internal scope signals a promote through a blocker owned by an agent it skip
 | a blocker `owner: PM` | the change is visible to users: **a visible scope**, asked (`logic-only` when only a rule or result changes) | step 2, as a visible change |
 | a blocker `owner: PM` | an outside caller sees it, or it touches auth, permissions or personal data | step 2, full flow |
 | a blocker `owner: Designer` | the change needs a changed screen, flow or component: **a visible scope** with a designer, `ui+logic` or `ui-only` (asked); a new one is the full flow | step 2 (then 3 with the designer) |
-| Step 4 changed more than 15 source files, a dependency, devops-owned files or auth files (`node .claude/skills/muffy/scripts/diff-signals.mjs <base> <branch> --profile change` exits 1) | the work outgrew the scope | step 2 |
+| Step 4 changed more than 15 source files, a dependency, devops-owned files or auth files (`node "<muffy>/scripts/diff-signals.mjs" <base> <branch> --profile change` exits 1) | the work outgrew the scope | step 2 |
 
 The owner alone does not promote. Read the blocker's `problem` and promote only when it names a failed triage condition (a visible change, an outside consumer, auth or personal data, a new dependency or stack fact, a new screen, flow or component). For the internal scope the Orchestrator wrote `ac.md`, so a `PM` blocker that only asks what an AC means is a clarification: ask the user one `AskUserQuestion`, update `ac.md`, and send the answer back to the same agent.
 
-A blocker `owner: Architect` at step 4 is not a promote: the architect is in this scope, so it goes back to step 3 through the normal loop ([loops.md](loops.md)). On a promote: stop, keep `ac.md` and `contract.md` as input for the restarted steps, switch the lane with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> change --scope <visible scope>` for a visible change or `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> feature` for the full flow (never by editing the line by hand), and record the reason in the checkpoint and the vault task note. A visible scope keeps the gates, so the plan and design are approved before code goes on.
+A blocker `owner: Architect` at step 4 is not a promote: the architect is in this scope, so it goes back to step 3 through the normal loop ([loops.md](loops.md)). On a promote: stop, keep `ac.md` and `contract.md` as input for the restarted steps, switch the lane with `node "<muffy>/scripts/checkpoint.mjs" profile .team/<task> change --scope <visible scope>` for a visible change or `node "<muffy>/scripts/checkpoint.mjs" profile .team/<task> feature` for the full flow (never by editing the line by hand), and record the reason in the checkpoint and the vault task note. A visible scope keeps the gates, so the plan and design are approved before code goes on.
 
 ## When a UI-only run needs logic
 

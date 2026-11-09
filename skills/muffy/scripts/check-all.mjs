@@ -8,11 +8,12 @@
 //   brain       each role of this step wrote <brain>/agents/<role>/<task>.md          (with --brain)
 //   runtime     the runtime in qa-report.md matches the deploy.md pin                  (when both exist)
 //   fix lane    from step 4 on: the 4a diagnosis is `known`, fix.md has ## Cause and ## Repro   (fix lane)
+//   worktrees   no role worktree of the task is left (remove-worktrees.mjs)                (step 11)
 // The lane comes from the checkpoint's `## Run profile` line (lanes.mjs); --profile overrides it.
 //   diff        diff-signals.mjs: the 3d decision, and from step 4 on the lane scope     (with --base)
 // The judgment half of quality-checks.md (plan phases, what the brain note says, gates the user answered) stays with you.
 //
-// Usage: node check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign|change] [--skip 3d] [--brain <dir>]
+// Usage: node check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|change|verify|upgrade] [--skip 3d] [--brain <dir>]
 //                           [--base <ref> [--head <ref>] [--cwd <repo>]]
 // Hand-offs are ordered by round, then step order (steps.md), so a fix round (4 r2) comes after the review that sent it (6 r1).
 // Prints `next=<action>` first, then one `ok`/`FAIL` line per check and the failing lines.
@@ -29,6 +30,7 @@ import { classify, laneVerdict, smokeOnRecord } from './diff-signals.mjs';
 import { parseOwnership } from './ownership.mjs';
 import { gateErrors, gateState } from './gate-rules.mjs';
 import { STEP_ORDER, laneSpec, resolveLane, skipsOf, parseRunProfile } from './lanes.mjs';
+import { remainingWorktrees } from './remove-worktrees.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export { STEP_ORDER };
@@ -113,6 +115,13 @@ export function checkAll(taskDir, { step, round, profile: given, skip = [], brai
     add('fix lane', errs);
   }
 
+  // step 11 runs after the Human gate approved, so the role worktrees should be gone (step-details.md Step 10). Outside a git repo there are none
+  if (String(step) === '11') {
+    let left = [];
+    try { left = remainingWorktrees(task, 'roles', resolve(taskDir)); } catch { /* not a git repo */ }
+    add('worktrees', left.map((w) => `${w} is still there after the Human gate: run remove-worktrees.mjs ${task} --stage roles`));
+  }
+
   if (base) {
     let files = null;
     try { files = execFileSync('git', ['-c', 'core.quotePath=false', 'diff', '--name-only', `${base}...${head}`], { cwd: cwd ?? process.cwd(), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).split('\n').filter(Boolean); }
@@ -129,10 +138,12 @@ export function checkAll(taskDir, { step, round, profile: given, skip = [], brai
 
   // what to do now: any loop verdict but accept wins (fix, retry, ask, escalate, block), then a lane promotion, then any failed check
   const failed = results.filter(([, e]) => e.length);
+  const sendBack = failed.filter(([n]) => n !== 'worktrees'); // leftover worktrees are the Orchestrator's own step, no agent's to fix
   const promote = results.some(([n, e]) => n === 'diff' && e.some((x) => x.startsWith('promote:')));
   const action = next !== 'accept' ? next
     : promote ? 'promote:full-flow'
-    : failed.length ? `send-back:${failed.map(([n]) => n).join(',')}`
+    : sendBack.length ? `send-back:${sendBack.map(([n]) => n).join(',')}`
+    : failed.length ? 'remove:worktrees'
     : next === 'accept' ? 'proceed' : next;
   return { next: action, results, ok: !failed.length && action === 'proceed' };
 }
@@ -143,7 +154,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const pos = [];
   for (let i = 0; i < argv.length; i++) argv[i].startsWith('--') ? (o[argv[i].slice(2)] = argv[++i]) : pos.push(argv[i]);
   if (!pos[0] || !o.step || !o.round) {
-    console.error('usage: check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|lite|redesign|change] [--skip a,b] [--brain <dir>] [--base <ref> [--head <ref>] [--cwd <repo>]]');
+    console.error('usage: check-all.mjs <.team/<task>> --step <s> --round <n> [--profile fix|change|verify|upgrade] [--skip a,b] [--brain <dir>] [--base <ref> [--head <ref>] [--cwd <repo>]]');
     process.exit(2);
   }
   const r = checkAll(pos[0], { step: o.step, round: o.round, profile: o.profile, skip: (o.skip ?? '').split(',').filter(Boolean), brain: o.brain, base: o.base, head: o.head, cwd: o.cwd });

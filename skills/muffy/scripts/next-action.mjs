@@ -5,8 +5,9 @@
 // is a rule changed for both the running skill and `npm test`. Change the doc in the same commit.
 //
 // Usage:
-//   node next-action.mjs loop <handoff.json | handoff dir>... [--profile fix|lite|redesign [--scope <scope>]] [--skip 3d] [--smoke <signal,...>] [--task <task>] [--escalation-out <file>]
-//        hand-offs in the order they came back; a directory is read in file-time order
+//   node next-action.mjs loop <handoff.json | handoff dir>... [--profile fix|change|verify|upgrade [--scope <scope>]] [--skip 3d] [--smoke <signal,...>] [--task <task>] [--escalation-out <file>]
+//        hand-offs in the order they came back; a directory is read in file-time order. With no --profile the lane, scope,
+//        stop point and skips come from the checkpoint beside the hand-off folder (.team/<task>/checkpoint.md)
 //   node next-action.mjs effort --role <role> [--mode production|prototype] [--high-impact] [--assumed] [--exact-fix] [--stalled <n>]
 //   node next-action.mjs smoke [--runtime-changed] [--devops-files-changed] [--no-passing-smoke]
 //   node next-action.mjs triage fix|change '<signals json>'      (`lite` = change: the internal scope)
@@ -18,7 +19,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { validate } from './schema.mjs';
-import { LANES, NEVER_SKIP, STEP_ORDER, laneSpec, skipsOf, neverSkipOf, planCard } from './lanes.mjs';
+import { LANES, NEVER_SKIP, STEP_ORDER, laneSpec, skipsOf, neverSkipOf, planCard, parseRunProfile } from './lanes.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const schema = (kind) => JSON.parse(readFileSync(join(here, '..', 'schemas', `${kind}.schema.json`), 'utf8'));
@@ -455,6 +456,15 @@ function handoffFiles(paths) {
   return files;
 }
 
+// the Run profile of the checkpoint beside the hand-offs (.team/<task>/handoff/ → .team/<task>/checkpoint.md), or null
+function checkpointLane(paths) {
+  for (const p of paths) {
+    const dir = statSync(p).isDirectory() ? p : dirname(p);
+    try { return parseRunProfile(readFileSync(join(dir, '..', 'checkpoint.md'), 'utf8')); } catch { /* no checkpoint there */ }
+  }
+  return null;
+}
+
 function runLoop(args) {
   const valued = new Set(['--profile', '--scope', '--until', '--skip', '--smoke', '--task', '--escalation-out']);
   const paths = args.filter((a, i) => !a.startsWith('--') && !valued.has(args[i - 1]));
@@ -463,13 +473,18 @@ function runLoop(args) {
     try { return { handoff: JSON.parse(readFileSync(f, 'utf8')), file: f }; } catch { return { handoff: null, file: f }; }
   });
   const smoke = Object.fromEntries((opt(args, '--smoke') ?? '').split(',').filter(Boolean).map((k) => [k, true]));
-  const profile = opt(args, '--profile');
+  // the lane: --profile when given, else the checkpoint's lane line, as check-all reads it (a verify task asks before any fix
+  // even when the call names no profile); feature when neither names one. Skips: --skip when given, else the lane line's own
+  const cp = opt(args, '--profile') ? null : checkpointLane(paths);
+  const profile = opt(args, '--profile') ?? (cp && cp.lane !== 'feature' ? cp.lane : undefined);
+  const scope = opt(args, '--scope') ?? cp?.scope ?? undefined;
+  const ownSkip = (opt(args, '--skip') ?? '').split(',').filter(Boolean);
   const out = simulate({
     task: opt(args, '--task'),
     profile,
-    scope: opt(args, '--scope'),
-    until: opt(args, '--until'),
-    skip: [...skipsOf(profile, opt(args, '--scope')), ...(opt(args, '--skip') ?? '').split(',').filter(Boolean)],
+    scope,
+    until: opt(args, '--until') ?? cp?.until ?? undefined,
+    skip: [...skipsOf(profile, scope), ...(ownSkip.length ? ownSkip : cp?.skipped ?? [])],
     smoke_signals: smoke,
     events,
   });

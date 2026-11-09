@@ -1,7 +1,7 @@
 ## Workflow
 
 0a. **Platform.** Read `Platform:` from the brief or contract (default `web`).
-   - `mobile` or `desktop`: draw artboards at the frame sizes in `.claude/skills/muffy/references/platforms.md#routing`, and follow the platform's navigation and control conventions.
+   - `mobile` or `desktop`: draw artboards at the frame sizes in `<muffy>/references/platforms.md#routing`, and follow the platform's navigation and control conventions.
    - `cli` with screens (TUI): write text mock-ups of each screen in `design.md` instead of a canvas.
    - No `Platform:` yet at step 3 (the architect writes it in the same message): use the target the brief, `requirements.md` or `baseline.md` names; none named → `web`, as platforms.md says.
    - Ask through a `needs-input` hand-off (`questions[]`) only when those sources conflict or name an app without saying mobile or desktop.

@@ -1,7 +1,7 @@
 // Shared by guard-full-regression.mjs and guard-test-level.mjs: recognise a test-runner command line.
 // parseSegment(seg, extra) -> null (not a test run) | { whole, kind } where
 //   whole = no path, name or filter (runs everything), kind = 'unit' | 'integration' | 'e2e'.
-// Known limits: runners behind wrapper scripts, `node -e`, a flag's value mistaken for a test path (fails open).
+// Known limits: runners behind wrapper scripts other than run-quiet.mjs, `node -e`, a flag's value mistaken for a test path (fails open).
 
 const FILTER_FLAG = /^(-t|-g|-k|-m|--grep|--filter|--testNamePattern|--test-name-pattern|--testPathPattern|--project|--shard|--changedSince|--onlyChanged|--only-changed|--findRelatedTests|--lf|--ff|--last-failed|--failed-first|--spec|--specs|--tag|--tags|--include|--files?)(=|$)/;
 const RUNNERS = [
@@ -24,7 +24,21 @@ export const isScoped = (args) => {
   return afterDashes.some((t) => FILTER_FLAG.test(t) || !t.startsWith('-')); // any path/pattern, or a filter flag
 };
 
-export function parseSegment(seg, extra = []) {
+// muffy's own output wrapper runs whatever follows `--`: judge that command, not the wrapper. Any folder counts
+// (relative, .claude/…, the plugin's absolute path, quoted or not), so the wrapper is never a way around the guards.
+const RUN_QUIET = /^node\s+(?:"[^"]*run-quiet\.mjs"|'[^']*run-quiet\.mjs'|\S*run-quiet\.mjs)(?:\s+.*?)?\s--\s+(.+)$/;
+const unquote = (s) => (/^"[^"]*"$|^'[^']*'$/.test(s) ? s.slice(1, -1).trim() : s);
+export const unwrap = (seg) => {
+  for (let s = seg.trim(), i = 0; i < 5; i++) {
+    const m = RUN_QUIET.exec(s);
+    if (!m) return s;
+    s = unquote(m[1].trim());
+  }
+  return seg.trim();
+};
+
+export function parseSegment(rawSeg, extra = []) {
+  const seg = unwrap(rawSeg);
   if (extra.some((re) => re.test(seg))) return { whole: true, kind: kindOf(seg) };
   const pm = seg.match(PM);
   if (pm) {

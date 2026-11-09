@@ -8,7 +8,7 @@ Each rule has an id so reviews, the heuristic table and `quality_checks.failed[]
 The tiers below are the rule set. For detail on a specific concern (the rationale, a Do/Don't pair, severity) search the data tables with one plain command, always with an explicit `--domain`:
 
 ```
-node .claude/skills/muffy/scripts/ux-search.mjs "<2-5 terms>" --domain <ux|web|chart|typography|reasoning> -n 3
+node "<muffy>/scripts/ux-search.mjs" "<2-5 terms>" --domain <ux|web|chart|typography|reasoning> -n 3
 ```
 
 | Domain | Table | Use it for |

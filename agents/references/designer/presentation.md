@@ -9,8 +9,8 @@ The workflow, canvas and per-screen rules in [workflow.md](workflow.md) don't ap
 - `<output>/deck.json`: the content. Read it in full; it is your only source of words and numbers
 - `<output>/outline.md`: the brief at its top (audience profile, goal, setting) and the speaker notes
 - `docs/design-system/` (tokens and README) when it exists: colors, fonts, radius, and the `## Presentation` section if you wrote one before
-- `.claude/skills/muffy/templates/presentation-stage.html`: the frame you start from
-- `.claude/skills/muffy/templates/presentation.html` (optional): renders `deck.json` as a plain scrolling preview, handy for reading the content in order; it is not the design
+- `<muffy>/templates/presentation-stage.html`: the frame you start from
+- `<muffy>/templates/presentation.html` (optional): renders `deck.json` as a plain scrolling preview, handy for reading the content in order; it is not the design
 
 ## Build `<output>/deck.html`
 
@@ -28,7 +28,7 @@ The workflow, canvas and per-screen rules in [workflow.md](workflow.md) don't ap
    - `statement`, `section`: one sentence, very large, little else
    - `cta`: the ask large; next steps as numbered cards
 5. **Motion with meaning.** `.pop` with `--i` for the order things appear (headline first, then items in reading order); `.float` on a few cards, not all; `.flow` on connectors. Everything must work with reduced motion (the stage turns animation off) and in print (each slide a finished page)
-6. **Check:** `node .claude/skills/muffy/scripts/check-presentation.mjs <output>`. Fix every FAIL
+6. **Check:** `node "<muffy>/scripts/check-presentation.mjs" <output>`. Fix every FAIL
 
 ## Rules
 
