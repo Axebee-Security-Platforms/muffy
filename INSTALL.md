@@ -15,7 +15,7 @@ In Claude Code:
 
 ```text
 /plugin marketplace add Axebee-Security-Platforms/muffy
-/plugin install muffy@harmonyx
+/plugin install muffy@muffy
 ```
 
 Then, in each repo, run once:
@@ -36,7 +36,7 @@ How the plugin finds its files:
 - The skill and its references write script paths as `<muffy>/scripts/…`. `SKILL.md` defines `<muffy>` as `${CLAUDE_SKILL_DIR}`, and each agent defines it as `${CLAUDE_PLUGIN_ROOT}/skills/muffy`. Claude Code fills both in when it loads the file, so updating the plugin moves every path with it.
 - The guards ship in the plugin's `hooks/hooks.json`. A plugin's hooks run in every project that enables it, so muffy's guards do nothing until a project sets `MUFFY_GUARD` to `"1"` in `.claude/settings.local.json` or `.claude/settings.json`. To share the switch with the team, put it in `settings.json`.
 - Commands are namespaced: `/muffy:muffy <request>`, `/muffy:setup`, and agents `muffy:<role>`.
-- Update with `/plugin marketplace update harmonyx`, then restart Claude Code.
+- Update with `/plugin marketplace update muffy`, then restart Claude Code.
 
 Moving from a copied install: delete `.claude/skills/muffy/` and muffy's files in `.claude/agents/` (`MANIFEST.json` lists them), plus any muffy entries in `hooks.PreToolUse` of `.claude/settings.local.json`. Then run `/muffy:setup --with-guard`. `/muffy:setup` warns while the copy is still there, because both would load.
 

@@ -8,7 +8,7 @@
 
 [Quick start](#quick-start) · [Commands](#commands) · [How muffy works](#how-muffy-works) · [What each step produces](#what-each-step-produces) · [Example](#example) · [FAQ](#faq) · [Documentation](#documentation)
 
-<code>/plugin marketplace add Axebee-Security-Platforms/muffy</code> · <code>/plugin install muffy@harmonyx</code> · <code>/muffy:setup</code>
+<code>/plugin marketplace add Axebee-Security-Platforms/muffy</code> · <code>/plugin install muffy@muffy</code> · <code>/muffy:setup</code>
 
 </div>
 
@@ -30,7 +30,7 @@ Inside Claude Code, add the marketplace and install the plugin, then set up each
 
 ```text
 /plugin marketplace add Axebee-Security-Platforms/muffy
-/plugin install muffy@harmonyx
+/plugin install muffy@muffy
 /muffy:setup --vault "/absolute/path/to/Obsidian Vault" --with-guard
 ```
 

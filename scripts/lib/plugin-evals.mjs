@@ -13,6 +13,8 @@ export function runPluginEvals({ check, root }) {
   const agentFiles = readdirSync(join(root, 'agents')).filter((n) => n.endsWith('.md')).sort();
 
   check('plugin: plugin.json version matches package.json', plugin.version === pkg.version, `${plugin.version} vs ${pkg.version}`);
+  // a marketplace name belongs to one source: `harmonyx` is the spright repo's, so adding this repo under it is refused
+  check('plugin: the marketplace is named muffy, not the spright repo\'s harmonyx', market.name === 'muffy');
   check('plugin: marketplace lists muffy from the repo root under the manifest name', market.plugins?.some((p) => p.name === plugin.name && p.source === './'));
   // The default agents/ scan recurses, but only a file that opens with frontmatter loads as an agent: a reference file
   // starting with `---` would appear as muffy:references:…. An `agents` key in plugin.json loaded no agents at all
