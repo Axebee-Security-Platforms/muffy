@@ -15,7 +15,7 @@ It is an **upgrade** only if all hold; otherwise say which fails in one line and
 1. Name the task `upgrade-<slug>` and run the common setup, [setup.md](setup.md) steps 1-4, with `next-action.mjs baseline --lane upgrade` (a quick baseline is enough; the upgrade will move its Stack section anyway)
 2. `pause:scope`, one `AskUserQuestion` call: **Plan** (the card from `next-action.mjs plan-card upgrade`, go / bigger), **Target** (package or runtime, from and to versions; Confirm / Change it), **Base** (only when `main` and the current branch differ)
 3. Create the feature worktree from `<base>` (a baseline committed at the common setup on another branch is cherry-picked onto it first, [setup.md](setup.md) step 7), then `.team/<task>/`, `handoff/` and `rounds/`. Write `.team/<task>/ac.md` (the internal-scope format of [change-profile.md](change-profile.md#acmd), with `Lane: upgrade`): `AC-1` the app builds and boots on the new version, `AC-2` the existing tests pass, one `AC-<n>` per breaking change the changelog names once step 1 has read it, and a `## Traceability` table that maps each of the brief's must-not-miss items to its AC (`check-artifacts.mjs` holds the two together). Commit it to `feature/<task>`
-4. Write `checkpoint.md`, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> upgrade`, and record `checkpoint.mjs gate .team/<task> 2b skip --reason "no plan in an upgrade; the ADR is approved at 3c"`
+4. Write `checkpoint.md`, then its lane line with `node "<muffy>/scripts/checkpoint.mjs" profile .team/<task> upgrade`, and record `checkpoint.mjs gate .team/<task> 2b skip --reason "no plan in an upgrade; the ADR is approved at 3c"`
 
 ## Steps
 

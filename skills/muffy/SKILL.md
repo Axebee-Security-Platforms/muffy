@@ -19,7 +19,9 @@ description: >
 
 ## Purpose
 
-Orchestrate the subagents in `.claude/agents/` from research to deploy for one feature. The main session is the **Orchestrator**. Subagents never talk to each other. Everything goes through the Orchestrator, and work is handed off as files in `.team/<task>/`.
+Orchestrate muffy's subagents from research to deploy for one feature. The main session is the **Orchestrator**. Subagents never talk to each other. Everything goes through the Orchestrator, and work is handed off as files in `.team/<task>/`.
+
+**Paths.** `<muffy>` in this file and every reference is `${CLAUDE_SKILL_DIR}`, this skill's folder (in the plugin cache for a plugin install, `.claude/skills/muffy` for a copied one). Write it out in full with forward slashes, and in double quotes in a command: `node "<muffy>/scripts/check-all.mjs" …`. The agent definitions and their `references/` are in `<muffy>/../../agents/`. **Agent names:** spawn `muffy:<role>` when the Agent tool lists it (plugin install), otherwise `<role>`; the rest of this skill writes the bare role.
 
 ## Inputs
 
@@ -77,7 +79,7 @@ Critical rules (Orchestrator rules 1 to 4, plus the opt-in hooks): [references/h
 
 ## Quality Checks
 
-Verify after every step: run `node .claude/skills/muffy/scripts/check-all.mjs .team/<task> --step <s> --round <n>` and act on its `next=` line, then the judgment checks: [references/quality-checks.md](references/quality-checks.md)
+Verify after every step: run `node "<muffy>/scripts/check-all.mjs" .team/<task> --step <s> --round <n>` and act on its `next=` line, then the judgment checks: [references/quality-checks.md](references/quality-checks.md)
 
 ---
 

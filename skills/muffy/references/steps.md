@@ -2,7 +2,7 @@
 
 Row order is execution order: 0 → 1 → 2 → 2b → 3 → 3b → 3e → 3c → 3d → 4 → 5 → 6 → 7 → 10 → 11 → 12. Steps 8 and 9 no longer exist (docs review and staging were removed); their ids stay unused so hand-offs and scripts keep one numbering.
 
-Routing: an agent's `references/<agent>/when-to-use.md` (under `.claude/agents/`) lists when it is and is not the right agent. Read it only when a request or a hand-off leaves the owner unclear; the table below is the default.
+Routing: an agent's `references/<agent>/when-to-use.md` (under `<muffy>/../../agents/`) lists when it is and is not the right agent. Read it only when a request or a hand-off leaves the owner unclear; the table below is the default.
 
 | # | Agent | Input | Output |
 |---|---|---|---|
@@ -22,6 +22,6 @@ Routing: an agent's `references/<agent>/when-to-use.md` (under `.claude/agents/`
 | 5b | Orchestrator, **only if the user asked for PR diagrams** (off by default) | `fe/<task>` + `be/<task>` `.pr-lens/` render folders | Publish the PR diagrams as one Artifact and copy each `drawn.graph.json` to `.team/<task>/diagrams/`. Missing diagram → skip, never block. Details: [step-details.md](step-details.md#step-5b) |
 | 6 | `code-reviewer` | `diff-<n>.patch` (large: topic patches `diff-<n>-<topic>.patch` + `diff-<n>-index.md`, see [token-discipline.md](token-discipline.md)), `ac.md`, `contract.md`, `diagrams/*.graph.json` if present | Approve / Reject |
 | 7 | `qa-tester` | branch / contract + approved diff | `qa-report.md`. Runs on docker local; there is no staging in this skill |
-| 10 | **Human gate** | `AskUserQuestion` with the body from `node .claude/skills/muffy/scripts/gate-summary.mjs .team/<task> 10` (qa-report, smoke result if 3d ran, open `V-` questions; `ready=no` → fix its reasons first) | Before asking: update `<brain>/tasks/<task>.md` status and checkpoint. Approve means "accept this branch", not a deploy. Approve / Reject. On Approve: [remove worktrees](step-details.md#step-10) |
+| 10 | **Human gate** | `AskUserQuestion` with the body from `node "<muffy>/scripts/gate-summary.mjs" .team/<task> 10` (qa-report, smoke result if 3d ran, open `V-` questions; `ready=no` → fix its reasons first) | Before asking: update `<brain>/tasks/<task>.md` status and checkpoint. Approve means "accept this branch", not a deploy. Approve / Reject. On Approve: [remove worktrees](step-details.md#step-10) |
 | 11 | `docs-writer`, **after the Human gate approves** | approved diff, `qa-report.md`, `contract.md`, `deploy.md`; "Human approved" in the prompt | Docs + `release-notes.md` with a **Deploy hand-off**; only what the diff touched, no `TBD`, self-check instead of a review. Skippable only where the profile says so. Details: [step-details.md](step-details.md#step-11) |
 | 12 | Orchestrator | — | Read `references/closing.md` and follow it |

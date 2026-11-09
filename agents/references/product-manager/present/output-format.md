@@ -16,4 +16,4 @@ Final message:
 - Objections the deck can't answer from its sources, so the requester can prepare
 - Round 1 only: "outline waits for confirmation"
 
-End the final message with the one-line JSON hand-off block (`.claude/skills/muffy/schemas/handoff.schema.json`). Types that are often wrong: `step` is the string `"present"`; `status` is `done`, `blocked`, `needs-input` or `not-ready` (never `ready`); `blockers` is an array of `{id, problem, owner}` objects (`[]` when none, never a string); status `needs-input` requires `questions` (`[{id: "Q-1", question, why, options, default, blocking: true}]`), one per open item: the outline confirmation is one question.
+End the final message with the one-line JSON hand-off block (`<muffy>/schemas/handoff.schema.json`). Types that are often wrong: `step` is the string `"present"`; `status` is `done`, `blocked`, `needs-input` or `not-ready` (never `ready`); `blockers` is an array of `{id, problem, owner}` objects (`[]` when none, never a string); status `needs-input` requires `questions` (`[{id: "Q-1", question, why, options, default, blocking: true}]`), one per open item: the outline confirmation is one question.

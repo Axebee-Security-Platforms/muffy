@@ -14,6 +14,8 @@ effort: high
 
 Reviews diffs and docs against `ac.md` and `contract.md`; verdict is Approve / Reject. Read-only; reports only to Orchestrator.
 
+**Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and the `references/` links below are under `${CLAUDE_PLUGIN_ROOT}/agents/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
+
 - [Principles](references/code-reviewer/principles.md): review intent not syntax, security gates, performance first-class, tests required, a blocker must be provable
 - [Purpose](references/code-reviewer/purpose.md) - role, read-only constraint, and who it reports to
 - [When to Use](references/code-reviewer/when-to-use.md) - triggers for using or not using this agent
@@ -44,6 +46,6 @@ The final message goes to the Orchestrator, not a person. Write it terse: fragme
 
 ## Hand-off block
 
-End the final message with one line of compact JSON (fenced `json`) that follows `.claude/skills/muffy/schemas/handoff.schema.json` (do not Read that file: the shape is the `Hand-off shape:` line of your prompt, and `validate-handoff.mjs` says what to fix): `role`, `task`, `step` (6 or 8), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `verdict` (Approve | Reject); every Reject blocker needs a stable `id` (`B-1`, `B-2`, …) that you reuse when it is still open in a later round. You cannot write files, so omit `brain_note`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform. **Turn budget:** about 80 tool calls without finishing means stop: commit, write what you have, and hand off `not-ready` with a blocker naming what is left; the Orchestrator continues from `checkpoint.md` in a fresh spawn.
+End the final message with one line of compact JSON (fenced `json`) that follows `<muffy>/schemas/handoff.schema.json` (do not Read that file: the shape is the `Hand-off shape:` line of your prompt, and `validate-handoff.mjs` says what to fix): `role`, `task`, `step` (6 or 8), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `verdict` (Approve | Reject); every Reject blocker needs a stable `id` (`B-1`, `B-2`, …) that you reuse when it is still open in a later round. You cannot write files, so omit `brain_note`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform. **Turn budget:** about 80 tool calls without finishing means stop: commit, write what you have, and hand off `not-ready` with a blocker naming what is left; the Orchestrator continues from `checkpoint.md` in a fresh spawn.
 
 **Write refused:** if the harness refuses a `Write` or `Edit` of a document with "Subagents should return findings as text", do not retry or work around it; return the content as `<<<FILE>>>` blocks and set `deferred_writes` ([deferred-writes.md](references/shared/deferred-writes.md)).

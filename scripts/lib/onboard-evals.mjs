@@ -55,7 +55,7 @@ export function runOnboardEvals({ check, root }) {
   for (const [f, lane] of [['fix-profile.md', 'fix'], ['change-profile.md', 'change']]) {
     check(`docs: ${f} runs the common setup with the baseline check for its lane`, ref(f).includes('[setup.md](setup.md) steps 1-4') && ref(f).includes(`next-action.mjs baseline --lane ${lane}`));
   }
-  check('docs: setup.md step 3 uses next-action.mjs baseline for every lane', setup.includes('next-action.mjs baseline --lane <lane>') && /common setup[^\n]*every lane/.test(setup));
+  check('docs: setup.md step 3 uses next-action.mjs baseline for every lane', setup.includes('next-action.mjs" baseline --lane <lane>') && /common setup[^\n]*every lane/.test(setup));
   check('docs: setup saves the request and onboard 0f resumes it', setup.includes('.team/onboard/pending-request.md') && /^\| 0f \|[^\n]*pending-request\.md/m.test(onboard));
   check('docs: every onboard depth commits the baseline and reaches 0f, so the request resumes', ['quick', 'full'].every((d) => /0f/.test(depthRow(d).split(' | ')[2] ?? '')) && /\[Commit\]\(#commit-without-0d\)/.test(depthRow('quick')) && /^## Commit without 0d$/m.test(onboard));
   check('docs: a baseline committed at setup reaches the feature worktree on another base', setup.includes('cherry-pick <sha>') && ['fix-profile.md', 'change-profile.md'].every((f) => ref(f).includes('cherry-picked onto it first')));

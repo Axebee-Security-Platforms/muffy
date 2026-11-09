@@ -13,6 +13,12 @@
 
 ### Added
 
+- **Plugin install** (1.4.0). The repo is now a Claude Code plugin and a marketplace (`.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`): `/plugin marketplace add Axebee-Security-Platforms/muffy`, then `/plugin install muffy@harmonyx`. The skill, agents and scripts stay in the plugin folder.
+  - **Setup.** A new `/muffy:setup` skill runs `install.mjs <repo> --plugin`, which copies nothing and writes only `settings.local.json`, the `.gitignore` lines and the scan.
+  - **Paths.** Script and template paths in the skill, the agents and every reference are written `<muffy>/…`. `SKILL.md` defines `<muffy>` through `${CLAUDE_SKILL_DIR}`, and each agent through `${CLAUDE_PLUGIN_ROOT}`; the copied install rewrites `${CLAUDE_PLUGIN_ROOT}` to `.claude`, so both installs work. The default `agents/` scan loads the 13 agents. `agents/references/**` doesn't load as agents because those files have no frontmatter; an eval keeps it that way. An explicit `agents` key loaded no agents at all.
+  - **Guards.** They ship in `hooks/hooks.json` with `--plugin` and stay off until the project sets env `MUFFY_GUARD=1` (`plugin-gate.mjs`; `/muffy:setup --with-guard` sets it). The Bash allowlist accepts the plugin's own absolute script path, quoted or not, with either slash, and still refuses a look-alike `skills/muffy/scripts/` folder anywhere else.
+  - **Other script changes.** `sync-worktree.mjs` prints `nothing to sync` when the repo has no copied skill. The Orchestrator spawns `muffy:<role>` when the Agent tool lists it.
+  - **Checks** are in `scripts/lib/plugin-evals.mjs`. Doc checks that pinned `checkpoint.mjs profile …` now match the quoted `checkpoint.mjs" profile …`.
 - **Special flows, reached by plain words, no new command.**
   - **Diagnose only** ("แค่หาสาเหตุ", "just find the cause"): the fix lane with a stop point. `checkpoint.mjs profile … fix --scope bug --until 4b` writes `· until 4b` on the lane line; once 4b is accepted `check-all` and the loop answer `close:stop-point`, a step-4 spawn is refused, and a `needs-full-flow` diagnosis is reported with its `promote_to` as advice instead of promoted. `closing.md` has the stopped-at-a-stop-point close.
   - **Verify lane** (`references/verify-profile.md`): review, QA, the Human gate and docs on a branch someone already wrote, on a copy `verify/<task>`; the requester's branch is never edited or merged. A reject or a QA fail answers `ask:verify-fix`: fix on the copy, or report only.

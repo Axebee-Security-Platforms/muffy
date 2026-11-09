@@ -4,7 +4,7 @@ Orchestrator or user only: these commands write a file, so agents under the Bash
 
 ## Exporting a still image
 Manual: only when the user asks for an image (a slide, a document, a chat message), never unprompted.
-- `node .claude/skills/muffy/scripts/diagram-export.mjs <file.html> --png out.png [--theme light|dark] [--scale 2] [--width 1280]` works for every kind: headless Chrome/Edge opens the page on its finished frame (no animation or controls) and captures its full height. A flow's step bar is left out
+- `node "<muffy>/scripts/diagram-export.mjs" <file.html> --png out.png [--theme light|dark] [--scale 2] [--width 1280]` works for every kind: headless Chrome/Edge opens the page on its finished frame (no animation or controls) and captures its full height. A flow's step bar is left out
 - `--svg out.svg [--theme ...]` works for every kind. A `flow` diagram exports its own SVG (the diagram only). The other kinds are HTML cards, so the page is redrawn as native SVG shapes and text from what the browser laid out: positions, colours, borders, wires and text lines are kept, the whole page is included (title, subtitle, ledger), and shadows and the grid paper are left out. The text stays text, shown in the viewer's system font, so it stays editable in Figma, Inkscape or PowerPoint but may reflow slightly there
 - A page that fails `check-diagram.mjs` is not exported. No Chrome/Edge: it says so and exits 2
 

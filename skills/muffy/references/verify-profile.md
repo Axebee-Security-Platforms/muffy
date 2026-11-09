@@ -10,7 +10,7 @@ For a branch the requester (or someone else) wrote by hand: "ตรวจ branch
 2. Find the branch and its base: the branch the request names (ask once if it names none), and its base (`main`, or the branch it was cut from). Read the PR description or the request for what the change should do
 3. `pause:scope`, one `AskUserQuestion` call: **Plan** (the card from `next-action.mjs plan-card verify`, go / bigger), **AC** (the AC list drafted from the PR description or the request: what the change should do and what must stay as it was; Confirm / Change it), **Branch and base** (confirm both)
 4. Create the copy as the task's worktree: `git worktree add .worktrees/feature-<task> -b verify/<task> <their branch>`, then `.team/<task>/`, `handoff/` and `rounds/` inside it. Write `.team/<task>/ac.md` there (the internal-scope format of [change-profile.md](change-profile.md#acmd), with `Scope:` replaced by `Lane: verify` and a `## Unchanged` list when the request names one) and commit it to `verify/<task>`
-5. Write `checkpoint.md`, then its lane line with `node .claude/skills/muffy/scripts/checkpoint.mjs profile .team/<task> verify`
+5. Write `checkpoint.md`, then its lane line with `node "<muffy>/scripts/checkpoint.mjs" profile .team/<task> verify`
 
 ## Steps
 

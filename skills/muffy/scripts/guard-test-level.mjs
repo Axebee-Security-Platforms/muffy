@@ -16,6 +16,9 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import { kindOf, parseSegment, splitCommand } from './test-runners.mjs';
+import { guardOff } from './plugin-gate.mjs';
+
+if (guardOff()) process.exit(0); // plugin install without MUFFY_GUARD=1: the project did not opt in
 
 const TEST_FILE = /(\.(test|spec)\.[cm]?[jt]sx?$)|(^|[\\/])(__tests__|tests?)[\\/]|(^|[\\/])test_[^\\/]+\.py$|_test\.(go|py)$|(Test|Tests)\.(java|kt|cs)$|_spec\.rb$/i;
 const SUITE_PATH = /(^|[\\/])(e2e|integration|playwright|cypress)([\\/]|\.|-|$)|(playwright|cypress|vitest\.e2e)\.config\./i;

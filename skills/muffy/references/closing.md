@@ -18,6 +18,6 @@ Read this only at step 12, or when the user stops the flow.
 5b. **Remove the worktrees**, last, from the main checkout. A cancelled or aborted task is closed the same way; its branches stay too:
    - Commit everything closing wrote in the feature worktree to the task's branch: a removed worktree keeps only what is committed, and `git status --short` there must be empty
    - Stop any docker stack still running from a task worktree
-   - `node .claude/skills/muffy/scripts/remove-worktrees.mjs <task> --stage all`, then the same command with `--check`, which must print an empty `remaining=`
+   - `node "<muffy>/scripts/remove-worktrees.mjs" <task> --stage all`, then the same command with `--check`, which must print an empty `remaining=`
    - `kept=<path>:<reason>` means it would lose work or could not finish: never force it, name it in the final message. `dirty`: commit or ask the user what to do with the files. `locked`: stop what holds it and run the command again
 6. **Final message to the user**: status, commit/PR, the **Deploy hand-off** (branch and commit, migrations, config, order, what to check; the user deploys, no agent does), links to plan + ADR, diagram links (from the task note's `## Diagrams`), open issues, the worktrees removed, any kept with the reason, any `unmerged:` branch, and any step that was skipped or failed: stated as such

@@ -4,6 +4,9 @@
 // Inline code (`node -e`, `python -c`, `pwsh -Command`, a heredoc on stdin, …) that names .env or dotenv is blocked.
 // Known limits: a script file that reads .env, inline code that builds the path (`'.e'+'nv'`), and .NET calls are not caught.
 import { readFileSync } from 'node:fs';
+import { guardOff } from './plugin-gate.mjs';
+
+if (guardOff()) process.exit(0); // plugin install without MUFFY_GUARD=1: the project did not opt in
 
 const SAFE = /\.env\.(example|template|sample)$/i;
 const isEnvPath = (p) => typeof p === 'string' && /(^|[\\/])\.env(\.[^\\/]*)?$/i.test(p) && !SAFE.test(p);

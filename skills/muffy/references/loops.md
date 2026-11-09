@@ -21,9 +21,9 @@
 
 ## Fallback ladder
 
-**Compute it, don't count by hand**: `node .claude/skills/muffy/scripts/next-action.mjs loop <hand-off files in the order they came back> [--profile fix|change|verify|upgrade [--scope <scope>]] [--skip <steps>] --task <task> [--escalation-out .team/<task>/escalation-<n>.json]` applies this file (loop budget, repeated `B-`/`V-` ids, gates 3c/3d, fix-lane promotion, the verify lane's `ask:verify-fix`) and prints `next=<action>` plus the counters to copy into `## Loop counters`. On `escalate:*` it drafts the escalation file: add the recommendation, then validate. With no `--profile` it reads the lane, scope, stop point and skips from the checkpoint beside the hand-offs (`.team/<task>/checkpoint.md`), as `check-all.mjs` does; `--profile` overrides it.
+**Compute it, don't count by hand**: `node "<muffy>/scripts/next-action.mjs" loop <hand-off files in the order they came back> [--profile fix|change|verify|upgrade [--scope <scope>]] [--skip <steps>] --task <task> [--escalation-out .team/<task>/escalation-<n>.json]` applies this file (loop budget, repeated `B-`/`V-` ids, gates 3c/3d, fix-lane promotion, the verify lane's `ask:verify-fix`) and prints `next=<action>` plus the counters to copy into `## Loop counters`. On `escalate:*` it drafts the escalation file: add the recommendation, then validate. With no `--profile` it reads the lane, scope, stop point and skips from the checkpoint beside the hand-offs (`.team/<task>/checkpoint.md`), as `check-all.mjs` does; `--profile` overrides it.
 
-Apply in order. Each rung applies to one loop point; the validator is `node .claude/skills/muffy/scripts/validate-handoff.mjs <file>`.
+Apply in order. Each rung applies to one loop point; the validator is `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
 1. **Invalid or missing hand-off block** (validator fails, or no JSON block) → spawn the same role fresh once, with the validator's error lines and the path of its invalid hand-off in the prompt (rebuilt with `make-envelope.mjs`, so the prefix stays cacheable: [spawn-prompt.md](spawn-prompt.md)). Invalid again → escalate `invalid-handoff`
 2. **Agent reports `quality_checks.passed: false`** → a fresh spawn of the role with its hand-off path in `Read:` (the failed items are in that file), once. Fails again → escalate `quality-check-failed-twice`. The same applies to `retry:audit-below-severity` (a `confirm` whose `evidence_level` is below the severity): a fresh `auditor` spawn that is told the claimed severity and its own previous hand-off path
@@ -39,7 +39,7 @@ Every re-spawn above is silent: the new spawn gets the previous hand-off in `Rea
 ## Escalation
 
 1. Write `.team/<task>/escalation-<n>.json` ([schema](../schemas/escalation.schema.json)): trigger, loops used, owner, open blockers with rounds open, one line per attempt, a recommendation, 2-4 options
-2. Validate it: `node .claude/skills/muffy/scripts/validate-handoff.mjs <file> escalation`
+2. Validate it: `node "<muffy>/scripts/validate-handoff.mjs" <file> escalation`
 3. Ask the user with `AskUserQuestion` (≤10 lines of context, recommended option first). Options, as relevant:
    - `extend-loops`: +2 loops at this point, asked again if it runs out
    - `change-approach`: send the root cause to the right owner (architect/PM/designer), then restart the point's counter
@@ -52,4 +52,4 @@ Every re-spawn above is silent: the new spawn gets the previous hand-off in `Rea
 
 Long loops lose the original goal. After every fix round and at steps 3d, 6 (on Approve) and 9, rewrite `.team/<task>/checkpoint.md` per [memory-model.md](memory-model.md#checkpoint). From round 2 on, every prompt carries `Checkpoint: <path>` and the owner reads only its `## Goal` and `## Open blockers` sections. Keep only the latest round's blockers in full; older rounds shrink to one `## History` line each.
 
-Record a fix round with one command, not by hand: `node .claude/skills/muffy/scripts/checkpoint.mjs round .team/<task> --step <step> --round <n> --handoff <hand-off file> --summary "<one line>" [--notes "a|b"]`. It writes `rounds/<step>-r<n>.md` once and updates the checkpoint's `Updated:` line, `## Loop counters` (only a Reject/Fail counts), `## Open blockers` (rounds open carried by id), the `## History` line and its `[label]`. Then it runs `check-checkpoint.mjs`. Edit `## Status` and `## Decisions in force` yourself; the script leaves them alone.
+Record a fix round with one command, not by hand: `node "<muffy>/scripts/checkpoint.mjs" round .team/<task> --step <step> --round <n> --handoff <hand-off file> --summary "<one line>" [--notes "a|b"]`. It writes `rounds/<step>-r<n>.md` once and updates the checkpoint's `Updated:` line, `## Loop counters` (only a Reject/Fail counts), `## Open blockers` (rounds open carried by id), the `## History` line and its `[label]`. Then it runs `check-checkpoint.mjs`. Edit `## Status` and `## Decisions in force` yourself; the script leaves them alone.

@@ -12,6 +12,9 @@
 // Orchestrator's own session or the user and is never blocked. Bash writes are not seen (known limit).
 import { readFileSync } from 'node:fs';
 import { blockingRule, roleOf, blockMessage } from './write-scope.mjs';
+import { guardOff } from './plugin-gate.mjs';
+
+if (guardOff()) process.exit(0); // plugin install without MUFFY_GUARD=1: the project did not opt in
 
 const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
 

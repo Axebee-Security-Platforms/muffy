@@ -10,6 +10,9 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { missingGates, gatesForSpawn, auditMissing, PAUSE_OF, MUFFY_ROLES } from './gate-rules.mjs';
+import { guardOff } from './plugin-gate.mjs';
+
+if (guardOff()) process.exit(0); // plugin install without MUFFY_GUARD=1: the project did not opt in
 
 let input;
 try {

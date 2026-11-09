@@ -24,6 +24,7 @@ import { runGateEvals } from './lib/gate-evals.mjs';
 import { runRouteEvals } from './lib/route-evals.mjs';
 import { runReviewBenchEvals } from './lib/review-bench-evals.mjs';
 import { runWorktreeEvals } from './lib/worktree-evals.mjs';
+import { runPluginEvals } from './lib/plugin-evals.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -1131,6 +1132,7 @@ runGateEvals({ check, root });
 
 /* 11. worktree removal (step-details.md Step 10, closing.md step 5b): remove-worktrees.mjs on a temp git repo */
 await runWorktreeEvals({ check, root });
+runPluginEvals({ check, root });
 
 console.log(`eval: ${pass} passed, ${failures.length} failed`);
 if (failures.length) { console.error(failures.map((x) => `  FAIL ${x}`).join('\n')); process.exit(1); }

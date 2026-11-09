@@ -8,7 +8,7 @@
 
 [Quick start](#quick-start) · [Commands](#commands) · [How muffy works](#how-muffy-works) · [What each step produces](#what-each-step-produces) · [Example](#example) · [FAQ](#faq) · [Documentation](#documentation)
 
-<code>node install.mjs /path/to/your-repo --vault "/path/to/Obsidian Vault"</code>
+<code>/plugin marketplace add Axebee-Security-Platforms/muffy</code> · <code>/plugin install muffy@harmonyx</code> · <code>/muffy:setup</code>
 
 </div>
 
@@ -24,7 +24,19 @@ The flow replaces ad-hoc multi-agent prompts. Unreviewed code and lost hand-offs
 
 Requires Node 18+. No runtime dependencies. Optional: the `impeccable` skill, which the Orchestrator uses for a UX/UI review of the design canvas before you approve it.
 
-### Install into your repo
+### Install as a plugin (recommended)
+
+Inside Claude Code, add the marketplace and install the plugin, then set up each repo once:
+
+```text
+/plugin marketplace add Axebee-Security-Platforms/muffy
+/plugin install muffy@harmonyx
+/muffy:setup --vault "/absolute/path/to/Obsidian Vault" --with-guard
+```
+
+The skill, agents and scripts stay in the plugin folder and update with the plugin. Nothing is copied into the repo. `/muffy:setup` writes only `.claude/settings.local.json`, the `.gitignore` lines and the onboarding scan. `--with-guard` turns on the plugin's guards for that repo. With the plugin, the commands are `/muffy:muffy <request>`, and the agents are named `muffy:<role>`.
+
+### Or copy into your repo
 
 Run from anywhere, pointing at the target repo root:
 

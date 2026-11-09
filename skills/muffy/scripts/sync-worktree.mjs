@@ -8,6 +8,7 @@
 //   then prints `synced N file(s)` and lists them; commit them as the worktree's first commit
 //   (`chore(muffy): sync skill scripts`). --check copies nothing, lists the differences and exits 1 if there are any.
 // The main checkout is the first entry of `git worktree list`. Files only the worktree has are left alone.
+// A plugin install has no .claude/skills/muffy/ in the repo: the script prints `nothing to sync` and exits 0.
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -33,7 +34,7 @@ export function syncWorktree(worktree, { check = false } = {}) {
   const main = mainCheckout(wt);
   if (resolve(main) === wt) throw new Error('that is the main checkout, not a task worktree');
   const src = join(main, SKILL);
-  if (!existsSync(src)) throw new Error(`no ${SKILL} in the main checkout ${main}`);
+  if (!existsSync(src)) return null; // plugin install: the skill lives outside the repo, nothing to sync
   const changed = [];
   for (const file of walk(src)) {
     const rel = relative(src, file);
@@ -52,6 +53,7 @@ if (resolve(process.argv[1] ?? '') === resolve(new URL(import.meta.url).pathname
   if (!target) { console.error('usage: sync-worktree.mjs <worktree> [--check]'); process.exit(2); }
   try {
     const changed = syncWorktree(target, { check });
+    if (changed === null) { console.log(`OK nothing to sync: no ${SKILL} in the main checkout (plugin install)`); process.exit(0); }
     if (check) {
       console.log(changed.length ? `stale: ${changed.length} file(s) differ from the main checkout\n${changed.join('\n')}` : 'OK worktree matches the main checkout');
       process.exit(changed.length ? 1 : 0);

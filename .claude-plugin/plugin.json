@@ -1,0 +1,16 @@
+{
+  "name": "muffy",
+  "version": "1.4.0",
+  "description": "Hub-and-spoke subagent team: research, plan, design, build, review and QA a feature to a tested branch. Never deploys.",
+  "author": {
+    "name": "HarmonyX"
+  },
+  "repository": "https://github.com/Axebee-Security-Platforms/muffy",
+  "keywords": [
+    "agents",
+    "team",
+    "workflow",
+    "qa",
+    "code-review"
+  ]
+}

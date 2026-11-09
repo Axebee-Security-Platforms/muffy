@@ -8,7 +8,7 @@
 
 ### Mode 2: Smoke build
 Runs only when the Orchestrator's prompt says a smoke trigger is true (new runtime/dependency/native package/datastore, devops-owned files changed, or no passing smoke on record for this stack). A feature that only adds routes, UI or logic does not need it; QA on docker local covers that.
-0. Preflight: run `node .claude/skills/muffy/scripts/devops-preflight.mjs` (add `--health <url>` once the app is up). It checks `node -v` against `.nvmrc` (e.g. Node 24.21.0) and prints one PASS/FAIL line per check. A smoke on another Node version proves nothing; a FAIL = fail, report it
+0. Preflight: run `node "<muffy>/scripts/devops-preflight.mjs"` (add `--health <url>` once the app is up). It checks `node -v` against `.nvmrc` (e.g. Node 24.21.0) and prints one PASS/FAIL line per check. A smoke on another Node version proves nothing; a FAIL = fail, report it
 1. On branch `ops/<task>` inside its worktree, create/edit only the infra files `contract.md` says devops owns: minimum: pin the runtime (e.g. `.python-version`/`.nvmrc` + lockfile + base image), Dockerfile, a one-command way to run, `.env.example` (no real secrets)
 2. Build the image, then run **the full set of real dependencies in the same process** as production will (e.g. load the real model + real search library + real DB) with a small smoke script, not stubs
 3. Check that every version in the environment matches `contract.md` (runtime, main dependencies); mismatch = fail
@@ -49,7 +49,7 @@ What to skip:
 - Skip the Docker and HTTP health checks above unless the app also ships a server.
 - Skip the `devops-preflight.mjs` Node/`.nvmrc` check unless the project is Node-based. A missing `.nvmrc` is normal for Flutter, Swift, Kotlin and .NET.
 
-What to run instead: for each tool the target needs, run `node .claude/skills/muffy/scripts/devops-preflight.mjs --toolchain <name>[=<version from contract.md>]`.
+What to run instead: for each tool the target needs, run `node "<muffy>/scripts/devops-preflight.mjs" --toolchain <name>[=<version from contract.md>]`.
 - Valid names: `flutter`, `dart`, `xcodebuild`, `swift`, `dotnet`, `java`, `gradle`, `android-sdk`, `cargo`, `go`, `python`, `docker`, `node`.
 - A FAIL prints `toolchain-missing: <name> on <os>`. Report it as the blocker, never as a pass.
 

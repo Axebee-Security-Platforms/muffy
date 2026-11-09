@@ -10,6 +10,9 @@
 // Orchestrator's own session or the user and is never blocked.
 // Known limits: a write through `node -e`, a script file, or a git alias the patterns don't see.
 import { readFileSync } from 'node:fs';
+import { guardOff } from './plugin-gate.mjs';
+
+if (guardOff()) process.exit(0); // plugin install without MUFFY_GUARD=1: the project did not opt in
 
 const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
 const GIT_PATH = /(^|[\\/])\.git([\\/]|$)/; // .git/ or a worktree's .git file; .github/ and .gitignore do not match

@@ -31,7 +31,7 @@ export function runEntryEvals({ check, root }) {
 
   /* where the card is shown */
   const routeDoc = ref('route.md');
-  check('docs: route.md shows the plan, not a `Route:` line', /^## Say the plan$/m.test(routeDoc) && routeDoc.includes('next-action.mjs plan-card') && !routeDoc.includes('`Route: <name> → <agents>'));
+  check('docs: route.md shows the plan, not a `Route:` line', /^## Say the plan$/m.test(routeDoc) && routeDoc.includes('next-action.mjs" plan-card') && !routeDoc.includes('`Route: <name> → <agents>'));
   for (const [f, lane] of [['setup.md', 'feature'], ['fix-profile.md', 'fix --scope <bug | cosmetic>'], ['change-profile.md', 'change --scope internal']]) {
     check(`docs: ${f} asks the plan card first at pause:scope`, ref(f).includes(`**Plan**: the card from \`next-action.mjs plan-card ${lane}\``));
   }

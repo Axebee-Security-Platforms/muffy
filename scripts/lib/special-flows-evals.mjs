@@ -34,7 +34,7 @@ export function runSpecialFlowsEvals({ check, root }) {
   check('verify: ungated, quick baseline', LANES.verify.gated === false && LANES.verify.baseline === 'quick');
   check('verify: route sends review-and-test to verify, a bare review stays review', route({ outcome: 'verify' }).route === 'verify' && route({ outcome: 'review' }).route === 'review');
   const vp = ref('verify-profile.md');
-  check('verify-doc: works on a copy, verify/<task>, and never edits or merges the requester branch', vp.includes('verify/<task>') && /never edited or merged/.test(vp) && vp.includes('checkpoint.mjs profile .team/<task> verify'));
+  check('verify-doc: works on a copy, verify/<task>, and never edits or merges the requester branch', vp.includes('verify/<task>') && /never edited or merged/.test(vp) && vp.includes('checkpoint.mjs" profile .team/<task> verify'));
   check('verify-doc: a reject is reported and asked once (fix on the copy / report only)', vp.includes('ask:verify-fix') && /\*\*Fix on the copy/.test(vp) && /\*\*Report only\*\*/.test(vp));
 
   /* upgrade */
@@ -43,7 +43,7 @@ export function runSpecialFlowsEvals({ check, root }) {
   check('upgrade: route sends a version bump to the lane, before bug triage', route({ outcome: 'code', upgrade: true, bug: true, fix: { has_symptom: true, has_location: true } }).route === 'upgrade');
   const up = ref('upgrade-profile.md');
   check('drift: upgrade-profile.md never-skip list matches lanes.mjs', same(ids(up.match(/^Never skipped: ([^.]+)\./m)?.[1]), neverSkipOf('upgrade')));
-  check('upgrade-doc: only a dependency already in the manifest; a new one is the full flow', /already in the manifest/.test(up) && /full flow/.test(up) && up.includes('checkpoint.mjs profile .team/<task> upgrade'));
+  check('upgrade-doc: only a dependency already in the manifest; a new one is the full flow', /already in the manifest/.test(up) && /full flow/.test(up) && up.includes('checkpoint.mjs" profile .team/<task> upgrade'));
   check('upgrade-doc: full regression offered, baseline refreshed after', up.includes('pause:full-regression') && /silent refresh/.test(up));
 
   const tmp = mkdtempSync(join(tmpdir(), 'muffy-flows-'));

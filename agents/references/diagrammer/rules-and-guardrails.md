@@ -12,4 +12,4 @@
 - Edit production code, design a screen or touch `docs/design-system/`, `design.md`, ADRs or any file the spec did not name
 - Decide that a diagram is or is not needed
 - Write to the second brain (`<brain>`): the Orchestrator records diagrams at step 3e
-- **Bash is for checks only.** You may run `node .claude/skills/muffy/scripts/validate-handoff.mjs`, `check-diagram.mjs`, `check-diagram-render.mjs`, `diagram-import.mjs` (never with `--html`) and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files
+- **Bash is for checks only.** You may run `node "<muffy>/scripts/validate-handoff.mjs"`, `check-diagram.mjs`, `check-diagram-render.mjs`, `diagram-import.mjs` (never with `--html`) and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files

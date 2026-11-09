@@ -9,7 +9,38 @@ muffy is a hub-and-spoke agent team plus a skill. One command installs both into
 - Optional: an Obsidian vault for the second brain. Without one, notes and lessons live in `.team/brain/` and are shared through git
 - Optional: the `impeccable` skill in the main session, for the Orchestrator's UX/UI review of the rendered canvas at the design gate (step 3c). Without it that review is skipped and the gate says so; the designer's own heuristic and a11y checks still run
 
-## Install
+## Install as a plugin
+
+In Claude Code:
+
+```text
+/plugin marketplace add Axebee-Security-Platforms/muffy
+/plugin install muffy@harmonyx
+```
+
+Then, in each repo, run once:
+
+```text
+/muffy:setup --vault "/absolute/path/to/Obsidian Vault" --with-guard
+```
+
+`/muffy:setup` runs `install.mjs <repo> --plugin` from the plugin folder. It copies nothing. It writes:
+
+- `.claude/settings.local.json`, only if missing; with `--with-guard` it adds env `MUFFY_GUARD=1` to an existing file
+- the `.gitignore` lines
+- `.team/onboard/scan.json`
+
+Without `--vault`, the second brain lives in `.team/brain/`.
+
+How the plugin finds its files:
+- The skill and its references write script paths as `<muffy>/scripts/…`. `SKILL.md` defines `<muffy>` as `${CLAUDE_SKILL_DIR}`, and each agent defines it as `${CLAUDE_PLUGIN_ROOT}/skills/muffy`. Claude Code fills both in when it loads the file, so updating the plugin moves every path with it.
+- The guards ship in the plugin's `hooks/hooks.json`. A plugin's hooks run in every project that enables it, so muffy's guards do nothing until a project sets `MUFFY_GUARD` to `"1"` in `.claude/settings.local.json` or `.claude/settings.json`. To share the switch with the team, put it in `settings.json`.
+- Commands are namespaced: `/muffy:muffy <request>`, `/muffy:setup`, and agents `muffy:<role>`.
+- Update with `/plugin marketplace update harmonyx`, then restart Claude Code.
+
+Moving from a copied install: delete `.claude/skills/muffy/` and muffy's files in `.claude/agents/` (`MANIFEST.json` lists them), plus any muffy entries in `hooks.PreToolUse` of `.claude/settings.local.json`. Then run `/muffy:setup --with-guard`. `/muffy:setup` warns while the copy is still there, because both would load.
+
+## Install by copying
 
 ```bash
 node install.mjs /path/to/your-repo --vault "/absolute/path/to/Obsidian Vault"
@@ -24,7 +55,7 @@ What it does:
 | `.claude/settings.local.json` | created only if missing; sets `SECOND_BRAIN_VAULT` |
 | `.gitignore` | adds `.claude/settings.local.json`, `.worktrees/`, `.team/**/diff*.patch`, `.team/**/logs/` if missing |
 
-Existing agents or skill folders are skipped unless you pass `--force`. An existing `settings.local.json` is never touched.
+Existing agents or skill folders are skipped unless you pass `--force`. An existing `settings.local.json` is never touched. The copied agent files have `${CLAUDE_PLUGIN_ROOT}` rewritten to `.claude`, because Claude Code fills that variable in only for a plugin.
 
 Preview first with `--dry-run`:
 

@@ -6,6 +6,8 @@
 // --clean removes the previous install first, including agent files that a newer version dropped.
 // Creates .claude/settings.local.json only when missing, and adds ignore lines to .gitignore.
 // --scan runs the repo scanner after install and writes .team/onboard/scan.json (input for /muffy onboard).
+// --plugin is the plugin install's setup (/muffy:setup): it copies nothing, writes only the per-project files
+// (settings.local.json, .gitignore lines, the scan) and with --with-guard turns the plugin's guards on (env MUFFY_GUARD=1).
 // Hooks are not added by default. --with-guard merges the env, Bash allowlist, full-regression, test-level, write-scope, git and gate guards into hooks.PreToolUse.
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync, statSync } from 'node:fs';
@@ -27,6 +29,11 @@ const force = flag('--force') || clean; // --clean always replaces the files it 
 const vault = valueOf('--vault');
 const withGuard = flag('--with-guard');
 const scan = !flag('--no-scan'); // on by default; --scan is still accepted
+const pluginMode = flag('--plugin');
+if (pluginMode && (clean || flag('--force'))) {
+  console.error('error: --plugin copies nothing, so --clean and --force do not apply');
+  process.exit(2);
+}
 
 const log = (msg) => console.log(`${dryRun ? '[dry-run] ' : ''}${msg}`);
 const warn = (msg) => console.warn(`warning: ${msg}`);
@@ -48,6 +55,10 @@ if (flag('--help') || positional.length === 0) {
   console.log(`muffy ${pkg.version} installer
 
 usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean] [--with-guard] [--no-scan]
+       node install.mjs <target-repo> --plugin [--vault <absolute path>] [--with-guard] [--no-scan] [--dry-run]
+
+  --plugin      setup for the plugin install (/muffy:setup): copy nothing, write only settings, .gitignore lines and the scan;
+                with --with-guard, set env MUFFY_GUARD=1 so the plugin's guards run in this project
 
   --vault       path to the Obsidian vault (written to .claude/settings.local.json)
   --with-guard  merge the guards (guard-env.mjs, guard-bash-allowlist.mjs, guard-full-regression.mjs, guard-test-level.mjs, guard-write-scope.mjs, guard-git.mjs, guard-gates.mjs) into hooks.PreToolUse of .claude/settings.local.json
@@ -84,6 +95,8 @@ const skillDst = join(target, '.claude', 'skills', 'muffy');
 const manifestPath = join(skillDst, 'MANIFEST.json');
 const packagedAgents = listFiles(agentsSrc);
 
+if (pluginMode && existsSync(skillDst)) warn(`${rel(skillDst, target)} exists: a copied install next to the plugin gives two /muffy skills and two sets of agents. Remove .claude/skills/muffy and muffy's files in .claude/agents (listed in its MANIFEST.json) to use the plugin alone`);
+
 // 1. --clean: remove what the previous install owned
 if (clean) {
   const prev = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null;
@@ -113,8 +126,15 @@ const copy = (src, dst) => {
   if (!dryRun) cpSync(src, dst, { recursive: true });
   return true;
 };
-copy(agentsSrc, agentsDst);
-const skillCopied = copy(skillSrc, skillDst);
+// agent bodies name their files through ${CLAUDE_PLUGIN_ROOT} (the plugin install fills it in); a copy points it at .claude
+const agentsCopied = !pluginMode && copy(agentsSrc, agentsDst);
+if (agentsCopied && !dryRun) {
+  for (const f of readdirSync(agentsDst).filter((n) => n.endsWith('.md') && packagedAgents.includes(n))) {
+    const p = join(agentsDst, f);
+    writeFileSync(p, readFileSync(p, 'utf8').replaceAll('${CLAUDE_PLUGIN_ROOT}', '.claude'));
+  }
+}
+const skillCopied = !pluginMode && copy(skillSrc, skillDst);
 
 // 3. version record, written only when the skill was (re)installed
 if (skillCopied) {
@@ -124,7 +144,7 @@ if (skillCopied) {
     writeFileSync(join(skillDst, 'VERSION'), `${pkg.version}\n`);
     writeFileSync(manifestPath, `${JSON.stringify({ version: pkg.version, agents: packagedAgents }, null, 2)}\n`);
   }
-} else if (existsSync(join(skillDst, 'VERSION'))) {
+} else if (!pluginMode && existsSync(join(skillDst, 'VERSION'))) {
   log(`installed version stays ${readFileSync(join(skillDst, 'VERSION'), 'utf8').trim()} (package is ${pkg.version}; use --clean to update)`);
 }
 
@@ -145,7 +165,16 @@ if (!settingsExisted) {
   settingsChanged = true;
   log(`write: ${rel(settingsPath, target)}${vault ? '' : ' (vault placeholder — set it before the first run)'}`);
 }
-if (withGuard) {
+if (withGuard && pluginMode) {
+  // the plugin ships the guards in hooks/hooks.json; they stay off until the project sets MUFFY_GUARD
+  if (settings === null) die(`${rel(settingsPath, target)} is not valid JSON; fix it, then re-run with --with-guard (nothing was changed)`);
+  if (settings.env?.MUFFY_GUARD === '1') log('MUFFY_GUARD is already 1 (guards on)');
+  else {
+    settings.env = { ...(settings.env ?? {}), MUFFY_GUARD: '1' };
+    settingsChanged = true;
+    log(`set: env.MUFFY_GUARD=1 in ${rel(settingsPath, target)} (turns on the plugin's guards)`);
+  }
+} else if (withGuard) {
   const pre = settings.hooks?.PreToolUse;
   if (pre === undefined) {
     settings.hooks = { ...(settings.hooks ?? {}), PreToolUse: guardEntries };
@@ -187,7 +216,7 @@ if (scan) {
   log(`scan: ${rel(scanOut, target)}`);
   if (!dryRun) {
     try {
-      execFileSync(process.execPath, [join(skillDst, 'scripts', 'scan-repo.mjs'), target, '--out', scanOut], { stdio: 'pipe' });
+      execFileSync(process.execPath, [join(pluginMode ? skillSrc : skillDst, 'scripts', 'scan-repo.mjs'), target, '--out', scanOut], { stdio: 'pipe' });
       const r = JSON.parse(readFileSync(scanOut, 'utf8'));
       scanSummary = r.hasCode ? `Scan found ${r.sourceFiles.total} source files.` : 'Scan found no source files (new repo): onboarding is not needed.';
     } catch (e) {
@@ -215,9 +244,9 @@ if (missing.length) {
 console.log(`
 Done${dryRun ? ' (dry run, nothing written)' : ''}. Remaining manual steps:
 
-1. ${withGuard ? 'Env, Bash-allowlist, full-regression, test-level, write-scope and git guards are in hooks.PreToolUse of .claude/settings.local.json (see messages above if it was skipped).' : 'Hooks are not installed. Re-run with --with-guard for the guards, or add them yourself:\n     { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-full-regression.mjs" } ] }\n     { "matcher": "Bash|PowerShell|Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-test-level.mjs" } ] }\n     { "matcher": "Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-write-scope.mjs" } ] }\n     { "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-git.mjs" } ] }'}
+1. ${pluginMode ? (withGuard ? 'The plugin guards are on for this project (env MUFFY_GUARD=1 in .claude/settings.local.json).' : 'The plugin guards are off. Run /muffy:setup --with-guard to turn them on.') : withGuard ? 'Env, Bash-allowlist, full-regression, test-level, write-scope and git guards are in hooks.PreToolUse of .claude/settings.local.json (see messages above if it was skipped).' : 'Hooks are not installed. Re-run with --with-guard for the guards, or add them yourself:\n     { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-full-regression.mjs" } ] }\n     { "matcher": "Bash|PowerShell|Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-test-level.mjs" } ] }\n     { "matcher": "Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-write-scope.mjs" } ] }\n     { "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-git.mjs" } ] }'}
    - Team-flow rules 1–4 (merge, commit, push, temporary stack) are Orchestrator rules, not hooks: see skills/muffy/references/hooks-enforcement.md.
 2. Set SECOND_BRAIN_VAULT in .claude/settings.local.json if it still shows the placeholder.
 3. Make sure the repo has docs/plan/, docs/adr/, docs/design-system/ (where the flow needs them) and .nvmrc if devops checks the runtime.
-4. Start from the main session: /muffy <what you want done>, in your own words. muffy picks the route and says it before starting.
+4. Start from the main session: ${pluginMode ? '/muffy:muffy <what you want done>' : '/muffy <what you want done>'}, in your own words. muffy picks the route and says it before starting.
    On an existing codebase the first request asks once to look around the project first (onboarding), then carries on with it.${scanSummary ? ' ' + scanSummary : ''}`);
