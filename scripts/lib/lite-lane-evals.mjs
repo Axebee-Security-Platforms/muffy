@@ -51,7 +51,7 @@ export function runLiteLaneEvals({ check, root }) {
   const owners = readJson('skills/muffy/schemas/handoff.schema.json').properties.blockers.items.properties.owner.enum;
   const promoteOwners = [...((doc.split(/^## Promote out of the internal scope/m)[1] ?? '').split(/^## /m)[0]).matchAll(/`owner: (\w+)`/g)].map((m) => m[1]);
   check('lite-doc: every promote owner is a hand-off blocker owner', promoteOwners.length >= 4 && promoteOwners.every((o) => owners.includes(o)), promoteOwners.join(','));
-  const arch = read('agents/references/architect/workflow.md');
+  const arch = read('agent-references/architect/workflow.md');
   check('lite: the architect workflow names the promote owners and links the scope', /\*\*Internal change\*\* \(prompt says `Scope: internal`/.test(arch) && ['Researcher', 'PM', 'Designer'].every((o) => arch.includes(`\`${o}\``)) && arch.includes('change-profile.md#promote-out-of-the-internal-scope'));
 
   /* envelope and wiring */

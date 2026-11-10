@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Validates a present-mode output folder (agents/references/product-manager/present/output-format.md).
+// Validates a present-mode output folder (agent-references/product-manager/present/output-format.md).
 //   node check-presentation.mjs [--content] <folder> [more folders ...]   (--content: deck.json and outline only, before the designer builds deck.html)
 // Checks: deck.json fits the slide types and their limits; every number, date and timeframe the audience sees carries a
 // source that exists (or "request"); numbers not in the data carry `derived`; no internal names; deck.html is the template

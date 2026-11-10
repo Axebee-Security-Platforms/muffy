@@ -76,7 +76,7 @@ export function runReviewBenchEvals({ check, root }) {
 
   /* the runner reviews with the current reviewer rules */
   const sys = buildSystemPrompt();
-  const principles = readFileSync(join(root, 'agents/references/code-reviewer/principles.md'), 'utf8');
+  const principles = readFileSync(join(root, 'agent-references/code-reviewer/principles.md'), 'utf8');
   check(`${n}: runner prompt inlines the current reviewer principles`, sys.includes(principles.trim().split('\n')[0]) && sys.includes('A Blocker Must Be Provable'));
   check(`${n}: runner prompt names the patch, AC and contract`, ['diff-1.patch', 'ac.md', 'contract.md'].every((f) => userPrompt('x').includes(f)));
 }

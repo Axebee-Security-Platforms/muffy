@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Install or update the muffy agent team in another repo. Zero dependencies, Node 18+.
 //   node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean]
-// Copies agents/ -> <target>/.claude/agents/ and skills/muffy/ -> <target>/.claude/skills/muffy/.
+// Copies agents/ -> <target>/.claude/agents/, agent-references/ -> <target>/.claude/agent-references/ and skills/muffy/ -> <target>/.claude/skills/muffy/.
 // Writes .claude/skills/muffy/VERSION and MANIFEST.json (the agent files this install owns).
 // --clean removes the previous install first, including agent files that a newer version dropped.
 // Creates .claude/settings.local.json only when missing, and adds ignore lines to .gitignore.
@@ -92,10 +92,13 @@ const agentsSrc = join(here, 'agents');
 const agentsDst = join(target, '.claude', 'agents');
 const skillSrc = join(here, 'skills', 'muffy');
 const skillDst = join(target, '.claude', 'skills', 'muffy');
+const refsSrc = join(here, 'agent-references'); // outside agents/: a plugin loads every .md under agents/ as an agent
+const refsDst = join(target, '.claude', 'agent-references');
+const oldRefsDst = join(agentsDst, 'references'); // where installs before 1.4.0 put them
 const manifestPath = join(skillDst, 'MANIFEST.json');
 const packagedAgents = listFiles(agentsSrc);
 
-if (pluginMode && existsSync(skillDst)) warn(`${rel(skillDst, target)} exists: a copied install next to the plugin gives two /muffy skills and two sets of agents. Remove .claude/skills/muffy and muffy's files in .claude/agents (listed in its MANIFEST.json) to use the plugin alone`);
+if (pluginMode && existsSync(skillDst)) warn(`${rel(skillDst, target)} exists: a copied install next to the plugin gives two /muffy skills and two sets of agents. Remove .claude/skills/muffy, .claude/agent-references and muffy's files in .claude/agents (listed in its MANIFEST.json) to use the plugin alone`);
 
 // 1. --clean: remove what the previous install owned
 if (clean) {
@@ -110,9 +113,10 @@ if (clean) {
       if (!dryRun) rmSync(p, { force: true });
     }
   }
-  if (existsSync(skillDst)) {
-    log(`remove: ${rel(skillDst, target)}`);
-    if (!dryRun) rmSync(skillDst, { recursive: true, force: true });
+  for (const dir of [skillDst, refsDst, oldRefsDst]) {
+    if (!existsSync(dir)) continue;
+    log(`remove: ${rel(dir, target)}`);
+    if (!dryRun) rmSync(dir, { recursive: true, force: true });
   }
 }
 
@@ -134,6 +138,7 @@ if (agentsCopied && !dryRun) {
     writeFileSync(p, readFileSync(p, 'utf8').replaceAll('${CLAUDE_PLUGIN_ROOT}', '.claude'));
   }
 }
+if (!pluginMode) copy(refsSrc, refsDst);
 const skillCopied = !pluginMode && copy(skillSrc, skillDst);
 
 // 3. version record, written only when the skill was (re)installed

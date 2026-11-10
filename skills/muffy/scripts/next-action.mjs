@@ -47,7 +47,7 @@ export const REPEAT_LIMIT = 3; // same blocker id open in this many consecutive 
 export const GATED_STEPS = ['3c', '3d']; // must pass before step 4; 3c passes only after the user approves the design (pause:design-review)
 export { NEVER_SKIP };
 export const FIX_NEVER_SKIP = LANES.fix.neverSkip; // fix lane (references/fix-profile.md): diagnose, then audit the cause, before any code
-export const SEVERITIES = ['low', 'medium', 'high', 'critical']; // impact of the bug; the auditor's evidence bar rises with it (agents/references/auditor/rules-and-guardrails.md)
+export const SEVERITIES = ['low', 'medium', 'high', 'critical']; // impact of the bug; the auditor's evidence bar rises with it (agent-references/auditor/rules-and-guardrails.md)
 export const EVIDENCE_LEVELS = ['none', ...SEVERITIES]; // the highest severity tier whose minimum evidence a diagnosis meets
 export const AUDIT_ROUNDS = 1; // need-validation rounds allowed before the auditor's verdict counts as reject
 export const FIX_MAX_FILES = LANES.fix.maxFiles; // source files (tests and .team/ excluded) before a fix is promoted to the full flow

@@ -117,7 +117,7 @@ export function runFixLaneEvals({ check, root }) {
 
   /* the severity table is kept in three places: fix-profile.md, debugger and auditor rules-and-guardrails.md */
   check('doc: every severity tier is named in fix-profile.md', SEVERITIES.every((s) => doc.includes(`\`${s}\``)));
-  const tierRows = (name) => (readFileSync(rel('agents/references', name, 'rules-and-guardrails.md'), 'utf8').match(/^\| `(?:low|medium|high|critical)` \|.*$/gm) ?? []).map((r) => r.split('|').map((c) => c.trim()));
+  const tierRows = (name) => (readFileSync(rel('agent-references', name, 'rules-and-guardrails.md'), 'utf8').match(/^\| `(?:low|medium|high|critical)` \|.*$/gm) ?? []).map((r) => r.split('|').map((c) => c.trim()));
   const dbg = tierRows('debugger');
   const aud = tierRows('auditor');
   check('drift: debugger and auditor list the four severity tiers in order', dbg.map((r) => r[1]).join() === SEVERITIES.map((s) => `\`${s}\``).join() && aud.map((r) => r[1]).join() === dbg.map((r) => r[1]).join());

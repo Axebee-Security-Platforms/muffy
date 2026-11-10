@@ -16,11 +16,11 @@ export function runPluginEvals({ check, root }) {
   // a marketplace name belongs to one source: `harmonyx` is the spright repo's, so adding this repo under it is refused
   check('plugin: the marketplace is named muffy, not the spright repo\'s harmonyx', market.name === 'muffy');
   check('plugin: marketplace lists muffy from the repo root under the manifest name', market.plugins?.some((p) => p.name === plugin.name && p.source === './'));
-  // The default agents/ scan recurses, but only a file that opens with frontmatter loads as an agent: a reference file
-  // starting with `---` would appear as muffy:references:…. An `agents` key in plugin.json loaded no agents at all
-  // (checked with `claude plugin details`), so the manifest leaves the default scan alone.
-  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
-  check('plugin: no agents key, and no file under agents/references opens with frontmatter', plugin.agents === undefined && walk(join(root, 'agents', 'references')).filter((f) => f.endsWith('.md')).every((f) => !readFileSync(f, 'utf8').startsWith('---')));
+  // A plugin loads every .md under agents/, subfolders included and frontmatter or not: a live session listed each
+  // reference file as muffy:references:<role>:<file> (`claude plugin details` did not show them). So agents/ holds the
+  // agent definitions only, and their reference files live in agent-references/.
+  check('plugin: agents/ holds only the agent .md files, no subfolders', readdirSync(join(root, 'agents'), { withFileTypes: true }).every((e) => e.isFile() && e.name.endsWith('.md')) && plugin.agents === undefined);
+  check('plugin: every agent has its reference folder in agent-references/', agentFiles.every((f) => existsSync(join(root, 'agent-references', f.replace(/\.md$/, '')))));
   check('plugin: every top-level agent opens with frontmatter', agentFiles.every((f) => readFileSync(join(root, 'agents', f), 'utf8').startsWith('---')));
   const hooks = readJson('hooks/hooks.json').hooks?.PreToolUse ?? [];
   const cmds = hooks.flatMap((h) => h.hooks.map((x) => x.command));

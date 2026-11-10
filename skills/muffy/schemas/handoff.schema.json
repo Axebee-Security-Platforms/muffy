@@ -15,7 +15,7 @@
     "status": { "enum": ["done", "blocked", "needs-input", "not-ready"] },
     "verdict": { "enum": ["Approve", "Reject", "Pass", "Fail"] },
     "paths_written": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-    "deferred_writes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Paths whose content the agent returned as <<<FILE path>>> blocks in its final message because the harness refused its write; the Orchestrator writes them (agents/references/shared/deferred-writes.md). Each is also in paths_written" },
+    "deferred_writes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Paths whose content the agent returned as <<<FILE path>>> blocks in its final message because the harness refused its write; the Orchestrator writes them (agent-references/shared/deferred-writes.md). Each is also in paths_written" },
     "ac_ids_done": { "type": "array", "items": { "type": "string", "pattern": "^AC-[0-9]+$" } },
     "tests": {
       "type": "object",
@@ -136,7 +136,7 @@
           "kind": { "enum": ["architecture", "state", "deployment", "erd", "flow", "screenmap", "gantt", "story-map"] },
           "path": { "type": "string", "minLength": 1 },
           "pattern": { "type": "string", "minLength": 1 },
-          "content": { "type": "object", "description": "The diagram JSON body per agents/references/shared/diagram-style.md for this kind" },
+          "content": { "type": "object", "description": "The diagram JSON body per agent-references/shared/diagram-style.md for this kind" },
           "contract_ref": { "type": "string", "minLength": 1, "description": "contract.md section this diagram explains" }
         }
       }

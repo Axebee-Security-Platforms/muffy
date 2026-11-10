@@ -1,6 +1,6 @@
 # Learning a stack the team has no practices for
 
-The coding-practices files cover some frameworks and languages. For any other, the team learns a short note from the official docs once per framework, keeps it in the repo (`docs/stacks/<framework>.md`), and every role that touches that stack reads the same note. What an agent does when it meets such a stack is the [stack ladder](../../../agents/references/shared/stack-ladder.md); how the researcher writes the note is its stack-note mode ([researcher workflow](../../../agents/references/researcher/workflow.md)). This file is what the Orchestrator does.
+The coding-practices files cover some frameworks and languages. For any other, the team learns a short note from the official docs once per framework, keeps it in the repo (`docs/stacks/<framework>.md`), and every role that touches that stack reads the same note. What an agent does when it meets such a stack is the [stack ladder](../../../agent-references/shared/stack-ladder.md); how the researcher writes the note is its stack-note mode ([researcher workflow](../../../agent-references/researcher/workflow.md)). This file is what the Orchestrator does.
 
 ## When an agent returns `stack-unknown`
 A `blocked` hand-off with a blocker `owner: Researcher`, problem `stack-unknown: <framework> <version>`:

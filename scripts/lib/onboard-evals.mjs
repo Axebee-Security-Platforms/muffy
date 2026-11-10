@@ -60,7 +60,7 @@ export function runOnboardEvals({ check, root }) {
   check('docs: every onboard depth commits the baseline and reaches 0f, so the request resumes', ['quick', 'full'].every((d) => /0f/.test(depthRow(d).split(' | ')[2] ?? '')) && /\[Commit\]\(#commit-without-0d\)/.test(depthRow('quick')) && /^## Commit without 0d$/m.test(onboard));
   check('docs: a baseline committed at setup reaches the feature worktree on another base', setup.includes('cherry-pick <sha>') && ['fix-profile.md', 'change-profile.md'].every((f) => ref(f).includes('cherry-picked onto it first')));
   check('docs: a silent refresh with the Stack unchanged has no 0d', /\*\*Silent refresh\*\*[^\n]*skip 0c, 0c' and 0d/.test(onboard));
-  check('docs: the researcher writes a quick baseline when asked', read('agents/references/researcher/workflow.md').includes('depth: quick'));
+  check('docs: the researcher writes a quick baseline when asked', read('agent-references/researcher/workflow.md').includes('depth: quick'));
 
   /* the installer */
   const install = read('install.mjs');

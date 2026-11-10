@@ -1,6 +1,6 @@
 # Presentation Audience Types for Client and End-User Decks
 
-Research for present mode (product-manager; the designer builds the deck) (inputs: `agents/references/product-manager/present/required-inputs.md`; recipes: `recipes.md`; look: `agents/references/designer/presentation.md`; schema: `slide-types.md`; checker: `skills/muffy/scripts/check-presentation.mjs`). Researched 2026-10-17.
+Research for present mode (product-manager; the designer builds the deck) (inputs: `agent-references/product-manager/present/required-inputs.md`; recipes: `recipes.md`; look: `agent-references/designer/presentation.md`; schema: `slide-types.md`; checker: `skills/muffy/scripts/check-presentation.mjs`). Researched 2026-10-17.
 
 Constraints this is judged against: the requester answers one question round and muffy never infers the audience. Sources are limited to plan, ADRs, release notes, research brief and supplied data. Every shown number traces to a source. The deck's `audience` is now `client` | `end-user`, and `background` (`blueprint` | `plain` | `soft`) is meant to follow it.
 
@@ -132,12 +132,12 @@ Reconciling structure. Duarte gives executives answer first, no big reveal ([P])
 
 ### 4.5 Files that would change (not edited here)
 
-- `agents/references/product-manager/present/required-inputs.md`: question list (Q-1 role, Q-1a, Q-4 attitude)
+- `agent-references/product-manager/present/required-inputs.md`: question list (Q-1 role, Q-1a, Q-4 attitude)
 - `skills/muffy/references/present.md`: the Orchestrator's question round (line 6 lists `group`)
-- `agents/references/product-manager/present/slide-types.md`: `deck.json` shape, `cta.kind`
-- `agents/references/product-manager/present/recipes.md`: role → recipe column, new operator recipe, sceptical variant
-- `agents/references/product-manager/present/workflow.md` step 1 and `quality-checks.md`: profile fields
-- `agents/references/designer/presentation.md`: background rule (setting and legibility)
+- `agent-references/product-manager/present/slide-types.md`: `deck.json` shape, `cta.kind`
+- `agent-references/product-manager/present/recipes.md`: role → recipe column, new operator recipe, sceptical variant
+- `agent-references/product-manager/present/workflow.md` step 1 and `quality-checks.md`: profile fields
+- `agent-references/designer/presentation.md`: background rule (setting and legibility)
 - `skills/muffy/scripts/check-presentation.mjs`: lines 70–73 (audience enum, blueprint ban)
 - `skills/muffy/templates/presentation.html`: sample `"audience": "client"` (line 169), comment at line 45
 - `evals/` fixtures that set `audience`

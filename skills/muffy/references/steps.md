@@ -2,7 +2,7 @@
 
 Row order is execution order: 0 → 1 → 2 → 2b → 3 → 3b → 3e → 3c → 3d → 4 → 5 → 6 → 7 → 10 → 11 → 12. Steps 8 and 9 no longer exist (docs review and staging were removed); their ids stay unused so hand-offs and scripts keep one numbering.
 
-Routing: an agent's `references/<agent>/when-to-use.md` (under `<muffy>/../../agents/`) lists when it is and is not the right agent. Read it only when a request or a hand-off leaves the owner unclear; the table below is the default.
+Routing: an agent's `<agent>/when-to-use.md` (under `<muffy>/../../agent-references/`) lists when it is and is not the right agent. Read it only when a request or a hand-off leaves the owner unclear; the table below is the default.
 
 | # | Agent | Input | Output |
 |---|---|---|---|

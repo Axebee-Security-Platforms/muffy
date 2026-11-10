@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DECK TITLE</title>
-<!-- muffy presentation template. Copy verbatim and change ONLY <title>, the #theme style and the JSON in #deck. Spec: agents/references/product-manager/present/slide-types.md -->
+<!-- muffy presentation template. Copy verbatim and change ONLY <title>, the #theme style and the JSON in #deck. Spec: agent-references/product-manager/present/slide-types.md -->
 <style>
 :root {
   --paper: #eef0f4; --slide: #ffffff; --ink: #141821; --muted: #5d6778; --line: #dde1e8; --soft: #f4f6f9;
@@ -42,7 +42,7 @@ body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.45 v
   background-size: 10% 17.78%, 10% 17.78%, 2.5% 4.445%, 2.5% 4.445%;
 }
 .slide.has-cap { padding-bottom: clamp(48px, 11%, 120px); }
-/* background by audience (agents/references/designer/presentation.md): blueprint grid (default), plain surface, or a soft accent wash */
+/* background by audience (agent-references/designer/presentation.md): blueprint grid (default), plain surface, or a soft accent wash */
 [data-bg="plain"] .slide { background-image: none; }
 [data-bg="soft"] .slide { background-image: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%), radial-gradient(90% 80% at 0% 100%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 55%); }
 .slide::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--accent); }

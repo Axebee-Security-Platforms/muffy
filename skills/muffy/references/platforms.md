@@ -2,7 +2,7 @@
 
 Muffy's flow is the same for every target. What changes is who builds it, what "design" and "smoke" mean, and which toolchain must exist on the host. The architect records the target in `contract.md` on the Stack line as `Platform: <value>`; every other step reads it from there. No `Platform:` line = `web`.
 
-This file holds what the Orchestrator acts on: who to spawn, the toolchain check and what only the user may do. How each agent works on a platform lives with that agent: the CLI contract in [architect output-format](../../../agents/references/architect/output-format.md), native tokens and accessibility in [designer rules](../../../agents/references/designer/rules-and-guardrails.md) and [frontend coding practices](../../../agents/references/frontend-dev/coding-practices.md), smoke evidence in [devops workflow](../../../agents/references/devops/workflow.md#non-web-platforms-platform-mobile-desktop-or-cli), test runners in [qa-tester platform runners](../../../agents/references/qa-tester/platform-runners.md).
+This file holds what the Orchestrator acts on: who to spawn, the toolchain check and what only the user may do. How each agent works on a platform lives with that agent: the CLI contract in [architect output-format](../../../agent-references/architect/output-format.md), native tokens and accessibility in [designer rules](../../../agent-references/designer/rules-and-guardrails.md) and [frontend coding practices](../../../agent-references/frontend-dev/coding-practices.md), smoke evidence in [devops workflow](../../../agent-references/devops/workflow.md#non-web-platforms-platform-mobile-desktop-or-cli), test runners in [qa-tester platform runners](../../../agent-references/qa-tester/platform-runners.md).
 
 ## Routing
 

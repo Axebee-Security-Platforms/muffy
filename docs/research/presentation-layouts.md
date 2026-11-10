@@ -1,6 +1,6 @@
 # Presentation Layout Patterns for Client and End-User Decks
 
-Research for present mode (product-manager; the designer builds the deck) (template: `skills/muffy/templates/presentation.html`; types: `agents/references/product-manager/present/slide-types.md`). Researched 2026-10-17.
+Research for present mode (product-manager; the designer builds the deck) (template: `skills/muffy/templates/presentation.html`; types: `agent-references/product-manager/present/slide-types.md`). Researched 2026-10-17.
 
 Constraints this is judged against: no images or stock footage, every number traces to a source document, self-contained HTML/SVG, headline = takeaway sentence.
 

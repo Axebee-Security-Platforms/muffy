@@ -133,7 +133,7 @@ export function runLaneTableEvals({ check, root }) {
   // one header scheme: fix → Profile: fix; change → Scope: <scope>; the older --profile lite → Scope: internal
   check('make-envelope: each scope gets exactly its Scope: header and no Profile:', ['internal', 'ui-only', 'ui+logic', 'logic-only'].every((s) => head('--scope', s).endsWith(`Scope: ${s}`) && !head('--scope', s).includes('Profile:')));
   check('make-envelope: --profile lite becomes Scope: internal; --profile fix stays Profile: fix', head('--profile', 'lite').endsWith('Scope: internal') && !head('--profile', 'lite').includes('Profile:') && head('--profile', 'fix').endsWith('Profile: fix'));
-  const agentRef = (p) => readFileSync(join(root, 'agents/references', p), 'utf8');
+  const agentRef = (p) => readFileSync(join(root, 'agent-references', p), 'utf8');
   check('agents: the internal-scope refs key on Scope: internal, none on Profile: lite alone', ['architect/required-inputs.md', 'architect/workflow.md', 'devops/required-inputs.md', 'frontend-dev/required-inputs.md', 'qa-tester/required-inputs.md'].every((p) => agentRef(p).includes('Scope: internal')) && !['architect/required-inputs.md', 'devops/required-inputs.md', 'frontend-dev/required-inputs.md', 'qa-tester/required-inputs.md'].some((p) => agentRef(p).includes('Profile: lite')));
 
   /* the references name the command and the lists the table holds */
@@ -176,7 +176,7 @@ export function runLaneTableEvals({ check, root }) {
   check('promote_to: a needs-full-flow diagnosis may name it, and only a known target', validate(hs, dx({ status: 'needs-full-flow', confidence: 'high', reason: 'a visible rounding rule', promote_to: 'change-visible' })).length === 0 && validate(hs, dx({ status: 'needs-full-flow', confidence: 'high', reason: 'a visible rounding rule', promote_to: 'lite' })).length > 0);
   check('docs: fix-profile.md says what each promote_to target does, with the profile command', ['change-internal', 'change-visible', 'full'].every((t) => ref('fix-profile.md').includes(`\`${t}\``)) && ref('fix-profile.md').includes('checkpoint.mjs profile .team/<task> change --scope internal'));
   check('docs: run-profile.md has the promotion ladder, up and one rung down', /^## Promotion ladder$/m.test(ref('run-profile.md')) && ref('run-profile.md').includes('one rung down'));
-  check('docs: the debugger is told to set promote_to', readFileSync(join(root, 'agents/references/debugger/output-format.md'), 'utf8').includes('promote_to'));
+  check('docs: the debugger is told to set promote_to', readFileSync(join(root, 'agent-references/debugger/output-format.md'), 'utf8').includes('promote_to'));
   check('docs: an internal change that turns visible moves to a visible scope, not the full flow', /\*\*a visible scope\*\*/.test(ref('change-profile.md')));
   check('docs: the old lane references point at the change lane', ['lite-profile.md', 'redesign-profile.md'].every((f) => ref(f).includes('[change-profile.md](change-profile.md)')));
 }
