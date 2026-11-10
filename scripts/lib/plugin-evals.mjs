@@ -73,7 +73,35 @@ export function runPluginEvals({ check, root }) {
       const t = readFileSync(join(agentsDst, f), 'utf8');
       return !t.includes('${CLAUDE_PLUGIN_ROOT}') && t.includes('`<muffy>` is `.claude/skills/muffy`');
     }));
-    check('install --plugin: warns about a copied install next to the plugin', /two \/muffy skills/.test(inst('--plugin').stderr));
+
+    // --plugin removes that copy by default: its files and the hooks that run its scripts, nothing of the user's
+    const claude = join(repo, '.claude');
+    mkdirSync(join(agentsDst, 'references', 'architect'), { recursive: true }); // where installs before 1.4.0 put them
+    writeFileSync(join(agentsDst, 'references', 'architect', 'workflow.md'), '# Workflow\n');
+    writeFileSync(join(agentsDst, 'my-agent.md'), '---\nname: my-agent\n---\n');
+    const oldHook = (s) => ({ type: 'command', command: `node .claude/skills/muffy/scripts/${s}` });
+    const local = JSON.parse(readFileSync(join(claude, 'settings.local.json'), 'utf8'));
+    local.hooks = {
+      PreToolUse: [{ matcher: 'Bash', hooks: [oldHook('guard-env.mjs')] }, { matcher: 'Bash', hooks: [{ type: 'command', command: 'node my-hook.mjs' }] }],
+      PostToolUse: [{ matcher: 'Write', hooks: [oldHook('check-artifacts.mjs --hook'), { type: 'command', command: 'echo mine' }] }],
+    };
+    writeFileSync(join(claude, 'settings.local.json'), JSON.stringify(local));
+    const team = JSON.stringify({ hooks: { PreToolUse: [{ matcher: 'Bash', hooks: [oldHook('guard-git.mjs')] }] } });
+    writeFileSync(join(claude, 'settings.json'), team);
+
+    const dry = inst('--plugin', '--dry-run');
+    check('install --plugin --dry-run: lists the removal and changes nothing', dry.status === 0 && /remove: \.claude\/skills\/muffy\//.test(dry.stdout) && existsSync(join(claude, 'skills', 'muffy')) && existsSync(join(agentsDst, 'architect.md')));
+    const keep = inst('--plugin', '--keep-copy');
+    check('install --plugin --keep-copy: leaves the copy and warns', keep.status === 0 && existsSync(join(claude, 'skills', 'muffy')) && /--keep-copy/.test(keep.stderr));
+
+    const rm = inst('--plugin');
+    const after = JSON.parse(readFileSync(join(claude, 'settings.local.json'), 'utf8'));
+    const cmds = Object.values(after.hooks ?? {}).flat().flatMap((e) => e.hooks.map((h) => h.command));
+    check('install --plugin: removes the copied skill, muffy agent files and both reference folders', rm.status === 0 && !existsSync(join(claude, 'skills')) && !existsSync(join(claude, 'agent-references')) && !existsSync(join(agentsDst, 'references')) && agentFiles.every((f) => !existsSync(join(agentsDst, f))));
+    check('install --plugin: keeps the user\'s own agent', existsSync(join(agentsDst, 'my-agent.md')));
+    check('install --plugin: drops only the hooks that run the removed scripts', cmds.length === 2 && cmds.includes('node my-hook.mjs') && cmds.includes('echo mine'));
+    check('install --plugin: reports old hooks in the team settings.json without editing it', /settings\.json still has hooks/.test(rm.stderr) && readFileSync(join(claude, 'settings.json'), 'utf8') === team);
+    check('install --plugin: a second run finds nothing to remove', !/remove/.test(inst('--plugin').stdout));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

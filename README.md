@@ -41,9 +41,10 @@ The skill, agents and scripts stay in the plugin folder and update with the plug
 | `--vault <path>` | The Obsidian vault for the second brain. It is set only when `.claude/settings.local.json` is created; otherwise set `SECOND_BRAIN_VAULT` there yourself |
 | `--with-guard` | Turns on the plugin's guards in this repo by setting env `MUFFY_GUARD=1`. They are off until then, because a plugin's hooks run in every project that has it enabled |
 | `--no-scan` | Skip the repo scan |
+| `--keep-copy` | Keep an older copied install. Without it, setup removes the copy and its hooks |
 | `--dry-run` | Show what would change and write nothing |
 
-With the plugin, every command has the plugin's prefix: type `/muffy:muffy <request>` wherever this README shows `/muffy <request>`. The agents are named `muffy:<role>`. To move from a copied install, delete `.claude/skills/muffy/`, `.claude/agent-references/` (`.claude/agents/references/` before 1.4.0) and muffy's files in `.claude/agents/` first; `/muffy:setup` warns while both are there. Details: [INSTALL.md](INSTALL.md#install-as-a-plugin).
+With the plugin, every command has the plugin's prefix: type `/muffy:muffy <request>` wherever this README shows `/muffy <request>`. The agents are named `muffy:<role>`. To move from a copied install, run `/muffy:setup` in that repo. By default it removes the copy: the skill, muffy's agent files, the reference folders, and the hooks that run its scripts. Your own agents and hooks stay; add `--keep-copy` to keep the copy instead. Details: [INSTALL.md](INSTALL.md#install-as-a-plugin).
 
 ### Or copy into your repo
 

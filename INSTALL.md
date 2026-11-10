@@ -38,7 +38,13 @@ How the plugin finds its files:
 - Commands are namespaced: `/muffy:muffy <request>`, `/muffy:setup`, and agents `muffy:<role>`.
 - Update with `/plugin marketplace update muffy`, then restart Claude Code.
 
-Moving from a copied install: delete `.claude/skills/muffy/`, `.claude/agent-references/` (or `.claude/agents/references/` before 1.4.0) and muffy's files in `.claude/agents/` (`MANIFEST.json` lists them), plus any muffy entries in `hooks.PreToolUse` of `.claude/settings.local.json`. Then run `/muffy:setup --with-guard`. `/muffy:setup` warns while the copy is still there, because both would load.
+Moving from a copied install: run `/muffy:setup --with-guard`. It removes the copy by default:
+- `.claude/skills/muffy/`
+- muffy's agent files in `.claude/agents/` (from `MANIFEST.json`)
+- `.claude/agent-references/` and `.claude/agents/references/`
+- the hooks in `.claude/settings.local.json` that run `.claude/skills/muffy/scripts/*`
+
+Your own agents and hooks stay. Preview it with `--dry-run`, or keep the copy with `--keep-copy`. Hooks in a team `.claude/settings.json` are only reported, not edited.
 
 ## Install by copying
 
