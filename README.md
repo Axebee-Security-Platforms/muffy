@@ -427,5 +427,6 @@ npm run eval:sync    # re-copy each agent's rubric from its quality-checks.md
 npm run package      # stage a clean copy in dist/muffy (no .git, no personal config)
 ```
 
+- Release: bump `version` in both `package.json` and `.claude-plugin/plugin.json` (an eval keeps them equal). The plugin pins its version, so installed copies take a change only after the version moves.
 - Personal config: copy `settings.local.json.template` to `.claude/settings.local.json` (gitignored).
 - CI: [.github/workflows/ci.yml](.github/workflows/ci.yml) runs lint, evals, and the package check on every push and PR.
