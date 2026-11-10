@@ -8,6 +8,7 @@
 // --scan runs the repo scanner after install and writes .team/onboard/scan.json (input for /muffy onboard).
 // --plugin is the plugin install's setup (/muffy:setup): it copies nothing, writes only the per-project files
 // (settings.local.json, .gitignore lines, the scan) and with --with-guard turns the plugin's guards on (env MUFFY_GUARD=1).
+// It also removes an older copied install (its skill, agent files, reference folders and hooks) unless --keep-copy.
 // Hooks are not added by default. --with-guard merges the env, Bash allowlist, full-regression, test-level, write-scope, git and gate guards into hooks.PreToolUse.
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync, statSync } from 'node:fs';
@@ -30,6 +31,7 @@ const vault = valueOf('--vault');
 const withGuard = flag('--with-guard');
 const scan = !flag('--no-scan'); // on by default; --scan is still accepted
 const pluginMode = flag('--plugin');
+const keepCopy = flag('--keep-copy'); // --plugin only: leave an older copied install in place
 if (pluginMode && (clean || flag('--force'))) {
   console.error('error: --plugin copies nothing, so --clean and --force do not apply');
   process.exit(2);
@@ -55,10 +57,12 @@ if (flag('--help') || positional.length === 0) {
   console.log(`muffy ${pkg.version} installer
 
 usage: node install.mjs <target-repo> [--vault <absolute path>] [--dry-run] [--force] [--clean] [--with-guard] [--no-scan]
-       node install.mjs <target-repo> --plugin [--vault <absolute path>] [--with-guard] [--no-scan] [--dry-run]
+       node install.mjs <target-repo> --plugin [--vault <absolute path>] [--with-guard] [--keep-copy] [--no-scan] [--dry-run]
 
   --plugin      setup for the plugin install (/muffy:setup): copy nothing, write only settings, .gitignore lines and the scan;
-                with --with-guard, set env MUFFY_GUARD=1 so the plugin's guards run in this project
+                with --with-guard, set env MUFFY_GUARD=1 so the plugin's guards run in this project;
+                removes an older copied install (.claude/skills/muffy, muffy's agent files, reference folders and its hooks)
+  --keep-copy   with --plugin: leave the copied install in place
 
   --vault       path to the Obsidian vault (written to .claude/settings.local.json)
   --with-guard  merge the guards (guard-env.mjs, guard-bash-allowlist.mjs, guard-full-regression.mjs, guard-test-level.mjs, guard-write-scope.mjs, guard-git.mjs, guard-gates.mjs) into hooks.PreToolUse of .claude/settings.local.json
@@ -98,7 +102,33 @@ const oldRefsDst = join(agentsDst, 'references'); // where installs before 1.4.0
 const manifestPath = join(skillDst, 'MANIFEST.json');
 const packagedAgents = listFiles(agentsSrc);
 
-if (pluginMode && existsSync(skillDst)) warn(`${rel(skillDst, target)} exists: a copied install next to the plugin gives two /muffy skills and two sets of agents. Remove .claude/skills/muffy, .claude/agent-references and muffy's files in .claude/agents (listed in its MANIFEST.json) to use the plugin alone`);
+// 0. --plugin: an older copied install next to the plugin gives two /muffy skills, two sets of agents and, once its
+// scripts are gone, hooks that fail on every tool call. Remove it (files and its hooks), unless --keep-copy.
+const OLD_HOOK = /\.claude[\\/]skills[\\/]muffy[\\/]scripts[\\/]/;
+const copyFound = pluginMode && [skillDst, refsDst, oldRefsDst].some(existsSync);
+const removeCopy = copyFound && !keepCopy;
+if (copyFound && keepCopy) warn(`${rel(skillDst, target)} kept (--keep-copy): the copied install and the plugin both load, so there are two /muffy skills and two sets of agents`);
+if (removeCopy) {
+  if (settingsExisted && settings === null) die(`${rel(settingsPath, target)} is not valid JSON, so the copied install's hooks cannot be removed with it; fix the file and re-run (nothing was changed)`);
+  const prev = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null;
+  if (!prev) warn('the copied install has no MANIFEST.json: removing the agent files this package ships by name');
+  // top-level agent files only; the reference folders go whole below
+  const owned = [...new Set([...(prev?.agents ?? []), ...packagedAgents])].filter((f) => !/[\\/]/.test(f));
+  log(`remove the copied install${prev?.version ? ` (muffy ${prev.version})` : ''}: the plugin replaces it`);
+  for (const f of owned) {
+    const p = join(agentsDst, f);
+    if (!existsSync(p)) continue;
+    log(`remove: ${rel(p, target)}`);
+    if (!dryRun) rmSync(p, { force: true });
+  }
+  for (const dir of [oldRefsDst, refsDst, skillDst]) {
+    if (!existsSync(dir)) continue;
+    log(`remove: ${rel(dir, target)}/`);
+    if (!dryRun) rmSync(dir, { recursive: true, force: true });
+  }
+  const skillsDir = dirname(skillDst);
+  if (!dryRun && existsSync(skillsDir) && readdirSync(skillsDir).length === 0) rmSync(skillsDir, { recursive: true }); // .claude/skills held only muffy
+}
 
 // 1. --clean: remove what the previous install owned
 if (clean) {
@@ -208,6 +238,35 @@ if (withGuard && pluginMode) {
     warn(`hooks.PreToolUse already exists in ${rel(settingsPath, target)}; not modified. Add these entries by hand:\n${JSON.stringify(guardEntries, null, 2)}`);
   }
 }
+// the copied install's hooks call .claude/skills/muffy/scripts/*, which step 0 removed: drop them (only those)
+if (removeCopy && settings?.hooks) {
+  const dropped = [];
+  for (const [event, entries] of Object.entries(settings.hooks)) {
+    if (!Array.isArray(entries)) continue;
+    const kept = entries
+      .map((e) => {
+        const hooks = (e.hooks ?? []).filter((h) => {
+          const old = OLD_HOOK.test(String(h.command ?? ''));
+          if (old) dropped.push(`${event}: ${h.command}`);
+          return !old;
+        });
+        return hooks.length === (e.hooks ?? []).length ? e : { ...e, hooks };
+      })
+      .filter((e) => (e.hooks ?? []).length > 0);
+    if (kept.length) settings.hooks[event] = kept;
+    else delete settings.hooks[event];
+  }
+  if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
+  if (dropped.length) {
+    settingsChanged = true;
+    for (const d of dropped) log(`remove hook from ${rel(settingsPath, target)}: ${d}`);
+  }
+}
+// a team file is not ours to edit: say what is left there
+const teamSettings = join(target, '.claude', 'settings.json');
+if (removeCopy && existsSync(teamSettings) && OLD_HOOK.test(readFileSync(teamSettings, 'utf8'))) {
+  warn(`${rel(teamSettings, target)} still has hooks that run .claude/skills/muffy/scripts/*; that folder is gone, so remove those hooks by hand (the plugin's guards replace them)`);
+}
 if (settingsExisted && !settingsChanged) log(`keep existing ${rel(settingsPath, target)} (not modified)`);
 if (settingsChanged && !dryRun) {
   mkdirSync(dirname(settingsPath), { recursive: true });
@@ -247,7 +306,7 @@ if (missing.length) {
 
 // 6. next steps
 console.log(`
-Done${dryRun ? ' (dry run, nothing written)' : ''}. Remaining manual steps:
+Done${dryRun ? ' (dry run, nothing written)' : ''}.${removeCopy ? ' The copied install and its hooks were removed (lines starting "remove" above); the plugin replaces them. Files that were committed can be restored from git.' : ''} Remaining manual steps:
 
 1. ${pluginMode ? (withGuard ? 'The plugin guards are on for this project (env MUFFY_GUARD=1 in .claude/settings.local.json).' : 'The plugin guards are off. Run /muffy:setup --with-guard to turn them on.') : withGuard ? 'Env, Bash-allowlist, full-regression, test-level, write-scope and git guards are in hooks.PreToolUse of .claude/settings.local.json (see messages above if it was skipped).' : 'Hooks are not installed. Re-run with --with-guard for the guards, or add them yourself:\n     { "matcher": "Read|Grep|Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-env.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-bash-allowlist.mjs" } ] }\n     { "matcher": "Bash|PowerShell", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-full-regression.mjs" } ] }\n     { "matcher": "Bash|PowerShell|Write|Edit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-test-level.mjs" } ] }\n     { "matcher": "Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-write-scope.mjs" } ] }\n     { "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "node .claude/skills/muffy/scripts/guard-git.mjs" } ] }'}
    - Team-flow rules 1–4 (merge, commit, push, temporary stack) are Orchestrator rules, not hooks: see skills/muffy/references/hooks-enforcement.md.
