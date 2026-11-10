@@ -133,7 +133,7 @@ export function gate(metrics, baseline) {
 /** System prompt for a bare reviewer run: the agent file plus the references it would load on demand, inlined. */
 export function buildSystemPrompt() {
   const strip = (t) => t.replace(/^---[\s\S]*?---\r?\n/, '');
-  const ref = (n) => readFileSync(join(root, 'agents/references/code-reviewer', n), 'utf8');
+  const ref = (n) => readFileSync(join(root, 'agent-references/code-reviewer', n), 'utf8');
   const parts = [strip(readFileSync(join(root, 'agents/code-reviewer.md'), 'utf8'))];
   for (const n of ['purpose', 'required-inputs', 'rules-and-guardrails', 'workflow', 'principles', 'output-format', 'quality-checks']) parts.push(ref(`${n}.md`));
   return 'The reference files named below are inlined after this line; do not try to open them.\n\n' + parts.join('\n\n');

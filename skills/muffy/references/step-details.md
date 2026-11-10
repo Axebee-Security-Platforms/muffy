@@ -56,7 +56,7 @@ The long form of the rows in [steps.md](steps.md) that need more than one line. 
 
 **Input:** `fe/<task>` + `be/<task>` worktrees: each `.pr-lens/<title>/` render folder (folder path in the hand-off `paths_written`)
 
-**Output:** (1) Publish the PR diagrams as one Claude Artifact (not the prlens.dev canvas): `node "<muffy>/scripts/build-diagram-page.mjs" <scratchpad>/pr-diagrams.html <fe render dir> <be render dir>`, then publish that file with the Artifact tool (icon `diagram`); keep the URL for `review-<n>.md`, the Human gate and the closing report. (2) Copy each `drawn.graph.json` to `.team/<task>/diagrams/fe.graph.json` / `be.graph.json` (the reviewer is read-only and cannot open a URL; step 6 reads these files). Missing diagram → skip, never block. Details: [pr-diagram.md](../../../agents/references/frontend-dev/pr-diagram.md)
+**Output:** (1) Publish the PR diagrams as one Claude Artifact (not the prlens.dev canvas): `node "<muffy>/scripts/build-diagram-page.mjs" <scratchpad>/pr-diagrams.html <fe render dir> <be render dir>`, then publish that file with the Artifact tool (icon `diagram`); keep the URL for `review-<n>.md`, the Human gate and the closing report. (2) Copy each `drawn.graph.json` to `.team/<task>/diagrams/fe.graph.json` / `be.graph.json` (the reviewer is read-only and cannot open a URL; step 6 reads these files). Missing diagram → skip, never block. Details: [pr-diagram.md](../../../agent-references/frontend-dev/pr-diagram.md)
 
 ## Step 10
 

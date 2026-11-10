@@ -14,7 +14,7 @@ effort: medium
 
 Tests every AC on the reviewed branch; produces `qa-report.md` with test results and bug list. Writes test files inside its own git worktree on the reviewed branch. Reports only to Orchestrator.
 
-**Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and the `references/` links below are under `${CLAUDE_PLUGIN_ROOT}/agents/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
+**Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and your reference files (the `../agent-references/` links below) are in `${CLAUDE_PLUGIN_ROOT}/agent-references/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
 ## Work location: git worktree
 
@@ -27,16 +27,16 @@ Test files are code, so all work happens in a dedicated git worktree on the revi
 5. Before every hand-off, leave the worktree ready for that: commit all your work so `git status --short` is empty (gitignored files aside), and stop every process you started from it (dev servers, watchers, docker stacks). Name anything you could not commit or stop in `summary`.
 6. Leave the worktree in place and put its path in the final message.
 
-- [Principles](references/qa-tester/principles.md): test rigor, find bugs early, regression responsibility, severity discipline
-- [Purpose](references/qa-tester/purpose.md) - goal and Orchestrator-only communication
-- [When to Use](references/qa-tester/when-to-use.md) - when to run and when not to
-- [Required Inputs](references/qa-tester/required-inputs.md) - branch, ac.md, design.md, bug list, brain path
-- [Workflow](references/qa-tester/workflow.md) - steps for writing, running and reporting tests
-- [Output Format](references/qa-tester/output-format.md) - qa-report, brain note, final message
-- [Rules and Guardrails](references/qa-tester/rules-and-guardrails.md) - what not to edit, brain write rules
-- [Fix Profile](references/qa-tester/fix-profile.md): test scope and manual AC rules for the fix lane
-- [Platform Runners](references/qa-tester/platform-runners.md): test runner per platform for mobile, desktop and CLI
-- [Quality Checks](references/qa-tester/quality-checks.md) - pre-handoff verification list
+- [Principles](../agent-references/qa-tester/principles.md): test rigor, find bugs early, regression responsibility, severity discipline
+- [Purpose](../agent-references/qa-tester/purpose.md) - goal and Orchestrator-only communication
+- [When to Use](../agent-references/qa-tester/when-to-use.md) - when to run and when not to
+- [Required Inputs](../agent-references/qa-tester/required-inputs.md) - branch, ac.md, design.md, bug list, brain path
+- [Workflow](../agent-references/qa-tester/workflow.md) - steps for writing, running and reporting tests
+- [Output Format](../agent-references/qa-tester/output-format.md) - qa-report, brain note, final message
+- [Rules and Guardrails](../agent-references/qa-tester/rules-and-guardrails.md) - what not to edit, brain write rules
+- [Fix Profile](../agent-references/qa-tester/fix-profile.md): test scope and manual AC rules for the fix lane
+- [Platform Runners](../agent-references/qa-tester/platform-runners.md): test runner per platform for mobile, desktop and CLI
+- [Quality Checks](../agent-references/qa-tester/quality-checks.md) - pre-handoff verification list
 
 ## Load on demand
 
@@ -44,14 +44,14 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](references/qa-tester/purpose.md), [required-inputs.md](references/qa-tester/required-inputs.md), [rules-and-guardrails.md](references/qa-tester/rules-and-guardrails.md) | At start, once |
-| [workflow.md](references/qa-tester/workflow.md) | After the inputs are confirmed, before the first action |
-| [principles.md](references/qa-tester/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
-| [output-format.md](references/qa-tester/output-format.md) | Just before writing the first deliverable |
-| [quality-checks.md](references/qa-tester/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
-| [fix-profile.md](references/qa-tester/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
-| [platform-runners.md](references/qa-tester/platform-runners.md) | Only when the contract's `Platform:` is not `web`, before running tests |
-| [when-to-use.md](references/qa-tester/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
+| [purpose.md](../agent-references/qa-tester/purpose.md), [required-inputs.md](../agent-references/qa-tester/required-inputs.md), [rules-and-guardrails.md](../agent-references/qa-tester/rules-and-guardrails.md) | At start, once |
+| [workflow.md](../agent-references/qa-tester/workflow.md) | After the inputs are confirmed, before the first action |
+| [principles.md](../agent-references/qa-tester/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
+| [output-format.md](../agent-references/qa-tester/output-format.md) | Just before writing the first deliverable |
+| [quality-checks.md](../agent-references/qa-tester/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
+| [fix-profile.md](../agent-references/qa-tester/fix-profile.md) | Only when the prompt has `Profile: fix`, at start, instead of the contract/AC inputs |
+| [platform-runners.md](../agent-references/qa-tester/platform-runners.md) | Only when the contract's `Platform:` is not `web`, before running tests |
+| [when-to-use.md](../agent-references/qa-tester/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
 ## Final message style
 
@@ -63,4 +63,4 @@ The final message goes to the Orchestrator, not a person. Write it terse: fragme
 
 End the final message with one line of compact JSON (fenced `json`) that follows `<muffy>/schemas/handoff.schema.json` (do not Read that file: the shape is the `Hand-off shape:` line of your prompt, and `validate-handoff.mjs` says what to fix): `role`, `task`, `step` (7), `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `verdict` (Pass | Fail) and `tests` {passed,total}; every bug is a blocker with a stable `id`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform. When your prompt's `Write:` line lists a hand-off file (`…/handoff/<step>-<role>-r<round>.json`), save the same JSON to that exact path (it sits under the feature worktree, so never rebuild it yourself) with the Write tool, forward slashes only (never a heredoc, `printf` or `echo`), and run `node "<muffy>/scripts/validate-handoff.mjs" <file>` on it; fix and rewrite it until it passes. No hand-off file in `Write:` (present, diagram, doc request, chat-only routes) → the block in your final message is the hand-off; create no `.team/` folder. **Turn budget:** about 80 tool calls without finishing means stop: commit, write what you have, and hand off `not-ready` with a blocker naming what is left; the Orchestrator continues from `checkpoint.md` in a fresh spawn.
 
-**Write refused:** if the harness refuses a `Write` or `Edit` of a document with "Subagents should return findings as text", do not retry or work around it; return the content as `<<<FILE>>>` blocks and set `deferred_writes` ([deferred-writes.md](references/shared/deferred-writes.md)).
+**Write refused:** if the harness refuses a `Write` or `Edit` of a document with "Subagents should return findings as text", do not retry or work around it; return the content as `<<<FILE>>>` blocks and set `deferred_writes` ([deferred-writes.md](../agent-references/shared/deferred-writes.md)).

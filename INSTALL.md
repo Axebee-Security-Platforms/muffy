@@ -38,7 +38,7 @@ How the plugin finds its files:
 - Commands are namespaced: `/muffy:muffy <request>`, `/muffy:setup`, and agents `muffy:<role>`.
 - Update with `/plugin marketplace update muffy`, then restart Claude Code.
 
-Moving from a copied install: delete `.claude/skills/muffy/` and muffy's files in `.claude/agents/` (`MANIFEST.json` lists them), plus any muffy entries in `hooks.PreToolUse` of `.claude/settings.local.json`. Then run `/muffy:setup --with-guard`. `/muffy:setup` warns while the copy is still there, because both would load.
+Moving from a copied install: delete `.claude/skills/muffy/`, `.claude/agent-references/` (or `.claude/agents/references/` before 1.4.0) and muffy's files in `.claude/agents/` (`MANIFEST.json` lists them), plus any muffy entries in `hooks.PreToolUse` of `.claude/settings.local.json`. Then run `/muffy:setup --with-guard`. `/muffy:setup` warns while the copy is still there, because both would load.
 
 ## Install by copying
 
@@ -50,7 +50,8 @@ What it does:
 
 | Copies to | From |
 |---|---|
-| `.claude/agents/` | `agents/` (subagent definitions and references) |
+| `.claude/agents/` | `agents/` (the subagent definitions) |
+| `.claude/agent-references/` | `agent-references/` (each agent's reference files) |
 | `.claude/skills/muffy/` | `skills/muffy/` (SKILL.md, references, schemas, scripts) |
 | `.claude/settings.local.json` | created only if missing; sets `SECOND_BRAIN_VAULT` |
 | `.gitignore` | adds `.claude/settings.local.json`, `.worktrees/`, `.team/**/diff*.patch`, `.team/**/logs/` if missing |

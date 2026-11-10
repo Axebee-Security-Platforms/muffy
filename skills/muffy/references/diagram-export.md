@@ -1,6 +1,6 @@
 # Diagram export and direct import
 
-Orchestrator or user only: these commands write a file, so agents under the Bash guard do not run them. The diagram format itself (template, JSON, patterns, checks, importing as a draft) is agent content: [diagram-style.md](../../../agents/references/shared/diagram-style.md).
+Orchestrator or user only: these commands write a file, so agents under the Bash guard do not run them. The diagram format itself (template, JSON, patterns, checks, importing as a draft) is agent content: [diagram-style.md](../../../agent-references/shared/diagram-style.md).
 
 ## Exporting a still image
 Manual: only when the user asks for an image (a slide, a document, a chat message), never unprompted.
@@ -9,4 +9,4 @@ Manual: only when the user asks for an image (a slide, a document, a chat messag
 - A page that fails `check-diagram.mjs` is not exported. No Chrome/Edge: it says so and exits 2
 
 ## Importing straight to HTML
-`diagram-import.mjs <file> --html <path>` writes the page directly instead of printing a JSON draft. Only the Orchestrator or the user runs it; the draft-and-check procedure an agent follows is "Importing an existing diagram" in [diagram-style.md](../../../agents/references/shared/diagram-style.md#importing-an-existing-diagram).
+`diagram-import.mjs <file> --html <path>` writes the page directly instead of printing a JSON draft. Only the Orchestrator or the user runs it; the draft-and-check procedure an agent follows is "Importing an existing diagram" in [diagram-style.md](../../../agent-references/shared/diagram-style.md#importing-an-existing-diagram).

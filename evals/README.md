@@ -12,7 +12,7 @@ npm run eval:sync # re-copy each agent's rubric from its quality-checks.md
 
 | Layer | Where | What it proves |
 |---|---|---|
-| Rubric sync | `agents/<role>.eval.json` → `rubric` | The eval still lists exactly the bullets in `agents/references/<role>/quality-checks.md`. Edit a quality check and CI fails until you review the eval (`eval:sync`) |
+| Rubric sync | `agents/<role>.eval.json` → `rubric` | The eval still lists exactly the bullets in `agent-references/<role>/quality-checks.md`. Edit a quality check and CI fails until you review the eval (`eval:sync`) |
 | Artifact spec | `agents/<role>.eval.json` → `artifacts` | Headings/patterns derived from `output-format.md` hold on the golden fixture, and the rules reject an empty file (so they are not vacuous) |
 | Hand-off schema | `fixtures/login-flow/.team/login-flow/handoff/*.json` | One valid golden hand-off per role; dropping a required field is rejected |
 | Traceability | `fixtures/login-flow/.team/login-flow/` | Every AC in `ac.md` appears in design / contract / qa-report; runtime pin equal in deploy / contract / qa-report; both checks fail when mutated |

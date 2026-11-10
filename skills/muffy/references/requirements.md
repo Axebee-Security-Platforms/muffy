@@ -24,10 +24,10 @@ What each agent asks about lives in its own workflow; the Orchestrator only need
 
 | Agent | Step | May return `needs-input` for | Its rules |
 |---|---|---|---|
-| `researcher` | 1 | context and constraints that change what to research (never product decisions: those go to the PM as open questions in the brief) | [workflow](../../../agents/references/researcher/workflow.md) step 1b |
-| `product-manager` | 2 | product decisions that change the AC or the plan | [workflow](../../../agents/references/product-manager/workflow.md) step 1b |
-| `architect` | 3 | a third-party provider choice only | [third-party-providers.md](../../../agents/references/architect/third-party-providers.md) |
-| `designer` | 3 | never for the design-system intake (that is one non-blocking question on a `done` hand-off, asked at `pause:design-review`); only a Platform conflict between sources, or the intake's follow-up round when the user said they have a brand | [design-system-intake.md](../../../agents/references/designer/design-system-intake.md) |
+| `researcher` | 1 | context and constraints that change what to research (never product decisions: those go to the PM as open questions in the brief) | [workflow](../../../agent-references/researcher/workflow.md) step 1b |
+| `product-manager` | 2 | product decisions that change the AC or the plan | [workflow](../../../agent-references/product-manager/workflow.md) step 1b |
+| `architect` | 3 | a third-party provider choice only | [third-party-providers.md](../../../agent-references/architect/third-party-providers.md) |
+| `designer` | 3 | never for the design-system intake (that is one non-blocking question on a `done` hand-off, asked at `pause:design-review`); only a Platform conflict between sources, or the intake's follow-up round when the user said they have a brand | [design-system-intake.md](../../../agent-references/designer/design-system-intake.md) |
 
 Outside the team flow, present mode and doc requests have their own `needs-input` rounds ([present.md](present.md), [doc-request.md](doc-request.md)).
 

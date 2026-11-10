@@ -61,7 +61,7 @@ Kind: bug | cosmetic    Owner: FE | BE | both
 ## Out of scope
 ```
 
-Optional `.team/<task>/flow.html` (published and recorded at step 3e right after 4a, [diagram-publish.md](diagram-publish.md)): one flow diagram ([diagram-style.md](../../../agents/references/shared/diagram-style.md)) the diagnosing dev draws only when the cause cannot be found without understanding a multi-participant flow. It is read by the auditor and the reviewer and stays in the task folder.
+Optional `.team/<task>/flow.html` (published and recorded at step 3e right after 4a, [diagram-publish.md](diagram-publish.md)): one flow diagram ([diagram-style.md](../../../agent-references/shared/diagram-style.md)) the diagnosing dev draws only when the cause cannot be found without understanding a multi-participant flow. It is read by the auditor and the reviewer and stays in the task folder.
 
 AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA report work unchanged.
 

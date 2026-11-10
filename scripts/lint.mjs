@@ -63,8 +63,8 @@ for (const f of agentFiles) {
   if (fm.effort && !['low', 'medium', 'high'].includes(fm.effort)) fail(file, 'effort', `"${fm.effort}" not allowed (low|medium|high only)`);
   if (!new RegExp(`^# ${role.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join('[ -]')}`, 'mi').test(txt)) fail(file, 'structure', 'H1 should be the agent name');
 
-  const refDir = join(root, 'agents/references', role);
-  if (!existsSync(refDir)) { fail(file, 'references', `missing agents/references/${role}/`); continue; }
+  const refDir = join(root, 'agent-references', role);
+  if (!existsSync(refDir)) { fail(file, 'references', `missing agent-references/${role}/`); continue; }
   // top-level files only; a mode folder (product-manager/present/) has its own orphan check below
   const entries = readdirSync(refDir, { withFileTypes: true });
   const present = entries.filter((d) => d.isFile() && d.name.endsWith('.md')).map((d) => d.name.replace(/\.md$/, ''));
@@ -90,9 +90,9 @@ for (const f of agentFiles) {
 }
 
 /* shared agent references: read by several agents, linked from at least one agent or skill file */
-const sharedDir = join(root, 'agents/references/shared');
+const sharedDir = join(root, 'agent-references/shared');
 if (existsSync(sharedDir)) {
-  const linkers = walk(root).filter((p) => p.endsWith('.md') && !p.startsWith(sharedDir) && (relative(root, p).startsWith('agents') || relative(root, p).startsWith('skills')));
+  const linkers = walk(root).filter((p) => p.endsWith('.md') && !p.startsWith(sharedDir) && /^(agents|agent-references|skills)[\\/]/.test(relative(root, p)));
   for (const n of readdirSync(sharedDir).filter((x) => x.endsWith('.md'))) {
     const f = join(sharedDir, n);
     if (!/^#{1,2} \S/.test(readFileSync(f, 'utf8'))) fail(f, 'structure', 'must start with a # / ## heading');
@@ -126,7 +126,7 @@ for (const s of skillDirs) {
 }
 
 /* links: [text](relative.md), plus inline `references/...md` and `agents/...md` paths */
-const mdFiles = walk(root).filter((p) => p.endsWith('.md') && (relative(root, p).startsWith('agents') || relative(root, p).startsWith('skills') || p.endsWith('README.md')) && !relative(root, p).startsWith('evals'));
+const mdFiles = walk(root).filter((p) => p.endsWith('.md') && (/^(agents|agent-references|skills)[\\/]/.test(relative(root, p)) || p.endsWith('README.md')) && !relative(root, p).startsWith('evals'));
 for (const file of mdFiles) {
   const txt = readFileSync(file, 'utf8').replace(/```[\s\S]*?```/g, '');
   for (const m of txt.matchAll(/\[[^\]]*\]\(([^)\s]+)\)/g)) {
@@ -136,7 +136,7 @@ for (const file of mdFiles) {
   }
   for (const m of txt.matchAll(/`((?:references|schemas|scripts)\/[A-Za-z0-9_./-]+\.(?:md|json|mjs))`/g)) {
     const here = dirname(file);
-    const candidates = [resolve(here, m[1]), resolve(root, 'skills/muffy', m[1]), resolve(root, 'agents', m[1])];
+    const candidates = [resolve(here, m[1]), resolve(root, 'skills/muffy', m[1]), resolve(root, 'agents', m[1]), resolve(root, m[1].replace(/^references\//, 'agent-references/'))];
     if (!candidates.some(existsSync)) fail(file, 'links', `broken path reference \`${m[1]}\``);
   }
 }
@@ -149,10 +149,10 @@ for (const file of mdFiles) {
 /* drift: text kept as copies in each agent must stay identical */
 const norm = (t) => t.replace(/\r\n/g, '\n');
 const typesLine = (t) => norm(t).match(/Types that are often wrong:.*$/m)?.[0];
-const outFormats = agentFiles.map((n) => join(root, 'agents/references', n.replace(/\.md$/, ''), 'output-format.md')).filter(existsSync);
+const outFormats = agentFiles.map((n) => join(root, 'agent-references', n.replace(/\.md$/, ''), 'output-format.md')).filter(existsSync);
 const refTypes = typesLine(readFileSync(outFormats[0], 'utf8'));
 for (const f of outFormats) if (typesLine(readFileSync(f, 'utf8')) !== refTypes) fail(f, 'drift', 'the "Types that are often wrong" hint differs from the other output-format.md files');
-const [feFix, beFix] = ['frontend-dev', 'backend-dev'].map((a) => join(root, 'agents/references', a, 'fix-profile.md'));
+const [feFix, beFix] = ['frontend-dev', 'backend-dev'].map((a) => join(root, 'agent-references', a, 'fix-profile.md'));
 if (norm(readFileSync(feFix, 'utf8')) !== norm(readFileSync(beFix, 'utf8'))) fail(beFix, 'drift', 'frontend-dev and backend-dev fix-profile.md must stay identical; edit both');
 
 /* drift: every agent except the read-only code-reviewer saves and validates its own hand-off file */

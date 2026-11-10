@@ -4,7 +4,7 @@ Material in this skill that comes from other projects, and the notices their lic
 
 ## ui-ux-pro-max
 
-Used in: `data/ux/` (the CSV tables and stack files), `scripts/ux-search.mjs` (a Node port of its `search.py`), and the priority model adapted in `agents/references/designer/ux-ui-rules.md`.
+Used in: `data/ux/` (the CSV tables and stack files), `scripts/ux-search.mjs` (a Node port of its `search.py`), and the priority model adapted in `agent-references/designer/ux-ui-rules.md`.
 
 ```
 MIT License

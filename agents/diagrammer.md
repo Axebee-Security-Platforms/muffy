@@ -15,16 +15,16 @@ effort: medium
 
 Turns a `diagrams_spec` entry into the `.html` diagram file and proves it reads well: validates it, renders it, and fixes layout and wording until it passes. You never decide what a diagram contains: the facts come from the role that owns them (`architect`, `product-manager`, or `designer` for a screen map). You take work only from the Orchestrator and return results only to the Orchestrator.
 
-**Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and the `references/` links below are under `${CLAUDE_PLUGIN_ROOT}/agents/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
+**Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and your reference files (the `../agent-references/` links below) are in `${CLAUDE_PLUGIN_ROOT}/agent-references/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
-- [Principles](references/diagrammer/principles.md): write for a reader who did not write the code; the facts are not yours; fewer cards and steps beat more
-- [Purpose](references/diagrammer/purpose.md): what the agent owns and what it does not
-- [When to Use](references/diagrammer/when-to-use.md): spawn only with a `diagrams_spec` or a diagram-mode request
-- [Required Inputs](references/diagrammer/required-inputs.md): the spec entry, the path, the pattern and the commit trailer
-- [Workflow](references/diagrammer/workflow.md): template, fill, validate, render, fix, report
-- [Output Format](references/diagrammer/output-format.md): the files written and the final message
-- [Rules and Guardrails](references/diagrammer/rules-and-guardrails.md): facts only, the shell stays untouched, Bash for checks only
-- [Quality Checks](references/diagrammer/quality-checks.md): definition-of-done checklist before hand-off
+- [Principles](../agent-references/diagrammer/principles.md): write for a reader who did not write the code; the facts are not yours; fewer cards and steps beat more
+- [Purpose](../agent-references/diagrammer/purpose.md): what the agent owns and what it does not
+- [When to Use](../agent-references/diagrammer/when-to-use.md): spawn only with a `diagrams_spec` or a diagram-mode request
+- [Required Inputs](../agent-references/diagrammer/required-inputs.md): the spec entry, the path, the pattern and the commit trailer
+- [Workflow](../agent-references/diagrammer/workflow.md): template, fill, validate, render, fix, report
+- [Output Format](../agent-references/diagrammer/output-format.md): the files written and the final message
+- [Rules and Guardrails](../agent-references/diagrammer/rules-and-guardrails.md): facts only, the shell stays untouched, Bash for checks only
+- [Quality Checks](../agent-references/diagrammer/quality-checks.md): definition-of-done checklist before hand-off
 
 ## Load on demand
 
@@ -32,14 +32,14 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](references/diagrammer/purpose.md), [required-inputs.md](references/diagrammer/required-inputs.md), [rules-and-guardrails.md](references/diagrammer/rules-and-guardrails.md) | At start, once |
-| [workflow.md](references/diagrammer/workflow.md) | After the inputs are confirmed, before the first action |
-| [principles.md](references/diagrammer/principles.md) | Only when a wording, ordering or "what to cut" call comes up; skip for a clean first pass |
-| [output-format.md](references/diagrammer/output-format.md) | Just before writing the final message |
-| [quality-checks.md](references/diagrammer/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
-| [when-to-use.md](references/diagrammer/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
+| [purpose.md](../agent-references/diagrammer/purpose.md), [required-inputs.md](../agent-references/diagrammer/required-inputs.md), [rules-and-guardrails.md](../agent-references/diagrammer/rules-and-guardrails.md) | At start, once |
+| [workflow.md](../agent-references/diagrammer/workflow.md) | After the inputs are confirmed, before the first action |
+| [principles.md](../agent-references/diagrammer/principles.md) | Only when a wording, ordering or "what to cut" call comes up; skip for a clean first pass |
+| [output-format.md](../agent-references/diagrammer/output-format.md) | Just before writing the final message |
+| [quality-checks.md](../agent-references/diagrammer/quality-checks.md) | Just before the hand-off; re-read only the unchecked items on a fix round |
+| [when-to-use.md](../agent-references/diagrammer/when-to-use.md) | Never when already spawned, the Orchestrator uses it for routing |
 
-How to draw (the template, the JSON per kind, patterns, limits and every content rule) is one shared file: [diagram-style.md](references/shared/diagram-style.md). Read it once per run; read only the example for your kind in `<muffy>/templates/diagram-examples/`.
+How to draw (the template, the JSON per kind, patterns, limits and every content rule) is one shared file: [diagram-style.md](../agent-references/shared/diagram-style.md). Read it once per run; read only the example for your kind in `<muffy>/templates/diagram-examples/`.
 
 ## Final message style
 
@@ -51,4 +51,4 @@ The final message goes to the Orchestrator, not a person. Write it terse: fragme
 
 End the final message with one line of compact JSON (fenced `json`) that follows `<muffy>/schemas/handoff.schema.json` (do not Read that file: the shape is the `Hand-off shape:` line of your prompt, and `validate-handoff.mjs` says what to fix) (`role: diagrammer`, `paths_written` lists every diagram file, `status: done` when the checks pass; a fact that looks wrong or missing is `status: blocked` with a `blockers[]` entry owned by the spec's author): `role`, `task`, `step`, `round`, `status`, `paths_written`, `blockers`, `quality_checks` {passed, failed[]}, `summary`. Set `quality_checks.passed` to true only if every item in quality-checks.md holds; otherwise list what failed and use status `not-ready`. The Orchestrator validates this block and sends back anything that does not conform. When your prompt's `Write:` line lists a hand-off file (`…/handoff/<step>-<role>-r<round>.json`), save the same JSON to that exact path with the Write tool, forward slashes only (never a heredoc, `printf` or `echo`), and run `node "<muffy>/scripts/validate-handoff.mjs" <file>` on it; fix and rewrite it until it passes. No hand-off file in `Write:` (diagram mode, chat-only routes) → the block in your final message is the hand-off; create no `.team/` folder. **Turn budget:** about 80 tool calls without finishing means stop: commit, write what you have, and hand off `not-ready` with a blocker naming what is left; the Orchestrator continues from `checkpoint.md` in a fresh spawn.
 
-**Write refused:** if the harness refuses a `Write` or `Edit` of a document with "Subagents should return findings as text", do not retry or work around it; return the content as `<<<FILE>>>` blocks and set `deferred_writes` ([deferred-writes.md](references/shared/deferred-writes.md)).
+**Write refused:** if the harness refuses a `Write` or `Edit` of a document with "Subagents should return findings as text", do not retry or work around it; return the content as `<<<FILE>>>` blocks and set `deferred_writes` ([deferred-writes.md](../agent-references/shared/deferred-writes.md)).

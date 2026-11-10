@@ -34,7 +34,16 @@ Inside Claude Code, add the marketplace and install the plugin, then set up each
 /muffy:setup --vault "/absolute/path/to/Obsidian Vault" --with-guard
 ```
 
-The skill, agents and scripts stay in the plugin folder and update with the plugin. Nothing is copied into the repo. `/muffy:setup` writes only `.claude/settings.local.json`, the `.gitignore` lines and the onboarding scan. `--with-guard` turns on the plugin's guards for that repo. With the plugin, the commands are `/muffy:muffy <request>`, and the agents are named `muffy:<role>`.
+The skill, agents and scripts stay in the plugin folder and update with the plugin. Nothing is copied into the repo. `/muffy:setup` writes only `.claude/settings.local.json`, the `.gitignore` lines and the onboarding scan.
+
+| `/muffy:setup` flag | What it does |
+|---|---|
+| `--vault <path>` | The Obsidian vault for the second brain. It is set only when `.claude/settings.local.json` is created; otherwise set `SECOND_BRAIN_VAULT` there yourself |
+| `--with-guard` | Turns on the plugin's guards in this repo by setting env `MUFFY_GUARD=1`. They are off until then, because a plugin's hooks run in every project that has it enabled |
+| `--no-scan` | Skip the repo scan |
+| `--dry-run` | Show what would change and write nothing |
+
+With the plugin, every command has the plugin's prefix: type `/muffy:muffy <request>` wherever this README shows `/muffy <request>`. The agents are named `muffy:<role>`. To move from a copied install, delete `.claude/skills/muffy/`, `.claude/agent-references/` (`.claude/agents/references/` before 1.4.0) and muffy's files in `.claude/agents/` first; `/muffy:setup` warns while both are there. Details: [INSTALL.md](INSTALL.md#install-as-a-plugin).
 
 ### Or copy into your repo
 
@@ -62,7 +71,7 @@ The checkpoint and artifact size hooks are opt-in and added by hand; team-flow r
 /muffy
 ```
 
-The first form does the work; a bare `/muffy` shows the menu: unfinished tasks to continue, what muffy knows about the project, and what else it can do.
+The first form does the work; a bare `/muffy` shows the menu: unfinished tasks to continue, what muffy knows about the project, and what else it can do. With the plugin install, type `/muffy:muffy` instead.
 
 | You type | What happens | Under the hood |
 |---|---|---|
@@ -112,9 +121,12 @@ Outside the team flow. The Orchestrator sends the request to the agent that owns
 
 ### Update muffy
 
-Run the installer again with `--clean`, and restart Claude Code.
+- Plugin: `/plugin marketplace update muffy`, then restart Claude Code. Your repos need nothing else.
+- Copied install: run the installer again with `--clean`, and restart Claude Code.
 
 ## Commands
+
+With the plugin install, add the prefix: `/muffy:muffy fix <request>` for `/muffy fix <request>`, and so on. `/muffy:setup` is the plugin's setup command ([Quick start](#install-as-a-plugin-recommended)).
 
 | Command | Use it for |
 |---|---|
@@ -292,7 +304,7 @@ For a version bump of a dependency or runtime the project already uses (a new de
 
 You approve the design before any code is written and the branch before it is handed over. No agent deploys.
 
-The plan gate (2b) and design gate (3c) are enforced, not only written. With `--with-guard`, `guard-gates.mjs` blocks a spawn until the gate is recorded as passed or skipped, and it fails closed: a spawn with no `Task:` header is matched to the task its prompt names, or blocked while any checkpoint exists. `checkpoint.mjs gate <dir> 2b|3c approve|reject|skip` is the only writer of the gate lines, and `check-all` flags a hand-off past an open gate. No hook can tell your reply from one the Orchestrator types, so the answer is a dated, auditable line in `## Status`. See [hooks enforcement](skills/muffy/references/hooks-enforcement.md).
+The plan gate (2b) and design gate (3c) are enforced, not only written. With the guards on (`/muffy:setup --with-guard`, or `install.mjs --with-guard`), `guard-gates.mjs` blocks a spawn until the gate is recorded as passed or skipped, and it fails closed: a spawn with no `Task:` header is matched to the task its prompt names, or blocked while any checkpoint exists. `checkpoint.mjs gate <dir> 2b|3c approve|reject|skip` is the only writer of the gate lines, and `check-all` flags a hand-off past an open gate. No hook can tell your reply from one the Orchestrator types, so the answer is a dated, auditable line in `## Status`. See [hooks enforcement](skills/muffy/references/hooks-enforcement.md).
 
 ### Memory
 
@@ -310,7 +322,7 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 |---|---|
 | `researcher` | Brief, evidence, onboard baseline; asks clarifying questions |
 | `product-manager` | Acceptance criteria, plan, strategy score, project goal and success metric; the only writer of `docs/strategy.md`; in `/muffy present`, the content of decks for clients and end-users, as a solutions engineer |
-| `designer` | Canvas, `design.md`, the project design system, and the look of `/muffy present` decks; checks the design against priority-tiered [UX/UI rules](agents/references/designer/ux-ui-rules.md) (accessibility first) and looks up styles, colors and fonts with `ux-search.mjs` |
+| `designer` | Canvas, `design.md`, the project design system, and the look of `/muffy present` decks; checks the design against priority-tiered [UX/UI rules](agent-references/designer/ux-ui-rules.md) (accessibility first) and looks up styles, colors and fonts with `ux-search.mjs` |
 | `diagrammer` | Draws every diagram (architecture, deployment, state, ERD, flow, screen map, gantt, story map) from facts the other roles decided, checks it renders, and keeps the words plain for readers who are not engineers |
 | `architect` | API contract, ADRs, stack decisions, build vs buy (recommends third-party providers; web access only to check a provider's facts) |
 | `devops` | Deploy plan, smoke build, local infra files (never deploys) |
@@ -350,7 +362,7 @@ For one-line edits with no behaviour risk, research-only or review-only requests
 <details>
 <summary><strong>Do I need an Obsidian vault?</strong></summary>
 
-No. The vault holds task notes and the consolidated `project.md` (Lessons, Open issues). Pass `--vault` at install, or set `SECOND_BRAIN_VAULT` in `.claude/settings.local.json`. Without it the same files live in `.team/brain/`, committed to the repo, so a team shares them through git instead of a shared vault.
+No. The vault holds task notes and the consolidated `project.md` (Lessons, Open issues). Pass `--vault` to `/muffy:setup` or the installer, or set `SECOND_BRAIN_VAULT` in `.claude/settings.local.json`. Without it the same files live in `.team/brain/`, committed to the repo, so a team shares them through git instead of a shared vault.
 
 </details>
 
@@ -378,7 +390,7 @@ A point rejected four times, or one blocker open across three consecutive reject
 <details>
 <summary><strong>Does muffy read my secrets?</strong></summary>
 
-Agents never read, grep, or print `.env*` files in full; they check a variable by name and prefix only. `--with-guard` installs a hook that blocks it. A key shown in chat must be rotated and logged in the checkpoint. See [hooks enforcement](skills/muffy/references/hooks-enforcement.md).
+Agents never read, grep, or print `.env*` files in full; they check a variable by name and prefix only. With the guards on (`--with-guard` on `/muffy:setup` or the installer), a hook blocks it. A key shown in chat must be rotated and logged in the checkpoint. See [hooks enforcement](skills/muffy/references/hooks-enforcement.md).
 
 </details>
 
@@ -391,11 +403,11 @@ The Orchestrator reads `.team/<task>/checkpoint.md` and the vault task note inst
 
 ## Documentation
 
-- [INSTALL.md](INSTALL.md): installer flags, hooks, and settings.
+- [INSTALL.md](INSTALL.md): plugin install and `/muffy:setup`, installer flags, hooks, and settings.
 - [SKILL.md](skills/muffy/SKILL.md): the skill entry point and its rules.
 - [Steps](skills/muffy/references/steps.md) and [run profile](skills/muffy/references/run-profile.md): who does what, and what can be skipped.
 - [Hooks and guards](skills/muffy/references/hooks-enforcement.md): the rules a hook can enforce, including who may write `docs/strategy.md` and the architecture files.
-- [Diagram style](agents/references/shared/diagram-style.md): the HTML template, JSON schema and validator for architecture, database and flow diagrams.
+- [Diagram style](agent-references/shared/diagram-style.md): the HTML template, JSON schema and validator for architecture, database and flow diagrams.
 - [Platforms](skills/muffy/references/platforms.md): web, mobile (Flutter, React Native, Swift, Kotlin), desktop (Electron, Mac, Windows) and CLI or console apps. What changes per target, the toolchain the host needs, and what only you may do (sign, upload, publish).
 - [Route](skills/muffy/references/route.md) and [route examples](skills/muffy/references/route-examples.md): how a request picks its route.
 - [Diagram mode](skills/muffy/references/diagram.md): diagram kinds, owners and output paths.
