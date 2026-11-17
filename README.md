@@ -326,7 +326,7 @@ Details: [memory model](skills/muffy/references/memory-model.md).
 | `designer` | Canvas, `design.md`, the project design system, and the look of `/muffy present` decks; checks the design against priority-tiered [UX/UI rules](agent-references/designer/ux-ui-rules.md) (accessibility first) and looks up styles, colors and fonts with `ux-search.mjs` |
 | `diagrammer` | Draws every diagram (architecture, deployment, state, ERD, flow, screen map, gantt, story map) from facts the other roles decided, checks it renders, and keeps the words plain for readers who are not engineers |
 | `architect` | API contract, ADRs, stack decisions, build vs buy (recommends third-party providers; web access only to check a provider's facts) |
-| `devops` | Deploy plan, smoke build, local infra files (never deploys) |
+| `devops` | Pins the runtime, smoke build, local Dockerfile/compose/CI files on docker local (never deploys; hosting is your choice) |
 | `frontend-dev` | UI implementation on `fe/<task>` (web, mobile and desktop apps) |
 | `backend-dev` | API and data implementation on `be/<task>`; also CLI and console apps |
 | `debugger` | Fix lane only: finds the cause of a bug, rates its severity, names the owner; no code |
@@ -405,6 +405,7 @@ The Orchestrator reads `.team/<task>/checkpoint.md` and the vault task note inst
 ## Documentation
 
 - [INSTALL.md](INSTALL.md): plugin install and `/muffy:setup`, installer flags, hooks, and settings.
+- [CHANGELOG.md](CHANGELOG.md): what changed in each release, including the unreleased lane and infrastructure changes.
 - [SKILL.md](skills/muffy/SKILL.md): the skill entry point and its rules.
 - [Steps](skills/muffy/references/steps.md) and [run profile](skills/muffy/references/run-profile.md): who does what, and what can be skipped.
 - [Hooks and guards](skills/muffy/references/hooks-enforcement.md): the rules a hook can enforce, including who may write `docs/strategy.md` and the architecture files.
