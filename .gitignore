@@ -12,3 +12,9 @@ node_modules/
 # PR Lens writes its previews here. They are rebuilt on demand.
 .pr-lens/
 .bench/
+
+# Pitch media stays out of git: the plugin installs from this repo, so every
+# install would download it. Rebuild the videos with docs/pitch/promo/capture.mjs.
+docs/pitch/**/*.mp4
+docs/pitch/**/*.webm
+docs/pitch/**/*.wav

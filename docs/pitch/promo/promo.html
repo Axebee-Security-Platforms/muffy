@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>Muffy Promo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 32-second promo, 1920x1080. Every animation is a CSS animation with an absolute delay,
+   so capture.mjs can pause them all and seek to any frame. Open the file to preview in real time. */
+:root{
+  --paper:#f3f6fb; --grid:#d5dfef; --grid-major:#b7c7e2;
+  --ink:#0e1d3b; --muted:#566987; --blue:#1d4cf0; --blue-soft:#e2e9ff;
+  --card:#fff; --card-line:#c9d6ee; --bad:#c2410c; --bad-soft:#ffe9df; --good:#0f7a55; --good-soft:#dcf5ea;
+  --human:#b45309; --human-soft:#fff2d6; --shadow:0 18px 40px -14px rgba(20,40,90,.28),0 2px 6px rgba(20,40,90,.08);
+  --font-d:'Bricolage Grotesque','IBM Plex Sans Thai',sans-serif;
+  --font-b:'IBM Plex Sans Thai','Segoe UI',sans-serif;
+  --font-m:'IBM Plex Mono','IBM Plex Sans Thai',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0b1736;overflow:hidden}
+.stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;overflow:hidden;color:var(--ink);font-family:var(--font-b);
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),linear-gradient(var(--grid-major) 1.5px,transparent 1.5px),linear-gradient(90deg,var(--grid-major) 1.5px,transparent 1.5px);
+  background-size:40px 40px,40px 40px,200px 200px,200px 200px;animation:drift 32s linear both}
+@keyframes drift{to{background-position:320px 320px,320px 320px,320px 320px,320px 320px}}
+
+/* scenes: fade in at --s, fade out at --e */
+.sc{position:absolute;inset:0;opacity:0;animation:sin .45s ease var(--s) both,sout .45s ease var(--e) forwards}
+.sc.last{animation:sin .45s ease var(--s) both}
+@keyframes sin{from{opacity:0}to{opacity:1}}
+@keyframes sout{from{opacity:1}to{opacity:0}}
+.in{animation:up .7s cubic-bezier(.2,.8,.2,1) calc(var(--s) + var(--d,0s)) both}
+@keyframes up{from{opacity:0;transform:translateY(40px) scale(.97)}to{opacity:1;transform:none}}
+.pop{animation:pop .6s cubic-bezier(.3,1.6,.5,1) calc(var(--s) + var(--d,0s)) both}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+
+.kicker{font:600 30px var(--font-m);letter-spacing:.14em;text-transform:uppercase;color:var(--blue);display:flex;align-items:center;gap:16px}
+.kicker::before{content:"";width:56px;height:4px;background:var(--blue)}
+h2{font:800 104px/1.08 var(--font-d);margin:18px 0 0;letter-spacing:-.01em}
+h2 em{font-style:normal;color:var(--blue)}
+.card{background:var(--card);border:2px solid var(--card-line);border-radius:18px;box-shadow:var(--shadow)}
+.pad{position:absolute;left:140px;top:150px;right:140px}
+
+/* S1 logo */
+.s1 .logo{position:absolute;left:0;right:0;top:250px;text-align:center}
+.s1 .logo .k{justify-content:center}
+.s1 h1{font:800 330px/.95 var(--font-d);letter-spacing:-.04em;margin:20px 0 0}
+.s1 h1 span{color:var(--blue)}
+.s1 .tag{font:700 54px var(--font-b);margin-top:28px}
+.s1 .tag b{color:var(--blue)}
+
+/* S2 problems */
+.probs{display:grid;grid-template-columns:repeat(3,1fr);gap:36px;margin-top:90px}
+.prob{padding:40px 40px 44px;position:relative}
+.prob .x{width:72px;height:72px;border-radius:16px;background:var(--bad-soft);display:grid;place-items:center}
+.prob .x svg{width:36px;height:36px;stroke:var(--bad);stroke-width:3.5;fill:none;stroke-linecap:round}
+.prob h3{font:700 46px/1.2 var(--font-b);margin:22px 0 0}
+.prob p{font:400 30px/1.4 var(--font-b);color:var(--muted);margin:10px 0 0}
+
+/* image frames with a slow zoom */
+.shot{position:absolute;overflow:hidden;border-radius:18px;border:2px solid var(--card-line);box-shadow:var(--shadow);background:#fff}
+.shot img{display:block;width:100%;height:100%;object-fit:cover;animation:kb 4.6s linear var(--s) both;transform-origin:var(--o,50% 50%)}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.06)}}
+
+/* S4 command */
+.term{position:absolute;left:140px;top:380px;width:1640px;padding:40px 48px;background:#0e1d3b;border-color:#0e1d3b;color:#eaf0ff}
+.term .bar{display:flex;gap:10px;margin-bottom:26px}.term .bar i{width:16px;height:16px;border-radius:50%;background:#ff6b6b}.term .bar i+i{background:#ffd166}.term .bar i+i+i{background:#06d6a0}
+.term .cmd{font:600 60px var(--font-m);white-space:nowrap;clip-path:inset(0 100% 0 0);animation:type 1.6s steps(26) calc(var(--s) + .6s) both}
+@keyframes type{to{clip-path:inset(0 0 0 0)}}
+.term .cmd b{color:#7b9bff}
+.caret{display:inline-block;width:28px;height:62px;background:#7b9bff;vertical-align:-10px;margin-left:8px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.plan{position:absolute;left:140px;top:690px;width:1640px;padding:30px 44px;display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+.plan .lb{font:600 28px var(--font-m);color:var(--blue);letter-spacing:.06em}
+.chip{font:600 32px var(--font-b);background:var(--blue-soft);color:var(--ink);border-radius:12px;padding:10px 22px}
+.arrow{font:700 34px var(--font-b);color:var(--muted)}
+
+/* S6 gates */
+.gates{display:grid;grid-template-columns:repeat(3,1fr);gap:36px;margin-top:90px}
+.gate{padding:40px;border-color:var(--human);border-width:3px}
+.gate .n{width:84px;height:84px;border-radius:50%;background:var(--human);color:#fff;font:800 48px var(--font-d);display:grid;place-items:center}
+.gate h3{font:800 54px/1.15 var(--font-b);margin:26px 0 8px}
+.gate p{font:400 30px/1.4 var(--font-b);color:var(--muted);margin:0}
+
+/* S7 rules */
+.rules{display:grid;gap:30px;margin-top:80px}
+.rule{padding:30px 40px;display:flex;gap:30px;align-items:center}
+.rule .ck{flex:none;width:76px;height:76px;border-radius:50%;background:var(--good-soft);display:grid;place-items:center}
+.rule .ck svg{width:40px;height:40px;stroke:var(--good);stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.rule b{font:700 52px/1.2 var(--font-b)}
+.rule span{font:400 32px var(--font-b);color:var(--muted);margin-left:20px}
+
+/* S8 CTA */
+.s8 .end{position:absolute;left:0;right:0;top:170px;text-align:center}
+.s8 h1{font:800 250px/.95 var(--font-d);letter-spacing:-.04em;margin:0}
+.s8 h1 span{color:var(--blue)}
+.s8 .line{font:700 50px var(--font-b);margin-top:24px}
+.s8 .cmds{display:flex;flex-direction:column;align-items:center;gap:22px;margin-top:64px}
+.s8 code{font:600 46px var(--font-m);background:#0e1d3b;color:#eaf0ff;border-radius:14px;padding:18px 36px}
+.s8 code b{color:#7b9bff}
+.s8 .note{font:500 32px var(--font-b);color:var(--muted);margin-top:40px}
+
+.progress{position:absolute;left:0;bottom:0;height:8px;background:var(--blue);width:0;animation:prog 32s linear both}
+@keyframes prog{to{width:100%}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+  <!-- S1 0.0–3.6 logo -->
+  <section class="sc s1" style="--s:0s;--e:3.2s">
+    <div class="logo">
+      <div class="kicker k in" style="--d:.1s">ทีมพัฒนาซอฟต์แวร์ AI</div>
+      <h1 class="pop" style="--d:.3s">Muff<span>y</span></h1>
+      <div class="tag in" style="--d:.9s">ทีม AI <b>13 ตำแหน่ง</b> ใน Claude Code</div>
+    </div>
+  </section>
+
+  <!-- S2 3.6–7.4 problem -->
+  <section class="sc" style="--s:3.6s;--e:7s">
+    <div class="pad">
+      <div class="kicker in">ปัญหา</div>
+      <h2 class="in" style="--d:.1s">ใช้ AI เขียนโค้ด <em>แต่งานยังวุ่น?</em></h2>
+      <div class="probs">
+        <div class="prob card in" style="--d:.5s"><div class="x"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></div><h3>เดาความต้องการ</h3><p>ไม่มีใครถามก่อน เลยต้องรื้อทำใหม่</p></div>
+        <div class="prob card in" style="--d:.8s"><div class="x"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></div><h3>ส่งต่อแล้วข้อมูลหาย</h3><p>สรุปสั้นๆ ที่คนถัดไปเข้าใจผิด</p></div>
+        <div class="prob card in" style="--d:1.1s"><div class="x"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></div><h3>ตรวจงานแล้วแต่โชค</h3><p>แก้วนไปเรื่อยๆ จนกว่าคนจะสั่งหยุด</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S3 7.4–11.4 team -->
+  <section class="sc" style="--s:7.4s;--e:11s">
+    <div class="pad">
+      <div class="kicker in">ทางออก</div>
+      <h2 class="in" style="--d:.1s"><em>13 ตำแหน่ง</em> ทำงานเป็นทีม</h2>
+    </div>
+    <div class="shot in" style="--d:.4s;left:140px;top:400px;width:1640px;height:600px"><img src="../slides/slide-04.png" alt="" style="object-position:50% 55%"></div>
+  </section>
+
+  <!-- S4 11.4–15.6 one command -->
+  <section class="sc" style="--s:11.4s;--e:15.2s">
+    <div class="pad">
+      <div class="kicker in">ใช้ยังไง</div>
+      <h2 class="in" style="--d:.1s">บอกด้วย<em>ภาษาของคุณ</em></h2>
+    </div>
+    <div class="term card in" style="--d:.2s"><div class="bar"><i></i><i></i><i></i></div><div class="cmd"><b>/muffy</b> ทำระบบรีเซ็ตรหัสผ่าน<span class="caret"></span></div></div>
+    <div class="plan card in" style="--d:2.4s"><span class="lb">แผน</span><span class="chip">วิจัย</span><span class="arrow">→</span><span class="chip">ออกแบบ</span><span class="arrow">→</span><span class="chip">สร้าง</span><span class="arrow">→</span><span class="chip">ตรวจ</span><span class="arrow">→</span><span class="chip">ทดสอบ</span></div>
+  </section>
+
+  <!-- S5 15.6–19.8 flow -->
+  <section class="sc" style="--s:15.6s;--e:19.4s">
+    <div class="pad">
+      <div class="kicker in">ขั้นตอน</div>
+      <h2 class="in" style="--d:.1s">จากไอเดียถึง<em>งานที่ผ่านการทดสอบ</em></h2>
+    </div>
+    <div class="shot in" style="--d:.4s;left:140px;top:400px;width:1640px;height:600px"><img src="../slides/slide-05.png" alt="" style="object-position:50% 62%"></div>
+  </section>
+
+  <!-- S6 19.8–23.8 gates -->
+  <section class="sc" style="--s:19.8s;--e:23.4s">
+    <div class="pad">
+      <div class="kicker in">คุณคุมเกม</div>
+      <h2 class="in" style="--d:.1s">คุณอนุมัติ <em>3 จุด</em></h2>
+      <div class="gates">
+        <div class="gate card pop" style="--d:.5s"><div class="n">1</div><h3>แผนงาน</h3><p>เกณฑ์ว่า “เสร็จ” คืออะไร ก่อนเริ่มออกแบบ</p></div>
+        <div class="gate card pop" style="--d:.9s"><div class="n">2</div><h3>แบบหน้าจอ</h3><p>ยังไม่มีใครเขียนโค้ดจนกว่าคุณจะอนุมัติ</p></div>
+        <div class="gate card pop" style="--d:1.3s"><div class="n">3</div><h3>งานก่อนรับมอบ</h3><p>ดูผลทดสอบต่อหน้า แล้วค่อยรับงาน</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S7 23.8–27.4 rules -->
+  <section class="sc" style="--s:23.8s;--e:27s">
+    <div class="pad">
+      <div class="kicker in">กติกากันพลาด</div>
+      <h2 class="in" style="--d:.1s">ปลอดภัย<em>ตั้งแต่ต้น</em></h2>
+      <div class="rules">
+        <div class="rule card in" style="--d:.4s"><div class="ck"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-11"/></svg></div><b>แก้ไม่เกิน 3 รอบ</b><span>ติดซ้ำแล้วหยุดถามคุณ</span></div>
+        <div class="rule card in" style="--d:.7s"><div class="ck"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-11"/></svg></div><b>ไม่อ่านไฟล์ค่าลับ (.env)</b><span>ตรวจแค่ว่ามีค่าหรือไม่</span></div>
+        <div class="rule card in" style="--d:1s"><div class="ck"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-11"/></svg></div><b>ทีมไม่แตะระบบจริง</b><span>คุณปล่อยระบบเองจากคู่มือที่ได้</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S8 27.4–32 CTA -->
+  <section class="sc s8 last" style="--s:27.4s">
+    <div class="end">
+      <h1 class="pop" style="--d:.1s">Muff<span>y</span></h1>
+      <div class="line in" style="--d:.5s">บอกสิ่งที่อยากได้ ที่เหลือฝากทีม AI</div>
+      <div class="cmds">
+        <code class="in" style="--d:1s"><b>/plugin</b> install muffy@muffy</code>
+        <code class="in" style="--d:1.3s"><b>/muffy</b> ทำระบบรีเซ็ตรหัสผ่าน</code>
+      </div>
+      <div class="note in" style="--d:1.8s">Claude Code plugin · Node 18+</div>
+    </div>
+  </section>
+
+  <div class="progress"></div>
+</div>
+<script>
+// Fit the 1920x1080 stage to the window. capture.mjs sets the viewport to 1920x1080, so the scale is 1 there.
+function fit(){var k=Math.min(innerWidth/1920,innerHeight/1080);document.getElementById('stage').style.transform='translate(-50%,-50%) scale('+k+')';}
+addEventListener('resize',fit);fit();
+// Used by capture.mjs: pause every animation and show the frame at t seconds.
+window.seek=function(t){document.getAnimations().forEach(function(a){a.pause();a.currentTime=t*1000;});};
+</script>
+</body>
+</html>
