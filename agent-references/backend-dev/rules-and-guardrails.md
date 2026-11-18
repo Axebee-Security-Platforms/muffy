@@ -8,8 +8,8 @@
 - **Small files, any language**: split by responsibility (one module per concern: entry/wiring, handlers, business rules, data access, types, errors, config; tests in their own files). No source file you write or edit passes ~400 lines (tests ~600); plan the file layout before coding, never dump a feature into one file or grow a file already over the cap: extract instead. Applies to every stack, including ones with no stack file; a stack file only says how that language lays out modules
 
 ### Anti-slop
-- Code must read like the surrounding code: same naming, structure, comment density and idioms as existing files
-- Comment only the non-obvious "why"; no comments restating code, no long docstrings repeating the signature, no banner/section comments, no stray TODOs
+- Code must read like the surrounding code: same naming, structure and idioms as existing files
+- **No comments except function name and function description.** The only comment allowed is the one that states a function's name and what it does (a doc comment on the function). No inline comments, no "why" comments, no banner/section comments, no commented-out code, no TODOs. Express intent through names and structure instead. A comment already in a file you edit stays unless your change removes the code it sits on
 - Don't add abstractions, interfaces, config, flags or error handling "just in case" that the contract/AC doesn't require; no broad catches that swallow errors; no fallbacks that hide failures
 - No dead code, debug print/log, empty or placeholder files; don't stub something and call it done, if an AC can't be proven, report that honestly
 - Tests must check real behavior, not re-assert the implementation or mock until nothing is left to test; test names describe behavior
