@@ -1,6 +1,6 @@
 {
   "name": "muffy",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Hub-and-spoke subagent team: research, plan, design, build, review and QA a feature to a tested branch. Never deploys.",
   "author": {
     "name": "HarmonyX"
