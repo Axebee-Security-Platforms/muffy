@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../skills/muffy/scripts/schema.mjs';
-import { simulate, chooseEffort, spawnProfile, MODELS, LEVELS, LOOP_LIMIT, REPEAT_LIMIT, FIX_MAX_FILES, LITE_MAX_FILES, NEVER_SKIP, LANE_SKIPS, defaultEffort, PROTECTED_ROLES, STALLED_AFTER, smokeRequired, SMOKE_TRIGGERS } from '../skills/muffy/scripts/next-action.mjs';
+import { simulate, chooseEffort, spawnProfile, MODELS, OPUS_ROLES, OPUS_ON_HIGH_IMPACT, LEVELS, LOOP_LIMIT, REPEAT_LIMIT, FIX_MAX_FILES, LITE_MAX_FILES, NEVER_SKIP, LANE_SKIPS, defaultEffort, PROTECTED_ROLES, STALLED_AFTER, smokeRequired, SMOKE_TRIGGERS } from '../skills/muffy/scripts/next-action.mjs';
 import { runFixLaneEvals } from './lib/fix-lane-evals.mjs';
 import { runOwnershipEvals } from './lib/ownership-evals.mjs';
 import { runLiteLaneEvals } from './lib/lite-lane-evals.mjs';
@@ -249,11 +249,16 @@ check('effort-doc: scenarios cover every role', roles.every((r) => scenarios.som
     ['stalled blocker -> raised', sp(mk('stalled', { ...plain, 'checkpoint.md': '## Open blockers\n- B-3 open\n\n## History\n- r1 rejected B-3\n- r2 rejected B-3\n' }), 'backend-dev', 3), { effort: 'high' }],
     ['protected role never lowered or moved to haiku', sp(mk('arch', { ...plain, ...reject([{ id: 'B-1', problem: 'x', file: 'contract.md:3', owner: 'Architect' }]) }), 'architect', 2), { effort: 'high', model: 'sonnet' }],
     ['--force overrides a signal the files got wrong', sp(fixtureDir, 'backend-dev', 1, { force: { highImpact: false } }), { effort: 'medium' }],
+    ['code-reviewer on high-impact contract -> opus', sp(fixtureDir, 'code-reviewer'), { effort: 'high', model: 'opus' }],
+    ['code-reviewer on plain task -> sonnet', sp(mk('rev-plain', plain), 'code-reviewer'), { effort: 'high', model: 'sonnet' }],
+    ['code-reviewer high-impact forced off -> sonnet', sp(fixtureDir, 'code-reviewer', 1, { force: { highImpact: false } }), { model: 'sonnet' }],
+    ['code-reviewer high-impact outside production -> sonnet', sp(fixtureDir, 'code-reviewer', 1, { mode: 'economy' }), { model: 'sonnet' }],
+    ['other role on high-impact never opus', sp(fixtureDir, 'architect'), { model: 'sonnet' }],
     ['qa re-run only -> haiku', spawnProfile({ role: 'qa-tester', step: '7', round: 2, teamDir: mk('qa', plain), flags: { rerunOnly: true } }), { model: 'haiku', effort: 'low' }],
   ];
   for (const [name, out, want] of cases) {
     check(`spawn-profile: ${name}`, Object.entries(want).every(([k, v]) => out[k] === v), `got model=${out.model} effort=${out.effort} (${out.reason}; ${out.modelReason})`);
-    check(`spawn-profile: ${name} stays within ${MODELS.join('/')}`, MODELS.includes(out.model) && LEVELS.includes(out.effort));
+    check(`spawn-profile: ${name} stays within ${MODELS.join('/')}`, (MODELS.includes(out.model) || (out.model === 'opus' && (OPUS_ROLES.includes(out.role ?? '') || name.startsWith('code-reviewer')))) && LEVELS.includes(out.effort));
   }
   const env = spawnSync(process.execPath, [rel('skills/muffy/scripts/make-envelope.mjs'), '--role', 'backend-dev', '--step', '4', '--round', '2', '--task', 'x', '--brain', join(tmp, 'exact', 'brain'), '--team-dir', join(tmp, 'exact'), '--goal', 'Fix it', '--read', 'ac.md', '--write', 'src/a.ts'], { encoding: 'utf8' });
   check('spawn-profile: make-envelope prints the spawn line on stderr and keeps stdout the prompt', env.status === 0 && env.stderr.includes('Spawn: model=haiku effort=low') && env.stderr.includes('Run profile line:') && !env.stdout.includes('Spawn:'), env.stderr);
@@ -276,6 +281,8 @@ check('effort-doc: scenarios cover every role', roles.every((r) => scenarios.som
   check('drift: run-profile.md fix-lane skips match LANE_SKIPS.fix', JSON.stringify(laneSkips(/fix lane .*?which skips (.+?), adds/)) === JSON.stringify(noGate(LANE_SKIPS.fix)));
   check('drift: run-profile.md internal-scope skips match LANE_SKIPS.lite', JSON.stringify(laneSkips(/internal scope, which skips (.+?) and starts/)) === JSON.stringify(noGate(LANE_SKIPS.lite)));
   check('drift: token-discipline.md allows exactly MODELS', tokDoc.includes(`only \`${MODELS[0]}\` and \`${MODELS[1]}\` are allowed`));
+  check('drift: token-discipline.md names the opus-on-high-impact roles', OPUS_ON_HIGH_IMPACT.every((r) => tokDoc.includes(`\`${r}\`, which may run on \`opus\` only when the High impact signal`)));
+  check('drift: opus-on-high-impact roles are not lowerable', OPUS_ON_HIGH_IMPACT.every((r) => PROTECTED_ROLES.includes(r)));
   check('drift: negative control, a changed number is caught', !fixDoc.includes(`≤ ${FIX_MAX_FILES + 1} source files`));
 }
 

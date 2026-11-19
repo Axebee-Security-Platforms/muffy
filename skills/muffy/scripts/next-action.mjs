@@ -313,6 +313,7 @@ export function chooseEffort({ role, mode = 'production', signals = {} }) {
 
 export const MODELS = ['haiku', 'sonnet']; // never opus or fable ...
 export const OPUS_ROLES = ['auditor']; // ... except the auditor, which runs on a different model from the debugger it audits (token-discipline.md)
+export const OPUS_ON_HIGH_IMPACT = ['code-reviewer']; // ... and these roles, raised to opus only when the high-impact signal holds in production mode (token-discipline.md)
 export const ROLE_OWNER = { 'frontend-dev': 'FE', 'backend-dev': 'BE', 'docs-writer': 'Docs', devops: 'Devops', architect: 'Architect', designer: 'Designer', 'product-manager': 'PM', researcher: 'Researcher' };
 export const HIGH_IMPACT = /\b(auth\w*|login|password|oauth|jwt|payments?|billing|stripe|migrations?|secrets?|api[ _-]?keys?|credentials?)\b/i;
 const defaultModel = (role) =>
@@ -371,6 +372,9 @@ export function spawnProfile({ role, step, round = 1, teamDir, brain, mode = 'pr
   if (haikuCase && !protectedRole) {
     if (haikuFailed) modelReason = `kept ${model}: project.md Lessons records haiku failing for ${role}`;
     else { model = 'haiku'; modelReason = haikuCase; }
+  }
+  if (mode === 'production' && OPUS_ON_HIGH_IMPACT.includes(role) && signals.highImpact) {
+    model = 'opus'; modelReason = 'high-impact: auth, payments, data migrations or secrets';
   }
 
   const used = Object.entries(signals).filter(([k, v]) => (k === 'stalledRounds' ? v >= STALLED_AFTER : v)).map(([k, v]) => (k === 'stalledRounds' ? `stalled ${v}` : k));
