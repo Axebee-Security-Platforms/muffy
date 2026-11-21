@@ -9,6 +9,12 @@
 //   gate   the user's answer at a human gate (2b, 3c): approve (needs the pause saved and the gate summary ready),
 //          reject (keeps the pause), skip (needs --reason). Writes `gate <id> passed|not passed|skipped` to ## Status
 //   profile  the lane line first in ## Run profile (`lane: <id>[ (<scope>)] · skipped …`, lanes.mjs), replacing an older one
+//   ask    a named pause about to ask (references/headless.md). Not headless → `next=ask-user` (AskUserQuestion as
+//          before, nothing written). Headless → rule H2 may pass it (`auto: … · rule H2` in ## Status), else the
+//          questions the Orchestrator put in .team/<task>/gate.json are validated and completed (gate, task,
+//          created_at), the pause line is set (replaced, never a second one) and `muffy-status: waiting:<gate>` printed
+//   answer  resume: consume `<gate> answered: <answer> by <who> (<source>) <ISO time>` for the gate in gate.json,
+//          record it (gate 2b/3c, audit 4b risk), clear the pause, mark the line `answered (used):`, delete gate.json
 // Every command runs check-checkpoint.mjs afterwards and fails with its errors.
 //
 // Usage:
@@ -23,9 +29,13 @@
 //   node checkpoint.mjs gate   <.team/<task>> 2b|3c skip    --reason "<why no gate>"
 //   node checkpoint.mjs profile <.team/<task>> feature|fix|change [--scope <scope>] [--until <step>]   (scopes: fix bug|cosmetic; change internal|ui-only|ui+logic|logic-only)
 //                               [--skip 3d,designer]
+//   node checkpoint.mjs ask    <.team/<task>> <pause id> [--until "<condition>"] [--triage-passed] [--ac-from-request]
+//                              [--scope-change] [--verdict need-validation|reject]     (env MUFFY_HEADLESS, _POLICY, MUFFY_TRIGGERED_BY)
+//   node checkpoint.mjs answer <.team/<task>> [--plan docs/plan/<task>.md]
 // Prints one verdict line. Exit 0 = written and checked, 1 = written but check-checkpoint failed, 2 = usage or input error.
-import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync, rmSync } from 'node:fs';
+import { basename, join, relative, resolve } from 'node:path';
+import { gatePolicy, validateGate, findAnswer, auditAnswer, gateAnswer, STATUS_LINE } from './headless.mjs';
 import { fileURLToPath } from 'node:url';
 import { checkTask } from './check-checkpoint.mjs';
 import { LOOP_LIMIT } from './next-action.mjs';
@@ -33,7 +43,7 @@ import { GATES, PAUSE_OF, gateState } from './gate-rules.mjs';
 import { gate2b, gate3c } from './gate-summary.mjs';
 import { laneSpec, skipsOf, neverSkipOf, formatRunProfile, isLaneLine, parseRunProfile } from './lanes.mjs';
 
-export const PAUSES = ['scope', 'scope-upgrade', 'onboard-review', 'todo-review', 'plan-review', 'design-review', 'full-regression', 'human-gate'];
+export const PAUSES = ['scope', 'scope-upgrade', 'onboard-review', 'todo-review', 'plan-review', 'design-review', 'full-regression', 'audit', 'escalation', 'question', 'human-gate'];
 const REJECTING = new Set(['Reject', 'Fail']);
 const DEF = /^\[([A-Za-z0-9.-]+)\]:\s*\S+\s*$/;
 
@@ -238,6 +248,79 @@ export function recordGate(taskDir, gate, action, { by, reason, plan } = {}) {
   return `${line} (gate state now ${gateState(render(cp), gate)})`;
 }
 
+/* ---------- headless gates (references/headless.md) ---------- */
+
+const statusOf = (cpPath) => parse(readFileSync(cpPath, 'utf8')).sections.find((s) => s.name === 'Status')?.body ?? [];
+
+// A pause about to ask. Returns { action: 'interactive' | 'auto' | 'ask', line?, reason?, gateFile? }.
+export function askGate(taskDir, gate, { env = {}, facts = {}, until, now = new Date() } = {}) {
+  if (!PAUSES.includes(gate)) throw new Error(`pause:${gate} is not a named pause (${PAUSES.join(', ')})`);
+  const cpPath = join(taskDir, 'checkpoint.md');
+  if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
+  const gateFile = join(taskDir, 'gate.json');
+  const policy = gatePolicy(gate, env, { ...facts, status: statusOf(cpPath) });
+  if (policy.action === 'interactive') return policy;
+
+  if (policy.action === 'auto') {
+    const cp = parse(readFileSync(cpPath, 'utf8'));
+    const kept = body(cp, 'Status').filter((l) => !l.includes(`paused at pause:${gate} `));
+    replaceBody(cp, 'Status', [...kept, `- ${policy.line} · ${now.toISOString()}`]);
+    writeFileSync(cpPath, render(cp));
+    if (existsSync(gateFile)) rmSync(gateFile);
+    return policy;
+  }
+
+  if (!existsSync(gateFile)) throw new Error(`ask: headless, ${policy.reason}. Write the AskUserQuestion input ({ "questions": [...] }) to ${gateFile} first`);
+  let draft;
+  try { draft = JSON.parse(readFileSync(gateFile, 'utf8')); } catch (e) { throw new Error(`ask: ${gateFile} is not JSON (${e.message})`); }
+  const out = { gate, task: basename(resolve(taskDir)), created_at: now.toISOString(), questions: Array.isArray(draft) ? draft : draft.questions };
+  const errs = validateGate(out);
+  if (errs.length) throw new Error(`ask: gate.json does not match the AskUserQuestion shape: ${errs.join('; ')}`);
+  writeFileSync(gateFile, `${JSON.stringify(out, null, 2)}\n`);
+  setPause(taskDir, gate, until?.trim() || 'a person answers gate.json');
+  return { ...policy, gateFile, statusLine: STATUS_LINE(gate) };
+}
+
+// Resume: the answer to the gate in gate.json, if a person wrote one. Returns { state: 'none' | 'waiting' | 'answered', … }.
+export function consumeAnswer(taskDir, { plan } = {}) {
+  const cpPath = join(taskDir, 'checkpoint.md');
+  const gateFile = join(taskDir, 'gate.json');
+  if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
+  if (!existsSync(gateFile)) return { state: 'none' };
+  const g = JSON.parse(readFileSync(gateFile, 'utf8'));
+  const a = findAnswer(statusOf(cpPath), g.gate, g.created_at);
+  if (!a) return { state: 'waiting', gate: g.gate, statusLine: STATUS_LINE(g.gate) };
+
+  const by = `${a.answer} · ${a.by} (${a.source})`;
+  let event = null;
+  const gateId = Object.keys(PAUSE_OF).find((k) => PAUSE_OF[k] === g.gate);
+  if (gateId) {
+    const act = gateAnswer(a.answer);
+    if (!act) throw new Error(`answer: "${a.answer}" is neither approve nor reject for gate ${gateId}`);
+    recordGate(taskDir, gateId, act, { by, plan });
+    event = act;
+  } else if (g.gate === 'audit') {
+    event = auditAnswer(a.answer);
+    if (!event) throw new Error(`answer: "${a.answer}" is not more-info, accept-risk or cancel`);
+    clearPause(taskDir);
+    if (event === 'accept-risk') {
+      const cp = parse(readFileSync(cpPath, 'utf8'));
+      replaceBody(cp, 'Status', [...body(cp, 'Status'), `- audit 4b: risk accepted · user: "${by}"`]);
+      writeFileSync(cpPath, render(cp));
+    }
+  } else {
+    clearPause(taskDir);
+  }
+
+  const cp = parse(readFileSync(cpPath, 'utf8'));
+  const status = body(cp, 'Status');
+  const at = status.findLastIndex((l) => l === a.line);
+  if (at >= 0) status[at] = status[at].replace(' answered:', ' answered (used):');
+  writeFileSync(cpPath, render(cp));
+  rmSync(gateFile);
+  return { state: 'answered', gate: g.gate, answer: a.answer, by: a.by, source: a.source, event };
+}
+
 /* ---------- CLI ---------- */
 
 function opts(argv) {
@@ -254,13 +337,26 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const [cmd, ...rest] = process.argv.slice(2);
   const { o, pos } = opts(rest);
   const taskDir = pos[0];
-  if (!['round', 'pause', 'unpause', 'spawn', 'gate', 'profile'].includes(cmd) || !taskDir) {
-    console.error('usage: checkpoint.mjs round|pause|unpause|spawn|gate|profile <.team/<task>> ... (see the header of this file)');
+  if (!['round', 'pause', 'unpause', 'spawn', 'gate', 'profile', 'ask', 'answer'].includes(cmd) || !taskDir) {
+    console.error('usage: checkpoint.mjs round|pause|unpause|spawn|gate|profile|ask|answer <.team/<task>> ... (see the header of this file)');
     process.exit(2);
   }
   let said;
+  let tail = [];
   try {
-    if (cmd === 'profile') said = setProfile(taskDir, pos[1], { scope: typeof o.scope === 'string' ? o.scope : undefined, until: typeof o.until === 'string' ? o.until : undefined, skip: typeof o.skip === 'string' ? o.skip.split(',').map((s) => s.trim()).filter(Boolean) : [] });
+    if (cmd === 'ask') {
+      const facts = { triagePassed: 'triage-passed' in o, acFromRequest: 'ac-from-request' in o, scopeChange: 'scope-change' in o, verdict: typeof o.verdict === 'string' ? o.verdict : undefined };
+      const r = askGate(taskDir, pos[1], { env: process.env, facts, until: typeof o.until === 'string' ? o.until : undefined });
+      if (r.action === 'interactive') { console.log('next=ask-user (not headless: AskUserQuestion as before; nothing written)'); process.exit(0); }
+      if (r.action === 'auto') { said = r.line; tail = ['next=continue']; }
+      else { said = `gate.json written · paused at pause:${pos[1]} (${r.reason})`; tail = ['next=stop: commit .team/<task>/ on the task branch, end the final message with the line below', r.statusLine]; }
+    } else if (cmd === 'answer') {
+      const r = consumeAnswer(taskDir, { plan: typeof o.plan === 'string' ? o.plan : undefined });
+      if (r.state === 'none') { console.log('next=none (no gate.json: nothing headless is waiting)'); process.exit(0); }
+      if (r.state === 'waiting') { console.log(`next=stop (pause:${r.gate} has no answer yet: do not ask, do not answer it yourself)\n${r.statusLine}`); process.exit(0); }
+      said = `pause:${r.gate} answered: ${r.answer} by ${r.by} (${r.source}); gate.json removed`;
+      tail = [`answer=${r.event ?? r.answer}`, 'next=continue'];
+    } else if (cmd === 'profile') said = setProfile(taskDir, pos[1], { scope: typeof o.scope === 'string' ? o.scope : undefined, until: typeof o.until === 'string' ? o.until : undefined, skip: typeof o.skip === 'string' ? o.skip.split(',').map((s) => s.trim()).filter(Boolean) : [] });
     else if (cmd === 'gate') said = recordGate(taskDir, pos[1], pos[2], { by: o.by, reason: o.reason, plan: typeof o.plan === 'string' ? o.plan : undefined });
     else if (cmd === 'round') {
       if (!o.step || !o.round || !o.handoff || !o.summary) throw new Error('round: --step, --round, --handoff and --summary are required');
@@ -280,4 +376,5 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
     process.exit(1);
   }
   console.log(`OK ${said}`);
+  for (const l of tail) console.log(l);
 }

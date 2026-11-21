@@ -35,6 +35,8 @@ Load lazily: open a reference only at the step that needs it; subagents do the s
 
 Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup and Run profile: [references/resume.md](references/resume.md).
 
+**Headless** (env `MUFFY_HEADLESS=1`, a `claude -p` run with no question tool): read [references/headless.md](references/headless.md) before the first question. Every question becomes `.team/<task>/gate.json` plus `checkpoint.mjs ask`; never `AskUserQuestion`, never an answer of your own.
+
 - **Menu**: a bare `/muffy` (no request) or `/muffy todo`, and resume when it cannot pick one task: [menu.md](references/menu.md)
 - **Route**: first, on a free-text request; show the plan before spawning (`next-action.mjs plan-card`): [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy onboard | present | diagram | resume <task> | fix | lite | redesign | feature`): the command is the route, so open that mode's reference, and a lane still shows its plan card
 - **Todo**: the menu's list of tasks in `.team` that are not done, read-only: [todo.md](references/todo.md)

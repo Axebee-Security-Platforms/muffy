@@ -12,6 +12,7 @@ A new session has no memory of the run. Everything it needs is in `.team/<task>/
    - **Index first**: `<brain>/project.md` → `## Tasks`. Rows marked `in progress` are the unfinished tasks; no checkpoint is opened to learn this
    - **No vault or no project.md**: `grep -m1 "^Updated:" .team/*/checkpoint.md` (also under `.worktrees/*/`), then read only the `## Status` of those; a task whose `## Status` says `closed` is finished
    - One unfinished task → use it. Several, or none → show the menu ([menu.md](menu.md)), which lists them and asks what to do
+   - **A headless answer first**: if `.team/<task>/gate.json` exists, run `node "<muffy>/scripts/checkpoint.mjs" answer .team/<task>` before anything else and act on it ([headless.md](headless.md#answers-and-resume)): a consumed answer is never asked again; no answer yet → stop with `muffy-status: waiting:<gate>`
 2. Read only that task's `checkpoint.md` and `<brain>/tasks/<task>.md`. The first line of `## Run profile` names the lane (`lane: fix`, `lane: change (<scope>)`; older checkpoints wrote `lane: lite`, `lane: redesign (<scope>)`, `fix:`, `lite:` or `redesign lane (<scope>):`, which read as the change lane): read [fix-profile.md](fix-profile.md) or [change-profile.md](change-profile.md) before continuing. `lane: feature` or no lane line is the full flow. Do not replay old conversations or re-read finished artifacts
 3. Check the repo against the checkpoint: `git status --short`, `git branch --list '*/<task>'`, `git worktree list`. The checkpoint is a cache: if it disagrees with an ADR, `contract.md`, a hand-off file or git, the other source wins and the checkpoint is corrected. A worktree the next step needs was removed but its branch exists → add it back with no `-b`: `git worktree add .worktrees/<role>-<task> <role>/<task>`, then `sync-worktree.mjs <path> --check`
 4. Missing or stale `.team/` (nothing committed, wrong branch) → look on the task's branches (`ops/`, `fe/`, `be/`, `feature/`) with `git log --all -- .team/<task>`, tell the user which branch holds it, and ask before switching
@@ -30,3 +31,5 @@ Before a pause, an escalation, a long conversation or any stop the user may cont
 ```
 /muffy resume <task>
 ```
+
+5. Headless (`MUFFY_HEADLESS=1`) at a pause: the very last line is `muffy-status: waiting:<gate>`, as `checkpoint.mjs ask` printed it ([headless.md](headless.md))
