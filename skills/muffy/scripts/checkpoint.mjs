@@ -291,17 +291,19 @@ export function consumeAnswer(taskDir, { plan, now = new Date() } = {}) {
   const a = findAnswer(statusOf(cpPath), g.gate);
   if (!a) return { state: 'waiting', gate: g.gate, statusLine: STATUS_LINE(g.gate) };
 
+  const answers = splitAnswers(a.answer, g.questions ?? []);
+  const first = answers[0].answer;
   const by = `${a.answer} · ${a.by} (${a.source})`;
   let event = null;
   const gateId = Object.keys(PAUSE_OF).find((k) => PAUSE_OF[k] === g.gate);
   if (gateId) {
-    const act = gateAnswer(a.answer);
-    if (!act) throw new Error(`answer: "${a.answer}" is neither approve nor reject for gate ${gateId}`);
+    const act = gateAnswer(first);
+    if (!act) throw new Error(`answer: "${first}" is neither approve nor reject for gate ${gateId}`);
     recordGate(taskDir, gateId, act, { by, plan });
     event = act;
   } else if (g.gate === 'audit') {
-    event = auditAnswer(a.answer);
-    if (!event) throw new Error(`answer: "${a.answer}" is not more-info, accept-risk or cancel`);
+    event = auditAnswer(first);
+    if (!event) throw new Error(`answer: "${first}" is not more-info, accept-risk or cancel`);
     clearPause(taskDir);
     if (event === 'accept-risk') {
       const cp = parse(readFileSync(cpPath, 'utf8'));
@@ -316,7 +318,19 @@ export function consumeAnswer(taskDir, { plan, now = new Date() } = {}) {
   replaceBody(cp, 'Status', [...body(cp, 'Status'), `- ${CONSUMED(g.gate, now.toISOString())}`]);
   writeFileSync(cpPath, render(cp));
   rmSync(gateFile);
-  return { state: 'answered', gate: g.gate, answer: a.answer, by: a.by, source: a.source, event };
+  return { state: 'answered', gate: g.gate, answer: a.answer, answers, by: a.by, source: a.source, event };
+}
+
+// One answer line holds every question's answer in question order, joined by ` | `; a multiSelect answer joins
+// its labels with `, `. A part count other than the question count is refused before anything is written.
+export function splitAnswers(answer, questions) {
+  const parts = answer.split(' | ').map((p) => p.trim());
+  const n = Math.max(questions.length, 1);
+  if (parts.length !== n) throw new Error(`answer: ${parts.length} part(s) separated by " | " for ${n} question(s) in gate.json; write one part per question, in order`);
+  return parts.map((p, i) => {
+    const q = questions[i] ?? {};
+    return { header: q.header ?? '', question: q.question ?? '', answer: p, labels: q.multiSelect ? p.split(',').map((l) => l.trim()).filter(Boolean) : [p] };
+  });
 }
 
 /* ---------- CLI ---------- */
@@ -353,7 +367,9 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
       if (r.state === 'none') { console.log('next=none (no gate.json: nothing headless is waiting)'); process.exit(0); }
       if (r.state === 'waiting') { console.log(`next=stop (pause:${r.gate} has no answer yet: do not ask, do not answer it yourself)\n${r.statusLine}`); process.exit(0); }
       said = `pause:${r.gate} answered: ${r.answer} by ${r.by} (${r.source}); gate.json removed`;
-      tail = [`answer=${r.event ?? r.answer}`, 'next=continue'];
+      tail = r.answers.length > 1
+        ? [...r.answers.map((x, i) => `answer.${i + 1}=${x.header}: ${x.answer}`), ...(r.event ? [`answer=${r.event}`] : []), 'next=continue']
+        : [`answer=${r.event ?? r.answer}`, 'next=continue'];
     } else if (cmd === 'profile') said = setProfile(taskDir, pos[1], { scope: typeof o.scope === 'string' ? o.scope : undefined, until: typeof o.until === 'string' ? o.until : undefined, skip: typeof o.skip === 'string' ? o.skip.split(',').map((s) => s.trim()).filter(Boolean) : [] });
     else if (cmd === 'gate') said = recordGate(taskDir, pos[1], pos[2], { by: o.by, reason: o.reason, plan: typeof o.plan === 'string' ? o.plan : undefined });
     else if (cmd === 'round') {
