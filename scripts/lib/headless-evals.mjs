@@ -152,6 +152,42 @@ export function runHeadlessEvals({ check, root }) {
     delete env.MUFFY_HEADLESS;
     const inter = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'checkpoint.mjs'), 'ask', dir, 'scope', '--triage-passed', '--ac-from-request'], { encoding: 'utf8', env });
     check('cli ask: not headless prints next=ask-user', inter.status === 0 && inter.stdout.startsWith('next=ask-user'), inter.stdout + inter.stderr);
+
+    /* several questions in one gate.json: one answer line, parts joined by " | " in question order */
+    const q = (header, multiSelect = false) => ({ question: `${header}?`, header, multiSelect, options: [{ label: 'A', description: '' }, { label: 'B', description: '' }] });
+    const multi = () => writeFileSync(gateFile, JSON.stringify({ questions: [q('Plan'), q('Roles', true), q('Target')] }));
+    const cliAnswer = () => spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'checkpoint.mjs'), 'answer', dir], { encoding: 'utf8' });
+    write(CP('- stage: setup'));
+    multi();
+    askGate(dir, 'scope', { env: HEADLESS, facts: SCOPE_OK, now });
+    write(`${read().trimEnd()}\n- scope answered: Go | FE + devops | Confirm by @kanata (Slack, via Terminus) 2026-11-21T14:00+07:00\n`);
+    const many = consumeAnswer(dir);
+    check('multi: each part maps to its question by position', many.state === 'answered' && many.answers.map((x) => `${x.header}=${x.answer}`).join(';') === 'Plan=Go;Roles=FE + devops;Target=Confirm' && pausedLines() === 0 && !existsSync(gateFile), JSON.stringify(many.answers));
+
+    write(CP('- stage: setup'));
+    multi();
+    askGate(dir, 'scope', { env: HEADLESS, facts: SCOPE_OK, now });
+    write(`${read().trimEnd()}\n- scope answered: Go | FE, devops | Confirm by @kanata (Slack) 2026-11-21T14:00+07:00\n`);
+    const ms = consumeAnswer(dir);
+    check('multi: multiSelect labels stay joined with ", " inside one part', ms.answers[1].answer === 'FE, devops' && JSON.stringify(ms.answers[1].labels) === '["FE","devops"]' && ms.answers.length === 3);
+
+    write(CP('- stage: setup'));
+    multi();
+    askGate(dir, 'scope', { env: HEADLESS, facts: SCOPE_OK, now });
+    write(`${read().trimEnd()}\n- scope answered: Go | Confirm by @kanata (Slack) 2026-11-21T14:00+07:00\n`);
+    const before = read();
+    const short = cliAnswer();
+    check('multi: a part count that does not match the questions exits 2, pause and gate.json stay', short.status === 2 && /2 part\(s\).*3 question\(s\)/.test(short.stderr) && existsSync(gateFile) && read() === before && pausedLines() === 1, short.stdout + short.stderr);
+    write(`${read().trimEnd()}\n- scope answered: Go | FE | Confirm by @kanata (Slack) 2026-11-21T14:05+07:00\n`);
+    const ok3 = cliAnswer();
+    check('multi: the CLI prints one answer.<n> line per question', ok3.status === 0 && ok3.stdout.includes('answer.1=Plan: Go') && ok3.stdout.includes('answer.3=Target: Confirm'), ok3.stdout + ok3.stderr);
+
+    write(CP('- stage: setup'));
+    draft();
+    askGate(dir, 'scope', { env: HEADLESS, facts: SCOPE_OK, now });
+    write(`${read().trimEnd()}\n- scope answered: Go by @kanata (Slack) 2026-11-21T14:00+07:00\n`);
+    const one = cliAnswer();
+    check('multi: a single-question gate is unchanged (no pipe, answer=<label>)', one.status === 0 && one.stdout.includes('answer=Go') && !one.stdout.includes('answer.1='), one.stdout + one.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
