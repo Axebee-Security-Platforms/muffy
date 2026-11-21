@@ -120,6 +120,8 @@ Read the `audit` object in the 4b hand-off and route on it:
 
 `node "<muffy>/scripts/next-action.mjs" loop <hand-offs…> --profile fix` computes this: `accept`, `revalidate:debugger`, `ask:reject-options`, `rediagnose:debugger`, `proceed:risk-accepted` or `escalate:loop-limit`. A user answer is an event `{ "answer": "more-info" | "accept-risk" | "cancel" }` in a scenario.
 
+**Headless** (`MUFFY_HEADLESS=1`, [headless.md](headless.md)): on `revalidate:debugger` or `ask:reject-options`, first run `node "<muffy>/scripts/checkpoint.mjs" ask .team/<task> audit --verdict need-validation|reject` (the reject question drafted in `gate.json`). `next=continue` (rule H2, the first need-validation only) → re-run the debugger and the auditor; `next=stop` → stop at `pause:audit` with `muffy-status: waiting:audit`. Without `MUFFY_HEADLESS_POLICY=self-heal` a need-validation stops too.
+
 **Promote** also when step 4 changed more than 5 source files, or reports a blocker owned by `Architect`. Count from the diff, not from the agent's `paths_written`: `node "<muffy>/scripts/diff-signals.mjs" <base> <branch> --profile fix` exits 1 with `next=promote:full-flow` and one `reason:` line per broken limit (file count, dependency, devops-owned files, auth files, schema or migration). Switch the lane with `checkpoint.mjs profile .team/<task> feature` and record the reason in checkpoint `## Status` and the vault task note.
 
 ## Diagnose only

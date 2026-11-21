@@ -21,6 +21,7 @@ import { runEntryEvals } from './lib/entry-evals.mjs';
 import { runSpecialFlowsEvals } from './lib/special-flows-evals.mjs';
 import { runPendingEvals } from './lib/pending-evals.mjs';
 import { runGateEvals } from './lib/gate-evals.mjs';
+import { runHeadlessEvals } from './lib/headless-evals.mjs';
 import { runRouteEvals } from './lib/route-evals.mjs';
 import { runReviewBenchEvals } from './lib/review-bench-evals.mjs';
 import { runWorktreeEvals } from './lib/worktree-evals.mjs';
@@ -1141,6 +1142,9 @@ runPendingEvals({ check, root });
 
 /* 10. human gates (step-details 2b, 3c; hooks-enforcement §14): spawn rules, recorded answers, guard-gates */
 runGateEvals({ check, root });
+
+/* 10b. headless gates (references/headless.md): gate.json, rule H2, resume consumes the answer */
+runHeadlessEvals({ check, root });
 
 /* 11. worktree removal (step-details.md Step 10, closing.md step 5b): remove-worktrees.mjs on a temp git repo */
 await runWorktreeEvals({ check, root });
