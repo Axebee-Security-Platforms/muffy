@@ -18,5 +18,6 @@
   { "id": "frontend-exact-fix-lowers", "role": "frontend-dev", "signals": { "exactFix": true }, "expect": "low" },
   { "id": "product-manager-assumed-ac-raises", "role": "product-manager", "signals": { "assumedAc": true }, "expect": "medium" },
   { "id": "debugger-default", "role": "debugger", "signals": {}, "expect": "high" },
-  { "id": "auditor-never-lowered-in-production", "role": "auditor", "mode": "production", "signals": { "exactFix": true }, "expect": "high" }
+  { "id": "auditor-pinned-low", "role": "auditor", "mode": "production", "signals": { "exactFix": true }, "expect": "low" },
+  { "id": "auditor-pinned-low-high-impact", "role": "auditor", "mode": "production", "signals": { "highImpact": true, "assumedAc": true }, "expect": "low" }
 ]

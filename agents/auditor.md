@@ -7,7 +7,7 @@ description: >
   Verdict confirm, need-validation or reject. Do not use to fix code, diagnose or review a diff.
 tools: Read, Grep, Glob, Write, Bash
 model: opus
-effort: high
+effort: low
 ---
 
 # Auditor

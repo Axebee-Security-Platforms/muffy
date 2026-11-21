@@ -282,6 +282,7 @@ export function simulate(scenario) {
 
 export const LEVELS = ['low', 'medium', 'high'];
 export const PROTECTED_ROLES = ['code-reviewer', 'architect', 'devops', 'auditor']; // never below their default in production mode
+export const PINNED_EFFORT = { auditor: 'low' }; // always this effort, whatever the signals say: the auditor runs opus at low
 export const STALLED_AFTER = 2; // same blocker id open in this many consecutive rejections counts as stalled
 
 // Agent definitions sit at <root>/agents/ in this repo and at .claude/agents/ once installed: three levels up either way.
@@ -297,8 +298,9 @@ export function chooseEffort({ role, mode = 'production', signals = {} }) {
   const base = defaultEffort(role);
   const idx = LEVELS.indexOf(base);
   if (idx < 0) throw new Error(`no valid effort in agents/${role}.md`);
-  const protectedRole = mode === 'production' && PROTECTED_ROLES.includes(role);
+  const protectedRole = mode === 'production' && PROTECTED_ROLES.includes(role) && !PINNED_EFFORT[role];
 
+  if (PINNED_EFFORT[role]) return { effort: PINNED_EFFORT[role], base, reason: 'pinned' };
   if (signals.highImpact) return { effort: 'high', base, reason: 'high-impact' };
 
   const up = (signals.assumedAc ? 1 : 0) + ((signals.stalledRounds ?? 0) >= STALLED_AFTER ? 1 : 0);
