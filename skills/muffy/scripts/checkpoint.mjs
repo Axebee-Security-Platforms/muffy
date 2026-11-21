@@ -14,7 +14,7 @@
 //          questions the Orchestrator put in .team/<task>/gate.json are validated and completed (gate, task,
 //          created_at), the pause line is set (replaced, never a second one) and `muffy-status: waiting:<gate>` printed
 //   answer  resume: consume `<gate> answered: <answer> by <who> (<source>) <ISO time>` for the gate in gate.json,
-//          record it (gate 2b/3c, audit 4b risk), clear the pause, mark the line `answered (used):`, delete gate.json
+//          record it (gate 2b/3c, audit 4b risk), clear the pause, append `<gate> answer consumed`, delete gate.json
 // Every command runs check-checkpoint.mjs afterwards and fails with its errors.
 //
 // Usage:
@@ -35,7 +35,7 @@
 // Prints one verdict line. Exit 0 = written and checked, 1 = written but check-checkpoint failed, 2 = usage or input error.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync, rmSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
-import { gatePolicy, validateGate, findAnswer, auditAnswer, gateAnswer, STATUS_LINE } from './headless.mjs';
+import { gatePolicy, validateGate, findAnswer, auditAnswer, gateAnswer, STATUS_LINE, CONSUMED } from './headless.mjs';
 import { fileURLToPath } from 'node:url';
 import { checkTask } from './check-checkpoint.mjs';
 import { LOOP_LIMIT } from './next-action.mjs';
@@ -282,13 +282,13 @@ export function askGate(taskDir, gate, { env = {}, facts = {}, until, now = new 
 }
 
 // Resume: the answer to the gate in gate.json, if a person wrote one. Returns { state: 'none' | 'waiting' | 'answered', … }.
-export function consumeAnswer(taskDir, { plan } = {}) {
+export function consumeAnswer(taskDir, { plan, now = new Date() } = {}) {
   const cpPath = join(taskDir, 'checkpoint.md');
   const gateFile = join(taskDir, 'gate.json');
   if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
   if (!existsSync(gateFile)) return { state: 'none' };
   const g = JSON.parse(readFileSync(gateFile, 'utf8'));
-  const a = findAnswer(statusOf(cpPath), g.gate, g.created_at);
+  const a = findAnswer(statusOf(cpPath), g.gate);
   if (!a) return { state: 'waiting', gate: g.gate, statusLine: STATUS_LINE(g.gate) };
 
   const by = `${a.answer} · ${a.by} (${a.source})`;
@@ -313,9 +313,7 @@ export function consumeAnswer(taskDir, { plan } = {}) {
   }
 
   const cp = parse(readFileSync(cpPath, 'utf8'));
-  const status = body(cp, 'Status');
-  const at = status.findLastIndex((l) => l === a.line);
-  if (at >= 0) status[at] = status[at].replace(' answered:', ' answered (used):');
+  replaceBody(cp, 'Status', [...body(cp, 'Status'), `- ${CONSUMED(g.gate, now.toISOString())}`]);
   writeFileSync(cpPath, render(cp));
   rmSync(gateFile);
   return { state: 'answered', gate: g.gate, answer: a.answer, by: a.by, source: a.source, event };

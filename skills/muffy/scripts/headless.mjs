@@ -58,30 +58,34 @@ export function parseAnswer(line) {
   return { gate: m[1], answer: m[2].trim(), by: m[3].trim(), source: m[4].trim(), at: m[5] || null };
 }
 
-// An answer counts when it names this gate and is not older than the gate.json it answers (an answer with no time
-// is taken as it stands). The last one in ## Status wins. Consumed lines read `answered (used):` and never match again.
-export function findAnswer(status, gate, createdAt) {
+export const CONSUMED = (gate, at) => `${gate} answer consumed · ${at}`;
+const CONSUMED_RE = /^\s*(?:-\s*)?(?:pause:)?([a-z0-9-]+) answer consumed\b/;
+
+// The person's line is never edited (it is their record). An answer counts when it names this gate and comes after
+// the last `<gate> answer consumed` marker for it; the last such answer in ## Status wins.
+export function findAnswer(status, gate) {
   let found = null;
   status.forEach((line, index) => {
+    if (CONSUMED_RE.exec(line)?.[1] === gate) { found = null; return; }
     const a = parseAnswer(line);
-    if (!a || a.gate !== gate) return;
-    if (createdAt && a.at && !Number.isNaN(Date.parse(a.at)) && Date.parse(a.at) < Date.parse(createdAt)) return;
-    found = { ...a, index, line };
+    if (a && a.gate === gate) found = { ...a, index, line };
   });
   return found;
 }
 
+const END = '(?=$|[\\s,.·!:;)])';
+const starts = (words) => new RegExp(`^\\s*(?:${words.join('|')})${END}`, 'i');
+
 export function auditAnswer(answer) {
-  const a = answer.toLowerCase();
-  if (/accept|risk|go ahead|ยอมรับ/.test(a)) return 'accept-risk';
+  const a = answer.trim().toLowerCase();
+  if (/accept|go ahead|ยอมรับ/.test(a)) return 'accept-risk';
   if (/cancel|abort|ยกเลิก/.test(a)) return 'cancel';
   if (/more|info|evidence|re-?diagnose|ข้อมูล/.test(a)) return 'more-info';
   return null;
 }
 
 export const gateAnswer = (answer) => {
-  const a = answer.toLowerCase();
-  if (/^\s*(approve|approved|ok|yes|อนุมัติ|ผ่าน)\b/.test(a)) return 'approve';
-  if (/^\s*(reject|request changes|changes|no|ไม่ผ่าน|แก้)/.test(a)) return 'reject';
+  if (starts(['reject', 'rejected', 'request changes', 'changes', 'no', 'ไม่ผ่าน', 'ไม่อนุมัติ', 'ขอแก้', 'แก้']).test(answer)) return 'reject';
+  if (starts(['approve', 'approved', 'ok', 'yes', 'go', 'อนุมัติ', 'ผ่าน']).test(answer)) return 'approve';
   return null;
 };

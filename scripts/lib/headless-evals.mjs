@@ -10,7 +10,7 @@ import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { gatePolicy, validateGate, findAnswer, parseAnswer, AUTO_REDIAGNOSE } from '../../skills/muffy/scripts/headless.mjs';
+import { gatePolicy, validateGate, findAnswer, parseAnswer, gateAnswer, AUTO_REDIAGNOSE } from '../../skills/muffy/scripts/headless.mjs';
 import { askGate, consumeAnswer, setPause, PAUSES } from '../../skills/muffy/scripts/checkpoint.mjs';
 import { gateState, auditMissing } from '../../skills/muffy/scripts/gate-rules.mjs';
 
@@ -57,7 +57,8 @@ export function runHeadlessEvals({ check, root }) {
   /* answer lines */
   check('answer: the documented line parses', JSON.stringify(parseAnswer('- human-gate answered: Approve by @lead (Slack #prod-fix, via Terminus) 2026-11-21T04:00:00Z')) === JSON.stringify({ gate: 'human-gate', answer: 'Approve', by: '@lead', source: 'Slack #prod-fix, via Terminus', at: '2026-11-21T04:00:00Z' }));
   check('answer: the spike form (no time, pause: prefix allowed) parses', parseAnswer('pause:human-gate answered: APPROVE by @spike-tester (Slack ..., via Terminus)')?.answer === 'APPROVE');
-  check('answer: one older than gate.json or already used is ignored', findAnswer(['- scope answered: Go by @a (Slack) 2026-11-20T00:00:00Z', '- scope answered (used): Go by @a (Slack) 2026-11-22T00:00:00Z'], 'scope', '2026-11-21T00:00:00Z') === null);
+  check('answer: one above the last consumed marker for its gate is ignored', findAnswer(['- scope answered: Go by @a (Slack) 2026-11-20T00:00:00Z', '- scope answer consumed · 2026-11-20T01:00:00Z'], 'scope') === null && findAnswer(['- scope answer consumed · x', '- scope answered: Go by @b (Slack)'], 'scope')?.by === '@b');
+  check('answer: Thai and English labels map; "not now" is not a reject', gateAnswer('อนุมัติ') === 'approve' && gateAnswer('ไม่ผ่าน') === 'reject' && gateAnswer('Approve') === 'approve' && gateAnswer('Request changes') === 'reject' && gateAnswer('not now') === null);
 
   /* checkpoint.mjs ask / answer on a temp task */
   const tmp = mkdtempSync(join(tmpdir(), 'muffy-headless-'));
@@ -111,12 +112,12 @@ export function runHeadlessEvals({ check, root }) {
 
     /* resume */
     check('answer: no answer yet keeps waiting (nothing consumed, gate.json stays)', consumeAnswer(dir).state === 'waiting' && existsSync(gateFile) && pausedLines() === 1);
-    write(read().replace('## Status\n\n', '## Status\n\n- human-gate answered: Approve by @old (Slack) 2026-11-20T00:00:00Z\n'));
-    check('answer: an answer older than gate.json is not consumed', consumeAnswer(dir).state === 'waiting');
+    write(read().replace('## Status\n\n', '## Status\n\n- human-gate answered: Approve by @old (Slack) 2026-11-20T00:00:00Z\n- human-gate answer consumed · 2026-11-20T01:00:00Z\n'));
+    check('answer: an answer consumed at an earlier pause is not consumed again', consumeAnswer(dir).state === 'waiting');
     write(`${read().trimEnd()}\n- human-gate answered: Approve by @lead (Slack #prod-fix, via Terminus) 2026-11-21T06:00:00Z\n`);
     const done = consumeAnswer(dir);
     check('answer: consumes the answer, clears the pause line, removes gate.json', done.state === 'answered' && done.answer === 'Approve' && done.by === '@lead' && pausedLines() === 0 && !existsSync(gateFile));
-    check('answer: the answer stays on record, marked used, and is not consumed twice', read().includes('human-gate answered (used): Approve by @lead') && consumeAnswer(dir).state === 'none');
+    check('answer: the person line stays untouched, a consumed marker follows, not consumed twice', read().includes('- human-gate answered: Approve by @lead (Slack #prod-fix, via Terminus) 2026-11-21T06:00:00Z') && /human-gate answer consumed · /.test(read()) && consumeAnswer(dir).state === 'none');
     check('answer: with no gate.json resume does nothing headless', consumeAnswer(dir).state === 'none');
 
     write(CP('- stage: audit'));
@@ -142,6 +143,11 @@ export function runHeadlessEvals({ check, root }) {
     draft();
     const cli = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'checkpoint.mjs'), 'ask', dir, 'human-gate'], { encoding: 'utf8', env: { ...process.env, ...SELF_HEAL } });
     check('cli ask: headless ends with muffy-status: waiting:<gate>', cli.status === 0 && cli.stdout.trim().split(/\r?\n/).at(-1) === 'muffy-status: waiting:human-gate', cli.stdout + cli.stderr);
+    write(`${read().trimEnd()}
+- human-gate answered: Approve by @lead (Slack) 2026-11-21T07:00:00Z
+`);
+    const ans = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'checkpoint.mjs'), 'answer', dir], { encoding: 'utf8' });
+    check('cli answer: consumes through the CLI and the checkpoint still checks', ans.status === 0 && ans.stdout.includes('next=continue') && !existsSync(gateFile), ans.stdout + ans.stderr);
     const env = { ...process.env };
     delete env.MUFFY_HEADLESS;
     const inter = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'checkpoint.mjs'), 'ask', dir, 'scope', '--triage-passed', '--ac-from-request'], { encoding: 'utf8', env });
