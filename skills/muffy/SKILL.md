@@ -81,20 +81,20 @@ The ones the Orchestrator runs every task (`node "<muffy>/scripts/<name>.mjs" â€
 
 | Script | Use it |
 |---|---|
-| `init-config.mjs` | Setup: writes `.team/config.json` `test_command` from `package.json` |
+| `init-config.mjs` | Setup: writes the project's `test_command` into the config file in `.team/`, from its package manifest |
 | `checkpoint.mjs` | Write the checkpoint: rounds, pauses, gate answers, the lane line |
 | `make-envelope.mjs` | Build each subagent prompt from flags, not by hand |
 | `next-action.mjs` | Deterministic rules: loop budget, effort, baseline, smoke and triage |
 | `check-all.mjs` | After every step: hand-offs, gates, checkpoint and artifacts in one call |
 | `gate-summary.mjs` | Build the question body at a human gate (2b, 3c, 10) |
 | `diff-signals.mjs` | Decide from the real diff whether a change still fits its lane |
-| `test-gate.mjs` | Step 7: run `test_command`, write `qa-report.md` from the exit code |
+| `test-gate.mjs` | Step 7: run `test_command`, write the QA report from the exit code |
 
 ## Prerequisites
 
 - A git repository and Node 18 or newer; the scripts have no other dependency.
 - The muffy agents installed next to this skill ([INSTALL.md](../../INSTALL.md)).
-- `.team/config.json` with a `test_command` for the test gate; setup writes it from `package.json`.
+- A `test_command` in the config file in `.team/`, for the test gate; setup writes it from the package manifest.
 
 ## Examples
 
@@ -106,12 +106,12 @@ The ones the Orchestrator runs every task (`node "<muffy>/scripts/<name>.mjs" â€
 
 - Never deploys and never touches staging or production; the run ends at a branch the user accepts.
 - QA is a script (`test-gate.mjs`) that runs the project's test command; devs write unit tests only and regression testing is the human's.
-- With no `test_command` in `.team/config.json`, the test gate reports itself skipped, never passed.
+- With no `test_command` in the `.team/` config file, the test gate reports itself skipped, never passed.
 
 ## Troubleshooting
 
 - **A spawn is blocked:** a human gate (`pause:plan-review` or `pause:design-review`) has no answer yet; ask the user and record it with `checkpoint.mjs gate` ([hooks-enforcement.md](references/hooks-enforcement.md)).
-- **Test gate says skipped:** add `{"test_command": "<your test command>"}` to `.team/config.json`.
+- **Test gate says skipped:** add `{"test_command": "<your test command>"}` to the config file in `.team/` (the gate's own message names it).
 - **A run stopped midway:** `/muffy resume` ([resume.md](references/resume.md)).
 
 ---
