@@ -68,3 +68,7 @@
   - **`auditor` is pinned** to `opus` at effort `low`: no signal raises or lowers it
   - A fresh round recomputes effort from the signals above; a round continued with `SendMessage` (requirements, present, diagram) keeps the agent's current effort
   - Record the signals used and the resulting effort in checkpoint `## Run profile` (one line): copy the `Run profile line:` that `make-envelope.mjs` prints. When it prints none, the default applies and no line is needed
+
+## Cost target and measurement
+
+A small bug has a target of **100 000 tokens** for the whole task, subagents and Orchestrator together. It is a number to measure against, never a limit that stops a run, and it is revisited after 3 to 5 real tasks. Step 12 prints the figure with `node "<muffy>/scripts/task-usage.mjs" .team/<task> --budget 100000`: subagents are the last `tok:` of each role and step in `spawns.tsv`, the Orchestrator is read from this session's transcript from the first commit of the task folder (input, cache-write and output tokens; cache reads are listed apart and not counted; subagents keep their own transcripts, so nothing is subtracted). Paste the line into `## Usage` and the final message. The script reports `n/a` or `at least` when it cannot read a number, never an estimate. In the fix lane, step 11 asks `small-fix.mjs` first, so a small fix does not pay for a docs-writer ([fix-profile.md](fix-profile.md)).

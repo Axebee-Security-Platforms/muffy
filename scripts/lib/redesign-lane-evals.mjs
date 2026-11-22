@@ -83,7 +83,7 @@ export function runRedesignLaneEvals({ check, root }) {
   check('steps: staging is not a smoke trigger', !('staging_none' in SMOKE_TRIGGERS));
   check('pauses: staging-credentials is gone and scope-upgrade exists, in the script and in run-profile.md', !PAUSES.includes('staging-credentials') && PAUSES.includes('scope-upgrade') && /`pause:scope-upgrade`/.test(refs('run-profile.md')) && !/pause:staging-credentials/.test(refs('run-profile.md')));
   check('gate 10: the body no longer asks for a staging result or release notes', !/staging|release-notes/i.test(gate10(mk('Full flow.')).notReady.join(' ')));
-  check('docs-writer: the fix and change profiles each run it as step 11 after the gate', ['fix-profile.md', 'change-profile.md'].every((f) => /\| 11 \| `docs-writer`/.test(refs(f))));
+  check('docs-writer: the fix and change profiles each run it as step 11 after the gate', ['fix-profile.md', 'change-profile.md'].every((f) => /\| 11 \|[^|]*`docs-writer`/.test(refs(f))) && /\| 11 \|[^|]*`small-fix\.mjs`/.test(refs('fix-profile.md'))); // the fix lane asks small-fix.mjs first
   check('docs-writer: step 11 has a section in step-details.md', /^## Step 11/m.test(refs('step-details.md')));
 
   /* the lane is documented where the router and the run profile look for it */

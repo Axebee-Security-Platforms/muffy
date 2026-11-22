@@ -4,13 +4,15 @@
 //   - checkpoint.mjs unpause: refused for a gate's pause while the gate has no answer
 //   - guard-gates.mjs: blocks the spawn before its gate, lets the rest through, fails closed without a Task header
 //   - fix lane: a dev's step-4 spawn is blocked until the auditor's `confirm` or the user's accepted risk (auditMissing, guard-gates.mjs)
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { gateState, gatesForSpawn, missingGates, gateErrors, auditMissing } from '../../skills/muffy/scripts/gate-rules.mjs';
 import { recordGate, clearPause } from '../../skills/muffy/scripts/checkpoint.mjs';
 import { gate10 } from '../../skills/muffy/scripts/gate-summary.mjs';
+import { smallVerdict } from '../../skills/muffy/scripts/small-fix.mjs';
+import { subagentTokens, orchestratorTokens } from '../../skills/muffy/scripts/task-usage.mjs';
 
 const CP = (status, profile = 'lane: feature · skipped none') =>
   `# Checkpoint: t\n\nUpdated: step 3\n\n## Goal\n\nx\n\n## Run profile\n\n${profile}\n\n## Status\n\n${status}\n`;
@@ -197,6 +199,53 @@ export function runGateEvals({ check, root }) {
       hand('4', 'backend-dev', 1, { ac_ids_done: ['AC-1'], decisions: [{ id: 'D-1', decision: 'reuse the test', why: 'it covers the AC' }] });
       const all = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'check-all.mjs'), task, '--step', '4', '--round', '1'], { encoding: 'utf8' });
       check('check-all: a retried 4a (round 2) is still read at step 4 round 1', !/block:no-diagnosis/.test(all.stdout), all.stdout.slice(0, 200));
+    }
+    // small-fix.mjs: a small fix gets script-written release notes, anything bigger keeps the docs-writer
+    {
+      const v = (o) => smallVerdict({ files: ['cart.js', 'test/cart.test.js', '.team/t/fix.md'], lines: 2, severity: 'medium', ...o });
+      check('small-fix: one file, 2 lines, medium severity is small (tests and .team/ do not count)', v({}).small === true, JSON.stringify(v({}).reasons));
+      check('small-fix: severity high is not small', v({ severity: 'high' }).small === false && /severity high/.test(v({ severity: 'high' }).reasons.join()));
+      check('small-fix: an unknown severity (no 4a hand-off) is not small', v({ severity: null }).small === false);
+      check('small-fix: 3 source files, or 21 source lines, is not small', v({ files: ['a.js', 'b.js', 'c.js'] }).small === false && v({ lines: 21 }).small === false);
+      check('small-fix: a migration, a dependency, a config file or an API spec is not small', ['db/migrations/001.sql', 'package.json', 'config/app.yaml', 'openapi.yaml'].every((f) => v({ files: ['cart.js', f] }).small === false));
+      check('small-fix: a doc that names the changed file is not small', v({ docsText: 'See cart.js for the total.' }).small === false && v({ docsText: 'Nothing about it.' }).small === true);
+      const proj = join(tmp, 'sf');
+      const g = (...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: proj, encoding: 'utf8' });
+      mkdirSync(join(proj, 'test'), { recursive: true });
+      mkdirSync(join(proj, '.team', 'tk', 'handoff'), { recursive: true });
+      writeFileSync(join(proj, 'cart.js'), 'export const total = (i) => 0;\n');
+      writeFileSync(join(proj, 'test', 'cart.test.js'), '// t\n');
+      g('init', '-b', 'main'); g('add', '.'); g('commit', '-m', 'base');
+      g('checkout', '-b', 'feature/tk');
+      writeFileSync(join(proj, 'cart.js'), 'export const total = (i, d = 0) => i - d;\n');
+      writeFileSync(join(proj, '.team', 'tk', 'fix.md'), '# Fix: tk\n## Symptom\ntotal ignores the discount\n## Cause\ncart.js never reads d\nseverity: medium\n');
+      writeFileSync(join(proj, '.team', 'tk', 'qa-report.md'), '# QA\n## Results\n`npm test` in /x/y: exit 0, tests passed\n## AC id -> test name\n| AC | test |\n|---|---|\n| AC-1 | applies the discount |\n');
+      writeFileSync(join(proj, '.team', 'tk', 'handoff', '4a-debugger-r1.json'), JSON.stringify({ diagnosis: { severity: 'medium' } }));
+      g('add', '.'); g('commit', '-m', 'fix');
+      const sf = (...a) => spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'small-fix.mjs'), join(proj, '.team', 'tk'), '--base', 'main', '--cwd', proj, ...a], { encoding: 'utf8' });
+      const small = sf();
+      const notes = readFileSync(join(proj, '.team', 'tk', 'release-notes.md'), 'utf8');
+      check('small-fix: a small fix writes release-notes.md from fix.md, qa-report.md and the diff, exit 0', small.status === 0 && /next=script-notes/.test(small.stdout) && /## Deploy hand-off/.test(notes) && /Revert `[0-9a-f]+`/.test(notes) && /AC-1: applies the discount/.test(notes) && !/\/x\/y/.test(notes), small.stdout + small.stderr + notes.slice(0, 400));
+      writeFileSync(join(proj, '.team', 'tk', 'handoff', '4a-debugger-r2.json'), JSON.stringify({ diagnosis: { severity: 'high' } }));
+      rmSync(join(proj, '.team', 'tk', 'release-notes.md'));
+      const big = sf();
+      check('small-fix: a later round that raises the severity to high sends the task to the docs-writer, exit 1, no notes written', big.status === 1 && /next=spawn-docs-writer/.test(big.stdout) && !/release-notes/.test(readdirSync(join(proj, '.team', 'tk')).join()), big.stdout);
+    }
+    // task-usage.mjs: one line for the whole task
+    {
+      check('task-usage: the last tok: of each role and step is summed (a retried 4a is one agent)', subagentTokens('4a\tdebugger\thaiku\thigh\t1\tfail\t0\tx tok:34000\n4a\tdebugger\thaiku\thigh\t2\tpass\t0\tx tok:56000\n6\tcode-reviewer\tsonnet\thigh\t1\tpass\t0\ttok:24000\n').total === 80000);
+      check('task-usage: a spawn row with no tok: is counted as missing, not as zero', subagentTokens('4\tbackend-dev\tsonnet\tmedium\t1\tpass\t0\tdone\n').missing === 1);
+      const rec = (id, ts, usage, extra = {}) => ({ type: 'assistant', requestId: id, timestamp: ts, message: { usage }, ...extra });
+      const u = (i, cc, o, cr = 0) => ({ input_tokens: i, cache_creation_input_tokens: cc, output_tokens: o, cache_read_input_tokens: cr });
+      const o = orchestratorTokens([
+        rec('r0', '2026-01-01T09:00:00Z', u(1, 1000, 100)), // before the task
+        rec('r1', '2026-01-01T10:00:00Z', u(2, 500, 10, 9000)),
+        rec('r1', '2026-01-01T10:00:01Z', u(2, 500, 40, 9000)), // the same request logged again: counted once, the larger one
+        rec('r2', '2026-01-01T10:05:00Z', u(1, 0, 20, 9500), { isSidechain: true }), // not the Orchestrator
+        rec('r3', '2026-01-01T11:00:00Z', u(3, 0, 7, 9800)),
+        rec('r4', '2026-01-01T12:00:00Z', u(1, 0, 1)), // after --until
+      ], Date.parse('2026-01-01T10:00:00Z'), Date.parse('2026-01-01T11:30:00Z'));
+      check('task-usage: Orchestrator tokens are input + cache write + output, once per request, inside the window, cache reads apart', o.fresh === 542 + 10 && o.cacheRead === 9000 + 9800 && o.requests === 2, JSON.stringify(o));
     }
     // fix lane: the debugger and the auditor are muffy roles, ungated; a dev step-4 spawn waits for the audit
     const fixHandoff = join(dir, 'handoff');
