@@ -75,7 +75,7 @@ An `internal` triage needs no scope question: the scope is `internal`. Otherwise
 
    **Visible**: the [Scope question](#scope-question-pausescope-always-asked-for-a-visible-change-never-defaulted) above
 3. Create the feature worktree from `<base>`: `git worktree add .worktrees/feature-<task> -b feature/<task> <base>` (a baseline committed at the common setup on another branch is cherry-picked onto it first, [setup.md](setup.md) step 7), then `.team/<task>/`, `handoff/` and `rounds/` inside it. **Internal**: write `.team/<task>/ac.md` there (format below) and commit it to `feature/<task>` (never to `<base>`); the Orchestrator writes it from the same reads, no `product-manager` is spawned for it. **Visible**: no `brief.md`; the prompt and the existing code are the brief, and `product-manager` writes `ac.md` at step 2
-4. Write `checkpoint.md` in the feature worktree, then its lane line with `node "<muffy>/scripts/checkpoint.mjs" profile .team/<task> change --scope <scope>` (add `--skip 3d` when no smoke trigger is true, [run-profile.md](run-profile.md)); it writes `lane: change (<scope>) · skipped …` with the steps the table below skips for that scope. `gate-rules.mjs` reads this line
+4. Write `checkpoint.md` in the feature worktree, then its lane line with `node "<muffy>/scripts/checkpoint.mjs" profile .team/<task> change --scope <scope>` (3d is skipped by definition, so it is already on the line); it writes `lane: change (<scope>) · skipped …` with the steps the table below skips for that scope. `gate-rules.mjs` reads this line
 
 ## `ac.md`
 
@@ -89,7 +89,7 @@ Scope: internal    Kind: internal-api | refactor | perf | db    Owner: FE | BE |
 ## Out of scope
 ```
 
-Visible, written by `product-manager`: each change as an `AC-<n>`, plus `## Unchanged`: the behaviours of the touched screens or rules that must stay as they are. QA covers both. No plan phases and no product ADR unless a product decision is made.
+Visible, written by `product-manager`: each change as an `AC-<n>`, plus `## Unchanged`: the behaviours of the touched screens or rules that must stay as they are. The devs map both to unit tests and the step 7 test gate runs the project suite. No plan phases and no product ADR unless a product decision is made.
 
 ≤ 60 lines and checked by [check-artifacts.mjs](../scripts/check-artifacts.mjs) like any `ac.md`: every AC id must appear in the contract the architect writes.
 
@@ -100,13 +100,13 @@ Visible, written by `product-manager`: each change as an `AC-<n>`, plus `## Unch
 | 1 | `researcher` | skipped | skipped | skipped | skipped |
 | 2 | `product-manager` | skipped: the Orchestrator wrote `ac.md` | `ac.md` from the current screens and the request | same | `ac.md` from the current rules and the request |
 | 2b | Human gate `pause:plan-review` | skipped (no gates) | **skipped**: `checkpoint.mjs gate 2b skip --reason "combined with the design gate"`; the AC are shown at 3c | asked | asked |
-| 3 | `designer` ∥ `architect` ∥ `devops` mode 1 | `architect`, plus devops mode 1 in the same message only for a migration or when there is no `deploy.md`. `Read:` `ac.md` (no `brief.md`, no `design.md`). Devops mode 1 makes sure the migration runs up and down on docker local | `designer` only | `designer` ∥ `architect`; devops mode 1 only for a migration or when there is no `deploy.md` | `architect`; devops mode 1 as left |
+| 3 | `designer` ∥ `architect` | `architect`. `Read:` `ac.md` (no `brief.md`, no `design.md`). A migration is run up and down on docker local by `backend-dev` at step 4 (`devops` is retired) | `designer` only | `designer` ∥ `architect` | `architect` |
 | 3b, 3e | publish canvas, diagrams | skipped (no canvas); 3e only if a diagram trigger fires | as the full flow | as the full flow | skipped (no canvas) |
 | 3c | Human gate `pause:design-review` | skipped (no gates) | design + AC together | design + contract | **contract gate**: the contract and the AC ([gate-summary.mjs](../scripts/gate-summary.mjs) shows them when `design.md` is absent) |
-| 3d | `devops` mode 2 | only on a smoke trigger ([run-profile.md](run-profile.md)); cut worktrees for the owners named in `ac.md` exactly as [setup.md](setup.md) step 7 says | same | same | same |
+| 3d | — | retired, always skipped; cut worktrees for the owners named in `ac.md` exactly as [setup.md](setup.md) step 7 says | same | same | same |
 | 4, 5 | dev, then Orchestrator merge | per `Owner:` in `ac.md`; perf: the dev records the before and after numbers with the AC's command in the hand-off summary | `frontend-dev` | `frontend-dev` ∥ `backend-dev` | `backend-dev` |
 | 6 | `code-reviewer` | never skipped, never downgraded | same | same | same |
-| 7 | `qa-tester` | **L2** for refactor, perf and db (refactor: the named tests pass before and after; db: the migration runs up and down), **L3** for internal-api with new AC; a migration is applied on docker local before the smoke | L3, limited to the pages the diff touched | L3, pages and endpoints the diff touched | L3 with no UI e2e, endpoints and flows the diff touched |
+| 7 | Test gate (`test-gate.mjs`, a script; `qa-tester` is retired) | the project's `test_command` runs once and its exit code decides; a refactor's named tests and a db change's migration up/down were run by `backend-dev` at step 4 | same | same | same |
 | 10 | Human gate | accept the branch; for perf, the question includes the before and after numbers | accept the branch | accept the branch | accept the branch |
 | 11 | `docs-writer`, after the gate approves | changelog or release notes and a **Deploy hand-off** (migration and its rollback, new config, perf numbers); skipped when there is no migration, no new config, nothing a user sees and no doc mentions the changed part (`docs skipped: <reason>` in `tasks/<task>.md`) | changelog and user docs of the changed pages | those plus API docs and the changed business rules | API docs and the changed business rules |
 | 12 | Orchestrator | [closing.md](closing.md) in full, `## Usage` from `spawns.tsv` | same | same | same |
@@ -117,7 +117,7 @@ Rules for the visible scopes:
 
 - **The designer** reads the current screens (running page URL, screenshots or the component files) and `docs/design-system/`; `design.md` shows before and after for each screen. Tokens come from the design system; a new component or colour is a design-system change that the gate lists
 - **The architect** writes a contract for the changed rules only and reads the current code; it does not redesign what the request leaves alone
-- **QA scope is by path.** The Orchestrator maps `git diff --name-only <base>...<branch>` to pages, routes and endpoints and writes them into the qa-tester `Read:` line with the `## Unchanged` rows for them. `test-level` is `L3`. A touched shared component or module that other pages use is a trigger to offer `pause:full-regression` ([test-levels.md](test-levels.md)); QA never widens on its own
+- **Unit tests by path.** The devs map each AC and each `## Unchanged` row of the touched pages, routes and endpoints to a unit test in `ac-tests-fe.md` / `ac-tests-be.md`, and `code-reviewer` checks the map. The test gate runs the project suite once; whole-system regression is the human's
 - **`docs-writer` always runs for a visible scope** (no skip rule). It follows step 11 of [steps.md](steps.md): after the Human gate, only what the diff touched, a Deploy hand-off, a self-check instead of a review
 - **Never skipped:** 2, 6, 7, 10, 11, and 3c whenever a designer or architect ran
 
@@ -148,7 +148,7 @@ A designer or frontend-dev who finds the design needs a field, endpoint or rule 
 
 ## Model and effort
 
-Defaults from [token-discipline.md](token-discipline.md); the architect keeps its default model and effort, and `code-reviewer`, `architect` and `devops` are never downgraded. `qa-tester` re-running existing tests only may use `haiku`.
+Defaults from [token-discipline.md](token-discipline.md); the architect keeps its default model and effort, and `code-reviewer`, `architect` and `devops` are never downgraded (`devops` is retired; the name stays so a revived agent keeps its floor).
 
 ## Prompt differences
 

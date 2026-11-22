@@ -23,12 +23,12 @@ It is an **upgrade** only if all hold; otherwise say which fails in one line and
 |---|---|---|
 | 1 | `researcher` | The changelog and migration guide between the two versions: breaking changes, deprecations, the new minimum runtime, known issues. Level L1, L2 for a major version. The brief lists each breaking change with where this repo is hit (Grep), under `## Must-not-miss requirements`; the Orchestrator adds an `AC-<n>` and a `## Traceability` row for each |
 | 2, 2b | skipped | No product question. 2b is recorded as skipped at setup |
-| 3 | `architect` ∥ `devops` mode 1 | The architect writes the **upgrade ADR** (supersedes the stack ADR for this package or runtime, if one exists; what changes in the code, the order, the rollback) and the contract changes it implies; devops updates the pins (`.nvmrc`, Dockerfile, compose, CI) in `deploy.md` |
+| 3 | `architect` | The architect writes the **upgrade ADR** (supersedes the stack ADR for this package or runtime, if one exists; what changes in the code, the order, the rollback) and the contract changes it implies; `backend-dev` updates the pins (`.nvmrc`, Dockerfile, compose, CI) at step 4 |
 | 3c | **Human gate** `pause:design-review` | The user approves the ADR and the contract (`gate-summary.mjs` shows the contract gate when there is no `design.md`). Never skipped |
 | 3d | — | **Skipped** (devops is retired): `backend-dev` boots the stack on the new version with real dependencies before reporting done, and the step 7 test gate runs the project suite |
 | 4, 5 | `frontend-dev` ∥ `backend-dev`, merge | The code changes the ADR lists, one AC at a time |
 | 6 | `code-reviewer` | Never downgraded |
-| 7 | `qa-tester` | L3 on what the breaking changes touch; offer `pause:full-regression` before QA, since an upgrade can break anything ([test-levels.md](test-levels.md)) |
+| 7 | Test gate (`test-gate.mjs`, a script; `qa-tester` is retired) | runs the project's `test_command`; an upgrade can break anything, so the human runs regression after it |
 | 10 | Human gate | Accept the branch |
 | 11 | `docs-writer`, after the gate approves | Release notes and a **Deploy hand-off**: the new version, the pins to deploy with it, the rollback from the ADR |
 | 12 | Orchestrator | [closing.md](closing.md) in full. The Stack moved, so run onboard's silent refresh of the baseline ([onboard.md](onboard.md#refresh)) after the merge, or note that the upgrade ADR supersedes the baseline's Stack until then |

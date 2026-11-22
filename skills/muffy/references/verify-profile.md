@@ -23,7 +23,7 @@ For a branch the requester (or someone else) wrote by hand: "ตรวจ branch
 | 11 | `docs-writer`, after the gate approves | Changelog or release notes for the diff and a Deploy hand-off, only when the diff changes something a user sees, a migration or config; otherwise `docs skipped: <reason>` |
 | 12 | Orchestrator | [closing.md](closing.md) in full |
 
-## A reject or a QA fail
+## A reject or a test-gate fail
 
 The loop does not send it to a dev on its own (`next-action.mjs` answers `ask:verify-fix`). The Orchestrator reports the findings (the review's blockers, the failing AC) and asks once, in one `AskUserQuestion`:
 
@@ -34,7 +34,7 @@ The answer is recorded in checkpoint `## Status` as `verify fix: on copy` or `ve
 
 ## Model and effort
 
-`code-reviewer` is never downgraded. `qa-tester` re-running existing tests only may use `haiku`.
+`code-reviewer` is never downgraded.
 
 ## Prompt differences
 

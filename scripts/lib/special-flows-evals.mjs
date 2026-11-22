@@ -44,7 +44,7 @@ export function runSpecialFlowsEvals({ check, root }) {
   const up = ref('upgrade-profile.md');
   check('drift: upgrade-profile.md never-skip list matches lanes.mjs', same(ids(up.match(/^Never skipped: ([^.]+)\./m)?.[1]), neverSkipOf('upgrade')));
   check('upgrade-doc: only a dependency already in the manifest; a new one is the full flow', /already in the manifest/.test(up) && /full flow/.test(up) && up.includes('checkpoint.mjs" profile .team/<task> upgrade'));
-  check('upgrade-doc: full regression offered, baseline refreshed after', up.includes('pause:full-regression') && /silent refresh/.test(up));
+  check('upgrade-doc: regression is a human step (no qa-tester), baseline refreshed after', /the human runs regression/.test(up) && /silent refresh/.test(up));
 
   const tmp = mkdtempSync(join(tmpdir(), 'muffy-flows-'));
   try {
