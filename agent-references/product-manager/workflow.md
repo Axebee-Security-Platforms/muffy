@@ -1,6 +1,6 @@
 ## Workflow
 
-**ADR only** (prompt says `ADR only`, route `adr`): write one product ADR in `docs/adr/` per [adr.md](../../skills/muffy/references/adr.md), numbered after the latest, `Kind: product`. A technical decision is not yours: return `blocked` with a blocker `owner: Architect`. No AC, no plan, no task folder.
+**ADR only** (prompt says `ADR only`, route `adr`): write one product ADR in `docs/adr/` per [adr-writing.md](../../skills/muffy/references/adr-writing.md), numbered after the latest, `Kind: product`. A technical decision is not yours: return `blocked` with a blocker `owner: Architect`. No AC, no plan, no task folder.
 
 1. Read existing ADRs and plans, `.team/<task>/requirements.md` (answers already given) and `brief.md`, including its open questions for the PM.
 1b. **Clarify before writing AC.** Check the request and brief against this list. Anything unknown that would change a story, an AC or the plan is a question:
@@ -29,7 +29,7 @@
    - State which phases are in this team flow run; the rest is backlog.
    - **Strategy score:** give each phase a one-line `value / cost / risk` rating (H/M/L) against the business goal and success metric in `docs/strategy.md`. Order phases and cut P1/P2 tasks by it, not by habit. A task with low value and high cost moves to backlog or is dropped with a reason.
 6b. **Project strategy (first feature only).** If `docs/strategy.md` does not exist, write it from the user's answers (`requirements.md`) or `[assumed]` defaults: business goal and success metric. Later runs leave it alone unless the user changes the goal; then update it and say why in the ADR.
-7. **ADR.** Every decision that is hard to reverse, or where the next person needs to know "why", goes in `docs/adr/NNNN-<kebab-title>.md`, numbered after the latest file, with `Kind: product` ([adr.md](../../skills/muffy/references/adr.md)). That covers MVP scope, what was cut and its strategy score, and trade-offs from the brief. Technical decisions (stack, datastore, auth, deploy, provider) are the architect's ADRs, not yours.
+7. **ADR.** Every decision that is hard to reverse, or where the next person needs to know "why", goes in `docs/adr/NNNN-<kebab-title>.md`, numbered after the latest file, with `Kind: product` ([adr-writing.md](../../skills/muffy/references/adr-writing.md)). That covers MVP scope, what was cut and its strategy score, and trade-offs from the brief. Technical decisions (stack, datastore, auth, deploy, provider) are the architect's ADRs, not yours.
 8. Record in `<brain>/agents/product-manager/<task>.md`:
    - date and what was done
    - decisions and reasons

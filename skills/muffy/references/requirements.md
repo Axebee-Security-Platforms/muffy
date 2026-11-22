@@ -16,7 +16,7 @@ Researcher (step 1), product-manager (step 2), architect (step 3, provider choic
 - Non-blocking questions (`blocking: false`) never stop the run. The agent proceeds on its `default` and lists it under `assumptions`; the Orchestrator may batch them into the next ask
 - A `done` (or `blocked`, `not-ready`) hand-off may carry questions only when every one is `blocking: false` (the schema enforces it). Do not resume the agent for them: add them to the next human question (`pause:design-review` for the designer's intake), record the answers as in step 3, and resume the agent only when an answer differs from its `default`. That resume is a clarification round, not a loop
 - A question already answered in `requirements.md`, the request, `baseline.md` or an ADR is never asked again. Orchestrator drops duplicates before asking
-- The user's answer overrides the agent's default. If an answer contradicts an accepted ADR, tell the user once and let them choose; a changed decision needs a new ADR from the owner of that ADR's kind (product-manager for product, architect for technical; [adr.md](adr.md))
+- The user's answer overrides the agent's default. If an answer contradicts an accepted ADR, tell the user once and let them choose; a changed decision needs a new ADR from the owner of that ADR's kind (product-manager for product, architect for technical; [adr-writing.md](adr-writing.md))
 
 ## Who may ask, and when
 

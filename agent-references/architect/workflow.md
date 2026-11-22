@@ -21,7 +21,7 @@
 - Say which finding would need a new ADR.
 - Hand-off: `status: done`, `paths_written: []`.
 
-**ADR only** (prompt says `ADR only`, route `adr`): write one technical ADR in `docs/adr/` per [adr.md](../../skills/muffy/references/adr.md), numbered after the latest, `Kind: technical`. Supersede an older one only when the prompt names it. A product decision is not yours: return `blocked` with a blocker `owner: PM`. No contract, no task folder.
+**ADR only** (prompt says `ADR only`, route `adr`): write one technical ADR in `docs/adr/` per [adr-writing.md](../../skills/muffy/references/adr-writing.md), numbered after the latest, `Kind: technical`. Supersede an older one only when the prompt names it. A product decision is not yours: return `blocked` with a blocker `owner: PM`. No contract, no task folder.
 
 **Normal mode:** if the prompt gives a `baseline.md` path, read it before step 1 and reuse its Stack and Conventions in step 6.
 
@@ -47,7 +47,7 @@
 6b. **Options before a hard-to-reverse choice.** This covers the stack, a datastore, the auth model, the deploy model, or a module split that FE and BE will build on.
    - Write 2-3 real options in `contract/stack.md`: one line each (what it is, the trade-off, what it locks in), plus the one you pick with the reason.
    - If there is one obvious option (the codebase or an ADR already decides it), say so in one line instead.
-7. Write hard-to-reverse technical decisions (stack, DB, auth, deploy model, a build-vs-buy choice) as an ADR at `docs/adr/NNNN-<kebab-title>.md`, numbered after the latest file, using the same format as the PM's ADRs with `Kind: technical`. Product decisions (scope, priorities) are the PM's ADRs, not yours; see [adr.md](../../skills/muffy/references/adr.md).
+7. Write hard-to-reverse technical decisions (stack, DB, auth, deploy model, a build-vs-buy choice) as an ADR at `docs/adr/NNNN-<kebab-title>.md`, numbered after the latest file, using the same format as the PM's ADRs with `Kind: technical`. Product decisions (scope, priorities) are the PM's ADRs, not yours; see [adr-writing.md](../../skills/muffy/references/adr-writing.md).
 8. Record in `<brain>/agents/architect/<task>.md`:
    - date and what was done
    - chosen stack

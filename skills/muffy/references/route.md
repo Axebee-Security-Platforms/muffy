@@ -100,7 +100,7 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | design-review | what to look at: a canvas or Artifact URL, a running page URL, or screenshots | where the screens are |
 | spec | the feature and who consumes the API or schema | the consumer |
 | arch-review | the document or area: an ADR, `contract.md`, `baseline.md`, or a module path | which document or area |
-| adr | the decision and whether it is product or technical ([adr.md](adr.md)) | the decision |
+| adr | the decision and whether it is product or technical ([adr-writing.md](adr-writing.md)) | the decision |
 | ops | the local infra file or area (Dockerfile, compose, runtime pin, CI) and the change, or "does the stack still boot" (a smoke on this branch) | the file or area, or the branch |
 | review | the diff: branch, PR or file list | the branch or PR |
 | verify | the branch, its base, and what it should do (PR description or the request) | the branch, or what it should do |
@@ -126,7 +126,7 @@ Each route needs a few facts before any agent starts. Most under-specified promp
 | A UX/UI review of screens that already exist (a canvas, a running page, screenshots) | design-review | main session with the `impeccable` skill, following [design-review.md](design-review.md) steps 2-4 on the given screens | findings in chat (`UX-<n>`, severity, suggested fix). No file changes; fixes are a design or fix route the requester picks |
 | API, schema, contract or data model only | spec | `architect` | `contract.md`. No code |
 | A review of an architecture, an ADR, a contract or a module's design | arch-review | `architect`, read-only ("Review only" in the prompt) | findings in chat. A changed decision is a new ADR only if the requester then asks for one |
-| Write or supersede an ADR | adr | `architect` (technical) or `product-manager` (product), per [adr.md](adr.md) | the new `docs/adr/NNNN-*.md`, committed on the requester's go-ahead |
+| Write or supersede an ADR | adr | `architect` (technical) or `product-manager` (product), per [adr-writing.md](adr-writing.md) | the new `docs/adr/NNNN-*.md`, committed on the requester's go-ahead |
 | Bump a dependency or runtime already in the manifest, and fix what breaks | upgrade ([upgrade-profile.md](upgrade-profile.md)) | `researcher` (changelog), `architect` (upgrade ADR) ∥ `devops`, the user approves the ADR, 3d smoke, devs, `code-reviewer`, `qa-tester` (full regression offered), `docs-writer` after the gate | Human gate |
 | Review and test a branch someone already wrote, and accept it before merge | verify ([verify-profile.md](verify-profile.md)) | `code-reviewer`, `qa-tester`, Human gate, `docs-writer`, on a copy `verify/<task>`; a reject is reported and fixed on the copy only if the requester says so | Human gate |
 | Local infra files: Dockerfile, compose, runtime pin, CI config; or "does the stack boot on this branch" | ops | `devops` (local only; for a smoke on a branch: mode 1 writes or checks `deploy.md`, then mode 2 in an `ops/<task>` worktree cut from that branch) | the infra change, checked on docker local. It never deploys; a deploy request is answered with the Deploy hand-off |

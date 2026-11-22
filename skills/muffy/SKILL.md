@@ -41,7 +41,7 @@ Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup
 - **Platforms**: when the contract's `Platform:` is not `web`, or the request names an app or CLI: [platforms.md](references/platforms.md)
 - **Publishing diagrams** (3e): [diagram-publish.md](references/diagram-publish.md) · **Design review** (3c): [design-review.md](references/design-review.md)
 - **Requirements interview** (steps 1 and 2, `needs-input`): [requirements.md](references/requirements.md)
-- **Stack learning**: [stack-learning.md](references/stack-learning.md) · **Baseline freshness** (red only; yellow is refreshed without a question): [baseline-freshness.md](references/baseline-freshness.md) · **ADR ownership**: [adr.md](references/adr.md)
+- **Stack learning**: [stack-learning.md](references/stack-learning.md) · **Baseline freshness** (red only; yellow is refreshed without a question): [baseline-freshness.md](references/baseline-freshness.md) · **ADR ownership**: [adr-writing.md](references/adr-writing.md)
 - **Loops**: only when a reject/fail happens: [loops.md](references/loops.md)
 - **Token discipline** (prompt envelope script, report cap, quiet Bash, turn budget, compact points) and **Memory model**: each once at setup: [token-discipline.md](references/token-discipline.md), [memory-model.md](references/memory-model.md)
 - **Test levels**: before step 7 (fix lane: before step 4): [test-levels.md](references/test-levels.md)
