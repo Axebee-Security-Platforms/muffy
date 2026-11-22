@@ -93,9 +93,9 @@ Before anything starts you see the plan, for example:
 
 ```text
 แผน: แก้บั๊ก
-ขั้นตอน: หาสาเหตุ (ยังไม่แก้โค้ด) → อีกโมเดลตรวจสาเหตุซ้ำ → แก้โค้ด + regression test → รีวิวโค้ด → เทสบน docker local → คุณอนุมัติ branch → เขียนเอกสาร + Deploy hand-off (ถ้าจำเป็น)
-ข้าม: วิจัยข้อมูล, เขียน user story และแผน, ออกแบบหน้าจอ, API และ infra (มีอาการและจุดที่เกิดชัดแล้ว)
-หยุดที่: branch ที่ผ่าน QA บน docker local (ไม่ deploy ให้)
+ขั้นตอน: หาสาเหตุ (ยังไม่แก้โค้ด) → อีกโมเดลตรวจสาเหตุซ้ำ → แก้โค้ด + unit test → รีวิวโค้ด → รันชุดเทสของโปรเจกต์ (script gate) → คุณอนุมัติ branch → เขียนเอกสาร + Deploy hand-off (ถ้าจำเป็น)
+ข้าม: วิจัยข้อมูล, เขียน user story และแผน, ออกแบบหน้าจอและ API (มีอาการและจุดที่เกิดชัดแล้ว)
+หยุดที่: branch ที่ผ่านรีวิวและ test gate (ไม่ deploy ให้)
 ```
 
 Answer go, stop earlier ("แค่วางแผน", "ยังไม่ต้องเขียนโค้ด"), or bigger or smaller. Nothing is deployed: the work ends on a branch you accept.

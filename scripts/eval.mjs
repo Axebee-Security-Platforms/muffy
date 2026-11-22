@@ -1119,7 +1119,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
 
   {
     const row3 = stepDetail('3');
-    check('docs: step 3 aligns the contract with deploy.md', row3.indexOf('aligns the contract') > -1);
+    check('docs: step 3 no longer spawns devops (retired); backend-dev owns the stack files', row3.indexOf('devops') > -1 && row3.indexOf('retired') > -1 && !/devops. mode 1/.test(row3));
     check('docs: the designer defaults a missing Platform to web instead of asking every time', readFileSync(rel('agent-references/designer/workflow.md'), 'utf8').includes('none named → `web`'));
   }
 }

@@ -12,11 +12,11 @@ The long form of the rows in [steps.md](steps.md) that need more than one line. 
 
 ## Step 3
 
-**Agent:** `designer` ∥ `architect` ∥ `devops` mode 1: one message
+**Agent:** `designer` ∥ `architect`: one message (`devops` is retired)
 
 **Input:** `ac.md`, `brief.md`, plan
 
-**Output:** `design.md`, `contract.md`, `deploy.md` (architect may return `needs-input` to have you pick a third-party provider, designer, only when the sources conflict on the Platform: interview the user per [requirements.md](requirements.md), then resume it). A designer that created the design system returns `done` on the starter style with one non-blocking style question: keep it for the 3c question ([requirements.md](requirements.md)). When every needs-input is answered, architect aligns the contract with `deploy.md`: pinned runtime and devops-owned files. If the architect's hand-off carries `diagrams_spec`, relay each entry to the same `designer` (`SendMessage`, after its own canvas/screen-map work) to draw: `designer` never specs a diagram's content itself except the screen map
+**Output:** `design.md`, `contract.md` (architect may return `needs-input` to have you pick a third-party provider, designer, only when the sources conflict on the Platform: interview the user per [requirements.md](requirements.md), then resume it). A designer that created the design system returns `done` on the starter style with one non-blocking style question: keep it for the 3c question ([requirements.md](requirements.md)). When every needs-input is answered and the architect names the runtime to pin, `backend-dev` owns that pin and the Dockerfile/compose files at step 4. If the architect's hand-off carries `diagrams_spec`, relay each entry to the same `designer` (`SendMessage`, after its own canvas/screen-map work) to draw: `designer` never specs a diagram's content itself except the screen map
 
 ## Step 3b
 
@@ -73,3 +73,13 @@ The long form of the rows in [steps.md](steps.md) that need more than one line. 
 **Check:** there is no `code-reviewer` pass. Before the hand-off the docs-writer traces every endpoint, field, rule and number it wrote to a file in the diff, `contract.md` or `qa-report.md`, and lists those sources in its hand-off. A failed check is fixed in this step; it never reopens the Human gate or the code approval.
 
 **Skip:** the fix lane and an internal change may skip it when the diff changes nothing a user sees, runs no migration, adds no config and no doc mentions the changed part; record `docs skipped: <reason>` in `tasks/<task>.md`. The redesign lane never skips it. The full flow skips it under the rule in [run-profile.md](run-profile.md).
+
+## Step 7
+
+**Agent:** none. The test gate is a script (`qa-tester` is retired to cut cost; its agent file stays so the change can be reverted).
+
+**Setup, once per project:** the user puts `{"test_command": "npm test"}` (the project's own command) in `.team/config.json`. Without it the gate reports **skipped**, never passed.
+
+**Run:** `node "<muffy>/scripts/test-gate.mjs" .team/<task> --cwd <merged worktree>`. Exit 0 → continue to step 10. Exit 1 → fix round to the dev owners with the failing output from `qa-report.md`. Exit 3 → continue, but the Human gate shows "test gate skipped: no test_command" and the Orchestrator says it in the closing summary.
+
+**AC coverage:** `frontend-dev` and `backend-dev` each write `.team/<task>/ac-tests-fe.md` / `ac-tests-be.md` (a `## AC id -> test name` table of unit tests, `manual` with a reason where none fits). The script merges them into `qa-report.md`; `code-reviewer` checks the unit tests cover every AC. Regression testing is the human's, not an agent's.

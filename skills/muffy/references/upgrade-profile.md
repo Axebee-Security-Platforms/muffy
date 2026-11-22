@@ -25,7 +25,7 @@ It is an **upgrade** only if all hold; otherwise say which fails in one line and
 | 2, 2b | skipped | No product question. 2b is recorded as skipped at setup |
 | 3 | `architect` ∥ `devops` mode 1 | The architect writes the **upgrade ADR** (supersedes the stack ADR for this package or runtime, if one exists; what changes in the code, the order, the rollback) and the contract changes it implies; devops updates the pins (`.nvmrc`, Dockerfile, compose, CI) in `deploy.md` |
 | 3c | **Human gate** `pause:design-review` | The user approves the ADR and the contract (`gate-summary.mjs` shows the contract gate when there is no `design.md`). Never skipped |
-| 3d | `devops` mode 2 | **Always runs**: the version change is a smoke trigger by definition. The stack boots on the new version before any dev starts |
+| 3d | — | **Skipped** (devops is retired): `backend-dev` boots the stack on the new version with real dependencies before reporting done, and the step 7 test gate runs the project suite |
 | 4, 5 | `frontend-dev` ∥ `backend-dev`, merge | The code changes the ADR lists, one AC at a time |
 | 6 | `code-reviewer` | Never downgraded |
 | 7 | `qa-tester` | L3 on what the breaking changes touch; offer `pause:full-regression` before QA, since an upgrade can break anything ([test-levels.md](test-levels.md)) |
@@ -33,7 +33,7 @@ It is an **upgrade** only if all hold; otherwise say which fails in one line and
 | 11 | `docs-writer`, after the gate approves | Release notes and a **Deploy hand-off**: the new version, the pins to deploy with it, the rollback from the ADR |
 | 12 | Orchestrator | [closing.md](closing.md) in full. The Stack moved, so run onboard's silent refresh of the baseline ([onboard.md](onboard.md#refresh)) after the merge, or note that the upgrade ADR supersedes the baseline's Stack until then |
 
-Never skipped: 1, 3, 3c, 3d, 6, 7, 10.
+Never skipped: 1, 3, 3c, 6, 7, 10.
 
 ## Promote
 

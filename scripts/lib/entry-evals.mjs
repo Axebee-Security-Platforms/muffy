@@ -20,11 +20,11 @@ export function runEntryEvals({ check, root }) {
       const steps = card[1];
       const runs = Object.keys(STEP_LABELS).filter((s) => !skipsOf(lane, scope).includes(s) && (lane === 'fix' || !['4a', '4b'].includes(s)));
       check(`plan card: ${lane}${scope ? ` (${scope})` : ''} ${lang} lists one step per step the lane runs`, steps.split(' → ').length === runs.length, steps);
-      check(`plan card: ${lane}${scope ? ` (${scope})` : ''} ${lang} names no lane id and ends at the default stop`, !/\b(lite|fix lane|redesign|feature)\b/i.test(card.slice(1).join('\n')) && /docker local/.test(card.at(-1)), card.join(' | '));
+      check(`plan card: ${lane}${scope ? ` (${scope})` : ''} ${lang} names no lane id and ends at the default stop`, !/\b(lite|fix lane|redesign|feature)\b/i.test(card.slice(1).join('\n')) && /test gate/.test(card.at(-1)), card.join(' | '));
     }
   }
   check('plan card: --until cuts the steps at the stop point', planCard('feature', { until: '2b' })[1].split(' → ').length === 3 && planCard('feature', { until: '2b' }).at(-1).includes(STEP_LABELS['2b'].th));
-  check('plan card: a run skip (3d) leaves the card', !planCard('lite', { skip: ['3d'] })[1].includes(STEP_LABELS['3d'].th) && planCard('lite')[1].includes(STEP_LABELS['3d'].th));
+  check('plan card: a run skip (11) leaves the card', !planCard('lite', { skip: ['11'] })[1].includes(STEP_LABELS['11'].th) && planCard('lite')[1].includes(STEP_LABELS['11'].th));
   let refused = '';
   try { planCard('redesign'); } catch (e) { refused = e.message; }
   check('plan card: redesign without a scope is refused (the scope is asked first)', /needs a scope/.test(refused), refused);

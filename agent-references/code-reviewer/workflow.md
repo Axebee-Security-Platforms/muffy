@@ -6,7 +6,7 @@
    - Never open all topic patches at once, and never open the merged `diff-<n>.patch`.
    - Cross-topic issues (for example, a contract mismatch between a BE route and an FE query) go in a final pass over only the touched lines.
    - Give one verdict at the end, and tag each blocker with its topic.
-1. Go through each AC and find the code that supports it (`AC id → file:line`). An AC with no code is a blocker.
+1. Go through each AC and find the code that supports it (`AC id → file:line`). An AC with no code is a blocker. So is an AC with no unit test: every AC needs a row in `ac-tests-fe.md` / `ac-tests-be.md` (a unit test name, or `manual` with a reason). QA is now a script that only runs the suite and the devs write unit tests only, so you are the check that the unit tests cover every AC. Do not ask for regression, integration or e2e tests; the human does regression.
 2. Security: auth, input validation, rate limits, secrets, injection, logging of sensitive data.
 3. Correctness against the contract: schema, error codes, status codes.
 4. Quality: the code follows existing conventions, and tests cover the error paths.

@@ -11,7 +11,7 @@
 
 // Execution order of the step ids (references/steps.md). 8 and 9 were removed with docs review and staging.
 export const STEP_ORDER = ['0', '1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4b', '4', '5', '5b', '6', '7', '10', '11', '12'];
-export const NEVER_SKIP = ['6', '7', '10']; // every lane: review, QA, Human gate
+export const NEVER_SKIP = ['6', '7', '10']; // every lane: review, test gate (7, a script, no agent), Human gate
 export const GATES = ['2b', '3c']; // human gates; a lane either has both or none
 export const SCOPES = ['internal', 'ui-only', 'ui+logic', 'logic-only']; // change lane, picked at pause:scope
 export const FIX_SCOPES = ['bug', 'cosmetic']; // fix lane: `Kind:` in fix.md; a cosmetic fix (existing tokens) skips the 4b audit
@@ -28,24 +28,24 @@ export const ALIASES = { lite: { lane: 'change', scope: 'internal' }, redesign: 
 // A scope overrides the fields it names. A lane's own fields apply when the scope is missing or unknown, so a line with no
 // scope fails closed: the change lane's are the visible scopes' (gated, full baseline), the fix lane's are a bug's (4a and 4b).
 export const LANES = {
-  feature: { skips: [], neverSkip: [], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'run-profile.md' },
+  feature: { skips: ['3d'], neverSkip: [], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'run-profile.md' },
   fix: {
     skips: ['1', '2', '2b', '3', '3b', '3c', '3d'], neverSkip: ['4a', '4b'], gated: false, maxFiles: 5, profile: 'fix', baseline: 'quick', ref: 'fix-profile.md',
     scopes: { bug: {}, cosmetic: { skips: ['1', '2', '2b', '3', '3b', '3c', '3d', '4b'], neverSkip: ['4a'] } },
   },
   change: {
-    skips: ['1'], neverSkip: ['2', '3c', '11'], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'change-profile.md',
+    skips: ['1', '3d'], neverSkip: ['2', '3c', '11'], gated: true, maxFiles: null, profile: null, baseline: 'full', ref: 'change-profile.md',
     scopes: {
-      internal: { skips: ['1', '2', '2b', '3b', '3c'], neverSkip: ['3'], gated: false, maxFiles: 15, baseline: 'quick' },
-      'ui-only': { skips: ['1', '2b'] },
-      'ui+logic': { skips: ['1'] },
-      'logic-only': { skips: ['1', '3b', '3e'] },
+      internal: { skips: ['1', '2', '2b', '3b', '3c', '3d'], neverSkip: ['3'], gated: false, maxFiles: 15, baseline: 'quick' },
+      'ui-only': { skips: ['1', '2b', '3d'] },
+      'ui+logic': { skips: ['1', '3d'] },
+      'logic-only': { skips: ['1', '3b', '3e', '3d'] },
     },
   },
   // verify-profile.md: the code exists; review, QA, the Human gate and docs run on a copy of the requester's branch
-  verify: { skips: ['1', '2', '2b', '3', '3b', '3e', '3c', '4a', '4b', '4', '5', '5b'], neverSkip: [], gated: false, maxFiles: null, profile: null, baseline: 'quick', ref: 'verify-profile.md' },
+  verify: { skips: ['1', '2', '2b', '3', '3b', '3e', '3c', '3d', '4a', '4b', '4', '5', '5b'], neverSkip: [], gated: false, maxFiles: null, profile: null, baseline: 'quick', ref: 'verify-profile.md' },
   // upgrade-profile.md: researcher reads the changelog, architect writes the upgrade ADR, the user approves it at 3c, 3d always runs
-  upgrade: { skips: ['2', '2b', '3b'], neverSkip: ['1', '3', '3c', '3d'], gated: true, maxFiles: null, profile: null, baseline: 'quick', ref: 'upgrade-profile.md' },
+  upgrade: { skips: ['2', '2b', '3b', '3d'], neverSkip: ['1', '3', '3c'], gated: true, maxFiles: null, profile: null, baseline: 'quick', ref: 'upgrade-profile.md' },
 };
 
 const order = (steps) => [...new Set(steps)].sort((a, b) => STEP_ORDER.indexOf(a) - STEP_ORDER.indexOf(b));
@@ -91,14 +91,14 @@ export const STEP_LABELS = {
   '1': { th: 'วิจัยข้อมูล', en: 'research' },
   '2': { th: 'เขียน user story และแผน', en: 'user stories and plan' },
   '2b': { th: 'คุณอนุมัติแผน', en: 'you approve the plan' },
-  '3': { th: 'ออกแบบหน้าจอ, API และ infra', en: 'design screens, API and infra' },
+  '3': { th: 'ออกแบบหน้าจอและ API', en: 'design screens and API' },
   '3c': { th: 'คุณอนุมัติดีไซน์', en: 'you approve the design' },
   '3d': { th: 'ทดสอบ stack บน docker', en: 'stack smoke on docker', maybe: true },
   '4a': { th: 'หาสาเหตุ (ยังไม่แก้โค้ด)', en: 'find the cause (no code yet)' },
   '4b': { th: 'อีกโมเดลตรวจสาเหตุซ้ำ', en: 'a second model checks the cause' },
   '4': { th: 'เขียนโค้ด', en: 'write the code' },
   '6': { th: 'รีวิวโค้ด', en: 'code review' },
-  '7': { th: 'เทสบน docker local', en: 'QA on docker local' },
+  '7': { th: 'รันชุดเทสของโปรเจกต์ (script gate)', en: 'project test suite (script gate)' },
   '10': { th: 'คุณอนุมัติ branch', en: 'you accept the branch' },
   '11': { th: 'เขียนเอกสาร + Deploy hand-off', en: 'docs and Deploy hand-off' },
 };
@@ -107,7 +107,7 @@ const LANE_WORDS = {
   feature: { th: 'ทำฟีเจอร์ใหม่', en: 'build something new', why: { th: '', en: '' }, labels: DOCS_MAYBE },
   fix: {
     th: 'แก้บั๊ก', en: 'fix a bug', why: { th: 'มีอาการและจุดที่เกิดชัดแล้ว', en: 'the symptom and where it happens are known' },
-    labels: { '4': { th: 'แก้โค้ด + regression test', en: 'fix + regression test' }, ...DOCS_MAYBE },
+    labels: { '4': { th: 'แก้โค้ด + unit test', en: 'fix + unit test' }, ...DOCS_MAYBE },
     scopes: {
       bug: { th: 'บั๊ก', en: 'a bug' },
       cosmetic: { th: 'หน้าตา จาก token เดิม', en: 'the look, existing tokens', labels: { '4': { th: 'แก้หน้าตา + เช็คด้วยตา', en: 'fix the look + visual check' } } },
@@ -129,7 +129,7 @@ const LANE_WORDS = {
 };
 LANE_WORDS.verify = {
   th: 'ตรวจ branch ที่เขียนเสร็จแล้ว', en: 'check a branch that is already written', why: { th: 'โค้ดเขียนเสร็จแล้ว', en: 'the code is already written' }, labels: DOCS_MAYBE,
-  stop: { th: 'ผลรีวิวและผลเทสบน docker local ของ branch คุณ (ไม่แก้และไม่ merge branch ของคุณ)', en: 'review and QA results on docker local for your branch (never edited or merged)' },
+  stop: { th: 'ผลรีวิวและ test gate ของ branch คุณ (ไม่แก้และไม่ merge branch ของคุณ)', en: 'review and test gate results for your branch (never edited or merged)' },
 };
 LANE_WORDS.upgrade = {
   th: 'อัปเกรด dependency หรือ runtime', en: 'upgrade a dependency or runtime', why: { th: 'อัปเกรดของที่มีอยู่ ไม่ได้สร้างของใหม่', en: 'it bumps something already there, nothing new is built' },
@@ -137,11 +137,10 @@ LANE_WORDS.upgrade = {
     '1': { th: 'สรุป changelog และ breaking changes', en: 'read the changelog and breaking changes' },
     '3': { th: 'เขียน ADR การอัปเกรดและสิ่งที่ต้องแก้', en: 'the upgrade ADR and what must change' },
     '3c': { th: 'คุณอนุมัติ ADR', en: 'you approve the ADR' },
-    '3d': { th: 'ทดสอบ stack บน docker', en: 'stack smoke on docker', maybe: false },
-    '7': { th: 'เทสบน docker local (เสนอ full regression)', en: 'QA on docker local (full regression offered)' },
+    
   },
 };
-const STOP_DEFAULT = { th: 'branch ที่ผ่าน QA บน docker local (ไม่ deploy ให้)', en: 'a QA-passed branch on docker local (never deployed)' };
+const STOP_DEFAULT = { th: 'branch ที่ผ่านรีวิวและ test gate (ไม่ deploy ให้)', en: 'a branch that passed review and the test gate (never deployed)' };
 
 // The card the Orchestrator shows before spawning, from the lane table: steps that run, steps skipped and why, where it stops.
 // until: stop after this step (a stated stop point: "แค่วางแผน" → 2b, "ยังไม่ต้องเขียนโค้ด" → 3c)

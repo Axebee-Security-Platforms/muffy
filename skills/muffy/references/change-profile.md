@@ -111,7 +111,7 @@ Visible, written by `product-manager`: each change as an `AC-<n>`, plus `## Unch
 | 11 | `docs-writer`, after the gate approves | changelog or release notes and a **Deploy hand-off** (migration and its rollback, new config, perf numbers); skipped when there is no migration, no new config, nothing a user sees and no doc mentions the changed part (`docs skipped: <reason>` in `tasks/<task>.md`) | changelog and user docs of the changed pages | those plus API docs and the changed business rules | API docs and the changed business rules |
 | 12 | Orchestrator | [closing.md](closing.md) in full, `## Usage` from `spawns.tsv` | same | same | same |
 
-Internal: Skipped: 1 (`researcher`), 2 (`product-manager`), `designer`, 3b, 3c. Never skipped: 3, 6, 7, 10.
+Internal: Skipped: 1 (`researcher`), 2 (`product-manager`), `designer`, 3b, 3c, 3d. Never skipped: 3, 6, 7, 10.
 
 Rules for the visible scopes:
 

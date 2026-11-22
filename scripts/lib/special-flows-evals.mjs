@@ -28,8 +28,8 @@ export function runSpecialFlowsEvals({ check, root }) {
 
   /* verify */
   const vcard = planCard('verify');
-  check('verify: the card runs the smoke if needed, review, QA, the gate and docs; no build', vcard[1].split(' → ').length === 5 && vcard[1].includes(STEP_LABELS['6'].th) && !vcard[1].includes(STEP_LABELS['4'].th) && planCard('verify', { skip: ['3d'] })[1].split(' → ').length === 4);
-  check('verify: 3d is conditional, never skipped by definition (a branch that bumps a package gets its smoke)', !skipsOf('verify').includes('3d'));
+  check('verify: the card runs review, the test gate, the Human gate and docs; no build', vcard[1].split(' → ').length === 4 && vcard[1].includes(STEP_LABELS['6'].th) && !vcard[1].includes(STEP_LABELS['4'].th));
+  check('verify: 3d is skipped by definition (devops is retired; the test gate at 7 is the check)', skipsOf('verify').includes('3d'));
   check('verify: the card says the requester branch is never edited or merged', /ไม่แก้และไม่ merge/.test(vcard.at(-1)) && /never edited or merged/.test(planCard('verify', { lang: 'en' }).at(-1)));
   check('verify: ungated, quick baseline', LANES.verify.gated === false && LANES.verify.baseline === 'quick');
   check('verify: route sends review-and-test to verify, a bare review stays review', route({ outcome: 'verify' }).route === 'verify' && route({ outcome: 'review' }).route === 'review');
@@ -38,8 +38,8 @@ export function runSpecialFlowsEvals({ check, root }) {
   check('verify-doc: a reject is reported and asked once (fix on the copy / report only)', vp.includes('ask:verify-fix') && /\*\*Fix on the copy/.test(vp) && /\*\*Report only\*\*/.test(vp));
 
   /* upgrade */
-  check('upgrade: research, the ADR, its gate and the smoke are never skipped', ['1', '3', '3c', '3d'].every((s) => neverSkipOf('upgrade').includes(s) && !skipsOf('upgrade').includes(s)));
-  check('upgrade: the card shows the smoke as always run, and the ADR approval', !planCard('upgrade')[1].includes('ทดสอบ stack บน docker (ถ้าจำเป็น)') && planCard('upgrade')[1].includes('คุณอนุมัติ ADR'));
+  check('upgrade: research, the ADR and its gate are never skipped; 3d is skipped', ['1', '3', '3c'].every((s) => neverSkipOf('upgrade').includes(s) && !skipsOf('upgrade').includes(s)) && skipsOf('upgrade').includes('3d'));
+  check('upgrade: the card has no smoke step, and shows the ADR approval', !planCard('upgrade')[1].includes('ทดสอบ stack บน docker') && planCard('upgrade')[1].includes('คุณอนุมัติ ADR'));
   check('upgrade: route sends a version bump to the lane, before bug triage', route({ outcome: 'code', upgrade: true, bug: true, fix: { has_symptom: true, has_location: true } }).route === 'upgrade');
   const up = ref('upgrade-profile.md');
   check('drift: upgrade-profile.md never-skip list matches lanes.mjs', same(ids(up.match(/^Never skipped: ([^.]+)\./m)?.[1]), neverSkipOf('upgrade')));
