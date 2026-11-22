@@ -90,7 +90,7 @@ The ones the Orchestrator runs every task (`node "<muffy>/scripts/<name>.mjs" â€
 | `diff-signals.mjs` | Decide from the real diff whether a change still fits its lane |
 | `test-gate.mjs` | Step 7: run `test_command`, write the QA report from the exit code |
 | `small-fix.mjs` | Fix lane step 11: a small fix gets script-written release notes, a bigger one the docs-writer |
-| `task-usage.mjs` | Step 12: the task's token total (subagents plus Orchestrator) against the target |
+| `task-usage.mjs` | Step 12: what the task cost in dollars (subagents plus Orchestrator) against the target |
 
 ## Prerequisites
 

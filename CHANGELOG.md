@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.5.0 — 2026-11-22
+
+### Changed
+
+- **The cost target is in dollars, not tokens: US$1.00 for a small bug.** `task-usage.mjs` now prices every request of the session transcript and of each subagent's own transcript by the model that answered it (input, cache write by TTL, cache read, output), from `skills/muffy/data/pricing.json` (list prices with an `as_of` date, from the claude-api skill's model table; a model that is not in the file is left out and said so, never guessed). Its two lines are `usage: $total (orchestrator, subagents) · target` and `tokens:` (the counts and a dollar figure per agent). `--budget` (tokens) and the `cost-weighted:` line are gone: `--budget-usd 1` replaces them. `spawns.tsv` `tok:` is no source of dollars (token counts only). Replayed on the three fix tasks of 1.4.6 to 1.4.9: $1.03, $1.20 and $1.11.
+- **The transcript is found from a feature worktree too.** The Orchestrator ran `task-usage.mjs` inside `.worktrees/feature-<task>` in the 1.4.9 run and got `orchestrator n/a`, because the session's transcript folder is named after the main repo. It tries the folder and then the main repo of the git checkout.
+
+### Measured: where a task's money goes
+
+About two thirds is the Orchestrator ($0.69 to $0.84): its context (about 90k tokens before the first muffy step in the Claude desktop app, 120k to 160k during the task) is re-read on every request, about 28 per task. The subagents are the rest, and the earlier token-weighted figures misled: the `haiku` debugger costs about a cent and the `haiku` docs-writer about a cent and a half, so skipping the docs-writer saves little; the `opus` auditor is the dearest subagent at about $0.15. About 45% of the first request's context in the desktop app is its own tool schemas (54 tools, 137k characters, one of them 37k); muffy cannot change that, a leaner session can.
+
+### Fixed
+
+- **The reviewer's hand-off example now carries `"verdict":"Approve"`** and the prompt says `Approve` or `Reject`, capitalised. The Orchestrator wrote it in lower case from the example's silence and spent a request fixing it.
+- **`fix-profile.md` has a short "steps 6 to 12 in few calls" paragraph.** A measured run spent 7 of its 28 requests reading script sources and re-running the suite to learn what the test gate and the Human gate print. This is guidance, not yet shown to cut requests: compare the next run's `tokens:` line.
+
+### Not done
+
+- Every Agent spawn still costs at least three requests here (the envelope, the launch, the wait for the background agent): not removable from the skill.
+- The 90k baseline context is the harness's; run muffy in a session with fewer tools and skills to see how much it saves, then say so here.
+
 ## v1.4.9 — 2026-11-22
 
 ### Fixed

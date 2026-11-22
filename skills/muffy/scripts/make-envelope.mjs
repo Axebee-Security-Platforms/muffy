@@ -85,7 +85,8 @@ if (errs.length) { console.error(`envelope invalid:\n- ${errs.join('\n- ')}`); p
 // first, everything that changes per step or round (goal, paths, round, hand-off shape) comes last, so the prompt prefix is reusable.
 const DECISION_ROLES = ['designer', 'architect', 'product-manager', 'frontend-dev', 'backend-dev', 'devops', 'docs-writer'];
 const withDecisions = DECISION_ROLES.includes(role) && /^[0-9]/.test(String(step));
-const example = JSON.stringify({ role, task: env.task, step: String(step), round: Number(round), status: 'done', paths_written: ['<path>'], ...(withDecisions ? { decisions: [{ id: 'D-1', decision: '<choice made>', why: '<reason, and the alternative rejected>' }] } : {}), blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'one line' });
+// the reviewer's hand-off needs `verdict`, spelled `Approve` or `Reject` (capitalised): the Orchestrator writes it, and a lower-case one cost a turn in a real run
+const example = JSON.stringify({ role, task: env.task, step: String(step), round: Number(round), status: 'done', ...(reviewerNoWrite ? { verdict: 'Approve' } : {}), paths_written: ['<path>'], ...(withDecisions ? { decisions: [{ id: 'D-1', decision: '<choice made>', why: '<reason, and the alternative rejected>' }] } : {}), blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'one line' });
 const header = [`Task: ${env.task}`, `Brain: ${env.brain}`];
 if (env.vault) header.push(`Vault: ${env.vault}`);
 if (env.mode !== undefined) header.push(`Mode: ${env.mode}`);
@@ -99,7 +100,7 @@ if (dontWrite && !reviewerNoWrite) out.push(dontWrite);
 if (env.commit_trailer) out.push(`Commit trailer: ${env.commit_trailer}`);
 out.push(
   reviewerNoWrite
-    ? 'Final message: the review (blockers first, one-line verdict, ≤ 120 lines), then the one-line JSON hand-off block. Do not Read handoff.schema.json; the shape is below.'
+    ? 'Final message: the review (blockers first, one-line verdict, ≤ 120 lines), then the one-line JSON hand-off block, with `verdict` exactly `Approve` or `Reject`. Do not Read handoff.schema.json; the shape is below.'
     : 'Final message (silent execution): on success (`status: done`, no blockers, checks passed) output ONLY the one-line JSON hand-off block, no prose; results, paths and details go in the JSON (`summary` ≤ 1 line) and the files. Prose (≤ 8 lines, ≤ 1,200 characters) only on an error, `blocked`/`not-ready`, or a decision the Orchestrator or user must make, with blockers `B-n`. Then the one-line JSON hand-off block. Do not Read handoff.schema.json; copy this shape and run validate-handoff.mjs on the file.' + (withDecisions ? ' Record each choice you made and why in `decisions` (D-n, stable across rounds): a later round is a fresh spawn that reads it from the file.' : '')
 );
 // --- per-spawn part below this line ---
