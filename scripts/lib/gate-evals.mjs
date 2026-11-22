@@ -27,7 +27,7 @@ export function runGateEvals({ check, root }) {
     const missing = agents.filter((n) => !readFileSync(rel('agents', n), 'utf8').includes(para ?? '\0'));
     check('token rules: the shared paragraph exists and every agent definition carries it word for word', !!para && agents.length >= 13 && missing.length === 0, `missing in: ${missing.join(', ')}`);
     check('token rules: the debugger caps `## Evidence` by severity without cutting the minimum evidence', /at most 8 lines for `low`, 15 for `medium`, 25 for `high`, 40 for `critical`/.test(readFileSync(rel('agent-references', 'debugger', 'rules-and-guardrails.md'), 'utf8')) && /never cuts a minimum/.test(readFileSync(rel('agent-references', 'debugger', 'rules-and-guardrails.md'), 'utf8')));
-    check('token rules: token-discipline.md tells the Orchestrator to batch independent calls and names the dollar target', /Fewer turns \(the Orchestrator\)/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')) && /US\$1\.00/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')));
+    check('token rules: token-discipline.md tells the Orchestrator to batch independent calls and measures cost in dollars with no target', /Fewer turns \(the Orchestrator\)/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')) && /## Cost measurement/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')) && !/budget-usd|US\$1\.00/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')));
   }
 
   /* rule set */
@@ -296,15 +296,15 @@ export function runGateEvals({ check, root }) {
       const tdir = join(tmp, 'usage-task');
       mkdirSync(tdir, { recursive: true });
       const usage = (...a) => spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'task-usage.mjs'), tdir, '--transcript', `${sess}.jsonl`, '--since', '2026-01-01T10:00:00Z', ...a], { encoding: 'utf8' }).stdout;
-      const full = usage('--budget-usd', '1');
-      check('task-usage: dollars for the Orchestrator and the subagents, the total and the target', /^usage: \$0\.006 · orchestrator \$0\.002 · subagents \$0\.004 · target \$1\.00: under/.test(full) && /debugger \$0\.004/.test(full) && /2026-11-03 list prices/.test(full), full);
+      const full = usage();
+      check('task-usage: dollars for the Orchestrator and the subagents, and the total, with no target', /^usage: \$0\.006 · orchestrator \$0\.002 · subagents \$0\.004\n/.test(full) && !/target|under|over/.test(full.split('\n')[0]) && /debugger \$0\.004/.test(full) && /2026-11-03 list prices/.test(full), full);
       writeFileSync(join(tdir, 'spawns.tsv'), '4\tbackend-dev\tsonnet\tmedium\t1\tpass\t0\tdone tok:500\n');
-      check('task-usage: spawns.tsv is no source of dollars (it has token counts only), so it changes nothing', usage('--budget-usd', '1') === full);
+      check('task-usage: spawns.tsv is no source of dollars (it has token counts only), so it changes nothing', usage() === full);
+      check('task-usage: a leftover --budget-usd from an older reference is ignored, not an error', usage('--budget-usd', '1') === full);
       rmSync(join(tdir, 'spawns.tsv'));
       rmSync(join(sess, 'subagents'), { recursive: true });
-      const none = usage('--budget-usd', '1');
-      check('task-usage: with no subagent transcripts the subagents are n/a, the total "at least" and the target "cannot tell"', /^usage: at least \$0\.002 · orchestrator \$0\.002 · subagents n\/a/.test(none) && /cannot tell/.test(none) && !/: under/.test(none), none);
-      check('task-usage: a partial total already over the target is still over', /: over/.test(usage('--budget-usd', '0.001')));
+      const none = usage();
+      check('task-usage: with no subagent transcripts the subagents are n/a and the total "at least"', /^usage: at least \$0\.002 · orchestrator \$0\.002 · subagents n\/a/.test(none), none);
       writeFileSync(`${sess}.jsonl`, jl([rec('m1', '2026-01-01T10:10:00Z', u(1, 400, 100), {}, 'claude-unknown-9')]));
       const unknown = usage();
       check('task-usage: requests on an unpriced model are left out and said so; the total is "at least"', /usage: at least \$0\.000/.test(unknown) && /1 request\(s\) on a model with no price/.test(unknown), unknown);
@@ -315,7 +315,7 @@ export function runGateEvals({ check, root }) {
       writeFileSync(idle, 'nothing about any task\n');
       check('task-usage: the transcript that names the task most is its own, even when another file is newer', pickTranscript([{ f: mine, t: 1 }, { f: other, t: 2 }, { f: idle, t: 3 }], 'fix-cart-b') === mine && pickTranscript([{ f: mine, t: 1 }, { f: other, t: 2 }, { f: idle, t: 3 }], 'fix-cart-a') === other);
       check('task-usage: with no mention anywhere the newest file is taken, and an unreadable one counts as no mention', pickTranscript([{ f: mine, t: 1 }, { f: idle, t: 3 }], 'fix-cart-zzz') === idle && pickTranscript([{ f: join(tmp, 'missing.jsonl'), t: 9 }, { f: mine, t: 1 }], 'fix-cart-b') === mine);
-      check('task-usage: a bad --budget-usd is exit 2', spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'task-usage.mjs'), tdir, '--budget-usd', 'abc'], { encoding: 'utf8' }).status === 2);
+      check('task-usage: a folder that does not exist is exit 2', spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'task-usage.mjs'), join(tmp, 'no-such-task')], { encoding: 'utf8' }).status === 2);
     }
     // fix lane: the debugger and the auditor are muffy roles, ungated; a dev step-4 spawn waits for the audit
     const fixHandoff = join(dir, 'handoff');

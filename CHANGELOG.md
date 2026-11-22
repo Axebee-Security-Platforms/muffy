@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.5.2 — 2026-11-22
+
+### Changed
+
+- **The cost target is removed.** A real task cannot be held to a number, so `task-usage.mjs` no longer takes `--budget-usd` or prints `target … under|over`; a leftover `--budget-usd` from an older reference is ignored, not an error. `token-discipline.md` ("Cost measurement"), `closing.md`, `fix-profile.md` and `SKILL.md` say the figure is a measurement for comparing runs before and after a change, never a limit or a verdict on one. The dollar pricing, the two output lines and everything else in 1.5.0 and 1.5.1 stay.
+
+### Measured (why the number still matters)
+
+The cost fell after the changes of 1.4.6 to 1.5.0: $1.03, $1.20 and $1.11 on 1.4.6 to 1.4.9 (three tasks), $0.95 and $0.84 on 1.5.0 (two tasks), all one-line fixes in the desktop app. That is 2 tasks against 3 with different bugs, so it shows a direction, not a size: compare the next tasks' `usage:` lines with these before saying how much.
+
 ## v1.5.1 — 2026-11-22
 
 ### Fixed

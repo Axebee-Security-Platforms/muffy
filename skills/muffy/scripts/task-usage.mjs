@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Step 12: what the task cost, in US dollars, in two lines, so the cost can be compared with a target. No agent writes these numbers.
+// Step 12: what the task cost, in US dollars, in two lines, so runs can be compared. No agent writes these numbers, and there is no
+// target: a real task cannot be held to one, so the line is a measurement to compare before and after a change, never a limit.
 //   Orchestrator  this session's transcript, the assistant messages sent since the task began (the first commit of `.team/<task>/`,
 //                 or --since <ISO time>), each API request once, priced by the model that answered it.
 //   subagents     their own transcripts (<session>/subagents/*.jsonl), counted the same way. Subagents write their own transcripts,
@@ -7,12 +8,12 @@
 //   price         data/pricing.json (list prices per million tokens, with an as_of date): input, cache write (5 minutes or 1 hour,
 //                 as each request used it), cache read and output. A model that is not in that file is not priced and is said so.
 //
-// Usage: node task-usage.mjs .team/<task> [--budget-usd <dollars>] [--since <ISO>] [--until <ISO>] [--transcript <file>] [--cwd <dir>]
+// Usage: node task-usage.mjs .team/<task> [--since <ISO>] [--until <ISO>] [--transcript <file>] [--cwd <dir>]
 //   until       default: now, which is right at step 12; set it only to measure a task that closed earlier in a longer session
 //   cwd         the folder the Orchestrator session runs in (default: the current folder; a feature worktree is mapped to its main
 //               repo, which is where the session started); picks ~/.claude/projects/<slug>/
 //   transcript  default: the session file of that folder that names the task most often (two sessions may run side by side)
-// Prints `usage: $<total> (orchestrator $<n>, subagents $<n>)[ · target $<n>: under|over]` and a `tokens:` line (the counts behind it).
+// Prints `usage: $<total> · orchestrator $<n> · subagents $<n>` and a `tokens:` line (the counts behind it).
 // Anything it cannot read or price is `n/a` and the total says `at least`: never an estimate. `spawns.tsv` carries token counts only,
 // not prices, so it is no source of dollars. Exit 0 always except bad usage (2): the line is a report, not a gate.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
@@ -112,8 +113,8 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const pos = [];
   for (let i = 0; i < argv.length; i++) argv[i].startsWith('--') ? (o[argv[i].slice(2)] = argv[++i]) : pos.push(argv[i]);
   const task = pos[0] && resolve(pos[0]);
-  if (!task || !existsSync(task) || (o['budget-usd'] !== undefined && !(Number(o['budget-usd']) > 0))) {
-    console.error('usage: task-usage.mjs .team/<task> [--budget-usd <dollars>] [--since <ISO>] [--until <ISO>] [--transcript <file>] [--cwd <dir>]');
+  if (!task || !existsSync(task)) {
+    console.error('usage: task-usage.mjs .team/<task> [--since <ISO>] [--until <ISO>] [--transcript <file>] [--cwd <dir>]');
     process.exit(2);
   }
   const since = o.since ?? taskStart(task);
@@ -141,12 +142,10 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   const unpriced = (orch?.unpriced ?? 0) + (sub?.unpriced ?? 0);
   const total = (orch?.usd ?? 0) + (sub?.usd ?? 0);
   const complete = !!orch && !!sub && unpriced === 0;
-  const budget = o['budget-usd'] === undefined ? null : Number(o['budget-usd']);
   console.log([
     `usage: ${complete ? '' : 'at least '}${usd(total)}`,
     `orchestrator ${orch ? usd(orch.usd) : 'n/a (no session transcript or start time)'}`,
     `subagents ${sub ? usd(sub.usd) : 'n/a (no subagent transcripts)'}`,
-    ...(budget ? [`target ${usd(budget)}: ${total > budget ? 'over' : complete ? 'under' : 'cannot tell (a part is missing)'}`] : []),
   ].join(' · '));
   console.log(`tokens: ${[
     orch ? `orchestrator ${fmt(orch.fresh)} fresh + ${fmt(orch.cacheRead)} cache read in ${orch.requests} requests since ${since}` : null,
