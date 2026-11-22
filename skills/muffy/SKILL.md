@@ -75,6 +75,27 @@ Critical rules (Orchestrator rules 1 to 4, plus the opt-in hooks): [references/h
 
 Verify after every step: run `node "<muffy>/scripts/check-all.mjs" .team/<task> --step <s> --round <n>` and act on its `next=` line, then the judgment checks: [references/quality-checks.md](references/quality-checks.md)
 
+## Scripts
+
+The ones the Orchestrator runs every task (`node "<muffy>/scripts/<name>.mjs" …`); the rest are called from the references.
+
+| Script | Use it |
+|---|---|
+| `init-config.mjs` | Setup: writes `.team/config.json` `test_command` from `package.json` |
+| `checkpoint.mjs` | Write the checkpoint: rounds, pauses, gate answers, the lane line |
+| `make-envelope.mjs` | Build each subagent prompt from flags, not by hand |
+| `next-action.mjs` | Deterministic rules: loop budget, effort, baseline, smoke and triage |
+| `check-all.mjs` | After every step: hand-offs, gates, checkpoint and artifacts in one call |
+| `gate-summary.mjs` | Build the question body at a human gate (2b, 3c, 10) |
+| `diff-signals.mjs` | Decide from the real diff whether a change still fits its lane |
+| `test-gate.mjs` | Step 7: run `test_command`, write `qa-report.md` from the exit code |
+
+## Prerequisites
+
+- A git repository and Node 18 or newer; the scripts have no other dependency.
+- The muffy agents installed next to this skill ([INSTALL.md](../../INSTALL.md)).
+- `.team/config.json` with a `test_command` for the test gate; setup writes it from `package.json`.
+
 ## Examples
 
 - `/muffy feature "login with email and password"`: the full flow; the user approves the plan and design before any code.
