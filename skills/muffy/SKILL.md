@@ -75,6 +75,24 @@ Critical rules (Orchestrator rules 1 to 4, plus the opt-in hooks): [references/h
 
 Verify after every step: run `node "<muffy>/scripts/check-all.mjs" .team/<task> --step <s> --round <n>` and act on its `next=` line, then the judgment checks: [references/quality-checks.md](references/quality-checks.md)
 
+## Examples
+
+- `/muffy feature "login with email and password"`: the full flow; the user approves the plan and design before any code.
+- `/muffy fix "the cart total ignores the discount"`: the fix lane: diagnose, audit the cause, fix, review, test gate.
+- `/muffy verify` on a branch someone already wrote: review and the test gate only; the branch is never edited.
+
+## Limitations
+
+- Never deploys and never touches staging or production; the run ends at a branch the user accepts.
+- QA is a script (`test-gate.mjs`) that runs the project's test command; devs write unit tests only and regression testing is the human's.
+- With no `test_command` in `.team/config.json`, the test gate reports itself skipped, never passed.
+
+## Troubleshooting
+
+- **A spawn is blocked:** a human gate (`pause:plan-review` or `pause:design-review`) has no answer yet; ask the user and record it with `checkpoint.mjs gate` ([hooks-enforcement.md](references/hooks-enforcement.md)).
+- **Test gate says skipped:** add `{"test_command": "<your test command>"}` to `.team/config.json`.
+- **A run stopped midway:** `/muffy resume` ([resume.md](references/resume.md)).
+
 ---
 
 **Not for:** questions about the code, one-line edits with no behaviour risk, step-by-step iteration in main session. Research-only, review-only, design-only and spec-only requests are not refused: they route to the single agent that owns them ([route.md](references/route.md))
