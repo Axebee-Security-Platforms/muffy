@@ -24,8 +24,10 @@ const QUESTIONS = {
     options: [{ label: 'Go', description: 'Fix lane, AC as listed' }, { label: 'Change it', description: 'Edit the AC first' }],
   }],
 };
-const HEADLESS = { MUFFY_HEADLESS: '1' };
-const SELF_HEAL = { MUFFY_HEADLESS: '1', MUFFY_HEADLESS_POLICY: 'self-heal', MUFFY_TRIGGERED_BY: 'oncall-dev' };
+// the checkpoints below are the fix lane, where rule H3 decides every gate by default; GATES=ask keeps the older waiting behaviour under test
+const HEADLESS = { MUFFY_HEADLESS: '1', MUFFY_HEADLESS_GATES: 'ask' };
+const SELF_HEAL = { ...HEADLESS, MUFFY_HEADLESS_POLICY: 'self-heal', MUFFY_TRIGGERED_BY: 'oncall-dev' };
+const H3 = { MUFFY_HEADLESS: '1' };
 const SCOPE_OK = { triagePassed: true, acFromRequest: true };
 
 export function runHeadlessEvals({ check, root }) {
@@ -44,6 +46,15 @@ export function runHeadlessEvals({ check, root }) {
   check('H2: a second non-confirm stops', gatePolicy('audit', SELF_HEAL, { verdict: 'need-validation', status: [`- ${AUTO_REDIAGNOSE} · 2026-11-21T00:00:00.000Z`] }).action === 'ask');
   check('H2: audit reject always stops', gatePolicy('audit', SELF_HEAL, { verdict: 'reject', status: [] }).action === 'ask');
   check('H2: the Human gate never passes on its own', gatePolicy('human-gate', SELF_HEAL, SCOPE_OK).action === 'ask' && gatePolicy('plan-review', SELF_HEAL, SCOPE_OK).action === 'ask' && gatePolicy('design-review', SELF_HEAL, SCOPE_OK).action === 'ask');
+
+  /* rule H3: headless fix lane decides its own gates; no sensible answer closes as blocked */
+  const fixH3 = (gate, facts = {}) => gatePolicy(gate, H3, { lane: 'fix', ...facts });
+  check('H3: in the fix lane scope passes with no policy and no MUFFY_TRIGGERED_BY', fixH3('scope').action === 'auto' && /rule H3/.test(fixH3('scope').line));
+  check('H3: a promotion or scope change blocks', fixH3('scope', { scopeChange: true }).action === 'block');
+  check('H3: the Human gate passes to PR review', fixH3('human-gate').line === 'auto: ship to PR review · rule H3');
+  check('H3: first need-validation re-diagnoses, the second and any reject block', fixH3('audit', { verdict: 'need-validation', status: [] }).action === 'auto' && fixH3('audit', { verdict: 'need-validation', status: [`- ${AUTO_REDIAGNOSE} · x`] }).action === 'block' && fixH3('audit', { verdict: 'reject' }).action === 'block');
+  check('H3: escalation and question block, they never guess', fixH3('escalation').action === 'block' && fixH3('question').action === 'block');
+  check('H3: other lanes keep waiting, and MUFFY_HEADLESS_GATES=ask switches H3 off', gatePolicy('human-gate', H3, { lane: 'feature' }).action === 'ask' && gatePolicy('scope', { ...H3, MUFFY_HEADLESS_GATES: 'ask' }, { lane: 'fix', ...SCOPE_OK }).action === 'ask');
 
   /* gate.json schema */
   const good = { gate: 'scope', task: 'fix-cart', created_at: '2026-11-21T03:04:05.000Z', ...QUESTIONS };
@@ -188,6 +199,18 @@ export function runHeadlessEvals({ check, root }) {
     write(`${read().trimEnd()}\n- scope answered: Go by @kanata (Slack) 2026-11-21T14:00+07:00\n`);
     const one = cliAnswer();
     check('multi: a single-question gate is unchanged (no pipe, answer=<label>)', one.status === 0 && one.stdout.includes('answer=Go') && !one.stdout.includes('answer.1='), one.stdout + one.stderr);
+
+    /* rule H3 through checkpoint.mjs ask (fix lane, no policy flags) */
+    write(CP('- stage: qa passed'));
+    draft();
+    const ship = askGate(dir, 'human-gate', { env: H3, now });
+    check('ask H3: the fix-lane Human gate is recorded as auto, no gate.json, no pause', ship.action === 'auto' && read().includes('rule H3') && !existsSync(gateFile) && pausedLines() === 0);
+    write(CP('- stage: audit'));
+    const blk = askGate(dir, 'audit', { env: H3, facts: { verdict: 'reject' }, now });
+    check('ask H3: a reject writes a blocked line, no gate.json, and returns the blocked status', blk.action === 'block' && read().includes('blocked at pause:audit') && !existsSync(gateFile) && blk.statusLine === 'muffy-status: blocked:audit');
+    write(CP('- stage: audit'));
+    const cliBlk = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'checkpoint.mjs'), 'ask', dir, 'question'], { encoding: 'utf8', env: { ...process.env, ...H3 } });
+    check('cli ask H3: a blocked gate ends with muffy-status: blocked:<gate>', cliBlk.status === 0 && cliBlk.stdout.includes('next=close:blocked') && cliBlk.stdout.trim().split(/\r?\n/).at(-1) === 'muffy-status: blocked:question', cliBlk.stdout + cliBlk.stderr);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -199,6 +222,7 @@ export function runHeadlessEvals({ check, root }) {
   check('docs: SKILL.md loads headless.md when MUFFY_HEADLESS=1', R('skills/muffy/SKILL.md').includes('references/headless.md') && R('skills/muffy/SKILL.md').includes('MUFFY_HEADLESS=1'));
   const doc = R('skills/muffy/references/headless.md');
   check('docs: headless.md names the commands, the status line and rule H2', ['checkpoint.mjs" ask', 'checkpoint.mjs" answer', 'muffy-status: waiting:<gate>', 'rule H2', 'MUFFY_HEADLESS_POLICY=self-heal', 'MUFFY_TRIGGERED_BY'].every((s) => doc.includes(s)));
+  check('docs: headless.md names rule H3, the off switch and the blocked status line', ['rule H3', 'MUFFY_HEADLESS_GATES=ask', 'muffy-status: blocked:<gate>'].every((s) => doc.includes(s)) && R('skills/muffy/references/fix-profile.md').includes('rule H3'));
   check('docs: resume.md consumes a headless answer before anything else', R('skills/muffy/references/resume.md').includes('checkpoint.mjs" answer'));
   check('docs: fix-profile.md routes the audit through checkpoint.mjs ask in headless', R('skills/muffy/references/fix-profile.md').includes('checkpoint.mjs" ask .team/<task> audit'));
 }

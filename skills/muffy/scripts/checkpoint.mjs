@@ -35,11 +35,11 @@
 // Prints one verdict line. Exit 0 = written and checked, 1 = written but check-checkpoint failed, 2 = usage or input error.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync, rmSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
-import { gatePolicy, validateGate, findAnswer, auditAnswer, gateAnswer, STATUS_LINE, CONSUMED } from './headless.mjs';
+import { gatePolicy, validateGate, findAnswer, auditAnswer, gateAnswer, STATUS_LINE, CONSUMED, BLOCKED_STATUS } from './headless.mjs';
 import { fileURLToPath } from 'node:url';
 import { checkTask } from './check-checkpoint.mjs';
 import { LOOP_LIMIT } from './next-action.mjs';
-import { GATES, PAUSE_OF, gateState } from './gate-rules.mjs';
+import { GATES, PAUSE_OF, gateState, laneOf } from './gate-rules.mjs';
 import { gate2b, gate3c } from './gate-summary.mjs';
 import { laneSpec, skipsOf, neverSkipOf, formatRunProfile, isLaneLine, parseRunProfile } from './lanes.mjs';
 
@@ -258,8 +258,17 @@ export function askGate(taskDir, gate, { env = {}, facts = {}, until, now = new 
   const cpPath = join(taskDir, 'checkpoint.md');
   if (!existsSync(cpPath)) throw new Error(`missing ${cpPath}`);
   const gateFile = join(taskDir, 'gate.json');
-  const policy = gatePolicy(gate, env, { ...facts, status: statusOf(cpPath) });
+  const policy = gatePolicy(gate, env, { lane: laneOf(readFileSync(cpPath, 'utf8')), ...facts, status: statusOf(cpPath) });
   if (policy.action === 'interactive') return policy;
+
+  if (policy.action === 'block') {
+    const cp = parse(readFileSync(cpPath, 'utf8'));
+    const kept = body(cp, 'Status').filter((l) => !l.includes(`paused at pause:${gate} `) && !l.includes(`blocked at pause:${gate} `));
+    replaceBody(cp, 'Status', [...kept, `- ${policy.line} · ${now.toISOString()}`]);
+    writeFileSync(cpPath, render(cp));
+    if (existsSync(gateFile)) rmSync(gateFile);
+    return { ...policy, statusLine: BLOCKED_STATUS(gate) };
+  }
 
   if (policy.action === 'auto') {
     const cp = parse(readFileSync(cpPath, 'utf8'));
@@ -361,6 +370,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
       const r = askGate(taskDir, pos[1], { env: process.env, facts, until: typeof o.until === 'string' ? o.until : undefined });
       if (r.action === 'interactive') { console.log('next=ask-user (not headless: AskUserQuestion as before; nothing written)'); process.exit(0); }
       if (r.action === 'auto') { said = r.line; tail = ['next=continue']; }
+      else if (r.action === 'block') { said = r.line; tail = ['next=close:blocked: close per closing.md with status blocked, put the reason in fix.md, end the final message with the line below', r.statusLine]; }
       else { said = `gate.json written · paused at pause:${pos[1]} (${r.reason})`; tail = ['next=stop: commit .team/<task>/ on the task branch, end the final message with the line below', r.statusLine]; }
     } else if (cmd === 'answer') {
       const r = consumeAnswer(taskDir, { plan: typeof o.plan === 'string' ? o.plan : undefined });

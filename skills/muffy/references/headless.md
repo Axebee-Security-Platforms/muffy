@@ -2,9 +2,22 @@
 
 Some runs have no person at the keyboard: `claude -p "/muffy …" --plugin-dir …` in a worker, with no `AskUserQuestion` tool. A person answers each gate later, somewhere else (a Slack button), and the run continues with `/muffy resume <task>`. This mode applies only when the env `MUFFY_HEADLESS=1` is set. Without it nothing here applies: every gate asks with `AskUserQuestion` as the lane says.
 
+## Rule H3: the fix lane decides its own gates (default)
+
+In the **fix lane**, headless needs no policy flag: every gate is decided by `checkpoint.mjs ask`, and the person approves at PR review, not at a gate. Each stop would cost a new process that reloads the skill, so none is made. Other lanes are unchanged. `MUFFY_HEADLESS_GATES=ask` turns H3 off (the fix lane then follows the rest of this file).
+
+| Gate (fix lane) | `ask` answers | Recorded in `## Status` |
+|---|---|---|
+| `scope` | `next=continue`, unless the run would promote or change scope | `auto: scope approved, headless fix lane … · rule H3` |
+| `audit`, first `need-validation` | `next=continue`: re-run the debugger, then the auditor | `auto: re-diagnose · rule H2` |
+| `human-gate` | `next=continue`: carry on to docs-writer and closing. The qa-report, its `manual` AC and the diff summary are for the PR review | `auto: ship to PR review · rule H3` |
+| `audit` reject or a second `need-validation`, `escalation`, `question`, a promotion | `next=close:blocked` | `blocked at pause:<gate> · <reason>` |
+
+On `next=close:blocked`: write the reason and the evidence so far into `fix.md`, start no dev, close per [closing.md](closing.md) with status `blocked`, commit `.team/<task>/` on the task's branch, and end the final message with `muffy-status: blocked:<gate>` as its last line. A blocked run is never answered by accepting the risk or by guessing the missing fact. `muffy` opens no PR: the review is on the branch, so say in the final message where `qa-report.md` and `fix.md` are.
+
 ## The one rule
 
-In headless mode the Orchestrator never calls `AskUserQuestion` and never answers a question itself: no "orchestrator default", no "assumed yes", and no plain-prose question as the last message. Every place a lane would ask (each named pause in [run-profile.md](run-profile.md#named-pauses), the audit 4b outcomes, a loop-limit escalation, a debugger `unknown`, a missing fact at triage, a `needs-input` interview) goes through the same two steps:
+Outside rule H3 (every lane but fix, or `MUFFY_HEADLESS_GATES=ask`), in headless mode the Orchestrator never calls `AskUserQuestion` and never answers a question itself: no "orchestrator default", no "assumed yes", and no plain-prose question as the last message. Every place a lane would ask (each named pause in [run-profile.md](run-profile.md#named-pauses), the audit 4b outcomes, a loop-limit escalation, a debugger `unknown`, a missing fact at triage, a `needs-input` interview) goes through the same two steps:
 
 1. Write the exact `AskUserQuestion` input you would have sent to `.team/<task>/gate.json`: `{ "questions": [ { "question", "header" (≤12 chars), "multiSelect", "options": [ { "label", "description" } ] } ] }`, with 1-4 questions and 2-4 options each, the recommended option first.
 2. Run `node "<muffy>/scripts/checkpoint.mjs" ask .team/<task> <pause id> [facts]` and act on what it prints:

@@ -18,18 +18,42 @@ export const STATUS_LINE = (gate) => `muffy-status: waiting:${gate}`;
 
 const GATE_SCHEMA = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'schemas', 'gate.schema.json'), 'utf8'));
 
+export const AUTO_FIX_SCOPE = (by) => `auto: scope approved, headless fix lane${by ? ` (@${by})` : ''} · rule H3`;
+export const AUTO_SHIP = 'auto: ship to PR review · rule H3';
+export const BLOCKED_LINE = (gate, reason) => `blocked at pause:${gate} · ${reason}`;
+export const BLOCKED_STATUS = (gate) => `muffy-status: blocked:${gate}`;
+
 export function headlessOf(env = {}) {
   return {
     headless: String(env.MUFFY_HEADLESS ?? '').trim() === '1',
     policy: String(env.MUFFY_HEADLESS_POLICY ?? '').trim(),
     by: String(env.MUFFY_TRIGGERED_BY ?? '').trim().replace(/^@/, ''),
+    // MUFFY_HEADLESS_GATES=ask turns rule H3 off: the fix lane waits for a person at its gates as before
+    gates: String(env.MUFFY_HEADLESS_GATES ?? '').trim().toLowerCase(),
   };
 }
 
-// facts: scope → { triagePassed, acFromRequest, scopeChange }; audit → { verdict, status: [## Status lines] }
+// Rule H3: headless in the fix lane decides every gate itself, the person approves at PR review. A gate with no
+// sensible automatic answer (it asks for something the run does not have) closes the task as blocked instead of guessing.
+function fixLanePolicy(gate, h, facts) {
+  const blocked = (reason) => ({ action: 'block', reason, line: BLOCKED_LINE(gate, reason) });
+  if (gate === 'scope') return facts.scopeChange ? blocked('a promotion or scope change leaves the fix lane') : { action: 'auto', line: AUTO_FIX_SCOPE(h.by) };
+  if (gate === 'audit') {
+    if (facts.verdict !== 'need-validation') return blocked(`audit ${facts.verdict ?? 'reject'}: the cause does not hold and no risk is accepted automatically`);
+    if ((facts.status ?? []).some((l) => l.includes(AUTO_REDIAGNOSE))) return blocked('audit need-validation twice: the evidence did not firm up');
+    return { action: 'auto', line: AUTO_REDIAGNOSE };
+  }
+  if (gate === 'human-gate') return { action: 'auto', line: AUTO_SHIP };
+  if (gate === 'escalation') return blocked('loop limit reached');
+  if (gate === 'question') return blocked('a fact only a person has is missing (unknown cause, log, repro or triage fact)');
+  return { action: 'ask', reason: `pause:${gate} does not occur in the fix lane` };
+}
+
+// facts: scope → { triagePassed, acFromRequest, scopeChange }; audit → { verdict, status: [## Status lines] }; every gate → { lane }
 export function gatePolicy(gate, env = {}, facts = {}) {
   const h = headlessOf(env);
   if (!h.headless) return { action: 'interactive', reason: 'MUFFY_HEADLESS is not 1: ask with AskUserQuestion as before' };
+  if (facts.lane === 'fix' && h.gates !== 'ask') return fixLanePolicy(gate, h, facts);
   if (h.policy !== SELF_HEAL) return { action: 'ask', reason: h.policy ? `policy "${h.policy}" allows no automatic pass` : 'no MUFFY_HEADLESS_POLICY: every gate waits for a person' };
   if (gate === 'scope') {
     if (!facts.triagePassed) return { action: 'ask', reason: 'rule H2 needs triage passed' };
