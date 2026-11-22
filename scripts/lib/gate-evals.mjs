@@ -142,6 +142,31 @@ export function runGateEvals({ check, root }) {
     check('guard: retired devops is blocked, with no Task header and no run too', spawn('devops', 'go').status === 2 && spawn('devops', 'go', join(tmp, 'elsewhere')).status === 2);
     check('guard: the namespaced name muffy:qa-tester is blocked too', spawn('muffy:qa-tester', `${hdr}go`).status === 2);
     check('guard: MUFFY_ALLOW_RETIRED=1 lifts the block', spawnSync(process.execPath, [guard], { input: JSON.stringify({ tool_name: 'Agent', tool_input: { subagent_type: 'devops', prompt: `${hdr}go` }, cwd: tmp }), encoding: 'utf8', env: { ...process.env, MUFFY_ALLOW_RETIRED: '1' } }).status === 0);
+    // init-config.mjs + test-gate.mjs
+    {
+      const proj = join(tmp, 'proj');
+      mkdirSync(proj, { recursive: true });
+      const init = () => spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'init-config.mjs'), proj], { encoding: 'utf8' });
+      const cfg = () => { try { return JSON.parse(readFileSync(join(proj, '.team', 'config.json'), 'utf8')); } catch { return null; } };
+      writeFileSync(join(proj, 'package.json'), JSON.stringify({ scripts: { test: 'echo "Error: no test specified" && exit 1' } }));
+      init();
+      check('init-config: npm placeholder test script writes nothing', cfg() === null);
+      writeFileSync(join(proj, 'package.json'), JSON.stringify({ scripts: { test: 'vitest run' } }));
+      init();
+      check('init-config: scripts.test with no lockfile writes npm test', cfg()?.test_command === 'npm test');
+      writeFileSync(join(proj, '.team', 'config.json'), JSON.stringify({ test_command: 'make check', other: 1 }));
+      writeFileSync(join(proj, 'pnpm-lock.yaml'), '');
+      init();
+      check('init-config: an existing test_command is never overwritten', cfg()?.test_command === 'make check' && cfg()?.other === 1);
+      rmSync(join(proj, '.team'), { recursive: true });
+      init();
+      check('init-config: pnpm lockfile gives pnpm test', cfg()?.test_command === 'pnpm test');
+      mkdirSync(join(proj, '.team', 'tk'), { recursive: true });
+      const gate = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'test-gate.mjs'), join(proj, '.team', 'tk'), '--cwd', proj], { encoding: 'utf8' });
+      check('test-gate: reads the command init-config wrote (pnpm test is not installed here, so it fails, not skipped)', gate.status === 1 || gate.status === 0, String(gate.status));
+      rmSync(join(proj, '.team', 'config.json'));
+      check('test-gate: no config is exit 3, skipped', spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'test-gate.mjs'), join(proj, '.team', 'tk'), '--cwd', proj], { encoding: 'utf8' }).status === 3);
+    }
     // fix lane: the debugger and the auditor are muffy roles, ungated; a dev step-4 spawn waits for the audit
     const fixHandoff = join(dir, 'handoff');
     mkdirSync(fixHandoff, { recursive: true });

@@ -78,7 +78,7 @@ The long form of the rows in [steps.md](steps.md) that need more than one line. 
 
 **Agent:** none. The test gate is a script (`qa-tester` is retired to cut cost; its agent file stays so the change can be reverted).
 
-**Setup, once per project:** the user puts `{"test_command": "npm test"}` (the project's own command) in `.team/config.json`. Without it the gate reports **skipped**, never passed.
+**Setup, once per project:** `init-config.mjs` ([setup.md](setup.md) step 4) writes `.team/config.json` → `test_command` from `package.json`; for another stack the user sets it by hand. Without it the gate reports **skipped**, never passed.
 
 **Run:** `node "<muffy>/scripts/test-gate.mjs" .team/<task> --cwd <merged worktree>`. Exit 0 → continue to step 10. Exit 1 → fix round to the dev owners with the failing output from `qa-report.md`. Exit 3 → continue, but the Human gate shows "test gate skipped: no test_command" and the Orchestrator says it in the closing summary.
 

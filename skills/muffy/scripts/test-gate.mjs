@@ -3,7 +3,7 @@
 // It replaces the qa-tester agent (retired to cut cost; the agent file stays so the change can be reverted).
 // Usage: node test-gate.mjs .team/<task> [--cwd <dir>] [--timeout <seconds>]
 //   cwd      where the command runs: the merged feature worktree (default: the current folder)
-//   command  `test_command` in `<project>/.team/config.json`, set once per project by the user, e.g. {"test_command": "npm test"}
+//   command  `test_command` in `<project>/.team/config.json` (init-config.mjs writes it at setup from package.json; the user may edit it)
 //   AC map   the `## AC id -> test name` sections of `.team/<task>/ac-tests*.md` (ac-tests-fe.md, ac-tests-be.md: one writer each),
 //            merged by AC id into qa-report.md; with no such file the report lists it as an open bug (gate-summary.mjs then says not ready)
 // Exit 0 = tests passed, 1 = tests failed or timed out, 2 = bad usage, 3 = skipped (no test_command): qa-report.md says so
@@ -11,6 +11,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+
 
 const args = process.argv.slice(2);
 const flag = (name, dflt) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : dflt; };
@@ -27,8 +28,13 @@ if (!existsSync(task) || !Number.isFinite(timeoutS) || timeoutS <= 0) { console.
 const readIf = (p) => (existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, '\n') : null);
 const section = (text, title) => text?.match(new RegExp(`^## ${title}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1].trim() ?? null;
 
+// .team/config.json: next to the task folder, else in the main repo's .team/ (the task folder may sit in a feature worktree)
+const mainRoot = (() => { const r = spawnSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: task, encoding: 'utf8' }); return r.status === 0 ? dirname(r.stdout.trim()) : null; })();
 let command = null;
-try { command = JSON.parse(readIf(join(dirname(task), 'config.json')) ?? '{}').test_command ?? null; } catch { command = null; }
+for (const p of [join(dirname(task), 'config.json'), mainRoot && join(mainRoot, '.team', 'config.json')].filter(Boolean)) {
+  try { command = JSON.parse(readIf(p) ?? '{}').test_command ?? null; } catch { command = null; }
+  if (command) break;
+}
 command = typeof command === 'string' && command.trim() ? command.trim() : null;
 
 const rows = new Map();
@@ -45,7 +51,7 @@ let code;
 let results;
 if (!command) {
   code = 3;
-  results = 'test gate skipped: no `test_command` in .team/config.json, so no test was run. Set it once per project, e.g. {"test_command": "npm test"}';
+  results = 'test gate skipped: no `test_command` in .team/config.json, so no test was run. Setup writes it from package.json (init-config.mjs); set it by hand for another stack, e.g. {"test_command": "go test ./..."}';
 } else {
   const r = spawnSync(command, { cwd, shell: true, encoding: 'utf8', timeout: timeoutS * 1000, maxBuffer: 64 * 1024 * 1024 });
   const tail = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim().split('\n').slice(-25).join('\n');
