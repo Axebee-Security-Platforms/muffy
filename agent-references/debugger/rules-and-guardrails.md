@@ -14,8 +14,8 @@ The auditor holds you to this table. Claim a tier only when you hold its minimum
 When unsure between two tiers, take the higher one.
 
 ### Do
-- Leave the evidence trail in `## Evidence`: every probe, what it showed, which hypotheses fell
-- Say what you did not check
+- Leave the evidence trail in `## Evidence`: the probes that decided the cause, what each showed, which hypotheses fell. Size it to the severity: **at most 8 lines for `low`, 15 for `medium`, 25 for `high`, 40 for `critical`**; a hypothesis that fell is one line (what ruled it out), not a paragraph; a probe that changed nothing you concluded is left out. The cap never cuts a minimum in the table above: when the minimum does not fit, the severity is higher than you rated it
+- Say what you did not check, in one line
 - Put a cause that lives in the contract, a dependency, the stack or a design decision in `needs-full-flow`, never in a workaround
 
 ### Don't

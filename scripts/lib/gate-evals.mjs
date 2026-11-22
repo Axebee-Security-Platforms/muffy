@@ -20,6 +20,16 @@ const CP = (status, profile = 'lane: feature · skipped none') =>
 export function runGateEvals({ check, root }) {
   const rel = (...p) => join(root, ...p);
 
+  /* token rules: one paragraph, copied into every agent definition, so no agent spends a turn reading it */
+  {
+    const para = readFileSync(rel('agent-references', 'shared', 'token-rules.md'), 'utf8').split(/\r?\n/).find((l) => l.startsWith('**Token rules (every agent):**'));
+    const agents = readdirSync(rel('agents')).filter((n) => n.endsWith('.md'));
+    const missing = agents.filter((n) => !readFileSync(rel('agents', n), 'utf8').includes(para ?? '\0'));
+    check('token rules: the shared paragraph exists and every agent definition carries it word for word', !!para && agents.length >= 13 && missing.length === 0, `missing in: ${missing.join(', ')}`);
+    check('token rules: the debugger caps `## Evidence` by severity without cutting the minimum evidence', /at most 8 lines for `low`, 15 for `medium`, 25 for `high`, 40 for `critical`/.test(readFileSync(rel('agent-references', 'debugger', 'rules-and-guardrails.md'), 'utf8')) && /never cuts a minimum/.test(readFileSync(rel('agent-references', 'debugger', 'rules-and-guardrails.md'), 'utf8')));
+    check('token rules: token-discipline.md tells the Orchestrator to batch independent calls and names the cost-weighted line', /Fewer turns \(the Orchestrator\)/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')) && /cost-weighted/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')));
+  }
+
   /* rule set */
   check('gates: product-manager and researcher need no gate', gatesForSpawn('product-manager').length === 0 && gatesForSpawn('researcher').length === 0);
   check('gates: designer needs 2b only', JSON.stringify(gatesForSpawn('designer')) === '["2b"]');
@@ -272,6 +282,14 @@ export function runGateEvals({ check, root }) {
       rmSync(join(sess, 'subagents'), { recursive: true });
       const none = usage('--budget', '100000');
       check('task-usage: no spawns.tsv and no subagent transcripts is subagents n/a, total "at least", and the target "cannot tell"', /subagents n\/a/.test(none) && /total at least 501/.test(none) && /cannot tell/.test(none) && !/: under/.test(none), none);
+      // the cost-weighted line: write 1.25x, read 0.1x, output 5x (orchestrator: input 1, write 400, output 100, read 0 -> 1 + 500 + 500)
+      check('task-usage: a cost-weighted line prices input, cache write, cache read and output', orchestratorTokens([rec('w1', '2026-01-01T10:30:00Z', u(10, 400, 100, 5000))], 0).weighted === 10 + 500 + 500 + 500, JSON.stringify(orchestratorTokens([rec('w1', '2026-01-01T10:30:00Z', u(10, 400, 100, 5000))], 0)));
+      check('task-usage: with no subagent transcripts the weighted line says n/a, never a partial figure', /cost-weighted: n\/a/.test(usage()) && !/cost-weighted: [0-9]/.test(usage()));
+      mkdirSync(join(sess, 'subagents'), { recursive: true });
+      writeFileSync(join(sess, 'subagents', 'agent-b.jsonl'), jl([rec('s2', '2026-01-01T10:25:00Z', u(100, 0, 50, 1000))]));
+      const priced = usage('--budget', '100000');
+      check('task-usage: with the subagent transcripts the weighted line gives the total and the Orchestrator share', /cost-weighted: 1 451 input-equivalents \(orchestrator 1 001 = 69%/.test(priced) && /output 5x/.test(priced), priced);
+      rmSync(join(sess, 'subagents'), { recursive: true });
       const over = usage('--budget', '100');
       check('task-usage: a partial total already over the target is still over', /: over/.test(over), over);
     }

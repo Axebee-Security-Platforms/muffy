@@ -10,7 +10,9 @@
 //   until       default: now, which is right at step 12; set it only to measure a task that closed earlier in a longer session
 //   cwd         the folder the Orchestrator session runs in (default: the current folder); picks ~/.claude/projects/<slug>/
 //   transcript  default: the newest session file of that folder
-// Prints one line: `usage: orchestrator <n> · subagents <n> · total <n>[ · target <n>: under|over] (cache reads <n> not counted)`.
+// Prints `usage: orchestrator <n> · subagents <n> · total <n>[ · target <n>: under|over] (cache reads <n> not counted)`, then a
+// `cost-weighted:` line: the same tokens priced (cache write 1.25x, cache read 0.1x, output 5x), where the Orchestrator's context
+// re-read on every turn and the agents' output show up. The target is on the first line only.
 // A transcript it cannot find or read gives `orchestrator n/a` and the total says `at least`: never an estimate.
 // Exit 0 always except bad usage (2): the line is a report, not a gate.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
@@ -46,14 +48,21 @@ export function tokensIn(lines, sinceMs, untilMs = Infinity) {
     if (at < sinceMs || at > untilMs) continue;
     const u = r.message.usage;
     const key = r.requestId ?? r.uuid;
-    const mine = { fresh: (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.output_tokens ?? 0), cacheRead: u.cache_read_input_tokens ?? 0 };
+    const mine = { input: u.input_tokens ?? 0, write: u.cache_creation_input_tokens ?? 0, output: u.output_tokens ?? 0, cacheRead: u.cache_read_input_tokens ?? 0 };
+    mine.fresh = mine.input + mine.write + mine.output;
     const had = byReq.get(key);
     if (!had || mine.fresh > had.fresh) byReq.set(key, mine);
   }
-  let fresh = 0; let cacheRead = 0;
-  for (const v of byReq.values()) { fresh += v.fresh; cacheRead += v.cacheRead; }
-  return { fresh, cacheRead, requests: byReq.size };
+  const t = { fresh: 0, input: 0, write: 0, output: 0, cacheRead: 0, requests: byReq.size };
+  for (const v of byReq.values()) for (const k of ['fresh', 'input', 'write', 'output', 'cacheRead']) t[k] += v[k];
+  return { ...t, weighted: weighted(t) };
 }
+
+// What the tokens cost, in units of one fresh input token, at the standard price ratios: cache write 1.25x, cache read 0.1x,
+// output 5x. An estimate for comparing runs (a 1-hour cache write costs more than 1.25x): the fresh total ignores the cache reads
+// that a long context pays on every turn, and weights an output token like an input token. The target stays on the fresh total.
+export const WEIGHTS = { input: 1, write: 1.25, cacheRead: 0.1, output: 5 };
+export const weighted = (t) => Math.round(t.input * WEIGHTS.input + t.write * WEIGHTS.write + t.cacheRead * WEIGHTS.cacheRead + t.output * WEIGHTS.output);
 
 const fmt = (n) => n.toLocaleString('en-US').replace(/,/g, ' ');
 const slugOf = (cwd) => resolve(cwd).replace(/[^A-Za-z0-9]/g, '-');
@@ -97,12 +106,16 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   // (<session>/subagents/*.jsonl), so with no usable log they are read from there, counted the same way as the Orchestrator's
   let subFrom = 'spawns.tsv';
   const subDir = file && join(file.replace(/\.jsonl$/, ''), 'subagents');
-  if ((sub.agents === 0 || sub.missing > 0) && windowOk && subDir && existsSync(subDir)) {
+  let subT = null; // the subagents' transcripts: the fallback for the total, and the only source of the cost-weighted figure
+  if (windowOk && subDir && existsSync(subDir)) {
     try {
       const per = readdirSync(subDir).filter((f) => f.endsWith('.jsonl')).map((f) => tokensIn(read(join(subDir, f)), Date.parse(since), until)).filter((t) => t.requests > 0);
-      sub = { total: per.reduce((a, t) => a + t.fresh, 0), agents: per.length, missing: 0 };
-      subFrom = 'transcripts';
-    } catch { /* keep the spawns.tsv reading */ }
+      subT = { total: per.reduce((a, t) => a + t.fresh, 0), agents: per.length, weighted: per.reduce((a, t) => a + t.weighted, 0) };
+    } catch { subT = null; }
+  }
+  if ((sub.agents === 0 || sub.missing > 0) && subT && subT.agents > 0) {
+    sub = { total: subT.total, agents: subT.agents, missing: 0 };
+    subFrom = 'transcripts';
   }
   const subKnown = sub.agents > 0 && sub.missing === 0;
   const total = sub.total + (orch?.fresh ?? 0);
@@ -114,4 +127,11 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
     `total ${complete ? '' : 'at least '}${fmt(total)}`,
     ...(budget ? [`target ${fmt(budget)}: ${total > budget ? 'over' : complete ? 'under' : 'cannot tell (a part is missing)'}`] : []),
   ].join(' · ') + (orch ? ` (cache reads ${fmt(orch.cacheRead)} not counted; ${orch.requests} requests since ${since})` : ''));
+  // the second line: the same run priced, so a rule that cuts turns or output shows up (the fresh total above cannot see either)
+  if (orch && subT) {
+    const w = orch.weighted + subT.weighted;
+    console.log(`cost-weighted: ${fmt(w)} input-equivalents (orchestrator ${fmt(orch.weighted)} = ${Math.round((100 * orch.weighted) / w)}%, subagents ${fmt(subT.weighted)}; cache write ${WEIGHTS.write}x, cache read ${WEIGHTS.cacheRead}x, output ${WEIGHTS.output}x of an input token; an estimate for comparing runs, no target)`);
+  } else {
+    console.log('cost-weighted: n/a (needs the session transcript and the subagents\' transcripts)');
+  }
 }

@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.4.8 — 2026-11-22
+
+### Added
+
+- **`task-usage.mjs` prints a cost-weighted line.** The fresh total (input, cache write, output) cannot see the cache reads a long context pays on every turn, and weights an output token like an input token. The new `cost-weighted:` line prices the same tokens (cache write 1.25x, cache read 0.1x, output 5x of an input token; an estimate for comparing runs) and shows the Orchestrator's share. It needs the session transcript and the subagents' transcripts, and says `n/a` without them. The 100 000 target stays on the fresh total.
+- **Token rules for every agent** (`agent-references/shared/token-rules.md`): call independent tools in one turn, read part of a large file with `offset`/`limit`, and write each document no longer than the next reader needs. The paragraph is copied word for word into all 13 agent definitions, so no agent spends a turn reading it; `npm test` fails when one drifts.
+- **The debugger caps `## Evidence` by severity** (8 lines for `low`, 15 `medium`, 25 `high`, 40 `critical`; a dropped hypothesis is one line). The cap never cuts the minimum evidence of the severity table: when it does not fit, the severity is higher.
+- **A fewer-turns rule for the Orchestrator** in `token-discipline.md`: batch calls that do not depend on each other, and open no reference the step does not name.
+
+### Measured (why)
+
+`fix-cart-itemcount` priced: about 811k input-equivalents, 64% of it the Orchestrator (its context, about 144k per request, is re-read on every turn); the debugger about 157k, of which 14k output tokens are about 71k priced. These are one task's numbers; the rules are not yet shown to cut them: compare the next run's `cost-weighted:` line.
+
 ## v1.4.7 — 2026-11-22
 
 ### Fixed
