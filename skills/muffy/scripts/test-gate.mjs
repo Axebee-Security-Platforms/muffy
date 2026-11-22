@@ -4,8 +4,8 @@
 // Usage: node test-gate.mjs .team/<task> [--cwd <dir>] [--timeout <seconds>]
 //   cwd      where the command runs: the merged feature worktree (default: the current folder)
 //   command  `test_command` in `<project>/.team/config.json` (init-config.mjs writes it at setup from package.json; the user may edit it)
-//   AC map   the `## AC id -> test name` sections of `.team/<task>/ac-tests*.md` (ac-tests-fe.md, ac-tests-be.md: one writer each),
-//            merged by AC id into qa-report.md; with no such file the report lists it as an open bug (gate-summary.mjs then says not ready)
+//   AC map   every table row that starts with an `AC-<n>` id in `.team/<task>/ac-tests*.md` (ac-tests-fe.md, ac-tests-be.md: one
+//            writer each), whatever the heading or the columns, merged by AC id into qa-report.md; with no such file the report lists it as an open bug (gate-summary.mjs then says not ready)
 // Exit 0 = tests passed, 1 = tests failed or timed out, 2 = bad usage, 3 = skipped (no test_command): qa-report.md says so
 // in plain words and the Human gate shows it. A skipped gate is never a silent pass.
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
@@ -39,25 +39,26 @@ command = typeof command === 'string' && command.trim() ? command.trim() : null;
 
 const rows = new Map();
 for (const f of readdirSync(task).filter((n) => /^ac-tests.*\.md$/.test(n)).sort()) {
-  const body = section(readIf(join(task, f)), 'AC id (?:->|→) test name') ?? '';
-  for (const line of body.split('\n')) {
+  for (const line of (readIf(join(task, f)) ?? '').split('\n')) {
+    if (!line.trimStart().startsWith('|')) continue;
     const cells = line.split('|').slice(1, -1).map((c) => c.trim());
-    const id = cells[0]?.match(/AC-\d+/)?.[0];
+    const id = cells[0]?.match(/^AC-\d+$/)?.[0];
     if (id) rows.set(id, [rows.get(id), cells.slice(1).join(' ')].filter(Boolean).join(' + '));
   }
 }
 const acMap = rows.size ? ['| AC | test |', '|---|---|', ...[...rows].map(([id, t]) => `| ${id} | ${t} |`)].join('\n') : null;
 let code;
 let results;
+let output = '';
 if (!command) {
   code = 3;
   results = 'test gate skipped: no `test_command` in .team/config.json, so no test was run. Setup writes it from package.json (init-config.mjs); set it by hand for another stack, e.g. {"test_command": "go test ./..."}';
 } else {
   const r = spawnSync(command, { cwd, shell: true, encoding: 'utf8', timeout: timeoutS * 1000, maxBuffer: 64 * 1024 * 1024 });
-  const tail = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim().split('\n').slice(-25).join('\n');
+  output = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim().split('\n').slice(-25).join('\n');
   const timedOut = r.error?.code === 'ETIMEDOUT';
   code = r.status === 0 ? 0 : 1;
-  results = `\`${command}\` in ${cwd}: ${code === 0 ? 'exit 0, tests passed' : timedOut ? `timed out after ${timeoutS}s` : `exit ${r.status ?? 'none'}, tests did not pass`}\n\n\`\`\`text\n${tail}\n\`\`\``;
+  results = `\`${command}\` in ${cwd}: ${code === 0 ? 'exit 0, tests passed' : timedOut ? `timed out after ${timeoutS}s` : `exit ${r.status ?? 'none'}, tests did not pass`}`;
 }
 
 const bugs = [];
@@ -78,6 +79,7 @@ const report = [
   '## AC id -> test name',
   acMap ?? '| AC | test |\n|---|---|',
   '',
+  ...(output ? ['## Output', 'The last lines of the test command, for reading only: the gate decides from the exit code, never from this text.', '', '```text', output, '```', ''] : []),
 ].join('\n');
 writeFileSync(join(task, 'qa-report.md'), report);
 console.log(`test gate: ${code === 0 ? 'PASS' : code === 3 ? 'SKIPPED (no test_command)' : 'FAIL'} · qa-report.md written${bugs.length ? ` · ${bugs.length} open item(s)` : ''}`);

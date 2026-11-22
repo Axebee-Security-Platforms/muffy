@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { gateState, gatesForSpawn, missingGates, gateErrors, auditMissing } from '../../skills/muffy/scripts/gate-rules.mjs';
 import { recordGate, clearPause } from '../../skills/muffy/scripts/checkpoint.mjs';
+import { gate10 } from '../../skills/muffy/scripts/gate-summary.mjs';
 
 const CP = (status, profile = 'lane: feature · skipped none') =>
   `# Checkpoint: t\n\nUpdated: step 3\n\n## Goal\n\nx\n\n## Run profile\n\n${profile}\n\n## Status\n\n${status}\n`;
@@ -166,6 +167,36 @@ export function runGateEvals({ check, root }) {
       check('test-gate: reads the command init-config wrote (pnpm test is not installed here, so it fails, not skipped)', gate.status === 1 || gate.status === 0, String(gate.status));
       rmSync(join(proj, '.team', 'config.json'));
       check('test-gate: no config is exit 3, skipped', spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'test-gate.mjs'), join(proj, '.team', 'tk'), '--cwd', proj], { encoding: 'utf8' }).status === 3);
+    }
+    // the first real run of the flow (scratch-cart) found these: a loose AC table, raw test output in Results, a retried 4a, a reviewer and a brain note
+    {
+      const proj = join(tmp, 'run');
+      const task = join(proj, '.team', 'tk');
+      mkdirSync(task, { recursive: true });
+      writeFileSync(join(proj, '.team', 'config.json'), JSON.stringify({ test_command: 'node -e "console.log(\'ℹ pass 1\'); console.log(\'ℹ fail 0\')"' }));
+      writeFileSync(join(task, 'fix.md'), ['# Fix: tk', '## AC', '| AC-1 | total applies the discount | unit test |', ''].join('\n'));
+      writeFileSync(join(task, 'ac-tests-be.md'), ['# AC tests (BE)', '', '| AC | Test | File |', '|---|---|---|', '| AC-1 | total applies a percentage discount | test/cart.test.js |', ''].join('\n'));
+      const run = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'test-gate.mjs'), task, '--cwd', proj], { encoding: 'utf8' });
+      const report = readFileSync(join(task, 'qa-report.md'), 'utf8');
+      check('test-gate: an AC table under any heading and any columns is merged', run.status === 0 && /\| AC-1 \| total applies a percentage discount/.test(report.split('## AC id')[1] ?? ''), report.slice(0, 300));
+      check('test-gate: Results is one summary line; the raw output sits under ## Output', !/```/.test(report.split('## Bugs')[0]) && /## Output/.test(report));
+      const g10 = gate10(task);
+      check('gate 10: a test runner line like "fail 0" is not a failure, and the loose AC table closes the coverage gap', g10.notReady.length === 0, JSON.stringify(g10.notReady));
+      const env = (role, extra = []) => spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'make-envelope.mjs'), '--role', role, '--step', '4', '--round', '1', '--task', 'tk', '--brain', '.team/brain', '--goal', 'goal text', '--done-when', 'done text', '--read', 'fix.md', ...extra], { encoding: 'utf8' });
+      const rv = env('code-reviewer', []);
+      check('make-envelope: code-reviewer needs no --write (the saved review is its path)', rv.status === 0 && /review-1\.md/.test(rv.stdout), rv.stderr);
+      const be = env('backend-dev', ['--write', 'cart.js']);
+      check('make-envelope: a dev gets its brain note in Write', be.status === 0 && /\.team\/brain\/agents\/backend-dev\/tk\.md/.test(be.stdout), be.stderr);
+      // check-all: step 4 round 1 after a retried 4a (round 2) still sees the diagnosis
+      const cp = join(task, 'checkpoint.md');
+      writeFileSync(cp, CP('- base: master', 'lane: fix (bug) · skipped 1, 2, 2b, 3, 3b, 3c, 3d'));
+      mkdirSync(join(task, 'handoff'), { recursive: true });
+      const hand = (step, role, round, extra) => writeFileSync(join(task, 'handoff', `${step}-${role}-r${round}.json`), JSON.stringify({ role, task: 'tk', step, round, status: 'done', paths_written: ['x'], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'summary text', ...extra }));
+      hand('4a', 'debugger', 2, { diagnosis: { status: 'known', confidence: 'high', cause: 'the discount is never read', files: ['cart.js'], repro: 'npm test is red', severity: 'high', owner: 'BE' } });
+      hand('4b', 'auditor', 1, { audit: { verdict: 'confirm', evidence_level: 'high', repro_rerun: 'red' } });
+      hand('4', 'backend-dev', 1, { ac_ids_done: ['AC-1'], decisions: [{ id: 'D-1', decision: 'reuse the test', why: 'it covers the AC' }] });
+      const all = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'check-all.mjs'), task, '--step', '4', '--round', '1'], { encoding: 'utf8' });
+      check('check-all: a retried 4a (round 2) is still read at step 4 round 1', !/block:no-diagnosis/.test(all.stdout), all.stdout.slice(0, 200));
     }
     // fix lane: the debugger and the auditor are muffy roles, ungated; a dev step-4 spawn waits for the audit
     const fixHandoff = join(dir, 'handoff');

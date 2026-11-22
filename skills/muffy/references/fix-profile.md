@@ -71,7 +71,7 @@ AC ids use the usual `AC-<n>` form, so `ac_ids_done`, traceability and the QA re
 |---|---|---|
 | 4a | `debugger` (one agent for FE and BE) | **Diagnose, no code.** Reproduce with a tight, shrunk repro, trace the failing path, test 2 or 3 falsifiable hypotheses against a second piece of evidence, rate the **severity**, name the **owner** (`FE`, `BE` or `both`), write `## Cause`, `## Repro` and `## Evidence` in `fix.md`. Hand-off carries `diagnosis` with `files`, and `owner_files` per side when the owner is `both` ([schema](../schemas/handoff.schema.json)) |
 | 4b | `auditor` (`opus`, a different model from the debugger) | **Audit the cause, no code.** Runs the `## Repro` once, grades `## Evidence` against the severity table below, opens the diagnosed files. Hand-off carries `audit`: `confirm`, `need-validation` or `reject`. Runs only on a `known` diagnosis. **Blocks step 4**. Skipped for `Kind: cosmetic` (below) |
-| 4 | `frontend-dev` / `backend-dev` per the debugger's `owner` (FE ∥ BE if both), a fresh spawn | Fix + regression test that fails before and passes after. Cosmetic: the AC's visual check. Cold start: the prompt's `Read:` lists `fix.md` and the debugger's and auditor's hand-offs, so the dev reads only `diagnosis.files` plus tests |
+| 4 | `frontend-dev` / `backend-dev` per the debugger's `owner` (FE ∥ BE if both), a fresh spawn | Fix + a unit test for each AC (an existing test that was red before the fix counts); no regression suite, the human does regression. Cosmetic: the AC's visual check. Cold start: the prompt's `Read:` lists `fix.md` and the debugger's and auditor's hand-offs, so the dev reads only `diagnosis.files` plus tests |
 | 5 | Orchestrator | Merge into `feature/<task>` with `--no-ff`, as usual |
 | 6 | `code-reviewer` | Diff + `fix.md` (including Cause and Repro). Never skipped, never downgraded |
 | 7 | Test gate (`test-gate.mjs`, a script; `qa-tester` is retired) | `fix.md` AC replace `ac.md`. The dev writes unit tests only in step 4 and maps the AC to them in `.team/<task>/ac-tests-fe.md` or `ac-tests-be.md`; no regression test is written (the human does regression). The gate runs the project's `test_command` and reads its exit code. Cosmetic AC with no automated check, and an AC the dev says no seam can reach, are marked `manual` there and shown at the Human gate |
@@ -135,7 +135,7 @@ For "find out why, don't fix it yet" ("แค่หาสาเหตุ", "ห�
 
 ## Model and effort
 
-Spawn the `debugger` (4a) with `model: haiku` only for a cosmetic fix, or when the symptom already names the file and line. Otherwise keep the agent default (`sonnet`, effort `high`). The `auditor` (4b) always runs on its default, `opus`, so it stays a different model from the debugger; never downgrade it, `code-reviewer` or `devops`. QA re-running existing tests only may use `haiku`, as in [token-discipline.md](token-discipline.md).
+Spawn the `debugger` (4a) with `model: haiku` only for a cosmetic fix, or when the symptom already names the file and line. Otherwise keep the agent default (`sonnet`, effort `high`). The `auditor` (4b) always runs on its default, `opus`, so it stays a different model from the debugger; never downgrade it or `code-reviewer`.
 
 ## Prompt differences
 

@@ -68,6 +68,11 @@ env.write = (env.write ?? []).map(place);
 const reviewerNoWrite = role === 'code-reviewer';
 const handoffPath = `${teamDir}/handoff/${step}-${role}-r${round}.json`;
 if (!reviewerNoWrite && !env.write.includes(handoffPath)) env.write.push(handoffPath);
+// the reviewer has no Write tool: the Orchestrator saves its message as review-<round>.md, so that is the path it is told about
+if (reviewerNoWrite && !env.write.length) env.write.push(`${teamDir}/review-${round}.md`);
+// every other agent records `<brain>/agents/<role>/<task>.md` (its own quality check asks for it), so the note is part of its Write unless a guard rule refuses it
+const brainNote = `${String(env.brain ?? '').replace(/\/$/, '')}/agents/${role}/${env.task}.md`;
+if (!reviewerNoWrite && env.brain && !env.write.includes(brainNote) && !blockingRule(role, brainNote)) env.write.push(brainNote);
 
 // Refuse a Write: path the guard would block, so the agent is never sent to a file it cannot write (hooks-enforcement.md section 12).
 const blockedWrites = env.write.map((p) => [p, blockingRule(role, p)]).filter(([, r]) => r).map(([p, r]) => `${p}: ${blockMessage(role, r)}`);

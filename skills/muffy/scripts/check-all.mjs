@@ -38,6 +38,9 @@ const readIf = (p) => (existsSync(p) ? readFileSync(p, 'utf8').replace(/\r\n/g, 
 const section = (md, name) => md?.match(new RegExp(`^## ${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] ?? null;
 const version = (text) => text?.match(/\bRuntime:\s*[A-Za-z.]*\s*v?(\d+(?:\.\d+)*)/)?.[1];
 
+// the fix lane's diagnosis (4a) and audit (4b) come before step 4 whatever their round: a retried 4a is round 2 while step 4 is round 1
+const diagnosisFirst = (h) => (h.step === '4a' || h.step === '4b' ? 0 : 1);
+
 function handoffs(taskDir) {
   const dir = join(taskDir, 'handoff');
   if (!existsSync(dir)) return [];
@@ -46,7 +49,7 @@ function handoffs(taskDir) {
     let data = null;
     try { data = JSON.parse(readFileSync(join(dir, f), 'utf8')); } catch { /* reported by the handoff check */ }
     return m && STEP_ORDER.includes(m[1]) ? { file: f, step: m[1], role: m[2], round: Number(m[3]), data } : null;
-  }).filter(Boolean).sort((a, b) => a.round - b.round || STEP_ORDER.indexOf(a.step) - STEP_ORDER.indexOf(b.step));
+  }).filter(Boolean).sort((a, b) => diagnosisFirst(a) - diagnosisFirst(b) || a.round - b.round || STEP_ORDER.indexOf(a.step) - STEP_ORDER.indexOf(b.step));
 }
 
 export function checkAll(taskDir, { step, round, profile: given, skip = [], brain, base, head = 'HEAD', cwd } = {}) {
@@ -82,7 +85,8 @@ export function checkAll(taskDir, { step, round, profile: given, skip = [], brai
   // a task promoted out of the fix lane keeps its 4a/4b hand-offs in handoff/; they belong to the lane it left, so neither the
   // loop (which would promote again) nor the gates (which would see a step past 2b) read them
   const trail = run.lane === 'fix' ? all : all.filter((h) => !['4a', '4b'].includes(h.step));
-  const upTo = trail.filter((h) => h.round < Number(round) || (h.round === Number(round) && STEP_ORDER.indexOf(h.step) <= STEP_ORDER.indexOf(String(step))));
+  // a hand-off of an earlier step always counts, whatever its round: a retry of 4a is round 2 while step 4 is still round 1
+  const upTo = trail.filter((h) => STEP_ORDER.indexOf(h.step) < STEP_ORDER.indexOf(String(step)) || h.round < Number(round) || (h.round === Number(round) && STEP_ORDER.indexOf(h.step) <= STEP_ORDER.indexOf(String(step))));
   const loop = simulate({ task, profile, scope: run.scope, until: run.until, skip: skips, passed, events: upTo.map((h) => ({ handoff: h.data, step: h.step, role: h.role })) });
   const next = loop.outcome === 'invalid-profile' ? 'fix-run-profile' : loop.actions.at(-1) ?? 'none';
   add('loop', [...loop.violations, ...(['escalated', 'blocked', 'invalid-profile', 'promoted'].includes(loop.outcome) ? [`${next}${loop.trigger ? ` (${loop.trigger})` : ''}`] : [])]);

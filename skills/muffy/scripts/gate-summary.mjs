@@ -131,7 +131,10 @@ export function gate10(taskDir) {
     const bugs = section(qa, 'Bugs');
     out.push(`**Bugs:** ${none(bugs) ? 'none' : short(bugs.replace(/\n/g, '; '), 200)}`);
     if (!none(bugs)) notReady.push('qa-report.md lists open bugs');
-    if (/\bfail(ed|s)?\b/i.test(section(qa, 'Results') ?? '') && !/\b0 fail/i.test(section(qa, 'Results'))) notReady.push('QA results mention failures');
+    // the test gate writes one summary line (`exit 0, tests passed` / `tests did not pass` / `timed out`); an older report from an agent is read for the word fail
+    const results = section(qa, 'Results') ?? '';
+    const failed = /tests did not pass|timed out after/i.test(results) || (!/tests passed/i.test(results) && /\bfail(ed|s)?\b/i.test(results) && !/\b0 fail/i.test(results));
+    if (failed) notReady.push('QA results mention failures');
     const gaps = checkTask(taskDir, 'qa').filter((e) => e.startsWith('traceability:'));
     if (gaps.length) { out.push('**AC coverage gaps**', ...gaps.map((g) => `- ${g.replace('traceability: ', '')}`)); notReady.push(`${gaps.length} AC coverage gap(s)`); }
   }

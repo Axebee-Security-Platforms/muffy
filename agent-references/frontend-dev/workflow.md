@@ -12,7 +12,7 @@
    - Build the screen until it passes, following the canvas.
    - Tidy only while the tests are green.
 6. Run lint, type check and the tests of the files you touched.
-6b. **Map every AC to a unit test.** Write `.team/<task>/ac-tests-fe.md` with a `## AC id -> test name` table: one row per AC you cover, the test name or `manual` with the reason. The step 7 test gate copies it into `qa-report.md`; without it the Human gate says not ready.
+6b. **Map every AC to a unit test.** Write `.team/<task>/ac-tests-fe.md` as a table with one row per AC (`| AC-1 | <unit test name> |`, or `| AC-1 | manual: <reason> |`) under the heading `## AC id -> test name`. The step 7 test gate copies it into `qa-report.md`; without it the Human gate says not ready.
 7. Fix rounds: fix only the issues you were given, no extra refactoring, and keep the unit tests of what you touched passing. Write unit tests only: no regression, integration or e2e suite (the human runs regression).
 8. After tests pass and the work is committed, draw the PR diagram of your changed files (read [pr-diagram.md](pr-diagram.md) now).
 9. Record in `<brain>/agents/frontend-dev/<task>.md`:

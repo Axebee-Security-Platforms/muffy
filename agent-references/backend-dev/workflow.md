@@ -12,7 +12,7 @@
 5. Cover every endpoint, error code and status code in the contract this way. The happy path and each AC error case must have a test that failed before the code existed.
 6. Go through the security/limit AC checklist item by item (rate limit, TTL, lockout, input validation).
 6b. **You own the stack files and the migration check** (the `devops` agent is retired). If you add or bump a dependency or runtime pin, or need a Dockerfile or compose file, write the minimum yourself and boot the stack on docker local with real dependencies once. For a migration, run it up and down on docker local before you report done, and say what ran in your summary. Never deploy and never touch staging or production.
-6c. **Map every AC to a unit test.** Write `.team/<task>/ac-tests-be.md` with a `## AC id -> test name` table: one row per AC you cover, the test name or `manual` with the reason. The step 7 test gate copies it into `qa-report.md`; without it the Human gate says not ready.
+6c. **Map every AC to a unit test.** Write `.team/<task>/ac-tests-be.md` as a table with one row per AC (`| AC-1 | <unit test name> |`, or `| AC-1 | manual: <reason> |`) under the heading `## AC id -> test name`. The step 7 test gate copies it into `qa-report.md`; without it the Human gate says not ready.
 7. Fix rounds: fix only the issues you were given, and keep the unit tests of what you touched passing. Write unit tests only: no regression, integration or e2e suite (the human runs regression).
 8. After tests pass and the work is committed, draw the PR diagram of your changed files (read [pr-diagram.md](pr-diagram.md) now).
 9. Record in `<brain>/agents/backend-dev/<task>.md`:

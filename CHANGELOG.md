@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.4.5 — 2026-11-22
+
+### Fixed
+
+Found by the first real run of the fix lane on 1.4.4 (a scratch project, not the evals):
+
+- **The test gate read the devs' AC map too strictly.** `test-gate.mjs` now merges any table row that starts with an `AC-<n>` id in `ac-tests*.md`, whatever the heading or columns; the dev prompts give the exact heading and row shape.
+- **The Human gate called a passing run a failure.** `qa-report.md` `## Results` is now one summary line, and the raw test output sits under `## Output`; `gate-summary.mjs` reads the summary, so a runner line like `fail 0` is no longer "QA results mention failures".
+- **`check-all.mjs` lost a retried diagnosis.** Hand-offs were ordered by round before step, so `4a` round 2 sorted after step 4 round 1 and the loop answered `block:no-diagnosis`. 4a and 4b now always come first.
+- **`make-envelope.mjs` refused the code-reviewer** (the schema wants a Write path, the reviewer has no Write tool): its saved `review-<n>.md` is now the path. Every other agent now gets its brain note in Write, so its own quality check can pass without a retry round.
+- Stale text in `fix-profile.md` (a regression test written by the dev, `devops` and `qa-tester` in the model rules).
+
 ## v1.4.4 — 2026-11-22
 
 ### Changed
