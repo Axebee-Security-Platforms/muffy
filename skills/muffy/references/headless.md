@@ -10,7 +10,7 @@ In the **fix lane**, headless needs no policy flag: every gate is decided by `ch
 |---|---|---|
 | `scope` | `next=continue`, unless the run would promote or change scope | `auto: scope approved, headless fix lane … · rule H3` |
 | `audit`, first `need-validation` | `next=continue`: re-run the debugger, then the auditor | `auto: re-diagnose · rule H2` |
-| `human-gate` | `next=continue`: carry on to docs-writer and closing. The qa-report, its `manual` AC and the diff summary are for the PR review | `auto: ship to PR review · rule H3` |
+| `human-gate` | `next=continue`: carry on to docs-writer and closing. The qa-report (the test gate's result, or its `skipped` line when the project has no `test_command`), its `manual` AC and the diff summary are for the PR review | `auto: ship to PR review · rule H3` |
 | `audit` reject or a second `need-validation`, `escalation`, `question`, a promotion | `next=close:blocked` | `blocked at pause:<gate> · <reason>` |
 
 On `next=close:blocked`: write the reason and the evidence so far into `fix.md`, start no dev, close per [closing.md](closing.md) with status `blocked`, commit `.team/<task>/` on the task's branch, and end the final message with `muffy-status: blocked:<gate>` as its last line. A blocked run is never answered by accepting the risk or by guessing the missing fact. `muffy` opens no PR: the review is on the branch, so say in the final message where `qa-report.md` and `fix.md` are.

@@ -1,5 +1,7 @@
 # Test levels
 
+> **Retired:** `qa-tester` no longer runs in any lane. Step 7 is `scripts/test-gate.mjs` (the project suite, exit code only); devs write unit tests only and the human does regression. This table applies again only if `qa-tester` is brought back.
+
 Which tests run for which kind of change. The Orchestrator copies the row into the `Read:`/`Goal:` of the qa-tester prompt; qa-tester follows the row and never widens it. Test scope is always **selected by path, name or filter**, never "the whole suite".
 
 | Level | Typical change | Who writes | Who runs | Tests |

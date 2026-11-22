@@ -66,6 +66,8 @@ Install (persistent config: the user approves it; never add it silently):
 ```
 
 ## 10. Full regression needs approval
+**Dormant while `qa-tester` is retired:** the guard only checks calls with `agent_type: qa-tester`, which no lane spawns now. It stays installed so reviving the agent revives the rule. The human runs regression; the step 7 test gate is a script and no hook applies to it.
+
 **Rule:** `qa-tester` runs no whole-system suite (a bare `npm test`, `pytest`, `playwright test`, `go test ./...`, or a script named `test:all`, `test:e2e`, `ci`, `regression`) until the user approves it at `pause:full-regression` ([run-profile.md](run-profile.md#named-pauses)). Enforced by [scripts/guard-full-regression.mjs](../scripts/guard-full-regression.mjs) (exit 2 = block); only calls whose payload has `agent_type: qa-tester` are checked.
 - **Approval is a file.** After the user says yes, the Orchestrator writes `.team/<task>/full-regression.approved` (one line: the approved command and the date) and deletes it when the QA round ends. The guard looks for it from the hook's cwd upwards, so a qa worktree finds the repo's `.team/`
 - **Project commands:** list extra whole-system commands as regex strings in `.team/regression-commands.json`, e.g. `["^make e2e-all$"]`. The Orchestrator adds the `Whole-suite:` command of each new stack note there ([stack-learning.md](stack-learning.md))
@@ -78,6 +80,8 @@ Installed with the other guards by `install.mjs --with-guard`.
 ```
 
 ## 11. Test level ceiling
+**Dormant while `qa-tester` is retired** (same reason as rule 10): no lane spawns it, so no `test-level` file is written and the guard has nothing to check.
+
 **Rule:** `qa-tester` stays within the level the Orchestrator set in [test-levels.md](test-levels.md). Enforced by [scripts/guard-test-level.mjs](../scripts/guard-test-level.mjs) (exit 2 = block); only calls with `agent_type: qa-tester` are checked. The runner patterns are shared with rule 10 in [scripts/test-runners.mjs](../scripts/test-runners.mjs).
 - **The level is a file.** The Orchestrator writes `.team/<task>/test-level` (one token, `L0` to `L4`) when it builds the qa-tester prompt, and updates it if the level changes. A qa worktree named `qa-<task>` reads its own task's file; otherwise the lowest level among all tasks applies. No file = no ceiling
 - **L0:** no test run at all (build and lint pass), and no creating or editing test files
@@ -93,7 +97,7 @@ Installed with the other guards by `install.mjs --with-guard`.
 
 ## 12. Write scope for shared files
 **Rule:** `docs/strategy.md` is written only by `product-manager`; `docs/architecture/baseline.md` and its section files `docs/architecture/baseline/<section>.md` only by `researcher`; `docs/architecture/overview.html`, `data-model.html`, `deployment.html`, `flows/*.html`, `states/*.html`, `changes/*.html` and `data-models/*.html` only by `diagrammer` (the facts come from `architect`'s spec); no subagent writes any other file under `docs/architecture/`; `docs/plan/<task>-gantt.html` and `docs/plan/<task>-story-map.html` only by `diagrammer` (the facts come from `product-manager`'s spec); `docs/design/screen-map.html` only by `diagrammer` (the facts come from `designer`'s spec); `docs/design-system/` only by `designer` (and `architect` in onboard mode). Every diagram muffy produces is drawn by `diagrammer`, and by no one else: `architect`, `product-manager` and `designer` only supply the content it draws from. Enforced by [scripts/guard-write-scope.mjs](../scripts/guard-write-scope.mjs) (exit 2 = block); only calls whose payload has an `agent_type` are checked, so the Orchestrator's own session is never blocked (it still follows the rule as text: it never edits `strategy.md`).
-- **Known limits:** writes made through Bash are not seen (the doc agents' Bash is already limited by rule 9; `frontend-dev`, `backend-dev`, `devops` and `qa-tester` are not), and a path outside these names is allowed. The rules live in `scripts/write-scope.mjs`, shared by the guard and `make-envelope.mjs`: the envelope refuses a `Write:` path the role may not write (exit 1, before any spawn) and adds a `Shared files you may not write` line to the prompt, so the agent knows before it acts instead of learning from the block
+- **Known limits:** writes made through Bash are not seen (the doc agents' Bash is already limited by rule 9; `frontend-dev` and `backend-dev` are not; `devops` and `qa-tester` are retired), and a path outside these names is allowed. The rules live in `scripts/write-scope.mjs`, shared by the guard and `make-envelope.mjs`: the envelope refuses a `Write:` path the role may not write (exit 1, before any spawn) and adds a `Shared files you may not write` line to the prompt, so the agent knows before it acts instead of learning from the block
 Installed with the other guards by `install.mjs --with-guard`.
 ```json
 "PreToolUse": [
