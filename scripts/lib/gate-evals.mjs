@@ -138,6 +138,10 @@ export function runGateEvals({ check, root }) {
     write(CP('- gate 2b passed · user: "ok"\n- gate 3c passed · user: "ok"'));
     check('guard: frontend-dev allowed once 3c passed', spawn('frontend-dev', `${hdr}go`).status === 0);
 
+    check('guard: retired qa-tester is blocked', spawn('qa-tester', `${hdr}go`).status === 2);
+    check('guard: retired devops is blocked, with no Task header and no run too', spawn('devops', 'go').status === 2 && spawn('devops', 'go', join(tmp, 'elsewhere')).status === 2);
+    check('guard: the namespaced name muffy:qa-tester is blocked too', spawn('muffy:qa-tester', `${hdr}go`).status === 2);
+    check('guard: MUFFY_ALLOW_RETIRED=1 lifts the block', spawnSync(process.execPath, [guard], { input: JSON.stringify({ tool_name: 'Agent', tool_input: { subagent_type: 'devops', prompt: `${hdr}go` }, cwd: tmp }), encoding: 'utf8', env: { ...process.env, MUFFY_ALLOW_RETIRED: '1' } }).status === 0);
     // fix lane: the debugger and the auditor are muffy roles, ungated; a dev step-4 spawn waits for the audit
     const fixHandoff = join(dir, 'handoff');
     mkdirSync(fixHandoff, { recursive: true });

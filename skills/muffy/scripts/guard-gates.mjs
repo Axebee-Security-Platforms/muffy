@@ -5,11 +5,12 @@
 // Fails closed: a gated muffy role spawned without the header is checked against the task its prompt names
 // (`.worktrees/feature-<task>` or `.team/<task>`), and blocked when it names none while a run exists here.
 // A spawn of a role outside muffy, or in a repo with no checkpoint, is never blocked.
+// A retired role (qa-tester, devops) is blocked in every repo, task and lane, unless MUFFY_ALLOW_RETIRED=1.
 // Fix lane: a frontend-dev / backend-dev step-4 spawn is also blocked until the auditor's `confirm` (or the accepted risk) is on record.
 // Hook JSON arrives on stdin. Exit 2 = block (stderr is shown to the Orchestrator), 0 = allow.
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { missingGates, gatesForSpawn, auditMissing, PAUSE_OF, MUFFY_ROLES } from './gate-rules.mjs';
+import { missingGates, gatesForSpawn, auditMissing, PAUSE_OF, MUFFY_ROLES, RETIRED_ROLES } from './gate-rules.mjs';
 import { guardOff } from './plugin-gate.mjs';
 
 if (guardOff()) process.exit(0); // plugin install without MUFFY_GUARD=1: the project did not opt in
@@ -26,6 +27,10 @@ const spawn = input.tool_input ?? {};
 const role = String(spawn.subagent_type ?? '').split(':').pop();
 const prompt = String(spawn.prompt ?? '');
 if (!role) process.exit(0);
+if (Object.hasOwn(RETIRED_ROLES, role) && process.env.MUFFY_ALLOW_RETIRED !== '1') {
+  console.error(`[muffy] blocked: ${role} is retired (cost) and no lane spawns it. Instead: ${RETIRED_ROLES[role]}. To bring it back, set MUFFY_ALLOW_RETIRED=1 (references/hooks-enforcement.md §15).`);
+  process.exit(2);
+}
 
 const cwd = input.cwd ?? process.cwd();
 const cpDir = (task) => [join(cwd, '.worktrees', `feature-${task}`, '.team', task), join(cwd, '.team', task)]

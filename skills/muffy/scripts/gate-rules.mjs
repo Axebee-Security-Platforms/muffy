@@ -12,6 +12,9 @@ export const PAUSE_OF = { '2b': 'plan-review', '3c': 'design-review' };
 
 // the subagents muffy spawns (agents/*.md); guard-gates.mjs fails closed for these when a prompt has no Task header
 export const MUFFY_ROLES = new Set(['architect', 'auditor', 'backend-dev', 'code-reviewer', 'debugger', 'designer', 'devops', 'diagrammer', 'docs-writer', 'frontend-dev', 'product-manager', 'qa-tester', 'researcher']);
+// roles retired to cut cost: no lane spawns them (QA is scripts/test-gate.mjs, devops duties moved to backend-dev).
+// guard-gates.mjs blocks the spawn; MUFFY_ALLOW_RETIRED=1 lifts it to bring an agent back (hooks-enforcement.md §15).
+export const RETIRED_ROLES = { 'qa-tester': 'step 7 is the test gate script: node "<muffy>/scripts/test-gate.mjs" .team/<task> --cwd <worktree>', devops: 'backend-dev owns stack files and the migration up/down check, and step 3d is skipped in every lane' };
 // roles that run before any gate (steps 0-2)
 const BEFORE_GATES = new Set(['product-manager', 'researcher', 'presenter']);
 // roles that run only after the design gate (step 4 on, and the code review of step 6)

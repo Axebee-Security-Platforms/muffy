@@ -126,4 +126,8 @@ Enforced by [scripts/guard-gates.mjs](../scripts/guard-gates.mjs) (exit 2 = bloc
 ]
 ```
 
+## 15. Retired roles do not spawn
+**Rule:** `qa-tester` and `devops` are retired (cost): no lane spawns them. Step 7 is [scripts/test-gate.mjs](../scripts/test-gate.mjs); `backend-dev` owns stack files and the migration check; 3d is skipped. Enforced by the same hook as rule 14 ([scripts/guard-gates.mjs](../scripts/guard-gates.mjs), exit 2 = block) from `RETIRED_ROLES` in [scripts/gate-rules.mjs](../scripts/gate-rules.mjs), in every repo, task and lane, with or without a `Task:` header, `muffy:` prefix included. The message names what replaces the role.
+- **Bring a role back:** set `MUFFY_ALLOW_RETIRED=1` in the environment the hook runs in, then restore its step in `lanes.mjs` and the profiles (the agent files, schemas and rules 10 and 11 are still in place).
+
 Every rule here is **non-negotiable**. Hooks 7 and 8 are opt-in; without a hook, its rule still applies as text.
