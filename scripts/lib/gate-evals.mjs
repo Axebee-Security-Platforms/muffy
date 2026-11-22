@@ -12,7 +12,7 @@ import { gateState, gatesForSpawn, missingGates, gateErrors, auditMissing } from
 import { recordGate, clearPause } from '../../skills/muffy/scripts/checkpoint.mjs';
 import { gate10 } from '../../skills/muffy/scripts/gate-summary.mjs';
 import { smallVerdict, docsText } from '../../skills/muffy/scripts/small-fix.mjs';
-import { requestCost, orchestratorTokens } from '../../skills/muffy/scripts/task-usage.mjs';
+import { requestCost, orchestratorTokens, pickTranscript } from '../../skills/muffy/scripts/task-usage.mjs';
 
 const CP = (status, profile = 'lane: feature · skipped none') =>
   `# Checkpoint: t\n\nUpdated: step 3\n\n## Goal\n\nx\n\n## Run profile\n\n${profile}\n\n## Status\n\n${status}\n`;
@@ -308,6 +308,13 @@ export function runGateEvals({ check, root }) {
       writeFileSync(`${sess}.jsonl`, jl([rec('m1', '2026-01-01T10:10:00Z', u(1, 400, 100), {}, 'claude-unknown-9')]));
       const unknown = usage();
       check('task-usage: requests on an unpriced model are left out and said so; the total is "at least"', /usage: at least \$0\.000/.test(unknown) && /1 request\(s\) on a model with no price/.test(unknown), unknown);
+      // two sessions in one folder: the task's own transcript names it most, the newest file is often another session's
+      const mine = join(tmp, 'mine.jsonl'); const other = join(tmp, 'other.jsonl'); const idle = join(tmp, 'idle.jsonl');
+      writeFileSync(mine, 'fix-cart-b a\nfix-cart-b b\nfix-cart-b c\nfix-cart-a once\n');
+      writeFileSync(other, 'fix-cart-a x\nfix-cart-a y\nfix-cart-a z\n');
+      writeFileSync(idle, 'nothing about any task\n');
+      check('task-usage: the transcript that names the task most is its own, even when another file is newer', pickTranscript([{ f: mine, t: 1 }, { f: other, t: 2 }, { f: idle, t: 3 }], 'fix-cart-b') === mine && pickTranscript([{ f: mine, t: 1 }, { f: other, t: 2 }, { f: idle, t: 3 }], 'fix-cart-a') === other);
+      check('task-usage: with no mention anywhere the newest file is taken, and an unreadable one counts as no mention', pickTranscript([{ f: mine, t: 1 }, { f: idle, t: 3 }], 'fix-cart-zzz') === idle && pickTranscript([{ f: join(tmp, 'missing.jsonl'), t: 9 }, { f: mine, t: 1 }], 'fix-cart-b') === mine);
       check('task-usage: a bad --budget-usd is exit 2', spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'task-usage.mjs'), tdir, '--budget-usd', 'abc'], { encoding: 'utf8' }).status === 2);
     }
     // fix lane: the debugger and the auditor are muffy roles, ungated; a dev step-4 spawn waits for the audit

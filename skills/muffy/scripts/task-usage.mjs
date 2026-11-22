@@ -11,12 +11,12 @@
 //   until       default: now, which is right at step 12; set it only to measure a task that closed earlier in a longer session
 //   cwd         the folder the Orchestrator session runs in (default: the current folder; a feature worktree is mapped to its main
 //               repo, which is where the session started); picks ~/.claude/projects/<slug>/
-//   transcript  default: the newest session file of that folder
+//   transcript  default: the session file of that folder that names the task most often (two sessions may run side by side)
 // Prints `usage: $<total> (orchestrator $<n>, subagents $<n>)[ · target $<n>: under|over]` and a `tokens:` line (the counts behind it).
 // Anything it cannot read or price is `n/a` and the total says `at least`: never an estimate. `spawns.tsv` carries token counts only,
 // not prices, so it is no source of dollars. Exit 0 always except bad usage (2): the line is a report, not a gate.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { join, resolve, dirname, basename } from 'node:path';
 import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -82,9 +82,21 @@ function transcriptDirs(cwd) {
   return [...new Set(dirs)].map((d) => join(homedir(), '.claude', 'projects', slugOf(d))).filter((d) => existsSync(d));
 }
 
-function newestTranscript(cwd) {
+// Which session file is this task's. Two sessions can run in one folder at once (two tasks side by side, or the session that is
+// developing muffy), and the newest file is then often somebody else's: a real run priced one task from the other's transcript. The
+// file that names the task most often is the one that ran it; only with no mention anywhere is the newest taken.
+export function pickTranscript(files, taskName) {
+  const withMentions = files.map((x) => {
+    let n = 0;
+    try { n = taskName ? readFileSync(x.f, 'utf8').split(taskName).length - 1 : 0; } catch { /* unreadable: no mentions */ }
+    return { ...x, n };
+  });
+  return withMentions.sort((a, b) => b.n - a.n || b.t - a.t)[0]?.f ?? null;
+}
+
+function findTranscript(cwd, taskName) {
   const files = transcriptDirs(cwd).flatMap((dir) => readdirSync(dir).filter((f) => f.endsWith('.jsonl')).map((f) => ({ f: join(dir, f), t: statSync(join(dir, f)).mtimeMs })));
-  return files.sort((a, b) => b.t - a.t)[0]?.f ?? null;
+  return pickTranscript(files, taskName);
 }
 
 function taskStart(task) {
@@ -106,7 +118,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   }
   const since = o.since ?? taskStart(task);
   const until = o.until ? Date.parse(o.until) : Infinity;
-  const file = o.transcript ?? newestTranscript(o.cwd ?? task);
+  const file = o.transcript ?? findTranscript(o.cwd ?? task, basename(task));
   const read = (f) => readFileSync(f, 'utf8').split('\n').filter(Boolean).flatMap((l) => { try { return [JSON.parse(l)]; } catch { return []; } });
   const windowOk = since && Number.isFinite(Date.parse(since));
   let orch = null;

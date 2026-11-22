@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.5.1 — 2026-11-22
+
+### Fixed
+
+Found by the first two runs on 1.5.0 (`fix-cart-isempty` and `fix-cart-firstitem`, run side by side in one folder):
+
+- **`task-usage.mjs` priced one task from the other's transcript.** It took the newest session file of the folder, and two sessions were writing there (a third, the one developing muffy, too). The second task printed the first one's subagent cost ($0.22 instead of $0.31) into its task note. It now takes the session file that names the task most often, and the newest only when no file names it. Replayed on both tasks: $0.95 and $0.84, as computed by hand. Limit: two sessions that name one task equally often (a task resumed in another session) can still be mixed up; the script has no way to learn its own session id.
+
+### Measured (1.5.0, two tasks, both in the desktop app)
+
+`fix-cart-isempty` $0.95 and `fix-cart-firstitem` $0.84, against $1.03 to $1.20 for the three tasks on 1.4.6 to 1.4.9: under the $1.00 target both times, but two tasks against three, different bugs, so a direction only. Both sessions were the desktop app (52 and 58 tools): the lean-session comparison has not been run.
+
 ## v1.5.0 — 2026-11-22
 
 ### Changed
