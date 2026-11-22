@@ -10,7 +10,7 @@ Every kind has one facts owner. That owner also decides what happens when the su
 | Kind | Facts from | Not designed yet → route | Whole system | One feature or task |
 |---|---|---|---|---|
 | `architecture` | `architect` | spec | `docs/architecture/overview.html` | `docs/architecture/changes/<slug>.html` with pattern `delta` (what the feature adds, removes or changes) |
-| `deployment` | `architect` | spec (devops mode 1 joins when hosting is open) | `docs/architecture/deployment.html` | `docs/architecture/changes/<slug>.html` with pattern `delta` |
+| `deployment` | `architect` | spec (`devops` is retired; the architect records the hosting question) | `docs/architecture/deployment.html` | `docs/architecture/changes/<slug>.html` with pattern `delta` |
 | `erd` | `architect` | spec | `docs/architecture/data-model.html` | `docs/architecture/data-models/<slug>.html` |
 | `state` | `architect` | spec | — | `docs/architecture/states/<slug>.html` |
 | `flow` | `architect` | spec | — | `docs/architecture/flows/<slug>.html` |

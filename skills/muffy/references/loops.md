@@ -13,7 +13,7 @@
 
 ## Loop budget
 
-- A **loop point** is `<step>:<owner>`, e.g. `6:code-reviewer`, `7:qa-tester`, `3d:devops`. Count rejections per point in `.team/<task>/checkpoint.md` → `## Loop counters`
+- A **loop point** is `<step>:<owner>`, e.g. `6:code-reviewer`, `7:test-gate`. Count rejections per point in `.team/<task>/checkpoint.md` → `## Loop counters`
 - 3 fix loops are allowed per point; the **4th rejection stops the flow**. Nothing raises the limit except the user's answer to an escalation
 - **Only the work product's failures count.** A reject or fail counts toward the 3 only when the code, contract, design or docs are wrong. These do not count: an environment failure (`docker` absent, Node version mismatch, a rate limit, a missing credential), a tool that did not run, and an interrupted run being resumed. Record them as one `env:` line in `## Open blockers` (owner `Devops` or the user), fix or wait, then re-run the step at the same round number. After an interruption run `git status --short` in the worktree before redoing anything, so finished work is not repeated
 - A reviewer's `needs_validation` items (`V-1`…) are open questions, not blockers: they never make a Reject and never count toward the 3. Pass each one to its owner in the next prompt (or list it at the next human gate if the review is Approve). A `V-` id still open in 3 consecutive reviews escalates `repeated-blocker`, so a problem cannot dodge the check by switching between blocker and question
