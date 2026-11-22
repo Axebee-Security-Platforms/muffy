@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.3 — 2026-11-22
+
+### Changed
+
+- **Save-context rules are shared by every agent.** The shared paragraph in `agent-references/shared/token-rules.md`, copied word for word into all 13 `agents/*.md`, now also says: grep before opening a whole file and read only the part needed, read the diff and not the whole file it touches, do not restate what the prompt, a hand-off or an earlier round already decided, and keep answers short by default. `token-discipline.md` gains a "Save context (the Orchestrator)" paragraph for the rules that only apply to it: send a subagent to summarise the project, show the user the diff, suggest `/compact` or a new session when the task switches.
+
 ## v1.5.2 — 2026-11-22
 
 ### Changed

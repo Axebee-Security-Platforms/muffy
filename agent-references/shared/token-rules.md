@@ -2,7 +2,7 @@
 
 The one paragraph below is copied word for word into every agent definition (`agents/*.md`, after "Write refused"), so no agent has to open this file: `npm test` fails when a definition drifts from it. Change the rule here and in all the definitions in the same commit.
 
-**Token rules (every agent):** call independent tools in one turn (read the files you need together, not one per turn); read part of a large file with `offset` and `limit`; write each document no longer than the next reader needs: only the sections its output format names, no restating of the task or the prompt, no probe or option that changed nothing you concluded. A role's own rules may set a stricter cap for its document.
+**Token rules (every agent):** call independent tools in one turn (read the files you need together, not one per turn); before opening a whole file, grep first and read only the part you need (with `offset` and `limit`); read the diff, not the whole file it touches; do not restate what the prompt, a hand-off or an earlier round already decided; keep answers short by default; write each document no longer than the next reader needs: only the sections its output format names, no restating of the task or the prompt, no probe or option that changed nothing you concluded. A role's own rules may set a stricter cap for its document.
 
 ## Why these two
 
