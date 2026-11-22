@@ -34,9 +34,14 @@ export function subagentTokens(tsv) {
 
 // lines: parsed transcript records. Each requestId counts once, with its largest usage (a streamed reply is logged in pieces).
 export function orchestratorTokens(lines, sinceMs, untilMs = Infinity) {
+  return tokensIn(lines.filter((r) => !r.isSidechain), sinceMs, untilMs);
+}
+
+// the same count over any list of records; a subagent's own transcript is summed with this directly
+export function tokensIn(lines, sinceMs, untilMs = Infinity) {
   const byReq = new Map();
   for (const r of lines) {
-    if (r.type !== 'assistant' || r.isSidechain || !r.message?.usage) continue;
+    if (r.type !== 'assistant' || !r.message?.usage) continue;
     const at = Date.parse(r.timestamp);
     if (at < sinceMs || at > untilMs) continue;
     const u = r.message.usage;
@@ -77,23 +82,36 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
     console.error('usage: task-usage.mjs .team/<task> [--budget <tokens>] [--since <ISO>] [--until <ISO>] [--transcript <file>] [--cwd <dir>]');
     process.exit(2);
   }
-  const sub = subagentTokens(existsSync(join(task, 'spawns.tsv')) ? readFileSync(join(task, 'spawns.tsv'), 'utf8') : '');
+  const tsv = existsSync(join(task, 'spawns.tsv')) ? readFileSync(join(task, 'spawns.tsv'), 'utf8') : '';
+  let sub = subagentTokens(tsv);
   const since = o.since ?? taskStart(task);
+  const until = o.until ? Date.parse(o.until) : Infinity;
   const file = o.transcript ?? newestTranscript(o.cwd ?? process.cwd());
+  const read = (f) => readFileSync(f, 'utf8').split('\n').filter(Boolean).flatMap((l) => { try { return [JSON.parse(l)]; } catch { return []; } });
+  const windowOk = since && Number.isFinite(Date.parse(since));
   let orch = null;
-  if (file && since && existsSync(file) && Number.isFinite(Date.parse(since))) {
-    try {
-      const recs = readFileSync(file, 'utf8').split('\n').filter(Boolean).flatMap((l) => { try { return [JSON.parse(l)]; } catch { return []; } });
-      orch = orchestratorTokens(recs, Date.parse(since), o.until ? Date.parse(o.until) : Infinity);
-    } catch { orch = null; }
+  if (file && windowOk && existsSync(file)) {
+    try { orch = orchestratorTokens(read(file), Date.parse(since), until); } catch { orch = null; }
   }
+  // spawns.tsv is the Orchestrator's own log and may be missing or short; the subagents' transcripts sit next to the session file
+  // (<session>/subagents/*.jsonl), so with no usable log they are read from there, counted the same way as the Orchestrator's
+  let subFrom = 'spawns.tsv';
+  const subDir = file && join(file.replace(/\.jsonl$/, ''), 'subagents');
+  if ((sub.agents === 0 || sub.missing > 0) && windowOk && subDir && existsSync(subDir)) {
+    try {
+      const per = readdirSync(subDir).filter((f) => f.endsWith('.jsonl')).map((f) => tokensIn(read(join(subDir, f)), Date.parse(since), until)).filter((t) => t.requests > 0);
+      sub = { total: per.reduce((a, t) => a + t.fresh, 0), agents: per.length, missing: 0 };
+      subFrom = 'transcripts';
+    } catch { /* keep the spawns.tsv reading */ }
+  }
+  const subKnown = sub.agents > 0 && sub.missing === 0;
   const total = sub.total + (orch?.fresh ?? 0);
   const budget = o.budget === undefined ? null : Number(o.budget);
-  const lessSure = !orch || sub.missing > 0;
+  const complete = !!orch && subKnown;
   console.log([
     `usage: orchestrator ${orch ? fmt(orch.fresh) : 'n/a (no transcript or start time)'}`,
-    `subagents ${fmt(sub.total)} (${sub.agents} agents${sub.missing ? `, ${sub.missing} spawn row(s) with no tok:` : ''})`,
-    `total ${lessSure ? 'at least ' : ''}${fmt(total)}`,
-    ...(budget ? [`target ${fmt(budget)}: ${total <= budget ? 'under' : 'over'}`] : []),
+    subKnown ? `subagents ${fmt(sub.total)} (${sub.agents} agents, from ${subFrom})` : `subagents n/a (no spawns.tsv log and no subagent transcripts${sub.missing ? `; ${sub.missing} spawn row(s) with no tok:` : ''})`,
+    `total ${complete ? '' : 'at least '}${fmt(total)}`,
+    ...(budget ? [`target ${fmt(budget)}: ${total > budget ? 'over' : complete ? 'under' : 'cannot tell (a part is missing)'}`] : []),
   ].join(' · ') + (orch ? ` (cache reads ${fmt(orch.cacheRead)} not counted; ${orch.requests} requests since ${since})` : ''));
 }

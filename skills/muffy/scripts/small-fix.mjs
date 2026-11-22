@@ -3,7 +3,8 @@
 // (no docs-writer spawn, no LLM cost), and writes `release-notes.md` when it is. A bigger fix keeps the docs-writer.
 //
 // Usage: node small-fix.mjs .team/<task> --base <ref> [--head <ref>] [--cwd <repo>] [--check]
-//   base/head  the diff is <base>...<head>; head defaults to HEAD (the merged feature branch)
+//   base/head  the diff is <base>...<head>; head defaults to HEAD of the repo the task folder is in (the merged feature branch)
+//   cwd        default: the task folder, so the right worktree is read from any current folder; a diff with no source file is exit 2
 //   --check    decide only, write nothing
 // Small = every one of these holds (the thresholds are SMALL below, one place):
 //   - at most 2 source files and 20 changed source lines (tests and .team/ excluded)
@@ -11,7 +12,7 @@
 //   - the debugger's diagnosis severity is low or medium
 //   - no README or docs/ page mentions a changed source file by name (that doc may now be wrong: the docs-writer reads it)
 // Prints `next=script-notes` (release-notes.md written) or `next=spawn-docs-writer reasons=<a;b>`.
-// Exit 0 = small (notes written, unless --check), 1 = not small (spawn the docs-writer), 2 = usage or git error.
+// Exit 0 = small (notes written, unless --check), 1 = not small (spawn the docs-writer), 2 = usage, git error or an empty diff.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';
@@ -123,9 +124,18 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   }
   const task = pos[0] && resolve(pos[0]);
   if (!task || !o.base || !existsSync(task)) { console.error('usage: small-fix.mjs .team/<task> --base <ref> [--head <ref>] [--cwd <repo>] [--check]'); process.exit(2); }
-  const cwd = resolve(o.cwd ?? process.cwd());
+  // git runs where the task folder is, so HEAD is the feature branch of that worktree, not whatever checkout the Orchestrator stands in
+  let cwd = resolve(o.cwd ?? task);
   const head = o.head ?? 'HEAD';
   let files; let lines = 0; let commits = [];
+  try {
+    cwd = git(cwd, 'rev-parse', '--show-toplevel');
+    files = git(cwd, 'diff', '--name-only', `${o.base}...${head}`).split('\n').filter(Boolean);
+    if (!files.some((p) => !isTest(p) && !isTeam(p))) {
+      console.error(`no source file changed between ${o.base} and ${head} in ${cwd}: a wrong --base or --head, or a fix with no code change. Nothing decided, nothing written.`);
+      process.exit(2);
+    }
+  } catch (e) { console.error(`git failed: ${String(e.stderr ?? e.message).trim()}`); process.exit(2); }
   try {
     files = git(cwd, 'diff', '--name-only', `${o.base}...${head}`).split('\n').filter(Boolean);
     const src = files.filter((p) => !isTest(p) && !isTeam(p));

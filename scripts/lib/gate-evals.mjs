@@ -181,6 +181,12 @@ export function runGateEvals({ check, root }) {
       const run = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'test-gate.mjs'), task, '--cwd', proj], { encoding: 'utf8' });
       const report = readFileSync(join(task, 'qa-report.md'), 'utf8');
       check('test-gate: an AC table under any heading and any columns is merged', run.status === 0 && /\| AC-1 \| total applies a percentage discount/.test(report.split('## AC id')[1] ?? ''), report.slice(0, 300));
+      writeFileSync(join(task, 'ac-tests-fe.md'), ['AC-2 | the total shows the discount | test/ui.test.js', 'AC-3 | no outer pipes either | manual', ''].join('\n'));
+      const noPipes = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'test-gate.mjs'), task, '--cwd', proj], { encoding: 'utf8' });
+      const rep2 = readFileSync(join(task, 'qa-report.md'), 'utf8').split('## AC id')[1] ?? '';
+      check('test-gate: an AC row with no outer pipes is read too (a dev wrote it that way)', noPipes.status === 0 && /\| AC-2 \| the total shows the discount/.test(rep2) && /\| AC-3 \|/.test(rep2) && /\| AC-1 \|/.test(rep2), rep2);
+      rmSync(join(task, 'ac-tests-fe.md'));
+      spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'test-gate.mjs'), task, '--cwd', proj], { encoding: 'utf8' }); // back to the one-AC report the next checks read
       check('test-gate: Results is one summary line; the raw output sits under ## Output', !/```/.test(report.split('## Bugs')[0]) && /## Output/.test(report));
       const g10 = gate10(task);
       check('gate 10: a test runner line like "fail 0" is not a failure, and the loose AC table closes the coverage gap', g10.notReady.length === 0, JSON.stringify(g10.notReady));
@@ -230,6 +236,12 @@ export function runGateEvals({ check, root }) {
       rmSync(join(proj, '.team', 'tk', 'release-notes.md'));
       const big = sf();
       check('small-fix: a later round that raises the severity to high sends the task to the docs-writer, exit 1, no notes written', big.status === 1 && /next=spawn-docs-writer/.test(big.stdout) && !/release-notes/.test(readdirSync(join(proj, '.team', 'tk')).join()), big.stdout);
+      // the real 1.4.6 run: started from another checkout (HEAD there is the base), so the diff was empty and the verdict "small"
+      rmSync(join(proj, '.team', 'tk', 'handoff', '4a-debugger-r2.json'));
+      const elsewhere = spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'small-fix.mjs'), join(proj, '.team', 'tk'), '--base', 'main', '--check'], { cwd: tmp, encoding: 'utf8' });
+      check('small-fix: with no --cwd it reads the repo of the task folder, whatever folder it is started from', elsewhere.status === 0 && /1 source/.test(elsewhere.stdout), elsewhere.stdout + elsewhere.stderr);
+      const empty = sf('--head', 'main');
+      check('small-fix: a diff with no source file is exit 2 and writes nothing, never "small"', empty.status === 2 && /no source file changed/.test(empty.stderr) && !/next=/.test(empty.stdout), empty.stdout + empty.stderr);
     }
     // task-usage.mjs: one line for the whole task
     {
@@ -246,6 +258,22 @@ export function runGateEvals({ check, root }) {
         rec('r4', '2026-01-01T12:00:00Z', u(1, 0, 1)), // after --until
       ], Date.parse('2026-01-01T10:00:00Z'), Date.parse('2026-01-01T11:30:00Z'));
       check('task-usage: Orchestrator tokens are input + cache write + output, once per request, inside the window, cache reads apart', o.fresh === 542 + 10 && o.cacheRead === 9000 + 9800 && o.requests === 2, JSON.stringify(o));
+      // a task with no spawns.tsv: the subagents are read from <session>/subagents/*.jsonl, and a part that cannot be read is n/a, never 0 or "under"
+      const sess = join(tmp, 'sess');
+      mkdirSync(join(sess, 'subagents'), { recursive: true });
+      const jl = (rows) => rows.map((r) => JSON.stringify(r)).join('\n');
+      writeFileSync(`${sess}.jsonl`, jl([rec('m1', '2026-01-01T10:10:00Z', u(1, 400, 100))]));
+      writeFileSync(join(sess, 'subagents', 'agent-a.jsonl'), jl([rec('s1', '2026-01-01T10:20:00Z', u(1, 900, 100), { isSidechain: true }), rec('s1', '2026-01-01T10:20:01Z', u(1, 900, 150), { isSidechain: true })]));
+      const tdir = join(tmp, 'usage-task');
+      mkdirSync(tdir, { recursive: true });
+      const usage = (...a) => spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'task-usage.mjs'), tdir, '--transcript', `${sess}.jsonl`, '--since', '2026-01-01T10:00:00Z', ...a], { encoding: 'utf8' }).stdout;
+      const fromTranscripts = usage('--budget', '100000');
+      check('task-usage: no spawns.tsv reads the subagent transcripts, once per request, and says so', /orchestrator 501 /.test(fromTranscripts) && /subagents 1 051 \(1 agents, from transcripts\)/.test(fromTranscripts) && /total 1 552 /.test(fromTranscripts) && /: under/.test(fromTranscripts), fromTranscripts);
+      rmSync(join(sess, 'subagents'), { recursive: true });
+      const none = usage('--budget', '100000');
+      check('task-usage: no spawns.tsv and no subagent transcripts is subagents n/a, total "at least", and the target "cannot tell"', /subagents n\/a/.test(none) && /total at least 501/.test(none) && /cannot tell/.test(none) && !/: under/.test(none), none);
+      const over = usage('--budget', '100');
+      check('task-usage: a partial total already over the target is still over', /: over/.test(over), over);
     }
     // fix lane: the debugger and the auditor are muffy roles, ungated; a dev step-4 spawn waits for the audit
     const fixHandoff = join(dir, 'handoff');

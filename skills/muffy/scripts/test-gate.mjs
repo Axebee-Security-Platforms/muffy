@@ -4,7 +4,7 @@
 // Usage: node test-gate.mjs .team/<task> [--cwd <dir>] [--timeout <seconds>]
 //   cwd      where the command runs: the merged feature worktree (default: the current folder)
 //   command  `test_command` in `<project>/.team/config.json` (init-config.mjs writes it at setup from package.json; the user may edit it)
-//   AC map   every table row that starts with an `AC-<n>` id in `.team/<task>/ac-tests*.md` (ac-tests-fe.md, ac-tests-be.md: one
+//   AC map   every table row (outer pipes optional) that starts with an `AC-<n>` id in `.team/<task>/ac-tests*.md` (ac-tests-fe.md, ac-tests-be.md: one
 //            writer each), whatever the heading or the columns, merged by AC id into qa-report.md; with no such file the report lists it as an open bug (gate-summary.mjs then says not ready)
 // Exit 0 = tests passed, 1 = tests failed or timed out, 2 = bad usage, 3 = skipped (no test_command): qa-report.md says so
 // in plain words and the Human gate shows it. A skipped gate is never a silent pass.
@@ -40,8 +40,9 @@ command = typeof command === 'string' && command.trim() ? command.trim() : null;
 const rows = new Map();
 for (const f of readdirSync(task).filter((n) => /^ac-tests.*\.md$/.test(n)).sort()) {
   for (const line of (readIf(join(task, f)) ?? '').split('\n')) {
-    if (!line.trimStart().startsWith('|')) continue;
-    const cells = line.split('|').slice(1, -1).map((c) => c.trim());
+    // a row with or without its outer pipes (`| AC-1 | test |` or `AC-1 | test`): a dev wrote the second form in a real run
+    const cells = line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+    if (cells.length < 2) continue;
     const id = cells[0]?.match(/^AC-\d+$/)?.[0];
     if (id) rows.set(id, [rows.get(id), cells.slice(1).join(' ')].filter(Boolean).join(' + '));
   }

@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.4.7 — 2026-11-22
+
+### Fixed
+
+Found by the first real run of the fix lane on 1.4.6 (`fix-cart-itemcount`):
+
+- **`small-fix.mjs` called an empty diff "small".** Started from the main checkout, its default head was that checkout's `HEAD`, so `--base master` compared master with itself (`0 source / 0 changed`), wrote notes with no rollback commit and an empty "What changed", and the Orchestrator patched them by hand. It now reads the repo of the task folder (so `HEAD` is the feature branch) from any current folder, and a diff with no source file is exit 2 with nothing written.
+- **`task-usage.mjs` printed "under target" with no subagents.** The Orchestrator had not logged `spawns.tsv`, so subagents counted as 0. With no usable log it now reads the subagents' own transcripts (`<session>/subagents/*.jsonl`, counted the same way as the Orchestrator's); with neither it prints `subagents n/a`, the total as `at least`, and the target as `cannot tell` (a partial total already over the target still says `over`).
+- **`test-gate.mjs` missed AC rows with no outer pipes** (`AC-1 | test | file`), which a dev wrote in the real run and which left the AC map empty. Rows with or without the outer pipes are read.
+
+### Measured
+
+`fix-cart-itemcount` (a one-line change, severity `medium`, no docs-writer): subagents about 120k (debugger, auditor, backend-dev, code-reviewer) plus a baseline researcher of about 22k that falls before the window, Orchestrator about 50k, total about 170k against the 100k target. Down from about 323k for the first task, still over.
+
 ## v1.4.6 — 2026-11-22
 
 ### Changed
