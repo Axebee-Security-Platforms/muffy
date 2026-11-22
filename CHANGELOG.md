@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.4.6 — 2026-11-22
+
+### Changed
+
+- **A small fix no longer pays for a docs-writer (cost).** Fix lane step 11 runs `small-fix.mjs` first. It reads the real diff and, when the fix is small, writes `release-notes.md` itself (changelog, cause, tests, rollback commit, a Deploy hand-off with no migration or config); otherwise it answers `next=spawn-docs-writer reasons=…` and the docs-writer runs as before. Small = at most 2 source files and 20 changed source lines, no dependency, devops, schema, auth, config/env or contract file, debugger severity `low` or `medium`, and no README or `docs/` page that names a changed file. The limits are `SMALL` in the script.
+- **Step 12 prints the task's token cost.** `task-usage.mjs` sums the subagents' last `tok:` per role and step from `spawns.tsv` and reads the Orchestrator's own tokens from the session transcript (input, cache-write and output; cache reads listed apart). `closing.md` uses it for `## Usage`. A small fix has a target of 100 000 tokens, a number to measure against and revisit after 3 to 5 real tasks, not a limit ([token-discipline.md](skills/muffy/references/token-discipline.md#cost-target-and-measurement)).
+
+### Measured (one task, so a first data point only)
+
+The scratch fix (`fix-cart-discount`, a one-line change): subagents about 154k tokens, Orchestrator about 169k (79 requests), total about 323k. That task had severity `high`, so it would still use the docs-writer under the rule above. Skipping the docs-writer (31k) alone does not reach 100k: the Orchestrator is the larger share.
+
 ## v1.4.5 — 2026-11-22
 
 ### Fixed
