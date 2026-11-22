@@ -1,18 +1,10 @@
 ---
 name: muffy
 display_name: Earl Grey
-description: >
-  Run a subagent team from research to a QA-passed branch, on the smallest route. Never deploys.
-  Use to build a new capability (ทำฟีเจอร์, `/muffy feature`); for a bug (เจอบั๊ก, พัง, error,
-  `/muffy fix`); for an internal API, refactor, perf fix or migration (`/muffy lite`, ทำให้เร็วขึ้น); for changing
-  an existing screen, UX/UI or logic flow (`/muffy redesign`, ออกแบบใหม่, ปรับหน้า, แก้ flow); to bump a dependency
-  or runtime (อัปเกรด, bump); to review and test a branch before merge (ตรวจให้ครบ, รีวิวและเทส); and for
-  a single-step request: research (วิจัย), plan or user stories (วางแผน), screens (ออกแบบหน้าจอ), API or schema,
-  a UX/UI review (รีวิวดีไซน์), an architecture or ADR review, a new ADR, a PR review (รีวิว PR), tests, docs or
-  README (ทำเอกสาร), local infra files.
-  Also: bare `/muffy` for unfinished tasks (งานค้าง, ทำต่อ, `/muffy resume`), `/muffy onboard`,
-  `/muffy present` (client deck, ทำสไลด์), `/muffy diagram`.
-  Not for a code question, a one-line text edit, or step-by-step work in main session.
+description: Run a subagent team from research to a reviewed, test-gated branch; never deploys. Use for /muffy feature, fix, lite, redesign, upgrade, verify, onboard, present, diagram, ทำฟีเจอร์, เจอบั๊ก, ทำต่อ.
+metadata:
+  author: HarmonyX
+  tags: [agents, subagents, orchestration, team, workflow, development]
 ---
 
 # Muffy: Feature Development Team
