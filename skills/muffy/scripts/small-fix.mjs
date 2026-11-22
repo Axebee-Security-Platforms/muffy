@@ -10,7 +10,8 @@
 //   - at most 2 source files and 20 changed source lines (tests and .team/ excluded)
 //   - no dependency, devops-owned, schema/migration, auth, config/env or contract/API-spec file
 //   - the debugger's diagnosis severity is low or medium
-//   - no README or docs/ page mentions a changed source file by name (that doc may now be wrong: the docs-writer reads it)
+//   - no README or docs/ page mentions a changed source file by name (that doc may now be wrong: the docs-writer reads it);
+//     the onboard baseline (docs/architecture/baseline.md), docs/plan/ and docs/adr/ do not count (NOT_BEHAVIOUR_DOC)
 // Prints `next=script-notes` (release-notes.md written) or `next=spawn-docs-writer reasons=<a;b>`.
 // Exit 0 = small (notes written, unless --check), 1 = not small (spawn the docs-writer), 2 = usage, git error or an empty diff.
 import { execFileSync } from 'node:child_process';
@@ -58,15 +59,19 @@ export function severityOf(task) {
   return best;
 }
 
-// README and docs/ pages, concatenated (the repo root is the cwd). `.team/` is never read.
-function docsText(cwd) {
+// Pages that are not about behaviour: the onboard baseline lists every file of the project (so it names any file a fix changes, and
+// its freshness has its own check, baseline-freshness.md), and plans and ADRs record a past decision. They never count.
+export const NOT_BEHAVIOUR_DOC = /^docs\/(architecture\/baseline\.md|plan\/|adr\/)/i;
+
+// README and the behaviour docs under docs/, concatenated (the repo root is the cwd). `.team/` is never read.
+export function docsText(cwd) {
   const out = [];
   const walk = (dir, depth) => {
     if (!existsSync(dir) || depth > 3) return;
     for (const e of readdirSync(dir, { withFileTypes: true })) {
       const p = join(dir, e.name);
       if (e.isDirectory()) { if (!['node_modules', '.git', '.team', '.worktrees'].includes(e.name)) walk(p, depth + 1); }
-      else if (/\.md$/i.test(e.name)) out.push(readIf(p) ?? '');
+      else if (/\.md$/i.test(e.name) && !NOT_BEHAVIOUR_DOC.test(p.slice(cwd.length + 1).replace(/\\/g, '/'))) out.push(readIf(p) ?? '');
     }
   };
   for (const e of existsSync(cwd) ? readdirSync(cwd) : []) if (/^README/i.test(e)) out.push(readIf(join(cwd, e)) ?? '');

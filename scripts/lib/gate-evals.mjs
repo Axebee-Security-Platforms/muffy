@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process';
 import { gateState, gatesForSpawn, missingGates, gateErrors, auditMissing } from '../../skills/muffy/scripts/gate-rules.mjs';
 import { recordGate, clearPause } from '../../skills/muffy/scripts/checkpoint.mjs';
 import { gate10 } from '../../skills/muffy/scripts/gate-summary.mjs';
-import { smallVerdict } from '../../skills/muffy/scripts/small-fix.mjs';
+import { smallVerdict, docsText } from '../../skills/muffy/scripts/small-fix.mjs';
 import { subagentTokens, orchestratorTokens } from '../../skills/muffy/scripts/task-usage.mjs';
 
 const CP = (status, profile = 'lane: feature · skipped none') =>
@@ -225,6 +225,18 @@ export function runGateEvals({ check, root }) {
       check('small-fix: 3 source files, or 21 source lines, is not small', v({ files: ['a.js', 'b.js', 'c.js'] }).small === false && v({ lines: 21 }).small === false);
       check('small-fix: a migration, a dependency, a config file or an API spec is not small', ['db/migrations/001.sql', 'package.json', 'config/app.yaml', 'openapi.yaml'].every((f) => v({ files: ['cart.js', f] }).small === false));
       check('small-fix: a doc that names the changed file is not small', v({ docsText: 'See cart.js for the total.' }).small === false && v({ docsText: 'Nothing about it.' }).small === true);
+      // the real 1.4.8 run: the onboard baseline names every file, so every fix in an onboarded project needed the docs-writer
+      const onboarded = join(tmp, 'onboarded');
+      mkdirSync(join(onboarded, 'docs', 'architecture'), { recursive: true });
+      mkdirSync(join(onboarded, 'docs', 'plan'), { recursive: true });
+      mkdirSync(join(onboarded, 'docs', 'adr'), { recursive: true });
+      writeFileSync(join(onboarded, 'docs', 'architecture', 'baseline.md'), '# Baseline\n- cart.js: the cart functions\n');
+      writeFileSync(join(onboarded, 'docs', 'plan', 'cart.md'), 'cart.js is rewritten in phase 2\n');
+      writeFileSync(join(onboarded, 'docs', 'adr', '0001-cart.md'), 'We keep cart.js flat\n');
+      check('small-fix: the baseline, plans and ADRs name every file and do not count as a doc about the fix', !docsText(onboarded).includes('cart.js') && v({ docsText: docsText(onboarded) }).small === true, docsText(onboarded));
+      writeFileSync(join(onboarded, 'README.md'), 'Call maxPrice from cart.js to get the top price.\n');
+      writeFileSync(join(onboarded, 'docs', 'usage.md'), 'Other docs under docs/ still count.\n');
+      check('small-fix: a README or another docs/ page that names the file still counts', docsText(onboarded).includes('cart.js') && v({ docsText: docsText(onboarded) }).small === false && docsText(onboarded).includes('Other docs under docs/'));
       const proj = join(tmp, 'sf');
       const g = (...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: proj, encoding: 'utf8' });
       mkdirSync(join(proj, 'test'), { recursive: true });
@@ -279,7 +291,14 @@ export function runGateEvals({ check, root }) {
       const usage = (...a) => spawnSync(process.execPath, [rel('skills', 'muffy', 'scripts', 'task-usage.mjs'), tdir, '--transcript', `${sess}.jsonl`, '--since', '2026-01-01T10:00:00Z', ...a], { encoding: 'utf8' }).stdout;
       const fromTranscripts = usage('--budget', '100000');
       check('task-usage: no spawns.tsv reads the subagent transcripts, once per request, and says so', /orchestrator 501 /.test(fromTranscripts) && /subagents 1 051 \(1 agents, from transcripts\)/.test(fromTranscripts) && /total 1 552 /.test(fromTranscripts) && /: under/.test(fromTranscripts), fromTranscripts);
+      // a spawns.tsv that exists does not win: its tok: values leave the output out, so the transcripts (the same basis as the Orchestrator) come first
+      writeFileSync(join(tdir, 'spawns.tsv'), '4\tbackend-dev\tsonnet\tmedium\t1\tpass\t0\tdone tok:500\n');
+      const both = usage('--budget', '100000');
+      check('task-usage: the subagent transcripts come before spawns.tsv, whose tok: values leave the output out', /subagents 1 051 \(1 agents, from transcripts\)/.test(both) && !/from spawns\.tsv/.test(both), both);
       rmSync(join(sess, 'subagents'), { recursive: true });
+      const tsvOnly = usage('--budget', '100000');
+      check('task-usage: with no readable transcript spawns.tsv is the fallback and says so', /subagents 500 \(1 agents, from spawns\.tsv\)/.test(tsvOnly), tsvOnly);
+      rmSync(join(tdir, 'spawns.tsv'));
       const none = usage('--budget', '100000');
       check('task-usage: no spawns.tsv and no subagent transcripts is subagents n/a, total "at least", and the target "cannot tell"', /subagents n\/a/.test(none) && /total at least 501/.test(none) && /cannot tell/.test(none) && !/: under/.test(none), none);
       // the cost-weighted line: write 1.25x, read 0.1x, output 5x (orchestrator: input 1, write 400, output 100, read 0 -> 1 + 500 + 500)

@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.4.9 — 2026-11-22
+
+### Fixed
+
+Found by the first real run on 1.4.8 (`fix-cart-maxprice`, a one-line fix of severity `medium`):
+
+- **`small-fix.mjs` never said "small" in an onboarded project.** Its doc check counted the onboard baseline (`docs/architecture/baseline.md`), which lists every file of the project, so any changed file was "named by a doc" and the docs-writer ran (138k priced) to edit 4 lines of the baseline. The baseline, `docs/plan/` and `docs/adr/` no longer count (`NOT_BEHAVIOUR_DOC`); the baseline's freshness has its own check. A README or any other page under `docs/` that names a changed file still sends the fix to the docs-writer. Replayed on that task's branch before the docs-writer ran: `next=script-notes`.
+- **`closing.md` told the Orchestrator to copy one line of `task-usage.mjs`**, which has printed two since 1.4.8, so the `cost-weighted:` line was missing from the task note. Both lines go under `## Usage` and in the final message.
+- **The subagent total used a different basis from the Orchestrator's.** `spawns.tsv` `tok:` values are close to input plus cache write and leave the output out (a debugger: 35.6k there, 46.8k in its transcript), so the total sat about 23k low against the 100k target. `task-usage.mjs` now takes the subagents' transcripts first and uses `spawns.tsv` only when none can be read.
+
+### Known gap
+
+An agent that ran before the task's first commit (the baseline researcher at setup, about 21k in that run) is outside the count. `closing.md` has the Orchestrator list it on its own line marked `not in the total`. Counting it needs the task's start time recorded at setup: not done.
+
+### Corrected
+
+The 1.4.8 changelog and run notes read the Orchestrator's cost as up 18% on `fix-cart-maxprice`; that figure included turns after the task closed. At closing it was 529k against 520k (28 requests each). The whole +14% over `fix-cart-itemcount` (926k against 811k priced) was the docs-writer.
+
 ## v1.4.8 — 2026-11-22
 
 ### Added

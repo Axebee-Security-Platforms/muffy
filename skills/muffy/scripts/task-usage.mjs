@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Step 12: the task's token cost in one line, so the cost can be compared with a target. No agent writes these numbers.
-//   subagents     the `tok:` values in `.team/<task>/spawns.tsv`, the last value of each role + step (they are cumulative per agent)
+//   subagents     their own transcripts (<session>/subagents/*.jsonl), counted like the Orchestrator's so the two add up; with none
+//                 readable, the `tok:` values in `.team/<task>/spawns.tsv`, the last value of each role + step (cumulative per agent,
+//                 and they leave the output out, so that total is lower)
 //   Orchestrator  this session's transcript, the assistant messages sent since the task began (the first commit of `.team/<task>/`,
 //                 or --since <ISO time>): input + cache-write + output tokens, each API request once. Cache reads are listed
 //                 apart and left out of the total (a long session re-reads its context every turn, which is not new work).
@@ -113,7 +115,10 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
       subT = { total: per.reduce((a, t) => a + t.fresh, 0), agents: per.length, weighted: per.reduce((a, t) => a + t.weighted, 0) };
     } catch { subT = null; }
   }
-  if ((sub.agents === 0 || sub.missing > 0) && subT && subT.agents > 0) {
+  // The transcripts come first: they count output like the Orchestrator's own figure, so the two add up on one basis. The `tok:` values of
+  // spawns.tsv are close to input + cache write and leave the output out (35.6k against 46.8k for a debugger in a real run), which made
+  // the total look 23k lower than it was. spawns.tsv is the fallback when no transcript can be read.
+  if (subT && subT.agents > 0) {
     sub = { total: subT.total, agents: subT.agents, missing: 0 };
     subFrom = 'transcripts';
   }
