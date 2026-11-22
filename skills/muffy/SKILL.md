@@ -27,7 +27,7 @@ Orchestrate muffy's subagents from research to deploy for one feature. The main 
 
 - Feature request (+ minimum research level, if specified)
 - `<task>` name (kebab-case)
-- `<vault>`: env `SECOND_BRAIN_VAULT` (set in `.claude/settings.local.json`). Unset or still a `<...>` placeholder → no vault: `<brain>` is `.team/brain/` in the repo, committed and shared through git ([memory-model.md](references/memory-model.md))
+- `<vault>`: env `SECOND_BRAIN_VAULT` (set in the project's local Claude settings file, `.claude/` folder). Unset or still a `<...>` placeholder → no vault: `<brain>` is `.team/brain/` in the repo, committed and shared through git ([memory-model.md](references/memory-model.md))
 
 ## Workflow
 
@@ -57,9 +57,9 @@ Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup
 
 ## Output Format
 
-- `.team/<task>/`: the hand-off files, `checkpoint.md`, `handoff/`, `spawns.tsv`, `rounds/`, `canvas/`, `diagrams/`; the full list and the split rules are in [memory-model.md](references/memory-model.md)
+- `.team/<task>/`: the hand-off files, the checkpoint, `handoff/`, the spawn log, `rounds/`, `canvas/`, `diagrams/`; the full list and the split rules are in [memory-model.md](references/memory-model.md)
 - Repo: `docs/plan/<task>.md`, `docs/adr/NNNN-*.md`, `docs/design-system/` (if changed), merged `feature/<task>`
-- Vault: `tasks/<task>.md`, consolidated `project.md`
+- Vault: one note per task under `tasks/`, and the consolidated project note
 - Final message to the user: [closing.md](references/closing.md) step 6
 
 ## Rules and Guardrails
