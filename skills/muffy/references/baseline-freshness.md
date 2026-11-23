@@ -9,7 +9,9 @@
 |---|---|---|
 | green | no stack mismatch, no cited path missing, fewer than `yellow` covered files changed since the baseline's `commit` | Trust the baseline. Record `baseline: green` in checkpoint `## Status`. Nothing is asked and this file is not read |
 | yellow | a cited path is missing, or `yellow` or more covered files changed, or the commit is not in this history | Refresh without asking: setup's `next-action.mjs baseline` prints `refresh:silent` and the Orchestrator runs onboard's silent refresh (onboard.md), tells the user one line (`baseline: refreshed (<n> files changed)`) and carries on. If the refresh finds the Stack changed, it is red: 0c and 0d run before the task continues. Record `baseline: green` after the refresh |
+| red, headless (`MUFFY_HEADLESS=1`) | same facts as red | No question: `next-action.mjs baseline` prints `refresh:silent`, same as yellow. Stack changed is handled as in onboard.md's silent refresh |
 | red | a runtime or dependency in the baseline differs from the manifest by major version, or `red` or more covered files changed, or five or more cited paths are missing | The baseline is no longer a safe base for design. Ask the user: **refresh now** (run onboard, onboard.md) or **continue anyway**, in which case the architect and researcher treat the code as the only truth and the baseline as history. Record `baseline: red` and the answer |
+| missing, headless | no baseline | No question: `next-action.mjs baseline` prints `onboard-quick` or `onboard-full`; setup onboards at that depth and carries on |
 | missing | no baseline | Setup asks once, "look first, then carry on", and runs onboard at the depth the lane needs (setup.md step 3, onboard.md); the request resumes after it |
 
 ## What counts, and what does not

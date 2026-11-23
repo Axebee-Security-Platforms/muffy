@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.4 — 2026-11-23
+
+### Changed
+
+- **The baseline never asks in headless mode (`MUFFY_HEADLESS=1`).** `next-action.mjs baseline` now reads the env itself: a red baseline prints `refresh:silent` like a yellow one, and a missing baseline (or a quick one where the lane needs full) prints `onboard-quick | onboard-full` instead of `ask:onboard-*`. Setup onboards as "look first" would and carries on. Before, a repo with no `docs/architecture/baseline.md` gave `blocked at pause:question` on some headless runs and passed on others, depending on whether the model answered the question itself. Green still continues without a refresh. Runs with a person are unchanged. Four scenarios added to `evals/baseline-scenarios.json`; `setup.md`, `baseline-freshness.md` and `headless.md` say so.
+
 ## v1.5.3 — 2026-11-22
 
 ### Changed

@@ -9,5 +9,9 @@
   { "id": "green-full", "colour": "green", "depth": "full", "has_code": true, "lane": "redesign", "expect": "continue" },
   { "id": "yellow-refreshed-silently", "colour": "yellow", "depth": "full", "has_code": true, "lane": "feature", "expect": "refresh:silent" },
   { "id": "yellow-quick-fix-refreshed", "colour": "yellow", "depth": "quick", "has_code": true, "lane": "fix", "expect": "refresh:silent" },
-  { "id": "red-asks", "colour": "red", "depth": "full", "has_code": true, "lane": "lite", "expect": "ask:red" }
+  { "id": "red-asks", "colour": "red", "depth": "full", "has_code": true, "lane": "lite", "expect": "ask:red" },
+  { "id": "red-headless-refreshed", "colour": "red", "depth": "full", "has_code": true, "lane": "lite", "headless": true, "expect": "refresh:silent" },
+  { "id": "missing-fix-headless-onboards", "colour": "missing", "depth": null, "has_code": true, "lane": "fix", "headless": true, "expect": "onboard-quick" },
+  { "id": "missing-feature-headless-onboards", "colour": "missing", "depth": null, "has_code": true, "lane": "feature", "headless": true, "expect": "onboard-full" },
+  { "id": "quick-feature-headless-onboards", "colour": "green", "depth": "quick", "has_code": true, "lane": "feature", "headless": true, "expect": "onboard-full" }
 ]

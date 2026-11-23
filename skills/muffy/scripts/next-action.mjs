@@ -422,13 +422,22 @@ export const triageChange = triageLite;
 // What setup does about docs/architecture/baseline.md before the lane starts. The user is asked only when there is no usable
 // baseline (once, with the depth the lane needs) or when it is red; yellow is refreshed without a question.
 //   colour: check-baseline.mjs --json `baseline` (green | yellow | red | missing); depth: its `depth` (quick | full)
-export function baselineAction({ colour, depth, hasCode = true, lane = 'feature', scope } = {}) {
+// headless (MUFFY_HEADLESS=1): nobody can answer, so nothing here asks. A red baseline is refreshed like a yellow one, and a
+// missing or too-shallow one is onboarded ("look first") every time, so the outcome never depends on the model answering itself.
+export function baselineAction({ colour, depth, hasCode = true, lane = 'feature', scope, headless = false } = {}) {
   const need = laneSpec(lane, scope)?.baseline ?? 'full';
   if (!hasCode) return { next: 'continue', reason: 'no source files: nothing to onboard' };
-  if (colour === 'missing') return { next: `ask:onboard-${need}`, reason: `no baseline; the ${lane} lane needs a ${need} one` };
-  if (depth === 'quick' && need === 'full') return { next: 'ask:onboard-full', reason: `the baseline is quick; the ${lane} lane needs a full one` };
+  if (colour === 'missing') {
+    if (headless) return { next: `onboard-${need}`, reason: `no baseline, headless: onboard at ${need} depth without asking, then carry on` };
+    return { next: `ask:onboard-${need}`, reason: `no baseline; the ${lane} lane needs a ${need} one` };
+  }
+  if (depth === 'quick' && need === 'full') {
+    if (headless) return { next: 'onboard-full', reason: `the baseline is quick, headless: onboard at full depth without asking, then carry on` };
+    return { next: 'ask:onboard-full', reason: `the baseline is quick; the ${lane} lane needs a full one` };
+  }
   if (colour === 'green') return { next: 'continue', reason: 'baseline green' };
   if (colour === 'yellow') return { next: 'refresh:silent', reason: 'baseline yellow: refresh from the delta, no question' };
+  if (colour === 'red' && headless) return { next: 'refresh:silent', reason: 'baseline red, headless: refresh from the delta, no question' };
   if (colour === 'red') return { next: 'ask:red', reason: 'baseline red: refresh now or continue with the code as the only truth' };
   throw new Error(`baselineAction: unknown colour ${colour}`);
 }
@@ -538,7 +547,7 @@ function runBaseline(args) {
   const r = spawnSync(process.execPath, [join(here, 'check-baseline.mjs'), repo, '--json'], { encoding: 'utf8' });
   let facts;
   try { facts = JSON.parse(r.stdout); } catch { usage(`baseline: check-baseline.mjs gave no JSON: ${r.stderr.trim()}`); }
-  const out = baselineAction({ colour: facts.baseline, depth: facts.depth, hasCode: !args.includes('--no-code'), lane, scope: opt(args, '--scope') });
+  const out = baselineAction({ colour: facts.baseline, depth: facts.depth, hasCode: !args.includes('--no-code'), lane, scope: opt(args, '--scope'), headless: process.env.MUFFY_HEADLESS === '1' });
   console.log(`next=${out.next} baseline=${facts.baseline}${facts.depth ? ` depth=${facts.depth}` : ''} lane=${lane}`);
   console.log(`reason: ${out.reason}`);
   for (const x of facts.reasons ?? []) console.log(`- ${x}`);

@@ -18,7 +18,7 @@ export function runOnboardEvals({ check, root }) {
   /* the decision table */
   const scenarios = JSON.parse(read('evals/baseline-scenarios.json'));
   for (const s of scenarios) {
-    const out = baselineAction({ colour: s.colour, depth: s.depth, hasCode: s.has_code, lane: s.lane });
+    const out = baselineAction({ colour: s.colour, depth: s.depth, hasCode: s.has_code, lane: s.lane, headless: s.headless === true });
     check(`baseline action: ${s.id} → ${s.expect}`, out.next === s.expect, `got ${out.next}`);
   }
   const outcomes = new Set(scenarios.map((s) => s.expect));

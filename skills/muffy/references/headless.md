@@ -15,6 +15,10 @@ In the **fix lane**, headless needs no policy flag: every gate is decided by `ch
 
 On `next=close:blocked`: write the reason and the evidence so far into `fix.md`, start no dev, close per [closing.md](closing.md) with status `blocked`, commit `.team/<task>/` on the task's branch, and end the final message with `muffy-status: blocked:<gate>` as its last line. A blocked run is never answered by accepting the risk or by guessing the missing fact. `muffy` opens no PR: the review is on the branch, so say in the final message where `qa-report.md` and `fix.md` are.
 
+## The baseline never asks
+
+Setup step 3 is not a gate in headless mode, in any lane: `next-action.mjs baseline` reads `MUFFY_HEADLESS` itself and prints `refresh:silent` (yellow or red) or `onboard-quick | onboard-full` (no baseline, or a quick one where the lane needs full), never `ask:*`. Onboard runs as "look first" would, so a repo with no `docs/architecture/baseline.md` gives the same result every run instead of `blocked at pause:question` on some runs.
+
 ## The one rule
 
 Outside rule H3 (every lane but fix, or `MUFFY_HEADLESS_GATES=ask`), in headless mode the Orchestrator never calls `AskUserQuestion` and never answers a question itself: no "orchestrator default", no "assumed yes", and no plain-prose question as the last message. Every place a lane would ask (each named pause in [run-profile.md](run-profile.md#named-pauses), the audit 4b outcomes, a loop-limit escalation, a debugger `unknown`, a missing fact at triage, a `needs-input` interview) goes through the same two steps:
