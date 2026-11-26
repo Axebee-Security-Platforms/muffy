@@ -29,7 +29,10 @@ export async function runNextEvals({ check, root }) {
       const r = spawnSync(process.execPath, [NEXT, ...args], { cwd: repo, env, encoding: 'utf8', input });
       const action = r.stdout.match(/^action=(\S+)/m)?.[1] ?? null;
       const kv = (k) => r.stdout.match(new RegExp(`^${k}=(.*)$`, 'm'))?.[1];
-      const res = { status: r.status, out: r.stdout, err: r.stderr, action, role: kv('role'), round: kv('round'), step: kv('step'), model: kv('model'), prompt: r.stdout.match(/---prompt---\n([\s\S]*?)\n---prompt---/)?.[1] ?? '' };
+      // the prompt is a few lines that name an envelope file: the checks read the prompt and the envelope together
+      const shortPrompt = r.stdout.match(/---prompt---\n([\s\S]*?)\n---prompt---/)?.[1] ?? '';
+      const envPath = shortPrompt.match(/^Envelope:[ \t]*(.+?)[ \t]*$/m)?.[1];
+      const res = { status: r.status, out: r.stdout, err: r.stderr, action, role: kv('role'), round: kv('round'), step: kv('step'), model: kv('model'), shortPrompt, envPath, prompt: envPath && existsSync(envPath) ? `${shortPrompt}\n${readFileSync(envPath, 'utf8')}` : shortPrompt };
       log.push(`${args[0]}:${action}${res.role ? `:${res.role}:r${res.round}` : ''}`);
       return res;
     };
@@ -68,14 +71,19 @@ export async function runNextEvals({ check, root }) {
       const c = w.run(['step', T]);
       w.developed();
       const d = w.run(['step', T]);
+      // the real short prompts, through the guard while the worktree and the envelope files still exist (the first real run found the
+      // auditor's envelope, which Reads the debugger's hand-off, blocked as a debugger)
+      const guards = [a, b, c, d].map((x) => spawnSync(process.execPath, [join(root, 'skills/muffy/scripts/guard-gates.mjs')], { input: JSON.stringify({ tool_name: 'Agent', tool_input: { subagent_type: `muffy:${/Role: (\S+)/.exec(x.shortPrompt)[1]}`, prompt: x.shortPrompt }, cwd: w.repo }), encoding: 'utf8', env: { ...process.env, MUFFY_GUARD: '1' } }));
       const e = w.run(['review', T], w.reviewMsg('Approve'));
-      return { w, a, b, c, d, e, mainBefore };
+      return { w, a, b, c, d, e, mainBefore, guards };
     };
     const r1 = flow();
     const r2 = flow();
     check('next: headless fix lane, start to done: debugger, auditor, backend-dev, code-reviewer, then done', r1.w.log.join(' ') === 'start:spawn:debugger:r1 step:spawn:auditor:r1 step:spawn:backend-dev:r1 step:spawn:code-reviewer:r1 review:done', r1.w.log.join(' '));
     check('next: the same run twice gives the same actions', r1.w.log.join(' ') === r2.w.log.join(' '));
     check('next: the prompts carry the task, the lane header, the trailer and the hand-off path', r1.a.prompt.includes(`Task: ${T}`) && r1.a.prompt.includes('Profile: fix') && r1.a.prompt.includes('Co-Authored-By: Eval') && r1.a.prompt.includes('handoff/4a-debugger-r1.json'), r1.a.prompt.slice(0, 400));
+    // the real short prompts of the whole lane pass the guard (the first real run found the auditor's envelope, which Reads the debugger's hand-off, blocked)
+    check('next: the guard lets every real short prompt of the fix lane through (debugger, auditor, dev, reviewer)', r1.guards.every((g) => g.status === 0), r1.guards.map((g) => g.stderr).join(' '));
     check('next: the auditor runs on opus and the dev worktree is cut after the audit', r1.b.model === 'opus' && existsSync(join(r1.w.repo, '.worktrees', `be-${T}`)) === false && r1.c.prompt.includes('.worktrees/be-'), `${r1.b.model}`);
     check('next: the fix is merged into the feature branch and its tests pass', r1.w.git('show', `feature/${T}:cart.js`).includes('reduce') && spawnSync(process.execPath, ['--test'], { cwd: `${r1.w.repo}/.worktrees/feature-${T}`, encoding: 'utf8' }).status !== undefined && r1.e.out.includes('The test gate passed'), r1.e.out.slice(-600));
     check('next: the user\'s base branch is never touched and nothing is pushed', r1.w.git('rev-parse', 'main') === r1.mainBefore && r1.w.git('remote').length === 0);

@@ -132,10 +132,25 @@ function spawnAction(c, spec, extra = []) {
   const m = r.stderr.match(/Spawn: model=(\S+) effort=(\S+)/);
   const key = `${spec.step}:${spec.role}:r${spec.round}`;
   log(c, key, `${m?.[1] ?? 'default'}\t${m?.[2] ?? 'default'}`);
+  // The envelope (goal, files, rules, the hand-off shape: about 1.7 KB) is a file, so the Agent call carries a few lines instead of the
+  // whole text, in the Orchestrator's output and in every later request's context. guard-gates.mjs reads the file and blocks a spawn whose
+  // envelope is missing, unreadable or for another task or role.
+  const envPath = slash(join(c.team, 'envelopes', `${spec.step}-${spec.role}-r${spec.round}.md`));
+  mkdirSync(dirname(envPath), { recursive: true });
+  writeFileSync(envPath, r.stdout);
+  const h = spec.header ?? ['--profile', 'fix'];
+  const short = [
+    `Task: ${spec.task}`,
+    `Brain: ${brainArg(c)}${h.length ? `  ${h[0] === '--profile' ? 'Profile' : 'Scope'}: ${h[1]}` : ''}`,
+    `Step: ${spec.step} · Round: ${spec.round} · Role: ${spec.role}`,
+    ...(spec.role === 'code-reviewer' ? [] : [`Hand-off: ${slash(c.team)}/handoff/${spec.step}-${spec.role}-r${spec.round}.json`]),
+    `Envelope: ${envPath}`,
+    'First action: Read the envelope above in full, then follow it exactly: it holds your goal, the files you read and write, your rules and the hand-off shape. Start nothing before reading it.',
+  ].join('\n');
   out.push(`action=spawn`);
   say('role', spec.role); say('step', spec.step); say('round', spec.round); say('agent', agentName(spec.role));
-  say('model', m?.[1] ?? 'default'); say('description', `${spec.role} ${spec.step} r${spec.round}`.slice(0, 40));
-  sayPrompt(r.stdout);
+  say('model', m?.[1] ?? 'default'); say('description', `${spec.role} ${spec.step} r${spec.round}`.slice(0, 40)); say('envelope', envPath);
+  sayPrompt(short);
 }
 
 /* ---------- the three state files the lane keeps (checkpoint, fix.md, task note) ---------- */

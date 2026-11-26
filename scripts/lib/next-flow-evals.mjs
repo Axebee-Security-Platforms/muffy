@@ -33,7 +33,10 @@ export async function runNextFlowEvals({ check, root }) {
       for (const l of r.stdout.split('\n').filter((l) => /^(warning|error)=/.test(l))) noisy.push(`${name} ${args[0]}: ${l.slice(0, 200)}`);
       const spawns = [...r.stdout.matchAll(/^action=spawn\nrole=(\S+)\nstep=(\S+)\nround=(\S+)/gm)].map((m) => `${m[1]}:${m[2]}:r${m[3]}`);
       const action = r.stdout.match(/^action=(\S+)/m)?.[1] ?? null;
-      const res = { status: r.status, out: r.stdout, err: r.stderr, action, spawns, prompts: [...r.stdout.matchAll(/---prompt---\n([\s\S]*?)\n---prompt---/g)].map((m) => m[1]), gate: r.stdout.match(/^gate=(\S+)/m)?.[1] };
+      // the prompt is a few lines that name an envelope file: the checks read the prompt and the envelope together
+      const shorts = [...r.stdout.matchAll(/---prompt---\n([\s\S]*?)\n---prompt---/g)].map((m) => m[1]);
+      const prompts = shorts.map((p) => { const e = p.match(/^Envelope:[ \t]*(.+?)[ \t]*$/m)?.[1]; return e && existsSync(e) ? `${p}\n${readFileSync(e, 'utf8')}` : p; });
+      const res = { status: r.status, out: r.stdout, err: r.stderr, action, spawns, shorts, prompts, gate: r.stdout.match(/^gate=(\S+)/m)?.[1] };
       log.push(`${args[0]}:${action}${spawns.length ? `:${spawns.join('+')}` : ''}${res.gate ? `:${res.gate}` : ''}`);
       return res;
     };
@@ -393,6 +396,16 @@ export async function runNextFlowEvals({ check, root }) {
     check('flow feature: with a clean review the design gate asks the user, with the canvas and an artboard per AC', fGate.action === 'ask' && fGate.gate === 'design-review' && /cart-canvas/.test(fGate.out) && /AC-1/.test(fGate.out), fGate.out.slice(0, 500));
     const fDev = fw.run(['answer', F, 'Approve']);
     check('flow feature: Approve records gate 3c and starts the frontend-dev and the backend-dev together', /gate 3c passed/.test(readFileSync(`${fw.team}/checkpoint.md`, 'utf8')) && [...fDev.spawns].sort().join() === 'backend-dev:4:r1,frontend-dev:4:r1'.split(',').sort().join() || fDev.spawns.slice().sort().join('+') === 'backend-dev:4:r1+frontend-dev:4:r1', fDev.spawns.join());
+    // phase 4: the Agent call carries a few lines and an envelope file; the guard reads the file and fails closed without it
+    const guardRun = (short, role) => spawnSync(process.execPath, [join(root, 'skills/muffy/scripts/guard-gates.mjs')], { input: JSON.stringify({ tool_name: 'Agent', tool_input: { subagent_type: `muffy:${role}`, prompt: short }, cwd: fw.repo }), encoding: 'utf8', env: { ...process.env, MUFFY_GUARD: '1' } });
+    const shortFe = fDev.shorts.find((p) => /Role: frontend-dev/.test(p));
+    const envFeFile = shortFe?.match(/^Envelope:[ \t]*(.+?)[ \t]*$/m)?.[1];
+    check('flow feature: the prompt of a spawn is a few lines (under 800 characters) that name the task, the hand-off and an envelope file with the full text', shortFe && shortFe.length < 800 && /^Task: feature-cart$/m.test(shortFe) && /Hand-off: .*4-frontend-dev-r1\.json/.test(shortFe) && existsSync(envFeFile) && readFileSync(envFeFile, 'utf8').length > 1200, `${shortFe?.length}`);
+    check('flow feature: the guard lets the real short prompts through once the gates are passed', fDev.shorts.every((p) => guardRun(p, /Role: (\S+)/.exec(p)[1]).status === 0), fDev.shorts.map((p) => guardRun(p, /Role: (\S+)/.exec(p)[1]).stderr).join(' '));
+    const envKept = readFileSync(envFeFile, 'utf8');
+    rmSync(envFeFile);
+    check('flow feature: with the envelope file gone the same prompt is blocked (fail closed)', guardRun(shortFe, 'frontend-dev').status === 2 && /cannot be read/.test(guardRun(shortFe, 'frontend-dev').stderr));
+    writeFileSync(envFeFile, envKept);
     fw.devs();
     const fMerge = fw.run(['step', F]);
     check('flow feature: both devs back: both branches merged into the feature branch, then the reviewer', fMerge.spawns.join() === 'code-reviewer:6:r1' && fw.git('show', `feature/${F}:header.js`).includes('Cart') && fw.git('show', `feature/${F}:cart.js`).includes('reduce'), fMerge.out.slice(0, 300));
