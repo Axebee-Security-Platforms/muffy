@@ -82,3 +82,15 @@ Caveats, stated as they are:
 - Two of the nine runs (last-item r1 and r3, 14 requests each) stopped at the Human gate instead of closing. Cause: an agent's summary held `items[items.length]`, and checkpoint.md reads `[word]` as a link label (`check-checkpoint.mjs` failed, so `checkpoint.mjs ask` printed no `next=continue`). Fixed in `5b16720` with a test that fails without the fix. Those two runs miss the closing requests, perhaps 1 to 2 each; counting 2 more for each of them gives a mean of 15.9, still under the bar. Phase 5 measures again on the final version.
 - Cost fell less than requests (about 20%): one run's debugger rated severity high, which sends the fix to the docs-writer and the dearer subagents; that is the agents' judgment, not the script's.
 - One bench fixture (a small JS library, one-line bugs); the numbers compare versions, not real projects.
+
+## Phase 2 result (2026-11-26)
+
+`next.mjs` now drives every lane: verify, change (internal, ui-only, ui+logic, logic-only), upgrade and the full flow, through `next-flow.mjs` (one engine over `lanes.mjs`, calling the rule scripts that exist). `SKILL.md` routes each lane to it.
+
+Checked offline, on real temp repos with the agents and the user played by `scripts/lib/next-flow-evals.mjs` (about 45 checks; the fix lane's 22 still pass): the same actions on a second run for verify, change (internal), upgrade and the full flow; nothing written before the scope is approved; plan, design and Human gate each ask, and Approve, Request changes and Reject lead where they should; an invalid hand-off is retried once and then stops; a reviewer Reject and a failing test gate go back to the owners, and a third failing test round escalates; an agent's questions go to `requirements.md` with at most 2 rounds; designer and architect start together and a second `step` waits for the running one; headless runs wait at the scope, plan and Human gates and resume from the recorded answer; the requester's branch and the base never move in verify.
+
+What is not covered, stated as it is:
+- No live model run of the non-fix lanes. The cost target of this plan is the fix lane; a full-flow run costs several times more and cannot finish headless (the canvas needs an artifacts tool, which the bench leaves out). Ask before running any.
+- Not driven by `next.mjs`: step 5b PR diagrams, a lane line with a stop point (`until`; the script stops and says so), promotion between lanes (a blocker owned by a skipped agent: the script stops with the blockers and says what the reference says), onboard, present, diagram and todo modes.
+- Steps that need the model or an outside tool (publish canvas, publish diagrams, UX review, the breaking-change AC of an upgrade) are `action=do`: the script checks a `## Status` line that `next.mjs record` writes and never marks them done itself.
+- The fix lane keeps its own code path in `next.mjs`; both paths share the helpers. Merging them is not needed for the plan.

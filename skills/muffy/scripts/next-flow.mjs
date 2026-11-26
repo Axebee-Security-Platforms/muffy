@@ -30,7 +30,7 @@ const gitOk = (cwd, ...a) => N.gitOk(cwd, ...a);
 
 const LANES = ['change', 'verify', 'upgrade', 'feature'];
 // a lane is switched on when its offline scenarios pass (scripts/lib/next-flow-evals.mjs); the others keep the reference-driven flow
-const ENABLED = ['verify', 'change', 'upgrade'];
+const ENABLED = ['verify', 'change', 'upgrade', 'feature'];
 const VISIBLE = ['ui-only', 'ui+logic', 'logic-only'];
 const PIPELINE = ['1', '2', '2b', '3', '3b', '3e', '3c', '4', '5', '6', '7', '10', '11'];
 const today = () => new Date().toISOString().slice(0, 10);
@@ -436,20 +436,29 @@ const diagramStep = (x) => {
 
 const designReviewStep = (x) => {
   if (!lastOk(x, '3', 'designer') || x.skipped.has('3c')) return undefined;
-  const v = N.statusLine(x.c, 'design-review');
+  let v = N.statusLine(x.c, 'design-review');
+  // sent back at round n: the revised design (a designer hand-off at round n or later) is reviewed again, from a clean slate
+  const back = v?.match(/^sent back r(\d+)/i);
+  if (back && (latestOf(x, '3', 'designer')?.handoff.round ?? 0) >= Number(back[1])) { setStatus(x.c, 'design-review', 'pending'); v = 'pending'; }
+  if (v === 'pending' || (back && v === `sent back r${back[1]}`)) {
+    if (v === 'pending') return reviewAction(x);
+    return undefined;
+  }
   if (v && !/^high/i.test(v)) return undefined;
   if (v && /^high/i.test(v)) {
     const round = (latestOf(x, '3', 'designer')?.handoff.round ?? 1) + 1;
-    setStatus(x.c, 'design-review', 'sent back');
+    setStatus(x.c, 'design-review', `sent back r${round}`);
     writeFileSync(join(x.c.team, `design-review-${round - 1}.md`), `# UX/UI review, round ${round - 1}\n\n${v}\n`);
     spawnStep(x, '3', 'designer', round, `${x.T}/design-review-${round - 1}.md`);
     return flush(0);
   }
-  return doAction(x, 'design-review', [
-    'open the canvas at its URL (canvas: in checkpoint ## Status) and run the review in design-review.md: the impeccable skill on every AC x state against docs/design-system/',
-    'a high finding goes back to the designer before the user is asked; the rest go into the gate question',
-  ], `node next.mjs record ${x.task} design-review "clean"   (or "findings: <the non-blocking ones>", or "high: <what to fix>")`);
+  return reviewAction(x);
 };
+
+const reviewAction = (x) => doAction(x, 'design-review', [
+  'open the canvas at its URL (canvas: in checkpoint ## Status) and run the review in design-review.md: the impeccable skill on every AC x state against docs/design-system/',
+  'a high finding goes back to the designer before the user is asked; the rest go into the gate question',
+], `node next.mjs record ${x.task} design-review "clean"   (or "findings: <the non-blocking ones>", or "high: <what to fix>")`);
 
 /* ---------- code: dev, merge, review, test gate ---------- */
 
@@ -654,7 +663,7 @@ function applyAnswer(x, m, label, raw) {
     if (/^reject/i.test(label)) { node('checkpoint.mjs', ['gate', slash(x.c.team), step, 'reject', '--by', label]); push('action=stop'); say('outcome', 'rejected'); say('reason', `the user rejected at ${step}`); return flush(1); }
     writeFileSync(join(x.c.team, `changes-${step}.md`), `# Changes asked at ${step}\n\n${reason || label}\n`);
     node('checkpoint.mjs', ['unpause', slash(x.c.team)]);
-    if (step === '3c') setStatus(x.c, 'design-review', 'sent back');
+    if (step === '3c') setStatus(x.c, 'design-review', `sent back r${(latestOf(x, '3', 'designer')?.handoff.round ?? 0) + 1}`);
     const roles = step === '2b' ? ['product-manager'] : rolesOf(x, '3');
     const stp = step === '2b' ? '2' : '3';
     for (const r of roles) spawnStep(x, stp, r, (latestOf(x, stp, r)?.handoff.round ?? 0) + 1, `${x.T}/changes-${step}.md`);

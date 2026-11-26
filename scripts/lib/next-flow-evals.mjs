@@ -137,11 +137,11 @@ export async function runNextFlowEvals({ check, root }) {
         w.git('-C', w.feature, 'commit', '-qm', 'docs: plan');
         w.ho(`2-product-manager-r${round}.json`, { role: 'product-manager', step: '2', round, paths_written: [`.team/${C}/ac.md`], decisions: [{ id: 'D-1', decision: 'one AC', why: 'the request' }], summary: 'ac written' });
       };
-      w.dev = (round = 1, { fixIt = true } = {}) => {
+      w.dev = (round = 1, { fixIt = true, ...opts2 } = {}) => {
         const be = `${w.repo}/.worktrees/be-${C}`;
         if (fixIt) {
           const src = readFileSync(`${be}/cart.js`, 'utf8');
-          writeFileSync(`${be}/cart.js`, round === 1 ? src.replace('return items.length;', 'return items.reduce((s, i) => s + i.qty, 0);') : `${src}// round ${round}\n`);
+          writeFileSync(`${be}/cart.js`, src.includes('return items.length;') && !opts2.keepBug ? src.replace('return items.length;', 'return items.reduce((s, i) => s + i.qty, 0);') : `${src}// round ${round}\n`);
           w.git('-C', be, 'commit', '-qam', `fix itemCount r${round}`);
         }
         w.ho(`4-backend-dev-r${round}.json`, { role: 'backend-dev', step: '4', round, paths_written: ['cart.js'], ac_ids_done: ['AC-1'], decisions: [{ id: 'D-1', decision: 'sum qty', why: 'the AC' }], summary: 'built' });
@@ -320,6 +320,139 @@ export async function runNextFlowEvals({ check, root }) {
     gitIn(up2);
     drive(up2);
     check('flow upgrade: the same run twice gives the same actions', up.log.join(' ') === up2.log.join(' '), `${up.log.join(' ')} != ${up2.log.join(' ')}`);
+
+    /* ---------- feature (the full flow) with a UI: researcher, PM, plan gate, designer ∥ architect, canvas, review, design gate, FE ∥ BE ---------- */
+    const F = 'feature-cart';
+    const featureWorld = (name, opts = {}) => {
+      const w = changeWorld(name, 'logic-only', { ...opts });
+      w.task = F;
+      w.feature = `${w.repo}/.worktrees/feature-${F}`;
+      w.team = `${w.feature}/.team/${F}`;
+      w.start = ['start', '--lane', 'feature', '--task', F, '--request', 'Show the unit count in the cart header', '--trailer', 'Co-Authored-By: Eval <eval@example.test>', ...(opts.skip ? ['--skip', opts.skip] : [])];
+      const q = { task: F, status: 'done', paths_written: [], blockers: [], quality_checks: { passed: true, failed: [] } };
+      w.ho = (file, o) => writeFileSync(`${w.team}/handoff/${file}`, JSON.stringify({ ...q, ...o }));
+      w.reviewMsg = (verdict, round = 1) => `Verdict: ${verdict}\n\nReviewed.\n${JSON.stringify({ ...q, role: 'code-reviewer', step: '6', round, verdict, blockers: [], summary: verdict.toLowerCase() })}\n`;
+      w.researcher = () => { writeFileSync(`${w.team}/brief.md`, '# Brief\n## Must-not-miss requirements\n- show units, not lines\n'); w.ho('1-researcher-r1.json', { role: 'researcher', step: '1', round: 1, paths_written: [`.team/${F}/brief.md`], summary: 'researched' }); };
+      w.product = () => {
+        writeFileSync(`${w.team}/ac.md`, '# AC\n## User stories\n- As a shopper I see my unit count\n## AC\n- **AC-1** the header shows the unit count\n## Out of scope\nNone.\n');
+        mkdirSync(`${w.feature}/docs/plan`, { recursive: true });
+        writeFileSync(`${w.feature}/docs/plan/${F}.md`, '# Plan\n## Phase 1\n- P0 header\n');
+        execFileSync('git', ['-C', w.feature, 'add', 'docs'], { encoding: 'utf8' });
+        execFileSync('git', ['-C', w.feature, 'commit', '-qm', 'docs: plan'], { encoding: 'utf8' });
+        w.ho('2-product-manager-r1.json', { role: 'product-manager', step: '2', round: 1, paths_written: [`.team/${F}/ac.md`], decisions: [{ id: 'D-1', decision: 'one AC', why: 'the request' }], summary: 'AC written' });
+      };
+      w.architect = () => { writeFileSync(`${w.team}/contract.md`, '# Contract\n## AC map\n| AC | where |\n|---|---|\n| AC-1 | cart.js |\n'); w.ho('3-architect-r1.json', { role: 'architect', step: '3', round: 1, paths_written: [`.team/${F}/contract.md`], decisions: [{ id: 'D-1', decision: 'no API change', why: 'a header' }], summary: 'contract' }); };
+      w.designer = () => { writeFileSync(`${w.team}/design.md`, '# Design\nCanvas: https://claude.ai/design/cart-canvas\n## AC id -> artboard\n| AC | artboard |\n|---|---|\n| AC-1 | cart-phone |\n## Design system changes\nnone\n'); w.ho('3-designer-r1.json', { role: 'designer', step: '3', round: 1, paths_written: [`.team/${F}/design.md`], decisions: [{ id: 'D-1', decision: 'header badge', why: 'the AC' }], summary: 'design' }); };
+      w.devs = () => {
+        const be = `${w.repo}/.worktrees/be-${F}`;
+        const fe = `${w.repo}/.worktrees/fe-${F}`;
+        writeFileSync(`${be}/cart.js`, readFileSync(`${be}/cart.js`, 'utf8').replace('return items.length;', 'return items.reduce((s, i) => s + i.qty, 0);'));
+        execFileSync('git', ['-C', be, 'commit', '-qam', 'be'], { encoding: 'utf8' });
+        writeFileSync(`${fe}/header.js`, 'export const header = (n) => `Cart (${n})`;\n');
+        execFileSync('git', ['-C', fe, 'add', '.'], { encoding: 'utf8' });
+        execFileSync('git', ['-C', fe, 'commit', '-qm', 'fe'], { encoding: 'utf8' });
+        w.ho('4-backend-dev-r1.json', { role: 'backend-dev', step: '4', round: 1, paths_written: ['cart.js'], ac_ids_done: ['AC-1'], decisions: [{ id: 'D-1', decision: 'sum qty', why: 'the AC' }], summary: 'be done' });
+        w.ho('4-frontend-dev-r1.json', { role: 'frontend-dev', step: '4', round: 1, paths_written: ['header.js'], ac_ids_done: ['AC-1'], decisions: [{ id: 'D-1', decision: 'badge text', why: 'the design' }], summary: 'fe done' });
+        writeFileSync(`${w.team}/ac-tests-be.md`, '| AC-1 | test/cart.test.js |\n');
+        writeFileSync(`${w.team}/ac-tests-fe.md`, '| AC-1 | manual |\n');
+      };
+      w.docs = () => { writeFileSync(`${w.team}/release-notes.md`, '# Release notes\nHeader shows units.\n## Deploy hand-off\nNothing to run.\n'); w.ho('11-docs-writer-r1.json', { role: 'docs-writer', step: '11', round: 1, paths_written: [`.team/${F}/release-notes.md`], decisions: [{ id: 'D-1', decision: 'notes', why: 'the feature' }], summary: 'notes' }); };
+      return w;
+    };
+    const fw = featureWorld('feature-a');
+    gitIn(fw);
+    const fAsk = fw.run(fw.start);
+    check('flow feature: the scope question first; a full baseline is needed and nothing is written before it', fAsk.action === 'ask' && !existsSync(join(fw.repo, '.team')), fAsk.out.slice(0, 200));
+    const fR = fw.run([...fw.start, '--approved']);
+    check('flow feature: the researcher is first', fR.spawns.join() === 'researcher:1:r1', fR.out.slice(0, 300));
+    fw.researcher();
+    const fP = fw.run(['step', F]);
+    check('flow feature: the product-manager reads the brief and the request', fP.spawns.join() === 'product-manager:2:r1' && /brief\.md/.test(fP.prompts[0]) && /request\.md/.test(fP.prompts[0]), fP.out.slice(0, 300));
+    fw.product();
+    const fG = fw.run(['step', F]);
+    check('flow feature: the plan gate (2b) asks before the designer or architect start', fG.action === 'ask' && fG.gate === 'plan-review' && !/action=spawn/.test(fG.out), fG.out.slice(0, 300));
+    const fD = fw.run(['answer', F, 'Approve']);
+    check('flow feature: Approve starts the designer and the architect in one message', fD.spawns.slice().sort().join('+') === 'architect:3:r1+designer:3:r1', fD.spawns.join());
+    fw.architect();
+    const fW = fw.run(['step', F]);
+    check('flow feature: with only the architect back, step waits for the designer and spawns nothing twice', fW.action === 'wait' && /designer/.test(fW.out), fW.out.slice(0, 300));
+    fw.designer();
+    const fC = fw.run(['step', F]);
+    check('flow feature: both back: publishing the canvas is a `do` (the script cannot do it), checked by a status line', fC.action === 'do' && /publish-canvas/.test(fC.out), fC.out.slice(0, 300));
+    const fCr = fw.run(['record', F, 'canvas', 'https://claude.ai/design/cart-canvas']);
+    check('flow feature: after the canvas URL the UX review is the next `do`; it never skips ahead to the user', fCr.action === 'do' && /design-review/.test(fCr.out), fCr.out.slice(0, 300));
+    const fHigh = fw.run(['record', F, 'design-review', 'high: the badge is not reachable by keyboard']);
+    check('flow feature: a high finding sends the designer back (round 2) with the review to read, before the user is asked', fHigh.spawns.join() === 'designer:3:r2' && /design-review-1\.md/.test(fHigh.prompts[0] ?? ''), fHigh.out.slice(0, 400));
+    fw.ho('3-designer-r2.json', { role: 'designer', step: '3', round: 2, paths_written: [`.team/${F}/design.md`], decisions: [{ id: 'D-1', decision: 'badge is a button', why: 'the review' }], summary: 'design r2' });
+    const fRe = fw.run(['step', F]);
+    check('flow feature: the revised design is reviewed again', fRe.action === 'do' && /design-review/.test(fRe.out), fRe.out.slice(0, 300));
+    const fGate = fw.run(['record', F, 'design-review', 'clean']);
+    check('flow feature: with a clean review the design gate asks the user, with the canvas and an artboard per AC', fGate.action === 'ask' && fGate.gate === 'design-review' && /cart-canvas/.test(fGate.out) && /AC-1/.test(fGate.out), fGate.out.slice(0, 500));
+    const fDev = fw.run(['answer', F, 'Approve']);
+    check('flow feature: Approve records gate 3c and starts the frontend-dev and the backend-dev together', /gate 3c passed/.test(readFileSync(`${fw.team}/checkpoint.md`, 'utf8')) && [...fDev.spawns].sort().join() === 'backend-dev:4:r1,frontend-dev:4:r1'.split(',').sort().join() || fDev.spawns.slice().sort().join('+') === 'backend-dev:4:r1+frontend-dev:4:r1', fDev.spawns.join());
+    fw.devs();
+    const fMerge = fw.run(['step', F]);
+    check('flow feature: both devs back: both branches merged into the feature branch, then the reviewer', fMerge.spawns.join() === 'code-reviewer:6:r1' && fw.git('show', `feature/${F}:header.js`).includes('Cart') && fw.git('show', `feature/${F}:cart.js`).includes('reduce'), fMerge.out.slice(0, 300));
+    const fHg = fw.run(['review', F], fw.reviewMsg('Approve'));
+    const fDocs = fw.run(['answer', F, 'Approve']);
+    fw.docs();
+    const fDone = fw.run(['step', F]);
+    check('flow feature: review, test gate, Human gate, docs-writer, closing', fHg.gate === 'human-gate' && fDocs.spawns.join() === 'docs-writer:11:r1' && fDone.action === 'done' && fw.git('rev-parse', 'main') === fw.mainSha, `${fHg.out.slice(0, 100)} | ${fDocs.out.slice(0, 100)} | ${fDone.out.slice(0, 200)}`);
+
+    // no UI: the profile skips designer, canvas, design gate and the frontend-dev; the architect and BE do the work
+    const fn = featureWorld('feature-nu', { skip: 'designer,frontend-dev,3b,3c' });
+    gitIn(fn);
+    fn.run(fn.start); fn.run([...fn.start, '--approved']); fn.researcher(); fn.run(['step', F]); fn.product(); fn.run(['step', F]);
+    const nA = fn.run(['answer', F, 'Approve']);
+    check('flow feature: no UI (designer and 3c skipped on the lane line): only the architect after the plan gate', nA.spawns.join() === 'architect:3:r1', nA.out.slice(0, 300));
+    fn.architect();
+    const nD = fn.run(['step', F]);
+    check('flow feature: and then only the backend-dev, with no canvas and no design gate', nD.spawns.join() === 'backend-dev:4:r1' && !/frontend-dev/.test(nD.out), nD.out.slice(0, 300));
+
+    /* ---------- loops that need a gate, a failing test gate and the same-run check for the full flow ---------- */
+    // the design gate: Request changes sends the architect back, Reject stops (a logic-only scope: the contract gate)
+    const lg = changeWorld('change-lg', 'logic-only');
+    gitIn(lg);
+    lg.run(lg.start); lg.run([...lg.start, '--approved']); lg.pm(); lg.run(['step', C]); lg.run(['answer', C, 'Approve']); lg.contract(); lg.run(['step', C]);
+    const lgReq = lg.run(['answer', C, 'Request changes: name the rollback']);
+    check('flow change: Request changes at the design gate sends the architect back (round 2) with the reason; gate 3c stays open', lgReq.spawns.join() === 'architect:3:r2' && /changes-3c\.md/.test(lgReq.prompts[0] ?? '') && !/gate 3c passed/.test(readFileSync(`${lg.team}/checkpoint.md`, 'utf8')), lgReq.out.slice(0, 300));
+    const lgj = changeWorld('change-lgj', 'logic-only');
+    gitIn(lgj);
+    lgj.run(lgj.start); lgj.run([...lgj.start, '--approved']); lgj.pm(); lgj.run(['step', C]); lgj.run(['answer', C, 'Approve']); lgj.contract(); lgj.run(['step', C]);
+    const lgJ = lgj.run(['answer', C, 'Reject']);
+    check('flow change: Reject at the design gate stops the run and no dev starts', lgJ.action === 'stop' && !existsSync(join(lgj.repo, '.worktrees', `be-${C}`)), lgJ.out.slice(0, 300));
+
+    // a failing test gate goes back to the owners with qa-report.md, as many rounds as the loop limit allows, then escalates
+    const tf = changeWorld('change-tf', 'internal');
+    gitIn(tf);
+    tf.run(tf.start); tf.run([...tf.start, '--approved']); tf.contract(); tf.run(['step', C]);
+    tf.dev(1, { keepBug: true }); tf.run(['step', C]);
+    const tf1 = tf.run(['review', C], tf.reviewMsg('Approve'));
+    check('flow change: a failing test gate sends the dev back, round 2, with qa-report.md to read', tf1.spawns.join() === 'backend-dev:4:r2' && /qa-report\.md/.test(tf1.prompts[0] ?? ''), tf1.out.slice(0, 500));
+    tf.dev(2, { keepBug: true });
+    const tf2 = tf.run(['step', C]);
+    check('flow change: the second dev round is reviewed again as round 2', tf2.spawns.join() === 'code-reviewer:6:r2', tf2.out.slice(0, 300));
+    const tf3 = tf.run(['review', C], tf.reviewMsg('Approve', 2));
+    check('flow change: still failing: round 3', tf3.spawns.join() === 'backend-dev:4:r3', tf3.out.slice(0, 300));
+    tf.dev(3, { keepBug: true });
+    tf.run(['step', C]);
+    const tf4 = tf.run(['review', C], tf.reviewMsg('Approve', 3));
+    check('flow change: the test gate failing for the third round escalates (loop limit) instead of a fourth round', tf4.action === 'stop' && /loop-limit/.test(tf4.out), tf4.out.slice(0, 400));
+
+    // a fix that works after a failing round reaches the Human gate
+    const tg = changeWorld('change-tg', 'internal');
+    gitIn(tg);
+    tg.run(tg.start); tg.run([...tg.start, '--approved']); tg.contract(); tg.run(['step', C]);
+    tg.dev(1, { keepBug: true }); tg.run(['step', C]); tg.run(['review', C], tg.reviewMsg('Approve'));
+    tg.dev(2); tg.run(['step', C]);
+    const tgH = tg.run(['review', C], tg.reviewMsg('Approve', 2));
+    check('flow change: a fix that works in round 2 passes the test gate and reaches the Human gate', tgH.action === 'ask' && tgH.gate === 'human-gate', tgH.out.slice(0, 300));
+
+    // the full flow without a UI, twice: the same actions
+    const fn2 = featureWorld('feature-nu2', { skip: 'designer,frontend-dev,3b,3c' });
+    gitIn(fn2);
+    fn2.run(fn2.start); fn2.run([...fn2.start, '--approved']); fn2.researcher(); fn2.run(['step', F]); fn2.product(); fn2.run(['step', F]); fn2.run(['answer', F, 'Approve']); fn2.architect(); fn2.run(['step', F]);
+    check('flow feature: the same run twice gives the same actions', fn2.log.join(' ') === fn.log.join(' '), `${fn2.log.join(' ')} != ${fn.log.join(' ')}`);
 
     /* ---------- the lanes that follow are added below ---------- */
     void mkdirSync;
