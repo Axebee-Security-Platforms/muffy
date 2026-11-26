@@ -32,6 +32,7 @@ Resume (`/muffy resume`, "continue", ทำต่อ) skips Todo, Onboard, Setup
 
 - **Menu**: a bare `/muffy` (no request) or `/muffy todo`, and resume when it cannot pick one task: [menu.md](references/menu.md)
 - **Route**: first, on a free-text request; show the plan before spawning (`next-action.mjs plan-card`): [route.md](references/route.md). Skip it when the request starts with a mode command (`/muffy onboard | present | diagram | resume <task> | fix | lite | redesign | feature`): the command is the route, so open that mode's reference, and a lane still shows its plan card
+- **Fix lane** (`/muffy fix …`, or a request the route table sends to it): the lane is run by `next.mjs`, not by you. Read the request into the flags (`node "<muffy>/scripts/next.mjs" start --task fix-<slug> --scope bug|cosmetic --owner FE|BE|both --request "<verbatim>" --symptom … --ac "AC-1 | result | check"`, the rest is in its header), then do only what its `action=` line says: `spawn` (copy the prompt between the `---prompt---` lines into one Agent call with the `agent` and `model` it names), `ask` (put the `---questions---` JSON to `AskUserQuestion`, or in headless mode follow `then=`), `route`, `stop`, `onboard`, `done`. After an agent returns run `next.mjs step <task>`; after the code-reviewer pipe its whole message to `next.mjs review <task>`; the user's answer to a question goes to `next.mjs answer <task> "<label>"`. A request that names the lane is never cut down to a direct edit because the fix looks small: the diagnosis, the audit, the review and the test gate are the lane. Do not open `fix-profile.md`, `setup.md` or `closing.md` for it
 - **Todo**: the menu's list of tasks in `.team` that are not done, read-only: [todo.md](references/todo.md)
 - **Onboard**: started by setup step 3 when a task finds no usable baseline (asked once, depth by lane, then the task carries on), or by hand with `/muffy onboard`: [onboard.md](references/onboard.md)
 - **Present** (`/muffy present`): client deck outside the team flow: [present.md](references/present.md), missing documents: [doc-request.md](references/doc-request.md)
@@ -85,6 +86,7 @@ The ones the Orchestrator runs every task (`node "<muffy>/scripts/<name>.mjs" �
 | `init-config.mjs` | Setup: writes the project's `test_command` into the config file in `.team/`, from its package manifest |
 | `checkpoint.mjs` | Write the checkpoint: rounds, pauses, gate answers, the lane line |
 | `make-envelope.mjs` | Build each subagent prompt from flags, not by hand |
+| `next.mjs` | The fix lane, one step at a time: does the setup, git and bookkeeping, prints the next spawn, question or stop |
 | `next-action.mjs` | Deterministic rules: loop budget, effort, baseline, smoke and triage |
 | `check-all.mjs` | After every step: hand-offs, gates, checkpoint and artifacts in one call |
 | `gate-summary.mjs` | Build the question body at a human gate (2b, 3c, 10) |
@@ -119,4 +121,4 @@ The ones the Orchestrator runs every task (`node "<muffy>/scripts/<name>.mjs" �
 
 ---
 
-**Not for:** questions about the code, one-line edits with no behaviour risk, step-by-step iteration in main session. Research-only, review-only, design-only and spec-only requests are not refused: they route to the single agent that owns them ([route.md](references/route.md))
+**Not for:** questions about the code, one-line edits with no behaviour risk (unless the request names a lane, such as `/muffy fix`), step-by-step iteration in main session. Research-only, review-only, design-only and spec-only requests are not refused: they route to the single agent that owns them ([route.md](references/route.md))

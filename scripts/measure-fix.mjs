@@ -72,7 +72,7 @@ depth: quick
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 const testsPass = (cwd) => spawnSync(process.execPath, ['--test'], { cwd, encoding: 'utf8' }).status === 0;
 
-function buildRepo(dir, c) {
+export function buildRepo(dir, c) {
   if (existsSync(dir)) die(`${dir} already exists: use a new --out folder`);
   const write = (p, text) => { mkdirSync(dirname(join(dir, p)), { recursive: true }); writeFileSync(join(dir, p), text); };
   write('cart.js', cartJs(c.fn));

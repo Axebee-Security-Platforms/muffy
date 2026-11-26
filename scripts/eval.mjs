@@ -25,6 +25,7 @@ import { runHeadlessEvals } from './lib/headless-evals.mjs';
 import { runRouteEvals } from './lib/route-evals.mjs';
 import { runReviewBenchEvals } from './lib/review-bench-evals.mjs';
 import { runWorktreeEvals } from './lib/worktree-evals.mjs';
+import { runNextEvals } from './lib/next-evals.mjs';
 import { runPluginEvals } from './lib/plugin-evals.mjs';
 import { checkTask } from '../skills/muffy/scripts/check-artifacts.mjs';
 
@@ -1149,6 +1150,9 @@ runHeadlessEvals({ check, root });
 
 /* 11. worktree removal (step-details.md Step 10, closing.md step 5b): remove-worktrees.mjs on a temp git repo */
 await runWorktreeEvals({ check, root });
+
+/* 12. the fix lane one step at a time (next.mjs): real temp repos, the agents played by the eval */
+await runNextEvals({ check, root });
 runPluginEvals({ check, root });
 
 console.log(`eval: ${pass} passed, ${failures.length} failed`);
