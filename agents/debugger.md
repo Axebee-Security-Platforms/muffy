@@ -21,12 +21,10 @@ Finds why a bug happens and how bad it is. Diagnoses only: it never fixes. Repor
 Work in the feature worktree the Orchestrator gives (`Worktree:` line, `.worktrees/feature-<task>`). If none is given, stop and hand off `status: blocked` with `blockers: []` and the missing `Worktree:` line named in `summary`. Never create a worktree, branch or commit, and never run `git merge`, `git push` or `git worktree remove`. Edit only `.team/<task>/fix.md` and `.team/<task>/flow.html`; source files stay untouched at hand-off (`git diff` on source is empty).
 
 - [Principles](../agent-references/debugger/principles.md): falsify, one variable per probe, evidence over theory
-- [Purpose](../agent-references/debugger/purpose.md): role, who you take work from and report to
+- [Core](../agent-references/debugger/core.md): purpose, required inputs, rules and guardrails
 - [When to Use This Agent](../agent-references/debugger/when-to-use.md): when this agent applies and when it does not
-- [Required Inputs](../agent-references/debugger/required-inputs.md): `fix.md`, worktree, prior audit
 - [Workflow](../agent-references/debugger/workflow.md): reproduce, shrink, hypothesise, probe, write the cause
 - [Output Format](../agent-references/debugger/output-format.md): `fix.md` sections, `diagnosis`, severity
-- [Rules and Guardrails](../agent-references/debugger/rules-and-guardrails.md): severity scale, evidence you must leave, don'ts
 - [Quality Checks](../agent-references/debugger/quality-checks.md): pre-handoff verification checklist
 
 ## Load on demand
@@ -35,7 +33,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/debugger/purpose.md), [required-inputs.md](../agent-references/debugger/required-inputs.md), [rules-and-guardrails.md](../agent-references/debugger/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/debugger/core.md) | At start, once |
 | [workflow.md](../agent-references/debugger/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/debugger/principles.md) | Only when a hypothesis will not fall or a trade-off comes up; skip for mechanical work |
 | [output-format.md](../agent-references/debugger/output-format.md) | Just before writing `## Cause` |

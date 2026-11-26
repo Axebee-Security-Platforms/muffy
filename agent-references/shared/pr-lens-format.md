@@ -1,6 +1,6 @@
 ## PR Lens graph document (short form)
 
-Enough to write a valid `.pr-lens/graph.json` without loading the CLI manual (~17k tokens). Written for CLI 0.3.x, schema `0.2.0`. If `validate` rejects the document twice for a reason this page does not explain, load the full manual once: `npx @coldtea/pr-lens-cli@latest skill references`.
+Enough to write a valid `.pr-lens/graph.json` without loading the CLI manual (~17k tokens). Written for CLI 0.3.x, schema `0.2.0`. If `validate` rejects the document twice for a reason this page does not explain, load the full manual once: `npx @coldtea/pr-lens-cli@0.3.0 skill references`.
 
 Every object is strict: an unknown key is an error. Ids match `^[A-Za-z0-9][A-Za-z0-9._:/-]*$`, are unique per collection, readable kebab-case.
 

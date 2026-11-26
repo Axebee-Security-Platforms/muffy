@@ -12,7 +12,7 @@ The long form of the rows in [steps.md](steps.md) that need more than one line. 
 
 ## Step 3
 
-**Agent:** `designer` ∥ `architect`: one message (`devops` is retired)
+**Agent:** `designer` ∥ `architect`: one message (`devops` is retired; deployability is the user's check at the Deploy hand-off, and a missing `deploy.md` never triggers an agent)
 
 **Input:** `ac.md`, `brief.md`, plan
 

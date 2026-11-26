@@ -37,7 +37,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     if (!found) console.log('test_command: none found (no scripts.test in package.json); the step 7 test gate will report itself skipped until you set one in .team/config.json');
     else {
       mkdirSync(join(root, '.team'), { recursive: true });
-      writeFileSync(file, `${JSON.stringify({ ...config, test_command: found }, null, 2)}\n`);
+      writeFileSync(file, JSON.stringify({ ...config, test_command: found }, null, 2) + '\n');
       console.log(`test_command: ${found} (from package.json) → .team/config.json`);
     }
   }

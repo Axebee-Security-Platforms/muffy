@@ -26,7 +26,7 @@ export function runGateEvals({ check, root }) {
     const agents = readdirSync(rel('agents')).filter((n) => n.endsWith('.md'));
     const missing = agents.filter((n) => !readFileSync(rel('agents', n), 'utf8').includes(para ?? '\0'));
     check('token rules: the shared paragraph exists and every agent definition carries it word for word', !!para && agents.length >= 13 && missing.length === 0, `missing in: ${missing.join(', ')}`);
-    check('token rules: the debugger caps `## Evidence` by severity without cutting the minimum evidence', /at most 8 lines for `low`, 15 for `medium`, 25 for `high`, 40 for `critical`/.test(readFileSync(rel('agent-references', 'debugger', 'rules-and-guardrails.md'), 'utf8')) && /never cuts a minimum/.test(readFileSync(rel('agent-references', 'debugger', 'rules-and-guardrails.md'), 'utf8')));
+    check('token rules: the debugger caps `## Evidence` by severity without cutting the minimum evidence', /at most 8 lines for `low`, 15 for `medium`, 25 for `high`, 40 for `critical`/.test(readFileSync(rel('agent-references', 'debugger', 'core.md'), 'utf8')) && /never cuts a minimum/.test(readFileSync(rel('agent-references', 'debugger', 'core.md'), 'utf8')));
     check('token rules: token-discipline.md tells the Orchestrator to batch independent calls and measures cost in dollars with no target', /Fewer turns \(the Orchestrator\)/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')) && /## Cost measurement/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')) && !/budget-usd|US\$1\.00/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')));
   }
 

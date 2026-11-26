@@ -100,7 +100,7 @@ Visible, written by `product-manager`: each change as an `AC-<n>`, plus `## Unch
 | 1 | `researcher` | skipped | skipped | skipped | skipped |
 | 2 | `product-manager` | skipped: the Orchestrator wrote `ac.md` | `ac.md` from the current screens and the request | same | `ac.md` from the current rules and the request |
 | 2b | Human gate `pause:plan-review` | skipped (no gates) | **skipped**: `checkpoint.mjs gate 2b skip --reason "combined with the design gate"`; the AC are shown at 3c | asked | asked |
-| 3 | `designer` ∥ `architect` | `architect`. `Read:` `ac.md` (no `brief.md`, no `design.md`). A migration is run up and down on docker local by `backend-dev` at step 4 (`devops` is retired) | `designer` only | `designer` ∥ `architect` | `architect` |
+| 3 | `designer` ∥ `architect` | `architect`. `Read:` `ac.md` (no `brief.md`, no `design.md`). A migration is run up and down on docker local by `backend-dev` at step 4 (`devops` is retired). Whether the stack is deployable is the user's check at the Deploy hand-off; no agent verifies it at design time, and a missing `deploy.md` is never a reason to spawn one | `designer` only | `designer` ∥ `architect` | `architect` |
 | 3b, 3e | publish canvas, diagrams | skipped (no canvas); 3e only if a diagram trigger fires | as the full flow | as the full flow | skipped (no canvas) |
 | 3c | Human gate `pause:design-review` | skipped (no gates) | design + AC together | design + contract | **contract gate**: the contract and the AC ([gate-summary.mjs](../scripts/gate-summary.mjs) shows them when `design.md` is absent) |
 | 3d | — | retired, always skipped; cut worktrees for the owners named in `ac.md` exactly as [setup.md](setup.md) step 7 says | same | same | same |

@@ -115,11 +115,11 @@ export function runFixLaneEvals({ check, root }) {
   accepts('need-validation with a flaky rerun is accepted', { verdict: 'need-validation', evidence_level: 'low', repro_rerun: 'flaky', missing: ['loop the trigger'] });
   accepts('reject with a reason is accepted', { verdict: 'reject', evidence_level: 'none', repro_rerun: 'green', reason: 'the repro does not fail' });
 
-  /* the severity table is kept in three places: fix-profile.md, debugger and auditor rules-and-guardrails.md */
+  /* the severity table is kept in three places: fix-profile.md, debugger and auditor core.md */
   check('doc: every severity tier is named in fix-profile.md', SEVERITIES.every((s) => doc.includes(`\`${s}\``)));
-  const tierRows = (name) => (readFileSync(rel('agent-references', name, 'rules-and-guardrails.md'), 'utf8').match(/^\| `(?:low|medium|high|critical)` \|.*$/gm) ?? []).map((r) => r.split('|').map((c) => c.trim()));
+  const tierRows = (name) => (readFileSync(rel('agent-references', name, 'core.md'), 'utf8').match(/^\| `(?:low|medium|high|critical)` \|.*$/gm) ?? []).map((r) => r.split('|').map((c) => c.trim()));
   const dbg = tierRows('debugger');
   const aud = tierRows('auditor');
   check('drift: debugger and auditor list the four severity tiers in order', dbg.map((r) => r[1]).join() === SEVERITIES.map((s) => `\`${s}\``).join() && aud.map((r) => r[1]).join() === dbg.map((r) => r[1]).join());
-  check('drift: debugger and auditor state the same minimum evidence per tier', dbg.map((r) => r.at(-2)).join('|') === aud.map((r) => r.at(-2)).join('|'), 'the two rules-and-guardrails.md tables differ');
+  check('drift: debugger and auditor state the same minimum evidence per tier', dbg.map((r) => r.at(-2)).join('|') === aud.map((r) => r.at(-2)).join('|'), 'the two core.md tables differ');
 }

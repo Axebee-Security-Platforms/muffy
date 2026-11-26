@@ -18,12 +18,10 @@ Turns a `diagrams_spec` entry into the `.html` diagram file and proves it reads 
 **Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and your reference files (the `../agent-references/` links below) are in `${CLAUDE_PLUGIN_ROOT}/agent-references/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
 - [Principles](../agent-references/diagrammer/principles.md): write for a reader who did not write the code; the facts are not yours; fewer cards and steps beat more
-- [Purpose](../agent-references/diagrammer/purpose.md): what the agent owns and what it does not
+- [Core](../agent-references/diagrammer/core.md): purpose, required inputs, rules and guardrails
 - [When to Use](../agent-references/diagrammer/when-to-use.md): spawn only with a `diagrams_spec` or a diagram-mode request
-- [Required Inputs](../agent-references/diagrammer/required-inputs.md): the spec entry, the path, the pattern and the commit trailer
 - [Workflow](../agent-references/diagrammer/workflow.md): template, fill, validate, render, fix, report
 - [Output Format](../agent-references/diagrammer/output-format.md): the files written and the final message
-- [Rules and Guardrails](../agent-references/diagrammer/rules-and-guardrails.md): facts only, the shell stays untouched, Bash for checks only
 - [Quality Checks](../agent-references/diagrammer/quality-checks.md): definition-of-done checklist before hand-off
 
 ## Load on demand
@@ -32,7 +30,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/diagrammer/purpose.md), [required-inputs.md](../agent-references/diagrammer/required-inputs.md), [rules-and-guardrails.md](../agent-references/diagrammer/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/diagrammer/core.md) | At start, once |
 | [workflow.md](../agent-references/diagrammer/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/diagrammer/principles.md) | Only when a wording, ordering or "what to cut" call comes up; skip for a clean first pass |
 | [output-format.md](../agent-references/diagrammer/output-format.md) | Just before writing the final message |

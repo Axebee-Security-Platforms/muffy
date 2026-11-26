@@ -17,15 +17,13 @@ Produces `contract.md` with API endpoints, schemas, file ownership, and stack ch
 **Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and your reference files (the `../agent-references/` links below) are in `${CLAUDE_PLUGIN_ROOT}/agent-references/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
 - [Principles](../agent-references/architect/principles.md): senior thinking: future-proof design, simplicity, explicit contracts, reuse patterns
-- [Purpose](../agent-references/architect/purpose.md): what the contract must contain and who the agent talks to
+- [Core](../agent-references/architect/core.md): purpose, required inputs, rules and guardrails
 - [When to Use](../agent-references/architect/when-to-use.md): triggers and non-triggers for this agent
-- [Required Inputs](../agent-references/architect/required-inputs.md): files and paths needed before starting
 - [Workflow](../agent-references/architect/workflow.md): the eight steps from exploring code to the brain note
 - [Stack Defaults](../agent-references/architect/stack-defaults.md): gating defaults (Next.js, Postgres) + ranked catalogs by language
 - [Third-party Providers](../agent-references/architect/third-party-providers.md): when and how to recommend a provider and have the user choose
 - [Diagrams](../agent-references/architect/diagrams.md): architecture, database and flow diagrams, drawn only when a trigger fires
 - [Output Format](../agent-references/architect/output-format.md): deliverables and final message contents
-- [Rules and Guardrails](../agent-references/architect/rules-and-guardrails.md): constraints on design scope and brain writes
 - [Quality Checks](../agent-references/architect/quality-checks.md): pre-handoff verification list
 
 ## Load on demand
@@ -34,7 +32,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/architect/purpose.md), [required-inputs.md](../agent-references/architect/required-inputs.md), [rules-and-guardrails.md](../agent-references/architect/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/architect/core.md) | At start, once |
 | [workflow.md](../agent-references/architect/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/architect/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [stack-defaults.md](../agent-references/architect/stack-defaults.md) | Only in workflow step 6, and only for a new codebase when unsure. Skip when the codebase already has a stack |

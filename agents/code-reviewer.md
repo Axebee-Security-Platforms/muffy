@@ -17,12 +17,10 @@ Reviews diffs and docs against `ac.md` and `contract.md`; verdict is Approve / R
 **Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and your reference files (the `../agent-references/` links below) are in `${CLAUDE_PLUGIN_ROOT}/agent-references/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
 - [Principles](../agent-references/code-reviewer/principles.md): review intent not syntax, security gates, performance first-class, tests required, a blocker must be provable
-- [Purpose](../agent-references/code-reviewer/purpose.md) - role, read-only constraint, and who it reports to
+- [Core](../agent-references/code-reviewer/core.md): purpose, required inputs, rules and guardrails
 - [When to Use](../agent-references/code-reviewer/when-to-use.md) - triggers for using or not using this agent
-- [Required Inputs](../agent-references/code-reviewer/required-inputs.md) - files the Orchestrator must supply
 - [Workflow](../agent-references/code-reviewer/workflow.md) - ordered review steps
 - [Output Format](../agent-references/code-reviewer/output-format.md) - verdict, blockers, suggestions, second brain
-- [Rules and Guardrails](../agent-references/code-reviewer/rules-and-guardrails.md) - anti-slop criteria and prohibitions
 - [Fix Profile](../agent-references/code-reviewer/fix-profile.md): review rules when the spec is fix.md
 - [Quality Checks](../agent-references/code-reviewer/quality-checks.md) - checks before returning the verdict
 
@@ -32,7 +30,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/code-reviewer/purpose.md), [required-inputs.md](../agent-references/code-reviewer/required-inputs.md), [rules-and-guardrails.md](../agent-references/code-reviewer/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/code-reviewer/core.md) | At start, once |
 | [workflow.md](../agent-references/code-reviewer/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/code-reviewer/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](../agent-references/code-reviewer/output-format.md) | Just before writing the first deliverable |

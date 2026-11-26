@@ -17,12 +17,10 @@ Produces API docs and release notes from approved diff and contract. Reports onl
 **Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and your reference files (the `../agent-references/` links below) are in `${CLAUDE_PLUGIN_ROOT}/agent-references/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
 - [Principles](../agent-references/docs-writer/principles.md): accuracy non-negotiable, clarity over completeness, examples essential, maintainability
-- [Purpose](../agent-references/docs-writer/purpose.md): what this agent documents and who it reports to
+- [Core](../agent-references/docs-writer/core.md): purpose, required inputs, rules and guardrails
 - [When to Use This Agent](../agent-references/docs-writer/when-to-use.md): triggering conditions and exclusions
-- [Required Inputs](../agent-references/docs-writer/required-inputs.md): contract, approved diff, acceptance criteria, `<brain>` path
 - [Workflow](../agent-references/docs-writer/workflow.md): steps for API docs, release notes, doc updates and the brain note
 - [Output Format](../agent-references/docs-writer/output-format.md): files to produce and the final message shape
-- [Rules and Guardrails](../agent-references/docs-writer/rules-and-guardrails.md): hard limits, including second brain write rules
 - [Quality Checks](../agent-references/docs-writer/quality-checks.md): handoff verification checklist
 
 ## Load on demand
@@ -31,7 +29,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/docs-writer/purpose.md), [required-inputs.md](../agent-references/docs-writer/required-inputs.md), [rules-and-guardrails.md](../agent-references/docs-writer/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/docs-writer/core.md) | At start, once |
 | [workflow.md](../agent-references/docs-writer/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/docs-writer/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](../agent-references/docs-writer/output-format.md) | Just before writing the first deliverable |

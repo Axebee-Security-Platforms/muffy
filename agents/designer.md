@@ -18,15 +18,13 @@ Produces Claude Design canvas and `design.md` from `ac.md`; owns design system i
 **Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and your reference files (the `../agent-references/` links below) are in `${CLAUDE_PLUGIN_ROOT}/agent-references/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
 - [Principles](../agent-references/designer/principles.md): accessibility baseline, design system binding, every state designed, user research informed
-- [Purpose](../agent-references/designer/purpose.md): full role description and parallel-work constraint with the Architect
+- [Core](../agent-references/designer/core.md): purpose, required inputs, rules and guardrails
 - [When to Use](../agent-references/designer/when-to-use.md): when to invoke or not invoke this agent
-- [Required Inputs](../agent-references/designer/required-inputs.md): files and paths needed, and the API-only fallback
 - [Workflow](../agent-references/designer/workflow.md): numbered steps from design-system load to canvas and brain note
 - [Design System Intake](../agent-references/designer/design-system-intake.md): create the design system only when the project has none: one non-blocking question, then a ready starter if there is no brand
 - [Aesthetic Direction](../agent-references/designer/aesthetic-direction.md): pick a distinctive, subject-specific look (two passes: plan, then review against generic defaults) when the design system is created or its look changes
 - [Product Structure](../agent-references/designer/product-structure.md): the screen map and navigation, only when needed
 - [Output Format](../agent-references/designer/output-format.md): deliverable files and the final message contents
-- [Rules and Guardrails](../agent-references/designer/rules-and-guardrails.md): design system consistency, anti-slop, and don'ts
 - [UX/UI Rules](../agent-references/designer/ux-ui-rules.md): rules in priority tiers P1 to P10 (CRITICAL to LOW) with ids and the gate effect of each tier
 - [Quality Checks](../agent-references/designer/quality-checks.md): definition-of-done checklist before handoff to FE
 
@@ -36,7 +34,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/designer/purpose.md), [required-inputs.md](../agent-references/designer/required-inputs.md), [rules-and-guardrails.md](../agent-references/designer/rules-and-guardrails.md), [ux-ui-rules.md](../agent-references/designer/ux-ui-rules.md) | At start, once. In `ux-ui-rules.md` skip the P10 Charts section unless the task has a chart |
+| [core.md](../agent-references/designer/core.md) | At start, once. In `ux-ui-rules.md` skip the P10 Charts section unless the task has a chart |
 | [workflow.md](../agent-references/designer/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/designer/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [design-system-intake.md](../agent-references/designer/design-system-intake.md) | Only when `docs/design-system/` does not exist, the task has a UI and it is not an internal tool. Skip when it exists |

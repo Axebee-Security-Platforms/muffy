@@ -1,6 +1,6 @@
 ## UX/UI rules by priority
 
-Adapted from the `ui-ux-pro-max` skill's priority model (MIT; notice in `skills/muffy/THIRD_PARTY_NOTICES.md`). Work from P1 down to P10: when two rules conflict, the higher tier wins. The design system still decides the look ([rules-and-guardrails.md](rules-and-guardrails.md)); these rules decide what the screens must do for the people using them.
+Adapted from the `ui-ux-pro-max` skill's priority model (MIT; notice in `skills/muffy/THIRD_PARTY_NOTICES.md`). Work from P1 down to P10: when two rules conflict, the higher tier wins. The design system still decides the look ([core.md](core.md)); these rules decide what the screens must do for the people using them.
 
 Each rule has an id so reviews, the heuristic table and `quality_checks.failed[]` can cite it (e.g. `A11Y-3`).
 

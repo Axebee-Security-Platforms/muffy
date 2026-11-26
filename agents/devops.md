@@ -29,12 +29,10 @@ Mode 2 edits infra files, so it runs in a dedicated git worktree on `ops/<task>`
 6. Leave the worktree in place and put its path and branch in the final message.
 
 - [Principles](../agent-references/devops/principles.md): reliability first, observability precedes ops, deploy small/often, incidents learning
-- [Purpose](../agent-references/devops/purpose.md): What devops is for and the three modes
+- [Core](../agent-references/devops/core.md): purpose, required inputs, rules and guardrails
 - [When to Use This Agent](../agent-references/devops/when-to-use.md): When to use or not use this agent, by mode and step
-- [Required Inputs](../agent-references/devops/required-inputs.md): Inputs needed per mode, including the brain path and Human approval
 - [Workflow](../agent-references/devops/workflow.md): Step-by-step procedure for Mode 1, 2 and all modes
 - [Output Format](../agent-references/devops/output-format.md): Expected deliverables and final message per mode
-- [Rules and Guardrails](../agent-references/devops/rules-and-guardrails.md): Hard rules: approval, file ownership, secrets, brain writes
 - [Quality Checks](../agent-references/devops/quality-checks.md): Checks to verify before handing off
 
 ## Load on demand
@@ -43,7 +41,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/devops/purpose.md), [required-inputs.md](../agent-references/devops/required-inputs.md), [rules-and-guardrails.md](../agent-references/devops/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/devops/core.md) | At start, once |
 | [workflow.md](../agent-references/devops/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/devops/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](../agent-references/devops/output-format.md) | Just before writing the first deliverable |

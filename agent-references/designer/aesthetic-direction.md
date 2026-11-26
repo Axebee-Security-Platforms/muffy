@@ -1,6 +1,6 @@
 ## Aesthetic direction
 
-Adapted from Anthropic's `frontend-design` skill. It decides **what the look is**, once, when the design system is created or its look changes. It never overrides an existing design system: consistency wins ([rules-and-guardrails.md](rules-and-guardrails.md)).
+Adapted from Anthropic's `frontend-design` skill. It decides **what the look is**, once, when the design system is created or its look changes. It never overrides an existing design system: consistency wins ([core.md](core.md)).
 
 ### When it applies
 | Situation | What you do |

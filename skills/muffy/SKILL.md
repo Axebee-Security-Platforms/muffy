@@ -2,8 +2,9 @@
 name: muffy
 display_name: Earl Grey
 description: Run a subagent team from research to a reviewed, test-gated branch; never deploys. Use for /muffy feature, fix, lite, redesign, upgrade, verify, onboard, present, diagram, resume; ทำฟีเจอร์, เจอบั๊ก/พัง/error, ทำให้เร็วขึ้น, ออกแบบใหม่/ปรับหน้า/แก้ flow, อัปเกรด/bump, ตรวจให้ครบ/รีวิวและเทส, รีวิว PR, วิจัย, วางแผน, ออกแบบหน้าจอ, ทำเอกสาร, ทำสไลด์, งานค้าง/ทำต่อ. Not for a code question or a one-line edit.
+allowed-tools: Read, Grep, Glob, Agent, Edit, Write, AskUserQuestion, Bash(git:*), Bash(node:*)
 metadata:
-  author: HarmonyX
+  author: kanata-b
   tags: [agents, subagents, orchestration, team, workflow, development]
 ---
 

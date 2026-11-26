@@ -129,7 +129,7 @@ for (const f of readdirSync(rel('evals/fixtures/login-flow/prompts')).filter((n)
   const env = readJson(rel('evals/fixtures/login-flow/prompts', f));
   const errs = validate(envSchema, env);
   check(`envelope:${role} valid`, errs.length === 0, errs.join('; '));
-  const needed = readFileSync(rel('agent-references', role, 'required-inputs.md'), 'utf8').split(/\r?\n/)
+  const needed = readFileSync(rel('agent-references', role, existsSync(rel('agent-references', role, 'core.md')) ? 'core.md' : 'required-inputs.md'), 'utf8').split(/^## /m).filter((sec, i, a) => a.length === 1 || /^Required Inputs/.test(sec)).join('\n').split(/\r?\n/)
     .filter((l) => /^- /.test(l) && !/\(if /i.test(l))
     .flatMap((l) => [...l.matchAll(/`([^`]*<task>[^`]*)`/g)].map((m) => m[1].replaceAll('<task>', TASK).replaceAll('<n>', '1')));
   const absent = needed.filter((p) => !env.read.includes(p));
@@ -956,8 +956,8 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
     const row3b = stepDetail('3b');
     check('steps: 3b skips the first publish of wireframes and publishes once after the align round', row3b.includes('skip the first publish') && row3b.indexOf('skip the first publish') > row3b.indexOf('designer aligns fields'));
     const gd = (c) => spawnSync(process.execPath, [rel('skills/muffy/scripts/guard-bash-allowlist.mjs')], { input: JSON.stringify({ tool_name: 'Bash', agent_type: 'diagrammer', cwd: process.cwd(), tool_input: { command: c } }), encoding: 'utf8' }).status;
-    check('diagrammer: the Bash guardrail names the diagram checks, and the guard allows exactly those', R('agent-references/diagrammer/rules-and-guardrails.md').includes('`check-diagram.mjs`, `check-diagram-render.mjs`, `diagram-import.mjs` (never with `--html`)') && ['node .claude/skills/muffy/scripts/check-diagram.mjs docs/design/screen-map.html', 'node .claude/skills/muffy/scripts/check-diagram-render.mjs docs/design/screen-map.html', 'node .claude/skills/muffy/scripts/diagram-import.mjs a.mmd --json'].every((c) => gd(c) === 0) && ['node .claude/skills/muffy/scripts/diagram-import.mjs a.mmd --html out.html', 'node .claude/skills/muffy/scripts/check-diagram.mjs a.html; rm -rf .', 'npm test', 'git commit -m x'].every((c) => gd(c) === 2));
-    check('designer: the guardrail no longer claims every diagram, and still allows the checks it needs', !R('agent-references/designer/rules-and-guardrails.md').includes('You draw every diagram muffy produces'));
+    check('diagrammer: the Bash guardrail names the diagram checks, and the guard allows exactly those', R('agent-references/diagrammer/core.md').includes('`check-diagram.mjs`, `check-diagram-render.mjs`, `diagram-import.mjs` (never with `--html`)') && ['node .claude/skills/muffy/scripts/check-diagram.mjs docs/design/screen-map.html', 'node .claude/skills/muffy/scripts/check-diagram-render.mjs docs/design/screen-map.html', 'node .claude/skills/muffy/scripts/diagram-import.mjs a.mmd --json'].every((c) => gd(c) === 0) && ['node .claude/skills/muffy/scripts/diagram-import.mjs a.mmd --html out.html', 'node .claude/skills/muffy/scripts/check-diagram.mjs a.html; rm -rf .', 'npm test', 'git commit -m x'].every((c) => gd(c) === 2));
+    check('designer: the guardrail no longer claims every diagram, and still allows the checks it needs', !R('agent-references/designer/core.md').includes('You draw every diagram muffy produces'));
   }
   const { check: diagramErrors } = await import('../skills/muffy/scripts/check-diagram.mjs');
   const tpl = readFileSync(rel('skills/muffy/templates/diagram.html'), 'utf8');
@@ -1009,7 +1009,7 @@ check('install.mjs parses', spawnSync('node', ['--check', rel('install.mjs')]).s
   check('guard-env: inline code without .env, a script run with --env-file, and .env.example pass',
     [`node -e "console.log(process.version)"`, `python -c "import sys; print(sys.version)"`, 'node --env-file=.env server.js', 'npm run migrate', `node -e "require('fs').readFileSync('.env.example','utf8')"`, 'python -m pytest tests/unit'].every((c) => env(c) === 0));
   check('guard-env: every role with free Bash is told to run env-loading code through a project script, not inline',
-    ['backend-dev', 'frontend-dev', 'devops', 'qa-tester'].every((r) => { const t = readFileSync(rel(`agent-references/${r}/rules-and-guardrails.md`), 'utf8'); return t.includes('`.env*`') && /never inline `node -e`/.test(t) && t.includes('hooks-enforcement.md](../../skills/muffy/references/hooks-enforcement.md) §6'); }));
+    ['backend-dev', 'frontend-dev', 'devops', 'qa-tester'].every((r) => { const t = readFileSync(rel(`agent-references/${r}/${existsSync(rel('agent-references', r, 'core.md')) ? 'core' : 'rules-and-guardrails'}.md`), 'utf8'); return t.includes('`.env*`') && /never inline `node -e`/.test(t) && t.includes('hooks-enforcement.md](../../skills/muffy/references/hooks-enforcement.md) §6'); }));
   // guard-git: subagents never change git config, remotes, hooks or .git/; the Orchestrator is never blocked
   const gitBash = (agent_type, command, tool_name = 'Bash') => hook('guard-git.mjs', { tool_name, agent_type, tool_input: { command } });
   const gitWrite = (agent_type, file_path) => hook('guard-git.mjs', { tool_name: 'Edit', agent_type, tool_input: { file_path } });
