@@ -53,6 +53,14 @@ Bench: `scripts/measure-fix.mjs`, muffy `ed756c8` (tag `bench/phase0`), Claude C
 | max-price | Never started the lane: fixed it in the main session ("one-token change") | 5 | $0.14 |
 | last-item | Never started the lane: fixed it in the main session | 4 | $0.13 |
 
-Finding: with `/muffy fix` asked for by name, 2 of 3 runs skipped the lane and 1 of 3 stopped where the headless rule says to carry on. That is the run-to-run variation this plan targets, and it makes the request count of a single run meaningless as a baseline. Phase 1 compares two numbers: the share of runs that complete the lane (every run must), and requests per completed run.
+Rerun, 3 runs per case (9 in all; r2 and r3 on , which differs from  only in docs and the bench):
 
-Still open: a baseline of requests per completed run needs more runs than this (see the next decision with the user).
+| Case | Lane completed | Requests of those runs | Runs that skipped the lane (requests) |
+|---|---|---|---|
+| item-count | 2 of 3 | 25, 22 | 1 (4) |
+| max-price | 0 of 3 | none | 3 (5, 4, 5) |
+| last-item | 0 of 3 | none | 3 (4, 4, 6) |
+
+**Baseline: the lane ran in 2 of 9 runs (22%). Completed runs: 22 and 25 requests, US/usr/bin/bash.60 and /usr/bin/bash.74, 4 subagents each, both stopped at the Human gate (rule H3 says continue). The 7 other runs fixed the bug in the main session for 4 to 6 requests and about /usr/bin/bash.13, with no debugger, auditor or review.** No permission denials in any run.
+
+Reading: with  named in the request, a one-line bug with a visible cause usually skips the lane. Phase 1 therefore compares two numbers against this table: lane completion (target 9 of 9) and requests per completed run (baseline about 23.5). A cheaper run that skips the lane is not a saving. The 30% bar applies to the second number only.
