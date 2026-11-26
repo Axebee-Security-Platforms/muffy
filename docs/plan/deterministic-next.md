@@ -42,3 +42,17 @@ Each phase ends with `npm test` passing and its own commit.
 - Which guards read fields from the spawn prompt is not yet checked; the Bash allowlist must permit the `next` call.
 - Git writes made by `next` are invisible to the hooks, so its prohibitions need their own tests.
 - Each measurement round costs real money (about US$3 to 4 for 3 tasks at earlier prices).
+
+## Phase 0 result (2026-11-26)
+
+Bench: `scripts/measure-fix.mjs`, muffy `ed756c8` (tag `bench/phase0`), Claude Code 2.1.330, model sonnet, `--permission-mode auto`, headless, user settings and MCP left out, 3 cases x 1 run.
+
+| Case | What the run did | Requests | Cost |
+|---|---|---|---|
+| item-count | Ran the fix lane: debugger, auditor, dev, reviewer; stopped at the Human gate in its final message (rule H3 says continue) | 25 | $0.74 |
+| max-price | Never started the lane: fixed it in the main session ("one-token change") | 5 | $0.14 |
+| last-item | Never started the lane: fixed it in the main session | 4 | $0.13 |
+
+Finding: with `/muffy fix` asked for by name, 2 of 3 runs skipped the lane and 1 of 3 stopped where the headless rule says to carry on. That is the run-to-run variation this plan targets, and it makes the request count of a single run meaningless as a baseline. Phase 1 compares two numbers: the share of runs that complete the lane (every run must), and requests per completed run.
+
+Still open: a baseline of requests per completed run needs more runs than this (see the next decision with the user).
