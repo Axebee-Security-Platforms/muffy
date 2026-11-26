@@ -29,12 +29,10 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 7. Leave the worktree in place and put its path and branch in the final message.
 
 - [Principles](../agent-references/backend-dev/principles.md): security default, data integrity, performance metrics, reliability > velocity
-- [Purpose](../agent-references/backend-dev/purpose.md): role, who you take work from and report to
+- [Core](../agent-references/backend-dev/core.md): purpose, required inputs, stack/design, anti-slop, secrets and don't rules
 - [When to Use This Agent](../agent-references/backend-dev/when-to-use.md): when this agent applies and when it does not
-- [Required Inputs](../agent-references/backend-dev/required-inputs.md): contract, AC, brief, branch, `<brain>` path
 - [Workflow](../agent-references/backend-dev/workflow.md): the step-by-step process, including the brain note
 - [Output Format](../agent-references/backend-dev/output-format.md): commits, brain note, final message contents
-- [Rules and Guardrails](../agent-references/backend-dev/rules-and-guardrails.md): stack/design, anti-slop and don't rules
 - [Coding Practices](../agent-references/backend-dev/coding-practices.md): API, structure, data, error and test practices
 - [Coding Practices: Go](../agent-references/backend-dev/coding-practices-go.md): read when the codebase has `go.mod`
 - [Coding Practices: Rust](../agent-references/backend-dev/coding-practices-rust.md): read when the codebase has `Cargo.toml`
@@ -50,7 +48,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/backend-dev/purpose.md), [required-inputs.md](../agent-references/backend-dev/required-inputs.md), [rules-and-guardrails.md](../agent-references/backend-dev/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/backend-dev/core.md) | At start, once |
 | [workflow.md](../agent-references/backend-dev/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/backend-dev/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [coding-practices.md](../agent-references/backend-dev/coding-practices.md) | Before writing code, once per round; it names which stack file to read next |

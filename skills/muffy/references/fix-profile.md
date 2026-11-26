@@ -101,7 +101,7 @@ Severity is the **impact of the bug**, not the effort to fix it. The debugger se
 | `high` | Wrong data, money, permissions, or many users blocked | A repro that is red every run, plus competing hypotheses ruled out with evidence |
 | `critical` | Data loss or leak, production down | As `high`, plus why it started (`git log -p` or the change that introduced it) |
 
-The auditor's `evidence_level` is the highest tier whose minimum the diagnosis meets (`none` if not even `low`). A `confirm` needs `repro_rerun: red` and `evidence_level` at or above `severity`; `next-action.mjs` sends a `confirm` below the severity back once, then escalates `invalid-handoff`. The same table is kept in the debugger's and the auditor's `rules-and-guardrails.md`; `npm test` fails if the three drift.
+The auditor's `evidence_level` is the highest tier whose minimum the diagnosis meets (`none` if not even `low`). A `confirm` needs `repro_rerun: red` and `evidence_level` at or above `severity`; `next-action.mjs` sends a `confirm` below the severity back once, then escalates `invalid-handoff`. The same table is kept in the debugger's and the auditor's `core.md`; `npm test` fails if the three drift.
 
 ## Diagnose budget and outcomes
 

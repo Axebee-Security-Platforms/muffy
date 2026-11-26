@@ -29,12 +29,10 @@ All code work happens in a dedicated git worktree on your branch, never in the m
 7. Leave the worktree in place and put its path and branch in the final message.
 
 - [Principles](../agent-references/frontend-dev/principles.md): measurable UX, accessibility mandatory, design system binding, explicit state
-- [Purpose](../agent-references/frontend-dev/purpose.md) - role, branch, and reporting line
+- [Core](../agent-references/frontend-dev/core.md) - purpose, required inputs, stack/design, anti-slop, secrets and don't rules
 - [When to Use This Agent](../agent-references/frontend-dev/when-to-use.md) - when to use or not use this agent
-- [Required Inputs](../agent-references/frontend-dev/required-inputs.md) - files, branch, and brain path needed
 - [Workflow](../agent-references/frontend-dev/workflow.md) - step-by-step process from architecture to brain note
 - [Output Format](../agent-references/frontend-dev/output-format.md) - commits, brain note, and final message contents
-- [Rules and Guardrails](../agent-references/frontend-dev/rules-and-guardrails.md) - stack, anti-slop, and don't rules
 - [Coding Practices](../agent-references/frontend-dev/coding-practices.md) - framework-neutral components, state, forms, performance and test practices
 - [Coding Practices: React/Next.js](../agent-references/frontend-dev/coding-practices-react.md) - read when the codebase uses `react` or `next`
 - [Coding Practices: Vue/Nuxt](../agent-references/frontend-dev/coding-practices-vue.md) - read when the codebase uses `vue` or `nuxt`
@@ -58,7 +56,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/frontend-dev/purpose.md), [required-inputs.md](../agent-references/frontend-dev/required-inputs.md), [rules-and-guardrails.md](../agent-references/frontend-dev/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/frontend-dev/core.md) | At start, once |
 | [workflow.md](../agent-references/frontend-dev/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/frontend-dev/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [coding-practices.md](../agent-references/frontend-dev/coding-practices.md) | Before writing code, once per round; it names which stack file to read next |

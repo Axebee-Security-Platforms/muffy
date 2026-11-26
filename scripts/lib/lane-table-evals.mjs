@@ -134,7 +134,7 @@ export function runLaneTableEvals({ check, root }) {
   check('make-envelope: each scope gets exactly its Scope: header and no Profile:', ['internal', 'ui-only', 'ui+logic', 'logic-only'].every((s) => head('--scope', s).endsWith(`Scope: ${s}`) && !head('--scope', s).includes('Profile:')));
   check('make-envelope: --profile lite becomes Scope: internal; --profile fix stays Profile: fix', head('--profile', 'lite').endsWith('Scope: internal') && !head('--profile', 'lite').includes('Profile:') && head('--profile', 'fix').endsWith('Profile: fix'));
   const agentRef = (p) => readFileSync(join(root, 'agent-references', p), 'utf8');
-  check('agents: the internal-scope refs key on Scope: internal, none on Profile: lite alone', ['architect/required-inputs.md', 'architect/workflow.md', 'devops/required-inputs.md', 'frontend-dev/required-inputs.md', 'qa-tester/required-inputs.md'].every((p) => agentRef(p).includes('Scope: internal')) && !['architect/required-inputs.md', 'devops/required-inputs.md', 'frontend-dev/required-inputs.md', 'qa-tester/required-inputs.md'].some((p) => agentRef(p).includes('Profile: lite')));
+  check('agents: the internal-scope refs key on Scope: internal, none on Profile: lite alone', ['architect/core.md', 'architect/workflow.md', 'devops/core.md', 'frontend-dev/core.md', 'qa-tester/core.md'].every((p) => agentRef(p).includes('Scope: internal')) && !['architect/core.md', 'devops/core.md', 'frontend-dev/core.md', 'qa-tester/core.md'].some((p) => agentRef(p).includes('Profile: lite')));
 
   /* the references name the command and the lists the table holds */
   for (const [f, cmd] of [['setup.md', 'feature'], ['fix-profile.md', 'fix'], ['change-profile.md', 'change --scope']]) {

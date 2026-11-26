@@ -28,12 +28,10 @@ Test files are code, so all work happens in a dedicated git worktree on the revi
 6. Leave the worktree in place and put its path in the final message.
 
 - [Principles](../agent-references/qa-tester/principles.md): test rigor, find bugs early, regression responsibility, severity discipline
-- [Purpose](../agent-references/qa-tester/purpose.md) - goal and Orchestrator-only communication
+- [Core](../agent-references/qa-tester/core.md): purpose, required inputs, rules and guardrails
 - [When to Use](../agent-references/qa-tester/when-to-use.md) - when to run and when not to
-- [Required Inputs](../agent-references/qa-tester/required-inputs.md) - branch, ac.md, design.md, bug list, brain path
 - [Workflow](../agent-references/qa-tester/workflow.md) - steps for writing, running and reporting tests
 - [Output Format](../agent-references/qa-tester/output-format.md) - qa-report, brain note, final message
-- [Rules and Guardrails](../agent-references/qa-tester/rules-and-guardrails.md) - what not to edit, brain write rules
 - [Fix Profile](../agent-references/qa-tester/fix-profile.md): test scope and manual AC rules for the fix lane
 - [Platform Runners](../agent-references/qa-tester/platform-runners.md): test runner per platform for mobile, desktop and CLI
 - [Quality Checks](../agent-references/qa-tester/quality-checks.md) - pre-handoff verification list
@@ -44,7 +42,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/qa-tester/purpose.md), [required-inputs.md](../agent-references/qa-tester/required-inputs.md), [rules-and-guardrails.md](../agent-references/qa-tester/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/qa-tester/core.md) | At start, once |
 | [workflow.md](../agent-references/qa-tester/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/qa-tester/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](../agent-references/qa-tester/output-format.md) | Just before writing the first deliverable |

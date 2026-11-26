@@ -75,7 +75,8 @@ for (const f of agentFiles) {
       if (!txt.includes(`${sub.name}/${n}`) && !subFiles.some((q) => q !== p && readFileSync(q, 'utf8').includes(n))) fail(p, 'references', `not linked from ${f} or any file in ${sub.name}/ (orphan)`);
     }
   }
-  for (const r of REF_FILES) if (!present.includes(r)) fail(file, 'references', `missing references/${role}/${r}.md`);
+  const merged = ['purpose', 'required-inputs', 'rules-and-guardrails'];
+  for (const r of REF_FILES) if (!present.includes(r) && !(present.includes('core') && merged.includes(r))) fail(file, 'references', `missing references/${role}/${r}.md`);
   for (const needle of ['Hard cap:', 'Turn budget:', 'do not Read that file']) if (!txt.includes(needle)) fail(file, 'final-cap', `missing "${needle}"`);
   const loadSection = txt.split(/^## Load on demand/m)[1];
   if (loadSection === undefined) fail(file, 'lazy-load', 'missing "## Load on demand" section');

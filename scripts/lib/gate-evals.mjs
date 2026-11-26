@@ -26,7 +26,7 @@ export function runGateEvals({ check, root }) {
     const agents = readdirSync(rel('agents')).filter((n) => n.endsWith('.md'));
     const missing = agents.filter((n) => !readFileSync(rel('agents', n), 'utf8').includes(para ?? '\0'));
     check('token rules: the shared paragraph exists and every agent definition carries it word for word', !!para && agents.length >= 13 && missing.length === 0, `missing in: ${missing.join(', ')}`);
-    check('token rules: the debugger caps `## Evidence` by severity without cutting the minimum evidence', /at most 8 lines for `low`, 15 for `medium`, 25 for `high`, 40 for `critical`/.test(readFileSync(rel('agent-references', 'debugger', 'rules-and-guardrails.md'), 'utf8')) && /never cuts a minimum/.test(readFileSync(rel('agent-references', 'debugger', 'rules-and-guardrails.md'), 'utf8')));
+    check('token rules: the debugger caps `## Evidence` by severity without cutting the minimum evidence', /at most 8 lines for `low`, 15 for `medium`, 25 for `high`, 40 for `critical`/.test(readFileSync(rel('agent-references', 'debugger', 'core.md'), 'utf8')) && /never cuts a minimum/.test(readFileSync(rel('agent-references', 'debugger', 'core.md'), 'utf8')));
     check('token rules: token-discipline.md tells the Orchestrator to batch independent calls and measures cost in dollars with no target', /Fewer turns \(the Orchestrator\)/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')) && /## Cost measurement/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')) && !/budget-usd|US\$1\.00/.test(readFileSync(rel('skills', 'muffy', 'references', 'token-discipline.md'), 'utf8')));
   }
 
@@ -136,6 +136,20 @@ export function runGateEvals({ check, root }) {
     write(CP('- stage: design'));
     const hdr = 'Task: t\nBrain: .team/brain\n';
     check('guard: frontend-dev blocked before any gate', spawn('frontend-dev', `${hdr}go`).status === 2);
+    // a short prompt that points at an envelope file (next.mjs): the guard reads the file, and fails closed when it cannot
+    const envFile = (name, text) => { const p = join(tmp, name); writeFileSync(p, text); return p.split('\\').join('/'); };
+    const envFe = envFile('env-fe.md', 'Task: t\nWrite: /x/.team/t/handoff/4-frontend-dev-r1.json\n');
+    const short = (path, task = 't') => `Task: ${task}\nStep: 4 · Round: 1\nEnvelope: ${path}\nFirst action: Read the envelope.`;
+    check('guard: a short prompt with its envelope is checked like the full prompt (gates open: blocked)', spawn('frontend-dev', short(envFe)).status === 2);
+    check('guard: an envelope that does not exist blocks even a role that runs before the gates', spawn('product-manager', short(join(tmp, 'nope.md').split('\\').join('/'))).status === 2);
+    check('guard: an envelope for another task blocks', spawn('frontend-dev', short(envFile('env-other.md', 'Task: other\nWrite: /x/handoff/4-frontend-dev-r1.json\n'))).status === 2);
+    // the first real run caught this: the auditor's envelope Reads the debugger's hand-off, which is not the role the envelope is for
+    const envAud = envFile('env-aud.md', 'Task: t\nRead: /x/.team/t/fix.md, /x/.team/t/handoff/4a-debugger-r1.json\nWrite: /x/.team/t/handoff/4b-auditor-r1.json\n');
+    check('guard: an envelope that Reads another role\'s hand-off is for the role of its own Write: path (the auditor is not blocked as a debugger)', spawn('auditor', short(envAud)).status !== 2 || !/envelope is for/.test(spawn('auditor', short(envAud)).stderr));
+    check('guard: and a role that does not match that Write: path still blocks', /envelope is for auditor, not debugger/.test(spawn('debugger', short(envAud)).stderr));
+    check('guard: an envelope with no Task header blocks', spawn('product-manager', short(envFile('env-nohdr.md', 'Goal: x\n'))).status === 2);
+    check('guard: an envelope for another role blocks', spawn('designer', short(envFe)).status === 2 && /backend-dev|frontend-dev/.test(spawn('designer', short(envFe)).stderr));
+    check('guard: a role outside muffy ignores an Envelope line', spawn('general-purpose', `Envelope: ${join(tmp, 'nope.md').split('\\').join('/')}`).status === 0);
     check('guard: product-manager never blocked', spawn('product-manager', `${hdr}go`).status === 0);
     check('guard: no Task header, gated muffy role, a run exists: blocked', spawn('frontend-dev', 'go').status === 2);
     check('guard: no Task header, the task is read from a .team path in the prompt', spawn('designer', 'Read: .team/t/ac.md').status === 2);
@@ -150,6 +164,11 @@ export function runGateEvals({ check, root }) {
     check('guard: frontend-dev still blocked until 3c', spawn('frontend-dev', `${hdr}go`).status === 2);
     write(CP('- gate 2b passed · user: "ok"\n- gate 3c passed · user: "ok"'));
     check('guard: frontend-dev allowed once 3c passed', spawn('frontend-dev', `${hdr}go`).status === 0);
+    check('guard: a short prompt with a valid envelope is allowed once the gates are passed', spawn('frontend-dev', short(envFe)).status === 0);
+    write(FIXCP('- stage: fix'));
+    const envBe = envFile('env-be.md', 'Task: t\nWrite: /x/.team/t/handoff/4-backend-dev-r1.json\n');
+    check('guard: fix lane: a dev step-4 spawn is held for the audit even when only the envelope names the hand-off', spawn('backend-dev', short(envBe)).status === 2 && /auditor/.test(spawn('backend-dev', short(envBe)).stderr));
+    write(CP('- gate 2b passed · user: "ok"\n- gate 3c passed · user: "ok"'));
 
     check('guard: retired qa-tester is blocked', spawn('qa-tester', `${hdr}go`).status === 2);
     check('guard: retired devops is blocked, with no Task header and no run too', spawn('devops', 'go').status === 2 && spawn('devops', 'go', join(tmp, 'elsewhere')).status === 2);

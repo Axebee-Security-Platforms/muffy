@@ -14,8 +14,8 @@ When it is asked for:
 1. Read [pr-lens-format.md](../shared/pr-lens-format.md) (the short form of the graph document). Do not load the CLI manual unless validate fails twice for a reason that page does not explain.
 2. Read your diff (`git diff <base>...HEAD`) and write the graph document yourself; no model key is needed.
 3. Save it to `<worktree>/.pr-lens/graph.json`. Title it `fe: <task>` so it renders to its own folder. Do not commit `.pr-lens/` (the CLI adds it to `.gitignore`).
-4. Run `npx @coldtea/pr-lens-cli@latest validate .pr-lens/graph.json` and fix the named field until it passes.
-5. Run `npx @coldtea/pr-lens-cli@latest render .pr-lens/graph.json --theme light`, then again with `--theme dark`. SVGs land in a folder under `.pr-lens/` named after the title; report that folder path.
+4. Run `npx @coldtea/pr-lens-cli@0.3.0 validate .pr-lens/graph.json` and fix the named field until it passes.
+5. Run `npx @coldtea/pr-lens-cli@0.3.0 render .pr-lens/graph.json --theme light`, then again with `--theme dark`. SVGs land in a folder under `.pr-lens/` named after the title; report that folder path.
 
 ### What the diagram must show
 - Lanes: route/page, component, state/store, API client, and the backend endpoint each call hits.

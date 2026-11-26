@@ -2,6 +2,8 @@
 
 Silent flows re-spawn a role every round instead of continuing it with `SendMessage`, so the prompt is rebuilt each time. A prompt cache only reuses an identical **prefix**: put what is the same on every spawn of a role in a task first, and what changes per step or round last. `make-envelope.mjs` prints this order; never reorder it by hand.
 
+**A spawn from `next.mjs` carries the template as a file.** The text below is the envelope: `next.mjs` writes it to `.team/<task>/envelopes/<step>-<role>-r<n>.md` and the Agent call carries only `Task:`, `Brain:`, `Step:`, `Hand-off:`, `Envelope: <path>` and one line telling the agent to read the file first. The cache-stable order below still holds, inside the file.
+
 | Block | Lines | Changes per spawn? |
 |---|---|---|
 | 1. Constant | `Task:` / `Brain:` / `Vault:` / `Mode:` / `Profile:`, `Worktree:` / `Branch:`, `Don't touch:`, `Shared files you may not write`, `Commit trailer:`, `Final message:` | No (same for every round of a role in a task) |

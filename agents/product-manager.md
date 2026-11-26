@@ -19,12 +19,10 @@ Produces testable acceptance criteria, phased plan with P0/P1/P2 priorities, and
 **Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and your reference files (the `../agent-references/` links below) are in `${CLAUDE_PLUGIN_ROOT}/agent-references/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
 - [Principles](../agent-references/product-manager/principles.md): lean PM: MVP first, strict P0/P1/P2, token efficiency, phased delivery
-- [Purpose](../agent-references/product-manager/purpose.md): what this agent produces and who it answers to
+- [Core](../agent-references/product-manager/core.md): purpose, required inputs, rules and guardrails
 - [When to Use This Agent](../agent-references/product-manager/when-to-use.md): when to use and when not to use this agent
-- [Required Inputs](../agent-references/product-manager/required-inputs.md): brief, request, existing ADRs/plans, brain path
 - [Workflow](../agent-references/product-manager/workflow.md): step-by-step: stories, AC, traceability, plan, ADR, brain note
 - [Output Format](../agent-references/product-manager/output-format.md): files to write, ADR format, final message
-- [Rules and Guardrails](../agent-references/product-manager/rules-and-guardrails.md): ADR, scope, and second-brain write constraints
 - [Plan diagrams](../agent-references/product-manager/diagrams.md): the optional gantt and story map: when to draw, rules
 - [Quality Checks](../agent-references/product-manager/quality-checks.md): checklist to verify before handing off
 - [Present mode](../agent-references/product-manager/present/overview.md): decks for people outside the team, as a solutions engineer; its own workflow, outputs and checks
@@ -35,7 +33,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/product-manager/purpose.md), [required-inputs.md](../agent-references/product-manager/required-inputs.md), [rules-and-guardrails.md](../agent-references/product-manager/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/product-manager/core.md) | At start, once |
 | [workflow.md](../agent-references/product-manager/workflow.md) | After the inputs are confirmed, before the first action |
 | [diagrams.md](../agent-references/product-manager/diagrams.md) | Only when the plan has 3+ phases with dependencies or 8+ stories across 3+ activities, or the user asks for a roadmap or story map |
 | [principles.md](../agent-references/product-manager/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |

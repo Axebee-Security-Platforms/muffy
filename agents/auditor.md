@@ -21,12 +21,10 @@ Decides whether the debugger's cause is proven well enough for its severity, bef
 Read in the feature worktree the Orchestrator gives (`Worktree:` line). Bash is for running the one `## Repro` command from `fix.md` and read-only `git status|diff|log|show`; the repro must leave the tree as it found it (check `git status --short` before and after). Write only your hand-off file and your `<brain>` note. If the repro cannot run without changing files, say so: `repro_rerun: not-run` and the reason in `missing`.
 
 - [Principles](../agent-references/auditor/principles.md): independence, try to refute the cause, severity sets the bar
-- [Purpose](../agent-references/auditor/purpose.md): role, who you take work from and report to
+- [Core](../agent-references/auditor/core.md): purpose, required inputs, rules and guardrails
 - [When to Use This Agent](../agent-references/auditor/when-to-use.md): when this agent applies and when it does not
-- [Required Inputs](../agent-references/auditor/required-inputs.md): `fix.md`, the debugger's hand-off, worktree
 - [Workflow](../agent-references/auditor/workflow.md): re-run, grade the evidence, decide
 - [Output Format](../agent-references/auditor/output-format.md): `audit` object and the three verdicts
-- [Rules and Guardrails](../agent-references/auditor/rules-and-guardrails.md): evidence table, verdict rules, don'ts
 - [Quality Checks](../agent-references/auditor/quality-checks.md): pre-handoff verification checklist
 
 ## Load on demand
@@ -35,7 +33,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/auditor/purpose.md), [required-inputs.md](../agent-references/auditor/required-inputs.md), [rules-and-guardrails.md](../agent-references/auditor/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/auditor/core.md) | At start, once |
 | [workflow.md](../agent-references/auditor/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/auditor/principles.md) | Only when the evidence is borderline for its tier; skip for mechanical work |
 | [output-format.md](../agent-references/auditor/output-format.md) | Just before writing the hand-off |

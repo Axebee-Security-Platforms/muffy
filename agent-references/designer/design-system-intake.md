@@ -38,7 +38,7 @@ The Orchestrator resumes you with `requirements.md`. If the answer already holds
 
 ### The starter
 Use it whenever no brand or reference exists. It is one fixed set, so nothing is guessed value by value:
-- One neutral ramp and one accent color, plus the status colors, in the two-layer color system of [rules-and-guardrails.md](rules-and-guardrails.md); light and dark; comfortable density
+- One neutral ramp and one accent color, plus the status colors, in the two-layer color system of [core.md](core.md); light and dark; comfortable density
 - The system font stack; for Thai or another script that needs it, a font that supports the script and a larger line height; for a right-to-left language, mirrored layout tokens
 - The component library's default theme (from `baseline.md` or the manifest; for example shadcn/ui neutral), so components look like the library the team already uses
 - WCAG 2.2 AA contrast, 44 pt or 48 dp touch targets on touch platforms

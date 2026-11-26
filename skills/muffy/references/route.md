@@ -2,6 +2,8 @@
 
 Runs first on a free-text request, before any other reference. A request that starts with a mode command (`/muffy todo | onboard | present | diagram | resume | fix | lite | redesign | feature`; `lite` and `redesign` start the change lane) is already routed: skip this file. The Orchestrator reads the requester's prompt and picks the smallest route that delivers the outcome they asked for. It then shows the plan before spawning anything ([Say the plan](#say-the-plan)), in the words of the work, never a lane name alone. The requester can override it.
 
+**The decision order below is a script.** Read the prompt into signals (the keys are in the header of the script) and run `node "<muffy>/scripts/route.mjs" '<signals json>'`: it prints the route (`next=route:<name>`, and the lane to start), or the one question that cuts the candidates (`next=route:ask`, `question=<id>`, `text=<words for the requester>`). Reading the prompt is yours; picking the route is not. `npm test` runs every scenario of [route-examples.md](route-examples.md) through it.
+
 The route is decided by the **outcome asked for**, not by a single keyword. "Bug" alone does not make a fix, "review" alone does not make a review-only run, "ออกแบบ" alone does not make a design run; the decision order below decides.
 
 ## Decision order

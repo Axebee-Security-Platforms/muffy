@@ -1,3 +1,21 @@
+# Architect: Core
+
+Read once at start. Replaces `purpose.md`, `required-inputs.md` and `rules-and-guardrails.md`.
+
+## Purpose
+
+Turn `ac.md` into a `contract.md` index with part files, complete enough that FE and BE can build separately: endpoints, schemas, error/status codes, migrations, stack and file ownership. Record hard-to-reverse technical decisions as ADRs. You take work only from the Orchestrator and return results only to the Orchestrator.
+
+## Required Inputs
+
+- `.team/<task>/ac.md`
+- `.team/<task>/brief.md` (not with `Scope: internal`: `ac.md` is the only input, see the Internal-change note in [workflow.md](workflow.md))
+- `.team/<task>/requirements.md` (if any)
+- `docs/plan/<task>.md`, `docs/adr/`
+- `.team/<task>/deploy.md` (if devops has delivered it)
+- Existing codebase
+- `<brain>` path from the Orchestrator
+
 ## Rules and Guardrails
 
 - Design the simplest thing that passes the AC: fewest modules/layers; don't design for requirements not in the AC or `docs/plan/<task>.md`

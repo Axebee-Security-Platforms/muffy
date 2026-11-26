@@ -25,8 +25,31 @@ try {
 if (!['Agent', 'Task'].includes(input.tool_name ?? '')) process.exit(0);
 const spawn = input.tool_input ?? {};
 const role = String(spawn.subagent_type ?? '').split(':').pop();
-const prompt = String(spawn.prompt ?? '');
+let prompt = String(spawn.prompt ?? '');
 if (!role) process.exit(0);
+
+// The prompt may be a short one that points at an envelope file (`Envelope: <path>`, written by next.mjs): the envelope holds what the
+// checks below read (the Write: line with the hand-off path, the Mode). A muffy role whose prompt names an envelope that is missing,
+// unreadable or for another task or role is blocked: nothing can be checked, so nothing starts (hooks-enforcement.md §14).
+const envPath = prompt.match(/^Envelope:[ \t]*(.+?)[ \t]*$/m)?.[1];
+if (envPath && MUFFY_ROLES.has(role)) {
+  let env = null;
+  try { env = readFileSync(envPath, 'utf8'); } catch { /* reported below */ }
+  const promptTask = prompt.match(/^Task:[ \t]*(\S+)/m)?.[1];
+  const envTask = env?.match(/^Task:[ \t]*(\S+)/m)?.[1];
+  // the role the envelope is for is the one named by its own hand-off path, in its Write: line (its Read: line lists other roles' hand-offs)
+  const roleOfEnv = env?.match(/^Write:.*$/m)?.[0].match(/handoff[\\/]\w+-([a-z-]+)-r\d+\.json/)?.[1];
+  const why = env === null ? `the envelope ${envPath} cannot be read`
+    : !envTask ? `the envelope ${envPath} has no \`Task: <task>\` header`
+    : promptTask && promptTask !== envTask ? `the prompt is for task "${promptTask}" and its envelope for "${envTask}"`
+    : roleOfEnv && roleOfEnv !== role ? `the envelope is for ${roleOfEnv}, not ${role}`
+    : null;
+  if (why) {
+    console.error(`[muffy] blocked: ${role} may not start: ${why}. Build the prompt and its envelope with next.mjs (or make-envelope.mjs), so the gates of its task can be checked (references/hooks-enforcement.md §14).`);
+    process.exit(2);
+  }
+  prompt = `${prompt}\n${env}`;
+}
 if (Object.hasOwn(RETIRED_ROLES, role) && process.env.MUFFY_ALLOW_RETIRED !== '1') {
   console.error(`[muffy] blocked: ${role} is retired (cost) and no lane spawns it. Instead: ${RETIRED_ROLES[role]}. To bring it back, set MUFFY_ALLOW_RETIRED=1 (references/hooks-enforcement.md §15).`);
   process.exit(2);

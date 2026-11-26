@@ -47,7 +47,7 @@ export const REPEAT_LIMIT = 3; // same blocker id open in this many consecutive 
 export const GATED_STEPS = ['3c', '3d']; // must pass before step 4; 3c passes only after the user approves the design (pause:design-review)
 export { NEVER_SKIP };
 export const FIX_NEVER_SKIP = LANES.fix.neverSkip; // fix lane (references/fix-profile.md): diagnose, then audit the cause, before any code
-export const SEVERITIES = ['low', 'medium', 'high', 'critical']; // impact of the bug; the auditor's evidence bar rises with it (agent-references/auditor/rules-and-guardrails.md)
+export const SEVERITIES = ['low', 'medium', 'high', 'critical']; // impact of the bug; the auditor's evidence bar rises with it (agent-references/auditor/core.md)
 export const EVIDENCE_LEVELS = ['none', ...SEVERITIES]; // the highest severity tier whose minimum evidence a diagnosis meets
 export const AUDIT_ROUNDS = 1; // need-validation rounds allowed before the auditor's verdict counts as reject
 export const FIX_MAX_FILES = LANES.fix.maxFiles; // source files (tests and .team/ excluded) before a fix is promoted to the full flow
@@ -164,6 +164,14 @@ export function simulate(scenario) {
       retries[point] = (retries[point] ?? 0) + 1;
       if (retries[point] === 1) { actions.push('retry:invalid-handoff'); continue; }
       escalate(point, 'invalid-handoff', [], h?.role);
+      continue;
+    }
+
+    // 1b. the environment stopped it, not the work product (docker absent, Node mismatch, a rate limit, a missing credential): it never
+    // counts toward the loop limit, the retry counters or the repeated-blocker check, and no owner is sent a fix round. The run waits for
+    // the environment, then re-runs the step at the same round number (loops.md "Only the work product's failures count")
+    if (h.failure_kind === 'environment' && (REJECTING.has(h.verdict) || ['blocked', 'not-ready'].includes(h.status) || !h.quality_checks.passed)) {
+      actions.push('env:wait');
       continue;
     }
 
@@ -367,7 +375,8 @@ export function spawnProfile({ role, step, round = 1, teamDir, brain, mode = 'pr
     : (role === 'researcher' && flags.minimalResearch) ? 'codebase-only research'
     : null;
   const lessons = brain ? section(readIf(join(brain, 'project.md')), 'Lessons') : '';
-  const haikuFailed = lessons.split('\n').some((l) => l.includes(role) && /haiku/i.test(l) && /fail|rerun|re-run|retry|wrong|miss/i.test(l));
+  // the fixed line next.mjs writes (`- model-fail: <role> haiku · <task> · <why>`), or an older free-text bullet naming the role, haiku and a failure
+  const haikuFailed = lessons.split('\n').some((l) => new RegExp(`^[-*]\\s*model-fail:\\s*${role}\\s+haiku\\b`, 'i').test(l) || (l.includes(role) && /haiku/i.test(l) && /fail|rerun|re-run|retry|wrong|miss/i.test(l)));
   const protectedRole = mode === 'production' && PROTECTED_ROLES.includes(role);
   let model = MODELS.includes(baseModel) || (OPUS_ROLES.includes(role) && baseModel === 'opus') ? baseModel : 'sonnet';
   let modelReason = 'default';

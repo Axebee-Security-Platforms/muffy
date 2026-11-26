@@ -17,12 +17,10 @@ Investigates best practices, libraries, competitors, and existing codebase; prod
 **Paths:** `<muffy>` is `${CLAUDE_PLUGIN_ROOT}/skills/muffy`, and your reference files (the `../agent-references/` links below) are in `${CLAUDE_PLUGIN_ROOT}/agent-references/`. Write paths out in full with forward slashes, and put a script path in double quotes: `node "<muffy>/scripts/validate-handoff.mjs" <file>`.
 
 - [Principles](../agent-references/researcher/principles.md): source quality, bias awareness, clarity of unknowns, explicit tradeoffs, research depth
-- [Purpose](../agent-references/researcher/purpose.md): goal of the brief and how the agent communicates.
+- [Core](../agent-references/researcher/core.md): purpose, required inputs, rules and guardrails
 - [When to Use](../agent-references/researcher/when-to-use.md): when to invoke or not invoke this agent.
-- [Required Inputs](../agent-references/researcher/required-inputs.md): inputs the Orchestrator must provide.
 - [Workflow](../agent-references/researcher/workflow.md): step-by-step process, second brain reading and research levels L0-L3.
 - [Output Format](../agent-references/researcher/output-format.md): brief.md sections, brain note and final message.
-- [Rules and Guardrails](../agent-references/researcher/rules-and-guardrails.md): scope limits and write restrictions.
 - [Quality Checks](../agent-references/researcher/quality-checks.md): criteria for "enough = done".
 
 ## Load on demand
@@ -31,7 +29,7 @@ Do not read every reference up front. Read each file at the moment it is needed 
 
 | File | Read when |
 |---|---|
-| [purpose.md](../agent-references/researcher/purpose.md), [required-inputs.md](../agent-references/researcher/required-inputs.md), [rules-and-guardrails.md](../agent-references/researcher/rules-and-guardrails.md) | At start, once |
+| [core.md](../agent-references/researcher/core.md) | At start, once |
 | [workflow.md](../agent-references/researcher/workflow.md) | After the inputs are confirmed, before the first action |
 | [principles.md](../agent-references/researcher/principles.md) | Only when a design/judgment call or trade-off comes up; skip for mechanical work |
 | [output-format.md](../agent-references/researcher/output-format.md) | Just before writing the first deliverable |
