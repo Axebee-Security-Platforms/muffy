@@ -160,6 +160,9 @@ function main() {
   const budget = flag('budget', '3');
   const plugin = resolve(flag('plugin', root));
   const muffy = git(plugin, 'describe', '--always', '--dirty');
+  const claude = spawnSync(claudeBin(), ['--version'], { encoding: 'utf8' }).stdout?.trim() || 'unknown';
+  // nothing from this machine's session reaches the run: a vault would get the bench's notes, a stray MUFFY_* would change the lane
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([k]) => k !== 'SECOND_BRAIN_VAULT' && !k.startsWith('MUFFY_'))), MUFFY_HEADLESS: '1', MUFFY_GUARD: '1' };
   console.log(`plan: ${cases.length} cases x ${runs} runs, muffy ${muffy}, model ${model}, permission ${mode}, max $${budget} each -> ${out}`);
   if (!flag('yes')) { console.log('dry run (nothing sent). Add --yes to run; this spends money.'); return; }
   mkdirSync(out, { recursive: true });
@@ -172,12 +175,12 @@ function main() {
     const session = randomUUID();
     const args = ['-p', `/muffy:muffy fix "${c.request}"`, '--plugin-dir', plugin, '--session-id', session, '--model', model,
       '--permission-mode', mode, '--setting-sources', 'project,local', '--strict-mcp-config', '--max-budget-usd', String(budget), '--output-format', 'json'];
-    const r = spawnSync(claudeBin(), args, { cwd: repo, input: '', encoding: 'utf8', timeout: 1800000, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, MUFFY_HEADLESS: '1', MUFFY_GUARD: '1' } });
+    const r = spawnSync(claudeBin(), args, { cwd: repo, input: '', encoding: 'utf8', timeout: 1800000, maxBuffer: 64 * 1024 * 1024, env });
     writeFileSync(join(out, `${id}.claude.json`), r.stdout || r.stderr || String(r.error ?? ''));
-    let reply = '';
-    try { reply = JSON.parse(r.stdout).result ?? ''; } catch { /* not json: the raw output is saved */ }
+    let reply = '', denials = null;
+    try { const j = JSON.parse(r.stdout); reply = j.result ?? ''; denials = j.permission_denials?.length ?? null; } catch { /* not json: the raw output is saved */ }
     const status = reply.match(/muffy-status:\s*(\S+)/)?.[1] ?? (r.status === 0 ? 'finished' : `exit ${r.status ?? r.error?.code}`);
-    writeFileSync(dest, JSON.stringify({ id, muffy, model, permissionMode: mode, session, status, fixed: fixedOn(repo), usage: usageOf(session) }, null, 2) + '\n');
+    writeFileSync(dest, JSON.stringify({ id, muffy, claude, model, permissionMode: mode, session, status, denials,fixed: fixedOn(repo), usage: usageOf(session) }, null, 2) + '\n');
     console.log(`done ${id}: ${status}`);
   }
   score(out);
