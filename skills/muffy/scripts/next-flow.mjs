@@ -30,7 +30,7 @@ const gitOk = (cwd, ...a) => N.gitOk(cwd, ...a);
 
 const LANES = ['change', 'verify', 'upgrade', 'feature'];
 // a lane is switched on when its offline scenarios pass (scripts/lib/next-flow-evals.mjs); the others keep the reference-driven flow
-const ENABLED = ['verify', 'change'];
+const ENABLED = ['verify', 'change', 'upgrade'];
 const VISIBLE = ['ui-only', 'ui+logic', 'logic-only'];
 const PIPELINE = ['1', '2', '2b', '3', '3b', '3e', '3c', '4', '5', '6', '7', '10', '11'];
 const today = () => new Date().toISOString().slice(0, 10);
@@ -99,6 +99,7 @@ export function flowStart(o) {
   const need = ['task', 'request', ...(lane === 'verify' ? ['branch'] : []), ...(lane === 'upgrade' ? ['target'] : []), ...(lane === 'change' ? ['scope'] : [])].filter((k) => !o[k]);
   const internal = lane === 'change' && o.scope === 'internal';
   if (internal) for (const k of ['kind', 'owner']) if (!o[k]) need.push(k);
+  if (lane === 'upgrade') o.ac = o.ac?.length ? o.ac : ['AC-1 | the app builds and boots on the new version | the project build and boot', 'AC-2 | the existing tests pass | the test gate'];
   if ((internal || lane === 'verify') && !o.ac?.length) need.push('ac');
   if (need.length) throw new Error(`start --lane ${lane} needs ${need.map((k) => `--${k}`).join(', ')}`);
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(o.task)) throw new Error(`--task ${o.task}: lower-case words joined by hyphens`);
@@ -593,7 +594,16 @@ const docsStep = (x) => {
   return flush(0);
 };
 
-const HANDLERS = { '1': agentStep('1'), '2': agentStep('2'), '2b': humanGate('2b'), '3': agentStep('3'), '3b': canvasStep, '3e': diagramStep, '3c': (x) => designReviewStep(x) ?? humanGate('3c')(x), '4': devStep, '5': mergeStep, '6': reviewStep, '7': testStep, '10': humanGate10, '11': docsStep };
+// upgrade: once the researcher listed the breaking changes, one AC and one traceability row for each is the Orchestrator's to add (upgrade-profile.md step 3)
+const upgradeAcStep = (x) => {
+  if (x.lane.lane !== 'upgrade' || N.statusLine(x.c, 'upgrade-ac')) return undefined;
+  return doAction(x, 'upgrade-ac', [
+    `read the \`## Must-not-miss requirements\` of ${x.T}/brief.md: each breaking change the changelog names, with where this repo is hit`,
+    `add one AC-<n> per breaking change to ${x.T}/ac.md and one row per brief item to its \`## Traceability\` table (check-artifacts.mjs holds the two together)`,
+  ], `node next.mjs record ${x.task} upgrade-ac "<n> added"   (none named: "none: the changelog lists no breaking change")`);
+};
+
+const HANDLERS = { '1': (x) => agentStep('1')(x) ?? upgradeAcStep(x), '2': agentStep('2'), '2b': humanGate('2b'), '3': agentStep('3'), '3b': canvasStep, '3e': diagramStep, '3c': (x) => designReviewStep(x) ?? humanGate('3c')(x), '4': devStep, '5': mergeStep, '6': reviewStep, '7': testStep, '10': humanGate10, '11': docsStep };
 
 function closeAll(x) {
   const done = N.closeTask(x.c, { task: x.task, base: x.base, W: x.W, docs: true, branch: x.branch, lane: x.lane.lane, gateText: '', facts: N.statusLine(x.c, 'test-gate') ? `test gate ${N.statusLine(x.c, 'test-gate')}` : '' });
@@ -693,7 +703,7 @@ export function flowAnswer(o) {
 export function flowRecord(o) {
   const [task, key, ...val] = o._;
   const x = ctxOf({ ...o, _: [task] });
-  if (!['canvas', 'diagrams', 'design-review'].includes(key)) throw new Error('record: the key is canvas, diagrams or design-review');
+  if (!['canvas', 'diagrams', 'design-review', 'upgrade-ac'].includes(key)) throw new Error('record: the key is canvas, diagrams, design-review or upgrade-ac');
   if (!val.length) throw new Error(`record ${key} needs a value`);
   setStatus(x.c, key, val.join(' '));
   N.commitTeam(x.c, `docs(${x.lane.lane}): ${key} recorded for ${x.task}`);

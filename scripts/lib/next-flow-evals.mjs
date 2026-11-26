@@ -272,6 +272,55 @@ export async function runNextFlowEvals({ check, root }) {
     const hr = lh.run(['step', C]);
     check('flow change: the recorded plan-review answer resumes with the architect', hr.spawns.join() === 'architect:3:r1' && /gate 2b passed/.test(readFileSync(`${lh.team}/checkpoint.md`, 'utf8')), hr.out.slice(0, 400));
 
+    /* ---------- upgrade: researcher, the breaking-change AC, architect (ADR), contract gate, dev, review, docs ---------- */
+    const U = 'upgrade-cart';
+    const upgradeWorld = (name, opts = {}) => {
+      const w = changeWorld(name, 'logic-only', opts);
+      w.task = U;
+      w.team = `${w.repo}/.worktrees/feature-${U}/.team/${U}`;
+      w.feature = `${w.repo}/.worktrees/feature-${U}`;
+      w.start = ['start', '--lane', 'upgrade', '--task', U, '--target', 'left-pad 1.3 to 2.0', '--request', 'Upgrade left-pad to 2.0 and fix what breaks', '--owner', 'BE', '--trailer', 'Co-Authored-By: Eval <eval@example.test>'];
+      const q = { task: U, status: 'done', paths_written: [], blockers: [], quality_checks: { passed: true, failed: [] } };
+      w.ho = (file, o) => writeFileSync(`${w.team}/handoff/${file}`, JSON.stringify({ ...q, ...o }));
+      w.brief = () => { writeFileSync(`${w.team}/brief.md`, '# Brief\n## Must-not-miss requirements\n- the pad API now takes an options object\n'); w.ho('1-researcher-r1.json', { role: 'researcher', step: '1', round: 1, paths_written: [`.team/${U}/brief.md`], summary: 'changelog read' }); };
+      w.adr = () => { writeFileSync(`${w.team}/contract.md`, '# Contract\n## Stack\nleft-pad 2.0\n## Upgrade ADR\nOrder: bump, fix call sites, rollback = revert.\n'); w.ho('3-architect-r1.json', { role: 'architect', step: '3', round: 1, paths_written: [`.team/${U}/contract.md`], decisions: [{ id: 'D-1', decision: 'bump then fix call sites', why: 'smallest order' }], summary: 'ADR written' }); };
+      w.devU = () => {
+        const be = `${w.repo}/.worktrees/be-${U}`;
+        writeFileSync(`${be}/cart.js`, readFileSync(`${be}/cart.js`, 'utf8').replace('return items.length;', 'return items.reduce((s, i) => s + i.qty, 0);'));
+        execFileSync('git', ['-C', be, 'commit', '-qam', 'upgrade call sites'], { encoding: 'utf8' });
+        w.ho('4-backend-dev-r1.json', { role: 'backend-dev', step: '4', round: 1, paths_written: ['cart.js'], ac_ids_done: ['AC-1', 'AC-2'], decisions: [{ id: 'D-1', decision: 'call sites', why: 'the ADR' }], summary: 'built' });
+        writeFileSync(`${w.team}/ac-tests-be.md`, '| AC-1 | test/cart.test.js |\n| AC-2 | test/cart.test.js |\n');
+      };
+      w.docs = () => { writeFileSync(`${w.team}/release-notes.md`, '# Release notes\nleft-pad 2.0.\n## Deploy hand-off\nPin left-pad 2.0; rollback: revert.\n'); w.ho('11-docs-writer-r1.json', { role: 'docs-writer', step: '11', round: 1, paths_written: [`.team/${U}/release-notes.md`], decisions: [{ id: 'D-1', decision: 'notes', why: 'the upgrade' }], summary: 'notes written' }); };
+      return w;
+    };
+    const drive = (w) => {
+      w.run(w.start); w.run([...w.start, '--approved']); w.cp0 = readFileSync(`${w.team}/checkpoint.md`, 'utf8'); w.brief();
+      const ac = w.run(['step', U]);
+      const arch = w.run(['record', U, 'upgrade-ac', '1 added']);
+      w.adr();
+      const gate = w.run(['step', U]);
+      const dev = w.run(['answer', U, 'Approve']);
+      w.devU();
+      w.run(['step', U]);
+      const hg = w.run(['review', U], w.reviewMsg('Approve'));
+      const docs = w.run(['answer', U, 'Approve']);
+      w.docs();
+      const done = w.run(['step', U]);
+      return { ac, arch, gate, dev, hg, docs, done };
+    };
+    const up = upgradeWorld('upgrade-a', {});
+    gitIn(up);
+    const ur = drive(up);
+    check('flow upgrade: the researcher first, no product-manager, no plan gate (2b is recorded as skipped at setup)', up.log[1] === 'start:spawn:researcher:1:r1' && /gate 2b skipped/.test(up.cp0), up.log.join(' '));
+    check('flow upgrade: after the brief, the breaking-change AC is a `do` the script checks; then the architect writes the ADR', ur.ac.action === 'do' && /upgrade-ac/.test(ur.ac.out) && ur.arch.spawns.join() === 'architect:3:r1', `${ur.ac.out.slice(0, 200)} / ${ur.arch.out.slice(0, 200)}`);
+    check('flow upgrade: the ADR and contract go to the user at the design gate (contract gate) before any code', ur.gate.action === 'ask' && ur.gate.gate === 'design-review' && /Upgrade ADR|Contract/.test(ur.gate.out), ur.gate.out.slice(0, 300));
+    check('flow upgrade: Approve starts the backend-dev; review, test gate and Human gate follow; the docs-writer then closes it', ur.dev.spawns.join() === 'backend-dev:4:r1' && ur.hg.gate === 'human-gate' && ur.docs.spawns.join() === 'docs-writer:11:r1' && ur.done.action === 'done', `${ur.dev.out.slice(0, 120)} | ${ur.hg.out.slice(0, 120)} | ${ur.docs.out.slice(0, 120)} | ${ur.done.out.slice(0, 200)}`);
+    const up2 = upgradeWorld('upgrade-b', {});
+    gitIn(up2);
+    drive(up2);
+    check('flow upgrade: the same run twice gives the same actions', up.log.join(' ') === up2.log.join(' '), `${up.log.join(' ')} != ${up2.log.join(' ')}`);
+
     /* ---------- the lanes that follow are added below ---------- */
     void mkdirSync;
   } finally {
