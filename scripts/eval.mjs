@@ -104,7 +104,8 @@ check('runtime pin: mismatch is detected', runtime(read('deploy.md')) !== runtim
   const mk = (extra) => spawnSync(process.execPath, [rel('skills/muffy/scripts/make-envelope.mjs'), '--role', 'backend-dev', '--step', '4', '--round', '1', '--task', 'login-flow', '--brain', '.team/brain', '--goal', 'Build login', '--read', 'ac.md,contract.md', '--write', 'src/auth/', ...extra], { encoding: 'utf8' });
   const ok = mk([]), bad = mk(['--profile', 'nope']);
   check('make-envelope: valid flags print the template with the hand-off path and shape', ok.status === 0 && ok.stdout.includes('handoff/4-backend-dev-r1.json') && ok.stdout.includes('Hand-off shape:') && ok.stdout.includes('1,200 characters'), ok.stderr);
-  check('make-envelope: prompt stays lean (< 1.6 KB)', ok.stdout.length < 1600, String(ok.stdout.length));
+  // 1.6 KB until the failure_kind sentence (about 130 characters, in every spawn so an agent can say the environment stopped it)
+  check('make-envelope: prompt stays lean (< 1.75 KB)', ok.stdout.length < 1750, String(ok.stdout.length));
   check('make-envelope: schema violation exits 1 and prints nothing to stdout', bad.status === 1 && bad.stdout === '');
   // cache-stable prefix: lines before Final message: do not change with the round or the goal; per-spawn lines come after; Hand-off shape: is last
   const lines = (r) => r.stdout.split(/\r?\n/);

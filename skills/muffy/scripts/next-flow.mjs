@@ -238,6 +238,7 @@ function spawn(x, spec, extra = []) {
 
 export function flowStep(o) {
   N.compactCheckpoint(N.locate(o.repo ?? '.', o._[0]));
+  if (o.rerun) { N.setAsideEnv(N.locate(o.repo ?? '.', o._[0])); o.lost = true; }
   const x = ctxOf(o);
   if (/^closed\b/m.test(x.cp.split('## Status')[1] ?? '')) { push('action=done'); say('note', 'the task is already closed'); return flush(0); }
   if (x.lane.until) { push('action=stop'); say('reason', `the lane line has a stop point (until ${x.lane.until}): close it as closing.md says, or drop it with checkpoint.mjs profile`); return flush(1); }
@@ -259,7 +260,7 @@ export function flowStep(o) {
 
   // 1. a hand-off that says it cannot go on
   for (const h of x.hs) {
-    if (h.handoff && ['blocked', 'not-ready'].includes(h.handoff.status) && !x.hs.some((g) => g.handoff && g.handoff.role === h.handoff.role && String(g.handoff.step) === String(h.handoff.step) && g.handoff.round > h.handoff.round)) {
+    if (h.handoff && ['blocked', 'not-ready'].includes(h.handoff.status) && h.handoff.failure_kind !== 'environment' && !x.hs.some((g) => g.handoff && g.handoff.role === h.handoff.role && String(g.handoff.step) === String(h.handoff.step) && g.handoff.round > h.handoff.round)) {
       push('action=stop'); say('reason', `${h.handoff.role} ${h.handoff.step} r${h.handoff.round} is ${h.handoff.status}`);
       for (const b of h.handoff.blockers ?? []) say('blocker', `${b.id} · ${b.owner} · ${b.problem}`);
       say('then', 'read the blockers: a blocker owned by an agent this lane skips may promote it (change-profile.md, run-profile.md "Promotion ladder"); otherwise answer it with the owner and run step again');
@@ -284,8 +285,10 @@ export function flowStep(o) {
     return flush(1);
   }
   const last = x.hs.at(-1);
+  if (act === 'env:wait') return N.envStop(x.c, x.hs, x.task);
   if (act.startsWith('retry:')) return retry(x, last, act);
   if (act === 'ask:verify-fix') return askVerifyFix(x, last);
+  if (act.startsWith('fix:')) for (const o of act.slice(4).split('+').filter((s) => s in N.DEV)) N.recordModelFail(x.c, N.DEV[o], '4', maxRound(x, '4'), `sent back by the review: ${last?.handoff?.summary ?? 'rejected'}`);
   if (act.startsWith('fix:')) return devSpawn(x, { round: Math.max(maxRound(x, '4'), maxRound(x, '6')) + 1, only: act.slice(4).split('+').filter((s) => s in N.DEV), review: last });
 
   return pipeline(x);
@@ -297,6 +300,7 @@ function retry(x, last, act) {
   const step = String(h?.step ?? stepOfName(last.name));
   const round = (h?.round ?? roundOfName(last.name)) + 1;
   const errs = h ? validate(handoffSchema, h) : ['the file is not valid JSON'];
+  N.recordModelFail(x.c, role, step, round - 1, act);
   const file = `${x.T}/retry-${step}-${role}-r${round}.md`;
   writeFileSync(join(x.c.team, `retry-${step}-${role}-r${round}.md`), `# ${role} ${step}: the last hand-off was sent back (${act})\n\n${[...errs, ...(h?.quality_checks?.failed ?? [])].map((e) => `- ${e}`).join('\n') || '- quality_checks.passed was false'}\n`);
   if (step === '4') return devSpawn(x, { round, only: [Object.keys(N.DEV).find((s) => N.DEV[s] === role)], retry: file });
@@ -571,6 +575,7 @@ const testStep = (x) => {
     const fails = N.issued(x.c, `tested-fail:r${round}`) + (round > 1 ? round - 1 : 0);
     if (x.lane.lane === 'verify') return askVerifyFix(x, null, 'the test gate failed (qa-report.md lists the failing tests)');
     if (fails >= LOOP_LIMIT) { push('action=stop'); say('outcome', 'escalated'); say('trigger', 'loop-limit'); say('reason', `the test gate failed ${fails} rounds`); say('then', 'escalate as loops.md says'); if (x.headless) say('muffy-status', 'blocked:loop-limit'); return flush(1); }
+    for (const r of devRoles(x)) N.recordModelFail(x.c, r, '4', round, 'sent back by the test gate');
     return devSpawn(x, { round: round + 1, review: null });
   }
   N.log(x.c, `tested:r${round}`);

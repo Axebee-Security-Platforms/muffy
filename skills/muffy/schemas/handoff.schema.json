@@ -157,6 +157,7 @@
       }
     },
     "brain_note": { "type": "string", "description": "Path of the <brain>/agents/<role>/<task>.md written; absent for code-reviewer (Orchestrator writes it)" },
+    "failure_kind": { "enum": ["work", "environment"], "description": "Why a Reject, Fail, blocked or not-ready hand-off is one. `environment`: the environment, not the work product, stopped it (docker absent, Node version mismatch, a rate limit, a missing credential, a tool that did not run); it never counts toward the loop limit (loops.md). Absent means `work`, so an agent that says nothing is counted" },
     "summary": { "type": "string", "minLength": 3, "maxLength": 300 }
   },
   "allOf": [

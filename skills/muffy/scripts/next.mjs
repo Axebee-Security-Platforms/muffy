@@ -24,7 +24,7 @@
 //   onboard    the baseline needs onboarding first: depth, then run start again
 //   done       the task is closed: final-message facts
 // Exit 0 = an action to take, 1 = stop, 2 = usage or input error.
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, appendFileSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, appendFileSync, rmSync, renameSync } from 'node:fs';
 import { join, dirname, resolve, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync, execFileSync } from 'node:child_process';
@@ -47,7 +47,7 @@ const read = (p, d = '') => { try { return readFileSync(p, 'utf8').replace(/\r\n
 /* ---------- arguments ---------- */
 
 export function parseArgs(argv, multi = ['ac']) {
-  const BOOL = new Set(['approved', 'line-known', 'dry-run', 'lost']);
+  const BOOL = new Set(['approved', 'line-known', 'dry-run', 'lost', 'rerun']);
   const o = { _: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -305,11 +305,42 @@ const sideOf = (owner) => (owner === 'both' ? ['FE', 'BE'] : [owner]);
 // the 4a diagnosis the dev is sent to fix: the latest known one
 const lastOf = (hs, step) => hs.filter((x) => x.handoff && String(x.handoff.step) === step).at(-1);
 
+// A haiku spawn that needed a re-run (an invalid hand-off, failed quality checks, a fix round after a reject) is written to the project's
+// `## Lessons` as a fixed line, `- model-fail: <role> haiku · <task> · <why>`, once per role. spawnProfile (next-action.mjs) reads exactly that line
+// and keeps the agent's default model for the role from then on (token-discipline.md "Learn from this project's spawn history").
+export function recordModelFail(c, role, step, round, why) {
+  if (issuedWith(c, `${step}:${role}:r${round}`)?.[2] !== 'haiku') return false;
+  const f = join(c.brain, 'project.md');
+  let t = read(f);
+  if (!t || new RegExp(`^- model-fail: ${role} haiku\\b`, 'm').test(t)) return false;
+  const line = `- model-fail: ${role} haiku · ${basename(c.team)} · ${String(why).replace(/\s+/g, ' ').slice(0, 100)}`;
+  t = /^## Lessons\n/m.test(t) ? t.replace(/^(## Lessons\n)/m, `$1${line}\n`) : `${t.trimEnd()}\n\n## Lessons\n${line}\n`;
+  writeFileSync(f, t);
+  return true;
+}
+
+// A hand-off that failed for the environment (failure_kind: environment) is outside the loop budget: the run stops, says what to fix,
+// and `step <task> --rerun` runs the step again at the same round number (the failed hand-off is set aside as <name>.env)
+export function envStop(c, hs, task) {
+  const bad = hs.filter((x) => x.handoff?.failure_kind === 'environment').at(-1);
+  out.push('action=stop'); say('outcome', 'environment');
+  say('reason', `${bad?.handoff?.role ?? 'an agent'} ${bad?.handoff?.step ?? ''} r${bad?.handoff?.round ?? ''} failed for the environment, not the work: it does not count toward the loop limit`);
+  for (const b of bad?.handoff?.blockers ?? []) say('blocker', `${b.id} · ${b.owner} · ${b.problem}`);
+  say('then', `fix the environment (docker, the Node version, a credential, a rate limit), then run: node next.mjs step ${task} --rerun`);
+  if (headlessOf(process.env).headless) say('muffy-status', 'blocked:environment');
+  return flush(1);
+}
+
+export function setAsideEnv(c) {
+  for (const x of handoffsOf(c)) if (x.handoff?.failure_kind === 'environment') renameSync(x.file, `${x.file}.env`);
+}
+
 export function step(o) {
   const task = o._[0] ?? o._[1];
   if (!task) throw new Error('step needs a task name');
   const c = locate(o.repo ?? '.', task);
   if (!existsSync(join(c.team, 'checkpoint.md'))) throw new Error(`no task ${task} at ${c.team}: run start first`);
+  if (o.rerun) { setAsideEnv(c); o.lost = true; }
   const cp = read(join(c.team, 'checkpoint.md'));
   const lane = parseRunProfile(cp);
   if (lane.lane !== 'fix') return flowStep(o);
@@ -357,10 +388,12 @@ export function step(o) {
   const point = lastEv.handoff ? `${lh.step}:${lh.role}` : '?';
 
   // 3. the retries the rules ask for: the same step again, one round later, with the errors in a file
+  if (act === 'env:wait') return envStop(c, hs, task);
   if (act.startsWith('retry:')) {
     const role = lh?.role ?? roleOfFile(lastEv.name);
     const stepId = String(lh?.step ?? stepOfFile(lastEv.name));
     const round = (lh?.round ?? 1) + 1;
+    recordModelFail(c, role, stepId, round - 1, act);
     const errs = lh ? validate(handoffSchema, lh) : ['the file is not valid JSON'];
     writeFileSync(join(T, `retry-${stepId}-${role}-r${round}.md`), `# ${role} ${stepId}: the last hand-off was sent back (${act})\n\n${[...errs, ...(lh?.quality_checks?.failed ?? [])].map((e) => `- ${e}`).join('\n') || '- quality_checks.passed was false'}\n`);
     if (stepId === '6') return fixReviewer(c, hs, spec, { fixRel, ho, task, round, retry: `${slash(T)}/retry-6-${role}-r${round}.md` });
@@ -402,6 +435,7 @@ export function step(o) {
   if (act.startsWith('fix:')) {
     const round = (lastOf(hs, '4')?.handoff.round ?? 1) + 1;
     const owners = act.slice(4).split('+').filter((x) => x in DEV);
+    for (const o of owners) recordModelFail(c, DEV[o], '4', round - 1, `sent back by the review: ${lh?.summary ?? 'rejected'}`);
     return devSpawn(c, hs, lastOf(hs, '4a').handoff, spec, { fixRel, ho, task, W, round, only: owners.length ? owners : null, review: `${slash(T)}/review-${lh.round}.md` });
   }
   throw new Error(`next: no rule for ${point} → ${act}; the hand-off files are in ${slash(c.handoffs)}`);
@@ -728,6 +762,6 @@ function main() {
 }
 
 // what the other lanes' engine (next-flow.mjs) shares with the fix lane
-export { out, say, flush, spawnAction, commitTeam, stopFromAsk, consumeHandoff, issued, log, read, git, gitOk, node, lines, slash, trailerOf, statusLine, DEV, SIDE, oneLine };
+export { out, say, flush, spawnAction, commitTeam, stopFromAsk, consumeHandoff, issuedWith, issued, log, read, git, gitOk, node, lines, slash, trailerOf, statusLine, DEV, SIDE, oneLine };
 
 if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) main();

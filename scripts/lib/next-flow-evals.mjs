@@ -515,6 +515,22 @@ export async function runNextFlowEvals({ check, root }) {
     const rb2 = rb.run(['review', V], 'Still no JSON.');
     check('flow verify: a second message without one escalates', rb2.action === 'stop' && rb2.status === 1, rb2.out.slice(0, 300));
 
+    // failure_kind: environment never counts toward the loop limit and sends no owner a fix round; --rerun runs the step again at the same round
+    const ev = changeWorld('change-env', 'internal');
+    gitIn(ev);
+    ev.run(ev.start); ev.run([...ev.start, '--approved']); ev.contract(); ev.run(['step', C]); ev.dev(); ev.run(['step', C]);
+    const envMsg = (round) => `Verdict: Reject\n\nThe test command could not start (docker is not running).\n${JSON.stringify({ ...ev.q, role: 'code-reviewer', step: '6', round, verdict: 'Reject', failure_kind: 'environment', blockers: [{ id: 'B-1', problem: 'docker is not running', file: 'docker-compose.yml:1', owner: 'Devops' }], summary: 'reject: environment' })}\n`;
+    const e1 = ev.run(['review', C], envMsg(1));
+    check('flow change: a Reject for the environment stops with outcome environment and sends no owner a fix round', e1.action === 'stop' && /outcome=environment/.test(e1.out) && /--rerun/.test(e1.out) && !/action=spawn/.test(e1.out), e1.out.slice(0, 500));
+    const e2 = ev.run(['step', C, '--rerun']);
+    check('flow change: step --rerun sets the failed hand-off aside and runs the same step at the same round', e2.spawns.join() === 'code-reviewer:6:r1' && existsSync(`${ev.team}/handoff/6-code-reviewer-r1.json.env`), e2.out.slice(0, 400));
+    for (let i = 0; i < 4; i++) { ev.run(['review', C], envMsg(1)); ev.run(['step', C, '--rerun']); }
+    const e3 = ev.run(['review', C], envMsg(1));
+    check('flow change: five environment failures in a row never escalate: they are outside the loop budget', e3.action === 'stop' && /outcome=environment/.test(e3.out) && !/loop-limit|repeated-blocker/.test(e3.out), e3.out.slice(0, 300));
+    ev.run(['step', C, '--rerun']);
+    const ew = ev.run(['review', C], ev.reviewMsg('Reject', 1, [{ id: 'B-1', problem: 'a real defect', file: 'cart.js:1', owner: 'BE' }]));
+    check('flow change: after five environment failures a real defect is still the first loop: the dev gets round 2', ew.spawns.join() === 'backend-dev:4:r2', ew.out.slice(0, 300));
+
     // the prohibitions on a real remote: a bare origin gets main and their branch, a full run leaves every ref of it as it was
     const rm = verifyWorld('verify-remote');
     const bare = slash(join(base, 'origin.git'));

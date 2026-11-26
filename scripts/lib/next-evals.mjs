@@ -131,6 +131,27 @@ export async function runNextEvals({ check, root }) {
     const rb1 = rb.run(['review', T], 'Approved, nothing to add. (no JSON line)');
     check('next: a reviewer message with no hand-off line starts a fresh code-reviewer, round 2, with the errors to read', rb1.action === 'spawn' && rb1.role === 'code-reviewer' && rb1.round === '2' && /retry-6-code-reviewer-r2\.md/.test(rb1.prompt), rb1.out.slice(0, 400));
 
+    /* model-fail: a haiku spawn that had to be re-run is written as a fixed line, and the next spawn of that role keeps its default model */
+    const mf = world('modelfail');
+    const mfStart = mf.run([...mf.startArgs, '--line-known']);
+    check('next: with the line known the debugger starts on haiku', mfStart.model === 'haiku', mfStart.out.slice(0, 200));
+    writeFileSync(`${mf.team}/handoff/4a-debugger-r1.json`, '{"role":"debugger"}');
+    const mfRetry = mf.run(['step', T]);
+    const proj = readFileSync(join(mf.repo, '.team/brain/project.md'), 'utf8');
+    check('next: an invalid hand-off from a haiku debugger writes `- model-fail: debugger haiku` once, and the retry runs on the default model', /^- model-fail: debugger haiku · fix-item-count · retry:invalid-handoff$/m.test(proj) && mfRetry.role === 'debugger' && mfRetry.round === '2' && mfRetry.model !== 'haiku', `${proj}\n${mfRetry.out.slice(0, 200)}`);
+    writeFileSync(`${mf.team}/handoff/4a-debugger-r2.json`, '{"role":"debugger"}');
+    mf.run(['step', T]);
+    check('next: the line is written once per role, not once per failure', (readFileSync(join(mf.repo, '.team/brain/project.md'), 'utf8').match(/model-fail: debugger haiku/g) ?? []).length === 1);
+
+    /* an environment failure (failure_kind) in the fix lane: no escalation, no fix round; --rerun runs the dev again at the same round */
+    const fe = world('envfail');
+    fe.run(fe.startArgs); fe.diagnosed(); fe.run(['step', T]); fe.audited(); fe.run(['step', T]);
+    fe.ho('4-backend-dev-r1.json', { role: 'backend-dev', step: '4', round: 1, status: 'blocked', failure_kind: 'environment', paths_written: [], ac_ids_done: [], blockers: [{ id: 'B-1', problem: 'node is not installed in the worktree', owner: 'Devops' }], decisions: [{ id: 'D-1', decision: 'stopped', why: 'no node' }], summary: 'blocked by the environment' });
+    const fe1 = fe.run(['step', T]);
+    check('next: a dev blocked by the environment stops with outcome environment (not a blocker to promote, not a loop)', fe1.action === 'stop' && /outcome=environment/.test(fe1.out) && /muffy-status=blocked:environment/.test(fe1.out), fe1.out.slice(0, 400));
+    const fe2 = fe.run(['step', T, '--rerun']);
+    check('next: step --rerun runs the backend-dev again at the same round', fe2.action === 'spawn' && fe2.role === 'backend-dev' && fe2.round === '1', fe2.out.slice(0, 300));
+
     /* a real remote: a full fix run leaves every ref of it as it was */
     const rr = world('remote');
     const bare = join(base, 'origin.git').split('\\').join('/');
