@@ -100,7 +100,9 @@ export function handoffsOf(c) {
   }).sort((a, b) => keyOf(a) - keyOf(b) || STEP_ORDER.indexOf(stepOfFile(a.name)) - STEP_ORDER.indexOf(stepOfFile(b.name)));
 }
 
-const log = (c, key) => appendFileSync(join(c.team, 'next.log'), `${new Date().toISOString()}\t${key}\n`);
+const log = (c, key, extra = '') => appendFileSync(join(c.team, 'next.log'), `${new Date().toISOString()}\t${key}${extra ? `\t${extra}` : ''}\n`);
+// the model and effort a spawn was issued with, for the spawn log when its hand-off comes back
+const issuedWith = (c, key) => lines(read(join(c.team, 'next.log'))).map((l) => l.split('\t')).find((p) => p[1] === key && p[2]);
 const issued = (c, key) => lines(read(join(c.team, 'next.log'))).filter((l) => l.split('\t')[1] === key).length;
 
 /* ---------- the action a call prints ---------- */
@@ -127,7 +129,7 @@ function spawnAction(c, spec, extra = []) {
   if (r.status !== 0) throw new Error(`make-envelope failed for ${spec.role} ${spec.step}: ${r.stderr.trim()}`);
   const m = r.stderr.match(/Spawn: model=(\S+) effort=(\S+)/);
   const key = `${spec.step}:${spec.role}:r${spec.round}`;
-  log(c, key);
+  log(c, key, `${m?.[1] ?? 'default'}\t${m?.[2] ?? 'default'}`);
   out.push(`action=spawn`);
   say('role', spec.role); say('step', spec.step); say('round', spec.round); say('agent', agentName(spec.role));
   say('model', m?.[1] ?? 'default'); say('description', `${spec.role} ${spec.step} r${spec.round}`.slice(0, 40));
@@ -274,7 +276,7 @@ export function start(o) {
   // 6. headless: the scope pause is recorded by rule H3 (or stops the run when the answer would be a person's)
   if (headless) {
     const a = node('checkpoint.mjs', ['ask', slash(c.team), 'scope', '--triage-passed', '--ac-from-request'], { cwd: c.main });
-    if (!/next=continue/.test(a.stdout)) { return stopFromAsk(a.stdout); }
+    if (!/next=continue/.test(a.stdout)) { return stopFromAsk(a.stdout, a.stderr); }
     commitTeam(c, `docs(fix): scope recorded for ${o.task}`);
   }
   return step({ ...o, _: [o.task] });
@@ -285,9 +287,10 @@ function commitTeam(c, message) {
   if (!gitOk(c.feature, 'diff', '--cached', '--quiet')) git(c.feature, 'commit', '-q', '-m', `${message}${trailerOf(c) ? `\n\n${trailerOf(c)}` : ''}`);
 }
 
-function stopFromAsk(text) {
+function stopFromAsk(text, errors = '') {
   out.push('action=stop');
   for (const l of lines(text)) say('detail', l);
+  for (const l of lines(errors)) say('error', l);
   return flush(1);
 }
 
@@ -490,16 +493,24 @@ function afterDev(c, hs, diag4a, spec, { fixRel, ho, task, W, base }) {
 
 /* ---------- bookkeeping for a hand-off that came back ---------- */
 
+// A summary is free text from an agent. In checkpoint.md a `[word]` is a link label that needs a definition (check-checkpoint.mjs), so
+// brackets from code such as `items[items.length]` become parentheses; one line, at most 120 characters.
+const oneLine = (s) => String(s).replace(/\s+/g, ' ').replace(/\[/g, '(').replace(/\]/g, ')').trim().slice(0, 120);
+
 function consumeHandoff(c, x) {
   if (!x.handoff) return;
   const h = x.handoff;
   const key = `consumed:${x.name}`;
   if (issued(c, key)) return;
-  const sp = node('next-action.mjs', ['effort', '--role', h.role]);
-  const effort = sp.stdout.match(/effort:(\w+)/)?.[1] ?? 'medium';
-  const model = { debugger: 'haiku', auditor: 'opus', 'code-reviewer': 'sonnet' }[h.role] ?? 'sonnet';
-  node('checkpoint.mjs', ['spawn', slash(c.team), '--step', String(h.step), '--role', h.role, '--model', model, '--effort', effort, '--round', String(h.round), '--handoff', x.file]);
-  node('checkpoint.mjs', ['round', slash(c.team), '--step', String(h.step), '--round', String(h.round), '--handoff', x.file, '--summary', String(h.summary ?? `${h.role} ${h.status}`).slice(0, 120)]);
+  const was = issuedWith(c, `${h.step}:${h.role}:r${h.round}`);
+  const model = was?.[2] ?? 'sonnet';
+  const effort = was?.[3] ?? 'medium';
+  const results = [
+    node('checkpoint.mjs', ['spawn', slash(c.team), '--step', String(h.step), '--role', h.role, '--model', model, '--effort', effort, '--round', String(h.round), '--handoff', x.file]),
+    node('checkpoint.mjs', ['round', slash(c.team), '--step', String(h.step), '--round', String(h.round), '--handoff', x.file, '--summary', oneLine(h.summary ?? `${h.role} ${h.status}`)]),
+  ];
+  // a bookkeeping script that failed is reported, never ignored: the next gate reads what it should have written
+  for (const r of results.filter((r) => r.status !== 0)) say('warning', `${x.name}: ${lines(r.stdout + r.stderr).join(' / ').slice(0, 300)}`);
   log(c, key);
   commitTeam(c, `chore(muffy): ${h.role} ${h.step} r${h.round} back`);
 }
@@ -511,7 +522,7 @@ function askUser(c, gate, question, options = [{ label: 'Give more information',
   writeFileSync(join(c.team, 'gate.json'), JSON.stringify(gateJson, null, 2));
   if (headlessOf(process.env).headless) {
     const a = node('checkpoint.mjs', ['ask', slash(c.team), gate], { cwd: c.main });
-    return stopFromAsk(a.stdout);
+    return stopFromAsk(a.stdout, a.stderr);
   }
   rmSync(join(c.team, 'gate.json'), { force: true });
   out.push('action=ask'); say('gate', gate);
@@ -532,7 +543,7 @@ function askAuditReject(c, x) {
     const gateJson = { questions: [{ question: text, header: 'audit', multiSelect: false, options }] };
     writeFileSync(join(c.team, 'gate.json'), JSON.stringify(gateJson, null, 2));
     const r = node('checkpoint.mjs', ['ask', slash(c.team), 'audit', '--verdict', a.verdict === 'reject' ? 'reject' : 'need-validation'], { cwd: c.main });
-    return stopFromAsk(r.stdout);
+    return stopFromAsk(r.stdout, r.stderr);
   }
   out.push('action=ask'); say('gate', 'audit');
   out.push('---questions---', JSON.stringify({ questions: [{ question: text, header: 'audit', multiSelect: false, options }] }), '---questions---');
@@ -571,7 +582,7 @@ function afterReview(c, h, { task, base, W }) {
   const facts = `The test gate ${tg.status === 0 ? 'passed' : tg.status === 3 ? 'was skipped (no test command)' : 'reported failing tests: only those that already fail on the base branch are out of scope'}.`;
   if (headless) {
     const a = node('checkpoint.mjs', ['ask', slash(c.team), 'human-gate'], { cwd: c.main });
-    if (!/next=continue/.test(a.stdout)) return stopFromAsk(a.stdout);
+    if (!/next=continue/.test(a.stdout)) return stopFromAsk(a.stdout, a.stderr);
     return closeTask(c, { task, base, W, gateText, facts });
   }
   out.push('action=ask'); say('gate', 'human-gate');

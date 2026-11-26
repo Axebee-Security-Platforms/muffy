@@ -49,7 +49,7 @@ export async function runNextEvals({ check, root }) {
         writeFileSync(`${be}/cart.js`, readFileSync(`${be}/cart.js`, 'utf8').replace('return items.length;', 'return items.reduce((s, i) => s + i.qty, 0);'));
         git(be, 'commit', '-qam', `fix itemCount r${round}`);
       }
-      ho(`4-backend-dev-r${round}.json`, { role: 'backend-dev', step: '4', round, paths_written: ['cart.js'], ac_ids_done: ['AC-1'], decisions: [{ id: 'D-1', decision: 'sum qty', why: 'the AC' }], summary: 'fixed' });
+      ho(`4-backend-dev-r${round}.json`, { role: 'backend-dev', step: '4', round, paths_written: ['cart.js'], ac_ids_done: ['AC-1'], decisions: [{ id: 'D-1', decision: 'sum qty', why: 'the AC' }], summary: 'fixed: items[items.length] is now items.reduce(...)' });
       writeFileSync(`${team}/ac-tests-be.md`, '| AC-1 | test/cart.test.js |\n');
     };
     const reviewMsg = (verdict, round = 1, blockers = []) => `Verdict: ${verdict}\n\nReviewed.\n${JSON.stringify({ ...q, role: 'code-reviewer', step: '6', round, verdict, blockers, summary: verdict.toLowerCase() })}\n`;
@@ -80,6 +80,7 @@ export async function runNextEvals({ check, root }) {
     check('next: the fix is merged into the feature branch and its tests pass', r1.w.git('show', `feature/${T}:cart.js`).includes('reduce') && spawnSync(process.execPath, ['--test'], { cwd: `${r1.w.repo}/.worktrees/feature-${T}`, encoding: 'utf8' }).status !== undefined && r1.e.out.includes('The test gate passed'), r1.e.out.slice(-600));
     check('next: the user\'s base branch is never touched and nothing is pushed', r1.w.git('rev-parse', 'main') === r1.mainBefore && r1.w.git('remote').length === 0);
     check('next: closing removes the role and feature worktrees, keeps the branch and marks the task closed', !existsSync(join(r1.w.repo, '.worktrees', `feature-${T}`)) && !existsSync(join(r1.w.repo, '.worktrees', `be-${T}`)) && r1.w.git('rev-parse', '--verify', `feature/${T}`).length > 0 && /closed/.test(r1.w.git('show', `feature/${T}:.team/${T}/checkpoint.md`)));
+    check('next: a bracket in an agent summary (code such as items[i]) never breaks the checkpoint, and the spawn log has the model the spawn was issued with', ![r1.b, r1.c, r1.d, r1.e].some((r) => /^warning=/m.test(r.out)) && /\bopus\b/.test(r1.w.git('show', `feature/${T}:.team/${T}/spawns.tsv`)), [r1.b, r1.c, r1.d, r1.e].map((r) => r.out.match(/^warning=.*$/m)?.[0]).join(' | '));
     check('next: closing writes the task note and the project row from the files', /status: done/.test(readFileSync(join(r1.w.repo, '.team/brain/tasks', `${T}.md`), 'utf8')) && /done/.test(readFileSync(join(r1.w.repo, '.team/brain/project.md'), 'utf8')));
     check('next: every consumed hand-off is in the spawn log, committed with the trailer', r1.w.git('show', `feature/${T}:.team/${T}/spawns.tsv`).split('\n').filter(Boolean).length === 4 && r1.w.git('log', `feature/${T}`, '--format=%B', '-5').includes('Co-Authored-By: Eval'));
 
