@@ -87,6 +87,7 @@ The ones the Orchestrator runs every task (`node "<muffy>/scripts/<name>.mjs" â€
 | `init-config.mjs` | Setup: writes the project's `test_command` into the config file in `.team/`, from its package manifest |
 | `checkpoint.mjs` | Write the checkpoint: rounds, pauses, gate answers, the lane line |
 | `make-envelope.mjs` | Build each subagent prompt from flags, not by hand |
+| `route.mjs` | The route decision order of route.md: signals in, route or the one question out |
 | `next.mjs` | The fix lane, one step at a time: does the setup, git and bookkeeping, prints the next spawn, question or stop |
 | `next-action.mjs` | Deterministic rules: loop budget, effort, baseline, smoke and triage |
 | `check-all.mjs` | After every step: hand-offs, gates, checkpoint and artifacts in one call |
