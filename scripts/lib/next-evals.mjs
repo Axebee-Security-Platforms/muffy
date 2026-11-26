@@ -139,6 +139,25 @@ export async function runNextEvals({ check, root }) {
     const rb1 = rb.run(['review', T], 'Approved, nothing to add. (no JSON line)');
     check('next: a reviewer message with no hand-off line starts a fresh code-reviewer, round 2, with the errors to read', rb1.action === 'spawn' && rb1.role === 'code-reviewer' && rb1.round === '2' && /retry-6-code-reviewer-r2\.md/.test(rb1.prompt), rb1.out.slice(0, 400));
 
+    /* the docs-writer of the fix lane (a high-severity fix keeps it): not ready or failed checks start a fresh one a round later; the first real
+       nine-run found `no spec for step 11` here, and a missing agents/docs-writer brain folder that made the docs-writer say not-ready */
+    const dr = world('docsretry');
+    dr.run(dr.startArgs);
+    check('next: setup creates a brain folder for every agent (a note path an agent cannot write makes it not-ready)', ['docs-writer', 'debugger', 'auditor', 'backend-dev', 'code-reviewer'].every((r) => existsSync(join(dr.repo, '.team/brain/agents', r))));
+    dr.diagnosed(1, { diagnosis: { status: 'known', confidence: 'high', cause: 'itemCount ignores qty', files: ['cart.js'], repro: 'npm test', severity: 'high', owner: 'BE' } });
+    dr.run(['step', T]);
+    dr.ho('4b-auditor-r1.json', { role: 'auditor', step: '4b', round: 1, audit: { verdict: 'confirm', evidence_level: 'high', repro_rerun: 'red' }, summary: 'confirmed' });
+    dr.run(['step', T]); dr.developed(); dr.run(['step', T]);
+    const drDocs = dr.run(['review', T], dr.reviewMsg('Approve'));
+    check('next: a high-severity fix keeps the docs-writer after the Human gate', drDocs.action === 'spawn' && drDocs.role === 'docs-writer' && drDocs.round === '1', drDocs.out.slice(0, 300));
+    dr.ho('11-docs-writer-r1.json', { role: 'docs-writer', step: '11', round: 1, status: 'not-ready', paths_written: [], decisions: [{ id: 'D-1', decision: 'notes', why: 'the fix' }], blockers: [{ id: 'B-1', problem: 'the brain note folder is missing', owner: 'Docs' }], quality_checks: { passed: false, failed: ['brain note not written'] }, summary: 'not ready' });
+    const drRetry = dr.run(['step', T]);
+    check('next: a docs-writer that is not ready is started again, round 2, with the errors to read (no stepSpec error)', drRetry.action === 'spawn' && drRetry.role === 'docs-writer' && drRetry.round === '2' && /retry-11-docs-writer-r2\.md/.test(drRetry.prompt), `${drRetry.out.slice(0, 300)} ${drRetry.err}`);
+    writeFileSync(`${dr.team}/release-notes.md`, '# Release notes\nitemCount counts units.\n## Deploy hand-off\nNothing to run.\n');
+    dr.ho('11-docs-writer-r2.json', { role: 'docs-writer', step: '11', round: 2, paths_written: [`.team/${T}/release-notes.md`], decisions: [{ id: 'D-1', decision: 'notes', why: 'the fix' }], summary: 'notes written' });
+    const drDone = dr.run(['step', T]);
+    check('next: the second docs-writer closes the task', drDone.action === 'done', drDone.out.slice(0, 300));
+
     /* model-fail: a haiku spawn that had to be re-run is written as a fixed line, and the next spawn of that role keeps its default model */
     const mf = world('modelfail');
     const mfStart = mf.run([...mf.startArgs, '--line-known']);

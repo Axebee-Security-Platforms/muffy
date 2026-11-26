@@ -1,5 +1,46 @@
 # Changelog
 
+## v2.0.0 — 2026-11-26
+
+### Changed
+
+- **A script runs every lane; the Orchestrator reads the request and does what the script says.** `next.mjs` (fix lane) and `next-flow.mjs` (change in all four scopes, verify, upgrade, the full flow) do the setup, the worktrees, the checkpoint and hand-off bookkeeping, the merge, the diff, the test gate and the closing, and print one action: spawn, ask, do, wait, route, stop, onboard or done. They call the rule scripts that already existed (`next-action.mjs`, `lanes.mjs`, `checkpoint.mjs`, `test-gate.mjs`, …) and copy none of their rules. They never push, never touch the base branch, never force, reset or delete a branch. `SKILL.md` sends every lane to them and no longer lets a request that names a lane be cut down to a direct edit.
+- **Spawn prompts are files.** Each prompt is written to `.team/<task>/envelopes/<step>-<role>-r<n>.md`; the Agent call carries six lines. `guard-gates.mjs` reads the file and blocks a muffy role whose envelope is missing, unreadable, without a `Task:` header, or for another task or role.
+- **`route.mjs` picks the route** from signals the Orchestrator reads out of the prompt, or returns the one question to ask in the requester's words. The decision order of `route.md` was a model in the evals; the evals now test the shipped script.
+- **`failure_kind: environment`** in a hand-off keeps an environment failure (docker absent, Node mismatch, a rate limit, a missing credential) out of the loop budget: both engines stop with `outcome=environment`, and `step <task> --rerun` runs the step again at the same round. Absent means `work`.
+- **`- model-fail: <role> haiku · <task> · <why>`** is written under `## Lessons` when a haiku spawn needed a re-run, and `make-envelope.mjs` keeps the default model for that role from then on.
+- `SKILL.md` 15.9 KB to 13.5 KB. The references are unchanged: a measured run showed the Orchestrator opens none of them after loading `SKILL.md`, so cutting them would not lower any cost, and the modes the scripts do not drive still need them.
+- The prompt-size limit in the evals moves from 1.6 to 1.75 KB (the `failure_kind` sentence is in every spawn).
+
+### Measured
+
+Same bench for all three rows: `scripts/measure-fix.mjs`, three one-line bugs in a small JS library, three runs each, sonnet, headless, `--permission-mode auto`, Claude Code 2.1.330. The Orchestrator is a model, so the unit is requests, not tokens.
+
+| | 1.5.4 (`ed756c8`) | first `next.mjs` (`fd3747b`) | this release (`4b1ba88`) |
+|---|---|---|---|
+| Runs that went through the whole lane | 2 of 9 (7 fixed the bug in the main session) | 9 of 9 | 9 of 9 (see below) |
+| Requests per run that did | 22, 25 (mean 23.5) | mean 15.0 (13 to 18) | mean 15.8 (14 to 19) |
+| Cost per such run | $0.60, $0.74 | mean $0.59 | mean $0.56 |
+
+33% fewer requests and 16% lower cost than 1.5.4 on its two lane runs, and no run skipped the lane. Cost fell less than requests because the lane's agents are most of it. Of the nine runs of this release, eight closed; one (`max-price` r2) stopped at step 11 (below), fixed after the measurement and not re-measured. One fixture of one-line bugs: the numbers compare versions, not real projects.
+
+### Fixed (each found by a real run or an outside review, each with a test)
+
+- A run that printed a `warning=` or `error=` line passed unnoticed in the evals; they now fail on one. That caught a checkpoint over its 40-line cap after about ten hand-offs (the oldest History lines are now merged), a round file written twice for two agents that ran side by side, and an invalid hand-off logged as a spawn.
+- An agent's summary with code such as `items[items.length]` broke the checkpoint (a `[word]` is a link label there).
+- The guard took the role of an envelope from its first hand-off path, and the auditor's envelope Reads the debugger's, so the lane stopped at 4b.
+- The docs-writer of the fix lane was never started again when it came back not ready (`no spec for step 11`), and setup made no `agents/<role>/` brain folders, which is what made it not ready.
+- Verify took the current branch as its base (an empty diff when the requester was on it): `--base` is required and may not equal `--branch`.
+- Headless answers to a multi-question interview were all read as the defaults.
+- Closing read `diff-1.patch` after a reviewer Reject.
+
+### Not done
+
+- No live model run of the change, verify, upgrade or full-flow lanes (a headless run of those stops at its first gate, since rule H3 is the fix lane's). They are checked offline, on real repos, with the agents and the user played by the eval (about 70 checks).
+- Not driven by the scripts: PR diagrams (step 5b), a lane line with a stop point (`until`), promotion between lanes (the script stops and says what the reference says), and the onboard, present, diagram and todo modes.
+- Reading the prompt into signals for `route.mjs` is still the model's; `evals/route-live-scenarios.json` is the held-out set for it and has not been run.
+- The test gate and the Orchestrator do not set `failure_kind`; an environment failure of the test command reads as a failing test.
+
 ## v1.5.4 — 2026-11-23
 
 ### Changed

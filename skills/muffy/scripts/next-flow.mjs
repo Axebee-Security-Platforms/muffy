@@ -144,8 +144,7 @@ export function flowStart(o) {
   if (o['dry-run']) { say('dry-run', `would create brain, task note, the ${lane} worktree, request.md${o.ac?.length ? ', ac.md' : ''}, checkpoint.md and commit them`); return flush(0); }
 
   // the files
-  mkdirSync(join(c.brain, 'tasks'), { recursive: true });
-  mkdirSync(join(c.brain, 'agents'), { recursive: true });
+  N.makeBrain(c);
   const project = join(c.brain, 'project.md');
   if (!existsSync(project)) writeFileSync(project, '# Project\n\n## Tasks\n\n## Lessons\n\n## Open issues\n');
   writeFileSync(join(c.brain, 'tasks', `${o.task}.md`), `---\nproject: ${basename(c.main)}\ntask: ${o.task}\ndate: ${today()}\nstatus: in progress\n---\n# ${o.task}\n\n${o.request}\n`);

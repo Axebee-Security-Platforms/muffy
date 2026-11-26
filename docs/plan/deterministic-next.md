@@ -111,4 +111,11 @@ Three rules that the Orchestrator used to judge are now scripts. All three are c
 
 One real run (not the 9-run measurement, which is phase 5) found what the offline checks could not: the guard took the role of the envelope from its first hand-off path, and the auditor's envelope Reads the debugger's hand-off, so the auditor was blocked as a debugger and the lane stopped at 4b. The role now comes from the envelope's own `Write:` line; the real prompts are checked through the guard while their files still exist. The rerun on the fixed guard: fixed, 14 requests, US$0.61, no permission denial; the debugger read its envelope as its first action. Phase 1 on the same case: 14, 13 and 18 requests, $0.58 to $0.63, so one run shows no change in cost, and the saving (about 1.7 KB of Orchestrator output per spawn, and the same text out of every later request's context) is for phase 5 to measure.
 
+## Phase 5 result (2026-11-26)
+
+- `SKILL.md` shortened (15.9 to 13.5 KB). The reference cut of decision 9 was not done: a measured run showed the Orchestrator opens no reference after loading `SKILL.md`, so it would save nothing at run time and put the evals, the modes the scripts do not drive and the human readers at risk. The user chose to shorten `SKILL.md` only.
+- Final measurement on `4b1ba88` (nine runs, US$5.01): the lane ran in 9 of 9 (phase 0: 2 of 9); requests per run 15.8, range 14 to 19 (phase 0: 23.5; phase 1: 15.0); cost per run $0.56 (phase 0: $0.67; phase 1: $0.59). The phase 1 bar (every run through the lane, requests 30% under the baseline) holds: 33% under.
+- One of the nine (`max-price` r2) stopped at step 11: the docs-writer came back not ready (its brain folder `agents/docs-writer/` did not exist) and the fix lane had no retry for step 11. Fixed (a retry for the docs-writer, a brain folder per agent at setup) with a test; not re-measured, so the release says 8 of 9 closed.
+- Released as 2.0.0 (`package.json`, `.claude-plugin/plugin.json`, `CHANGELOG.md`). No tag, no push, no merge into `main` without the user's word.
+
 Not done in this phase: the open-blocker `env:` line that `loops.md` describes is not written (the stop message carries the blockers); `route.mjs` has no live-model check of signal reading (`evals/route-live-scenarios.json` is the held-out set for that, run by hand).

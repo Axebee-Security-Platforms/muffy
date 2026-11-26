@@ -271,8 +271,7 @@ export function start(o) {
   // 5. the files
   const dry = !!o['dry-run'];
   if (dry) { say('dry-run', 'would create brain, task note, the feature worktree, fix.md, checkpoint.md and commit them'); return flush(0); }
-  mkdirSync(join(c.brain, 'tasks'), { recursive: true });
-  mkdirSync(join(c.brain, 'agents'), { recursive: true });
+  makeBrain(c);
   const project = join(c.brain, 'project.md');
   if (!existsSync(project)) writeFileSync(project, `# Project\n\n## Tasks\n\n## Lessons\n\n## Open issues\n`);
   const date = new Date().toISOString().slice(0, 10);
@@ -412,6 +411,7 @@ export function step(o) {
     const errs = lh ? validate(handoffSchema, lh) : ['the file is not valid JSON'];
     writeFileSync(join(T, `retry-${stepId}-${role}-r${round}.md`), `# ${role} ${stepId}: the last hand-off was sent back (${act})\n\n${[...errs, ...(lh?.quality_checks?.failed ?? [])].map((e) => `- ${e}`).join('\n') || '- quality_checks.passed was false'}\n`);
     if (stepId === '6') return fixReviewer(c, hs, spec, { fixRel, ho, task, round, retry: `${slash(T)}/retry-6-${role}-r${round}.md` });
+    if (stepId === '11') { fixDocsWriter(c, { task, branch: `feature/${task}`, round, retry: `${slash(T)}/retry-11-${role}-r${round}.md` }); return flush(0); }
     if (stepId === '4') {
       const side = Object.keys(DEV).find((s) => DEV[s] === role);
       return devSpawn(c, hs, lastOf(hs, '4a').handoff, spec, { fixRel, ho, task, W, round, only: [side], retry: `${slash(T)}/retry-4-${role}-r${round}.md` });
@@ -717,15 +717,24 @@ export function latestDiff(c) {
   return `${slash(c.team)}/diff-${rounds.length ? Math.max(...rounds) : 1}.patch`;
 }
 
+// the fix lane's docs-writer (step 11); `retry`: a hand-off that was not ready or failed its checks starts a fresh one a round later
+function fixDocsWriter(c, { task, branch, round, retry }) {
+  const T = slash(c.team);
+  spawnAction(c, { role: 'docs-writer', step: '11', round, task, goal: 'Write the release notes and any doc the fix made wrong, with a Deploy hand-off.', doneWhen: 'release-notes.md exists and the hand-off validates',
+    read: [`${T}/fix.md`, latestDiff(c), `${T}/qa-report.md`, ...(retry ? [retry] : [])], write: [`${T}/release-notes.md`], dontTouch: ['source files', 'tests'], worktree: c.feature, branch }, ['--human-approved', new Date().toISOString().slice(0, 10)]);
+}
+
+// the brain folders every agent writes its note to (setup.md step 1: `agents/<role>/`, one per agent)
+export const AGENT_ROLES = ['researcher', 'product-manager', 'designer', 'architect', 'devops', 'frontend-dev', 'backend-dev', 'code-reviewer', 'qa-tester', 'docs-writer', 'diagrammer', 'debugger', 'auditor'];
+export const makeBrain = (c) => { for (const r of AGENT_ROLES) mkdirSync(join(c.brain, 'agents', r), { recursive: true }); mkdirSync(join(c.brain, 'tasks'), { recursive: true }); };
+
 // `lane`: what the closing note says about the work (the fix lane names the cause); `branch`: the branch the user takes (verify: the copy)
 export function closeTask(c, { task, base, W, gateText, facts, docs, branch = `feature/${task}`, lane = 'fix' }) {
   node('remove-worktrees.mjs', [task, '--stage', 'roles', '--cwd', slash(c.main)], { cwd: c.main });
   if (!docs) {
     const sf = node('small-fix.mjs', [slash(c.team), '--base', base], { cwd: c.main });
     if (/next=spawn-docs-writer/.test(sf.stdout)) {
-      const T = slash(c.team);
-      spawnAction(c, { role: 'docs-writer', step: '11', round: 1, task, goal: 'Write the release notes and any doc the fix made wrong, with a Deploy hand-off.', doneWhen: 'release-notes.md exists and the hand-off validates',
-        read: [`${T}/fix.md`, latestDiff(c), `${T}/qa-report.md`], write: [`${T}/release-notes.md`], dontTouch: ['source files', 'tests'], worktree: c.feature, branch }, ['--human-approved', new Date().toISOString().slice(0, 10)]);
+      fixDocsWriter(c, { task, branch, round: 1 });
       say('note', sf.stdout.trim().split('\n').join(' ; '));
       return flush(0);
     }
