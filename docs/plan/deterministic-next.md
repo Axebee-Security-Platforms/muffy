@@ -64,3 +64,21 @@ Rerun, 3 runs per case (9 in all; r2 and r3 on `83aff06`, which differs from `ed
 **Baseline: the lane ran in 2 of 9 runs (22%). Completed runs: 22 and 25 requests, US$0.60 and $0.74, 4 subagents each, both stopped at the Human gate (rule H3 says continue). The 7 other runs fixed the bug in the main session for 4 to 6 requests and about $0.13, with no debugger, auditor or review.** No permission denials in any run.
 
 Reading: with `/muffy fix` named in the request, a one-line bug with a visible cause usually skips the lane. Phase 1 therefore compares two numbers against this table: lane completion (target 9 of 9) and requests per completed run (baseline about 23.5). A cheaper run that skips the lane is not a saving. The 30% bar applies to the second number only.
+
+## Phase 1 result (2026-11-26)
+
+`next.mjs` drives the fix lane; `SKILL.md` sends the lane to it. Same bench, same fixture, same CLI (2.1.330), sonnet, `--permission-mode auto`, headless; muffy `fd3747b` (tag `bench/phase1`), 3 runs per case.
+
+| | Phase 0 (`ed756c8`) | Phase 1 (`fd3747b`) |
+|---|---|---|
+| Runs that completed the lane | 2 of 9 | **9 of 9** |
+| Requests per completed run | 22, 25 (mean 23.5) | 14, 13, 18, 14, 15, 14, 17, 14, 16 (**mean 15.0**, range 13 to 18) |
+| Cost per completed run | $0.60, $0.74 | mean $0.59 (range $0.54 to $0.72) |
+| Permission denials | 0 | 0 |
+
+Go/no-go bar: lane completion 9 of 9 and mean requests at most 16.5 (30% under 23.5). Both met: 36% fewer requests, and no run skipped the lane. **Go.**
+
+Caveats, stated as they are:
+- Two of the nine runs (last-item r1 and r3, 14 requests each) stopped at the Human gate instead of closing. Cause: an agent's summary held `items[items.length]`, and checkpoint.md reads `[word]` as a link label (`check-checkpoint.mjs` failed, so `checkpoint.mjs ask` printed no `next=continue`). Fixed in `5b16720` with a test that fails without the fix. Those two runs miss the closing requests, perhaps 1 to 2 each; counting 2 more for each of them gives a mean of 15.9, still under the bar. Phase 5 measures again on the final version.
+- Cost fell less than requests (about 20%): one run's debugger rated severity high, which sends the fix to the docs-writer and the dearer subagents; that is the agents' judgment, not the script's.
+- One bench fixture (a small JS library, one-line bugs); the numbers compare versions, not real projects.
