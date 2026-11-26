@@ -20,9 +20,9 @@ export async function runNextFlowEvals({ check, root }) {
   for (const k of Object.keys(baseEnv)) if (k.startsWith('MUFFY_')) delete baseEnv[k];
 
   // one temp repo with the bench fixture; `task` names the lane's task; the agents' files are written by the helpers below
-  const world = (name, { headless = false, task = 'verify-item-count' } = {}) => {
+  const world = (name, { headless = false, task = 'verify-item-count', depth = 'quick' } = {}) => {
     const repo = slash(join(base, name));
-    buildRepo(repo, CASES[0]);
+    buildRepo(repo, CASES[0], depth);
     git(repo, 'config', 'core.autocrlf', 'false');
     const env = { ...baseEnv, ...(headless ? { MUFFY_HEADLESS: '1' } : {}) };
     const log = [];
@@ -117,6 +117,160 @@ export async function runNextFlowEvals({ check, root }) {
     mkdirSync(dd, { recursive: true });
     for (const n of [1, 2, 10]) writeFileSync(join(dd, `diff-${n}.patch`), 'x');
     check('next: the docs-writer reads the diff of the last review round, not diff-1', latestDiff({ team: dd }).endsWith('/diff-10.patch') && latestDiff({ team: join(base, 'none') }).endsWith('/diff-1.patch'), latestDiff({ team: dd }));
+
+    /* ---------- change: internal and logic-only ---------- */
+    const C = 'change-item-count';
+    const changeWorld = (name, scope, opts = {}) => {
+      const w = world(name, { ...opts, task: C, depth: scope === 'internal' ? 'quick' : 'full' });
+      const common = ['start', '--lane', 'change', '--task', C, '--scope', scope, '--request', 'Make itemCount sum the qty of every item', '--trailer', 'Co-Authored-By: Eval <eval@example.test>'];
+      w.start = scope === 'internal' ? [...common, '--kind', 'refactor', '--owner', 'BE', '--ac', 'AC-1 | itemCount sums qty | test/cart.test.js'] : common;
+      w.mainSha = w.git('rev-parse', 'main');
+      w.contract = () => {
+        writeFileSync(`${w.team}/contract.md`, '# Contract\n## Stack\nNode, no change\n## AC map\n| AC | where |\n|---|---|\n| AC-1 | cart.js itemCount |\n');
+        w.ho('3-architect-r1.json', { role: 'architect', step: '3', round: 1, paths_written: [`.team/${C}/contract.md`], decisions: [{ id: 'D-1', decision: 'sum qty in itemCount', why: 'the AC' }], summary: 'contract written' });
+      };
+      w.pm = (round = 1) => {
+        writeFileSync(`${w.team}/ac.md`, '# AC: change-item-count\n## User stories\n- As a shopper I see how many units are in my cart\n## AC\n- **AC-1** itemCount sums the qty of every item\n## Unchanged\n- total is as before\n## Out of scope\nNone beyond the request.\n');
+        mkdirSync(`${w.feature}/docs/plan`, { recursive: true });
+        writeFileSync(`${w.feature}/docs/plan/${C}.md`, '# Plan\n## Phase 1\n- P0 sum qty\n');
+        w.git('-C', w.feature, 'add', 'docs');
+        w.git('-C', w.feature, 'commit', '-qm', 'docs: plan');
+        w.ho(`2-product-manager-r${round}.json`, { role: 'product-manager', step: '2', round, paths_written: [`.team/${C}/ac.md`], decisions: [{ id: 'D-1', decision: 'one AC', why: 'the request' }], summary: 'ac written' });
+      };
+      w.dev = (round = 1, { fixIt = true } = {}) => {
+        const be = `${w.repo}/.worktrees/be-${C}`;
+        if (fixIt) {
+          const src = readFileSync(`${be}/cart.js`, 'utf8');
+          writeFileSync(`${be}/cart.js`, round === 1 ? src.replace('return items.length;', 'return items.reduce((s, i) => s + i.qty, 0);') : `${src}// round ${round}\n`);
+          w.git('-C', be, 'commit', '-qam', `fix itemCount r${round}`);
+        }
+        w.ho(`4-backend-dev-r${round}.json`, { role: 'backend-dev', step: '4', round, paths_written: ['cart.js'], ac_ids_done: ['AC-1'], decisions: [{ id: 'D-1', decision: 'sum qty', why: 'the AC' }], summary: 'built' });
+        writeFileSync(`${w.team}/ac-tests-be.md`, '| AC-1 | test/cart.test.js |\n');
+      };
+      return w;
+    };
+    // the be worktree commit goes through the repo-level git helper with -C
+    const gitIn = (w) => { const g = w.git; w.git = (...a) => (a[0] === '-C' ? execFileSync('git', a, { encoding: 'utf8' }).trim() : g(...a)); };
+
+    const ci = changeWorld('change-i', 'internal');
+    gitIn(ci);
+    const cAsk = ci.run(ci.start);
+    check('flow change (internal): the scope question comes first and nothing is written', cAsk.action === 'ask' && cAsk.gate === 'scope' && !existsSync(join(ci.repo, '.worktrees')) && !existsSync(join(ci.repo, '.team')), cAsk.out.slice(0, 300));
+    const cGo = ci.run([...ci.start, '--approved']);
+    check('flow change (internal): the architect only, reading ac.md (no researcher, PM or designer, no gates)', cGo.spawns.join() === 'architect:3:r1' && /Scope: internal/.test(cGo.prompts[0]) && existsSync(`${ci.team}/ac.md`) && !/gate 2b|gate 3c/.test(readFileSync(`${ci.team}/checkpoint.md`, 'utf8')), cGo.out.slice(0, 400));
+    ci.contract();
+    const cDev = ci.run(['step', C]);
+    check('flow change (internal): after the contract, the backend-dev (owner from the request) on its own worktree', cDev.spawns.join() === 'backend-dev:4:r1' && existsSync(join(ci.repo, '.worktrees', `be-${C}`)), cDev.out.slice(0, 400));
+    const cWait = ci.run(['step', C]);
+    check('flow change: a second step while the dev is still running waits and starts nothing', cWait.action === 'wait', cWait.out.slice(0, 300));
+    ci.dev();
+    const cRev = ci.run(['step', C]);
+    check('flow change (internal): dev back: merge into the feature branch, then the code-reviewer', cRev.spawns.join() === 'code-reviewer:6:r1' && ci.git('show', `feature/${C}:cart.js`).includes('reduce'), cRev.out.slice(0, 400));
+    const cGate = ci.run(['review', C], ci.reviewMsg('Approve'));
+    check('flow change (internal): an Approve runs the test gate and asks the Human gate', cGate.action === 'ask' && cGate.gate === 'human-gate', cGate.out.slice(0, 400));
+    const cDone = ci.run(['answer', C, 'Approve']);
+    check('flow change (internal): Approve closes the task (no docs-writer: the diff touches no migration, config or doc)', cDone.action === 'done' && !existsSync(ci.feature) && ci.git('rev-parse', 'main') === ci.mainSha, cDone.out.slice(0, 500));
+    const ci2 = changeWorld('change-i2', 'internal');
+    gitIn(ci2);
+    ci2.run(ci2.start); ci2.run([...ci2.start, '--approved']); ci2.contract(); ci2.run(['step', C]); ci2.run(['step', C]); ci2.dev(); ci2.run(['step', C]); ci2.run(['review', C], ci2.reviewMsg('Approve')); ci2.run(['answer', C, 'Approve']);
+    check('flow change (internal): the same run twice gives the same actions', ci2.log.join(' ') === ci.log.join(' '), `${ci2.log.join(' ')} != ${ci.log.join(' ')}`);
+
+    const cr = changeWorld('change-r', 'internal');
+    gitIn(cr);
+    cr.run(cr.start); cr.run([...cr.start, '--approved']); cr.contract(); cr.run(['step', C]); cr.dev(); cr.run(['step', C]);
+    const cBack = cr.run(['review', C], cr.reviewMsg('Reject', 1, [{ id: 'B-1', problem: 'no empty-cart test', file: 'test/cart.test.js:1', owner: 'BE' }]));
+    check('flow change: a reviewer Reject sends the owner back, round 2, with the review to read', cBack.spawns.join() === 'backend-dev:4:r2' && /review-1\.md/.test(cBack.prompts[0] ?? ''), cBack.out.slice(0, 500));
+    cr.dev(2);
+    const cRev2 = cr.run(['step', C]);
+    check('flow change: the second dev round is merged and reviewed again as round 2', cRev2.spawns.join() === 'code-reviewer:6:r2' && existsSync(`${cr.team}/diff-2.patch`), cRev2.out.slice(0, 400));
+
+    const cb = changeWorld('change-bad', 'internal');
+    gitIn(cb);
+    cb.run(cb.start); cb.run([...cb.start, '--approved']);
+    writeFileSync(`${cb.team}/handoff/3-architect-r1.json`, '{"role":"architect"}');
+    const cRetry = cb.run(['step', C]);
+    check('flow change: an invalid hand-off is retried once, a round later, with the errors in a file', cRetry.spawns.join() === 'architect:3:r2' && /retry-3-architect-r2\.md/.test(cRetry.prompts[0] ?? ''), cRetry.out.slice(0, 400));
+    writeFileSync(`${cb.team}/handoff/3-architect-r2.json`, '{"role":"architect"}');
+    const cStop = cb.run(['step', C]);
+    check('flow change: invalid twice escalates and stops', cStop.action === 'stop' && cStop.status === 1, cStop.out.slice(0, 300));
+
+    // a visible scope needs a full baseline: on a quick one start asks for the onboard first and writes nothing
+    const quick = world('change-quick', { task: C, depth: 'quick' });
+    const onb = quick.run(['start', '--lane', 'change', '--task', C, '--scope', 'ui+logic', '--request', 'x', '--approved']);
+    check('flow change: a visible scope on a quick baseline asks for the full onboard first and writes nothing', onb.action === 'onboard' && /depth=full/.test(onb.out) && !existsSync(join(quick.repo, '.worktrees')), onb.out.slice(0, 300));
+
+    // logic-only: a visible scope, so the plan gate (2b), the contract gate (3c) and the docs-writer all apply
+    const docsDone = (w) => {
+      writeFileSync(`${w.team}/release-notes.md`, '# Release notes\nitemCount counts units.\n## Deploy hand-off\nNothing to run.\n');
+      w.ho('11-docs-writer-r1.json', { role: 'docs-writer', step: '11', round: 1, paths_written: [`.team/${C}/release-notes.md`], decisions: [{ id: 'D-1', decision: 'one paragraph', why: 'a small change' }], summary: 'notes written' });
+    };
+    const lo = changeWorld('change-lo', 'logic-only');
+    gitIn(lo);
+    const lAsk = lo.run(lo.start);
+    check('flow change (logic-only): the scope question carries the scope and nothing is written', lAsk.action === 'ask' && /logic-only/.test(lAsk.out) && !existsSync(join(lo.repo, '.team')), lAsk.out.slice(0, 200));
+    const lPm = lo.run([...lo.start, '--approved']);
+    check('flow change (logic-only): the product-manager first (the AC come from it), no researcher', lPm.spawns.join() === 'product-manager:2:r1' && /Scope: logic-only/.test(lPm.prompts[0]), lPm.out.slice(0, 300));
+    lo.pm();
+    const lG1 = lo.run(['step', C]);
+    check('flow change (logic-only): the plan gate asks Approve / Request changes / Reject before any design or code', lG1.action === 'ask' && lG1.gate === 'plan-review' && /Request changes/.test(lG1.out), lG1.out.slice(0, 300));
+    const early = spawnSync(process.execPath, [NEXT, 'step', C], { cwd: lo.repo, env: lo.env, encoding: 'utf8' });
+    check('flow change (logic-only): asking again before the answer asks the same question, spawns nothing', !/action=spawn/.test(early.stdout) && /gate=plan-review/.test(early.stdout), early.stdout.slice(0, 200));
+    const lA = lo.run(['answer', C, 'Approve']);
+    check('flow change (logic-only): Approve records gate 2b with checkpoint.mjs and starts the architect', lA.spawns.join() === 'architect:3:r1' && /gate 2b passed/.test(readFileSync(`${lo.team}/checkpoint.md`, 'utf8')), lA.out.slice(0, 400));
+    lo.contract();
+    const lG2 = lo.run(['step', C]);
+    check('flow change (logic-only): the contract gate (no designer ran) asks before any code', lG2.action === 'ask' && lG2.gate === 'design-review' && /Contract/.test(lG2.out), lG2.out.slice(0, 400));
+    const lB = lo.run(['answer', C, 'Approve']);
+    check('flow change (logic-only): Approve records gate 3c and starts the backend-dev only', lB.spawns.join() === 'backend-dev:4:r1' && /gate 3c passed/.test(readFileSync(`${lo.team}/checkpoint.md`, 'utf8')), lB.out.slice(0, 400));
+    lo.dev();
+    lo.run(['step', C]);
+    const lH = lo.run(['review', C], lo.reviewMsg('Approve'));
+    const lD = lo.run(['answer', C, 'Approve']);
+    check('flow change (logic-only): after the Human gate the docs-writer always runs (a visible scope never skips it)', lH.gate === 'human-gate' && lD.spawns.join() === 'docs-writer:11:r1' && /Human approved/.test(lD.prompts[0] ?? ''), lD.out.slice(0, 400));
+    docsDone(lo);
+    const lF = lo.run(['step', C]);
+    check('flow change (logic-only): the docs hand-off back, the task closes', lF.action === 'done' && !existsSync(lo.feature) && lo.git('rev-parse', 'main') === lo.mainSha, lF.out.slice(0, 400));
+
+    // request changes at the plan gate: the product-manager again, round 2, with the reason in a file; the gate stays open
+    const lc = changeWorld('change-lc', 'logic-only');
+    gitIn(lc);
+    lc.run(lc.start); lc.run([...lc.start, '--approved']); lc.pm(); lc.run(['step', C]);
+    const lReq = lc.run(['answer', C, 'Request changes: add an empty-cart AC']);
+    check('flow change: Request changes sends the product-manager back (round 2) with the reason to read; gate 2b stays open', lReq.spawns.join() === 'product-manager:2:r2' && /changes-2b\.md/.test(lReq.prompts[0] ?? '') && /empty-cart/.test(readFileSync(`${lc.team}/changes-2b.md`, 'utf8')) && !/gate 2b passed/.test(readFileSync(`${lc.team}/checkpoint.md`, 'utf8')), lReq.out.slice(0, 400));
+    const lRej = changeWorld('change-lj', 'logic-only');
+    gitIn(lRej);
+    lRej.run(lRej.start); lRej.run([...lRej.start, '--approved']); lRej.pm(); lRej.run(['step', C]);
+    const lJ = lRej.run(['answer', C, 'Reject']);
+    check('flow change: Reject at the plan gate stops the run and keeps the pause', lJ.action === 'stop' && /rejected/.test(lJ.out) && !existsSync(join(lRej.repo, '.worktrees', `be-${C}`)), lJ.out.slice(0, 300));
+
+    // needs-input: the interview goes to requirements.md, the agent starts again a round later, and at most 2 rounds per agent
+    const ln = changeWorld('change-ln', 'logic-only');
+    gitIn(ln);
+    ln.run(ln.start); ln.run([...ln.start, '--approved']);
+    const needs = (round) => ln.ho(`2-product-manager-r${round}.json`, { role: 'product-manager', step: '2', round, status: 'needs-input', summary: 'questions', questions: [{ id: `Q-${round}`, question: 'Count units or lines?', why: 'it decides the AC', options: ['units', 'lines'], default: 'units', blocking: true }] });
+    needs(1);
+    const nq = ln.run(['step', C]);
+    check('flow change: a needs-input hand-off becomes a question to the user (recommended option first)', nq.action === 'ask' && nq.gate === 'clarify' && /Count units or lines/.test(nq.out), nq.out.slice(0, 400));
+    const na = ln.run(['answer', C, 'lines']);
+    check('flow change: the answer goes to requirements.md and the same agent starts again a round later, reading it', na.spawns.join() === 'product-manager:2:r2' && /lines/.test(readFileSync(`${ln.team}/requirements.md`, 'utf8')) && /requirements\.md/.test(na.prompts[0] ?? '') && /clarify product-manager: 1\/2/.test(readFileSync(`${ln.team}/checkpoint.md`, 'utf8')), na.out.slice(0, 400));
+    needs(2);
+    ln.run(['step', C]); ln.run(['answer', C, 'units']);
+    needs(3);
+    const nlim = ln.run(['step', C]);
+    check('flow change: a third round of questions from one agent stops: the cap is 2 per agent', nlim.action === 'stop' && /third time/.test(nlim.out), nlim.out.slice(0, 300));
+
+    // headless: the plan gate waits for a person; the recorded answer resumes
+    const lh = changeWorld('change-lh', 'logic-only', { headless: true });
+    gitIn(lh);
+    const hs = lh.run(lh.start);
+    lh.status(`- scope answered: go (recommended) | logic-only by eval (test) ${new Date().toISOString()}`);
+    lh.run(['step', C]);
+    lh.pm();
+    const hg = lh.run(['step', C]);
+    check('flow change: headless waits at the plan gate with gate.json and muffy-status, never answering', hs.action === 'stop' && hg.action === 'stop' && /waiting:plan-review/.test(hg.out) && existsSync(`${lh.team}/gate.json`), hg.out.slice(0, 400));
+    lh.status(`- plan-review answered: Approve by eval (test) ${new Date().toISOString()}`);
+    const hr = lh.run(['step', C]);
+    check('flow change: the recorded plan-review answer resumes with the architect', hr.spawns.join() === 'architect:3:r1' && /gate 2b passed/.test(readFileSync(`${lh.team}/checkpoint.md`, 'utf8')), hr.out.slice(0, 400));
 
     /* ---------- the lanes that follow are added below ---------- */
     void mkdirSync;

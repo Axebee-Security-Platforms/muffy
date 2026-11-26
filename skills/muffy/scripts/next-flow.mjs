@@ -30,7 +30,7 @@ const gitOk = (cwd, ...a) => N.gitOk(cwd, ...a);
 
 const LANES = ['change', 'verify', 'upgrade', 'feature'];
 // a lane is switched on when its offline scenarios pass (scripts/lib/next-flow-evals.mjs); the others keep the reference-driven flow
-const ENABLED = ['verify'];
+const ENABLED = ['verify', 'change'];
 const VISIBLE = ['ui-only', 'ui+logic', 'logic-only'];
 const PIPELINE = ['1', '2', '2b', '3', '3b', '3e', '3c', '4', '5', '6', '7', '10', '11'];
 const today = () => new Date().toISOString().slice(0, 10);
@@ -218,7 +218,7 @@ const maxRound = (x, step) => Math.max(0, ...x.hs.filter((h) => stepOfName(h.nam
 
 function devRoles(x) {
   const sides = x.owner === 'both' ? ['FE', 'BE'] : [x.owner];
-  return sides.filter((s) => !x.tokens.has(N.DEV[s]));
+  return sides.filter((s) => !x.tokens.has(N.DEV[s])).map((s) => N.DEV[s]);
 }
 
 const rel = (x, p) => `${slash(x.W)}/${p}`;
@@ -633,6 +633,8 @@ function applyAnswer(x, m, label, raw) {
   const reason = label.includes(':') ? label.slice(label.indexOf(':') + 1).trim() : '';
   if (m.gate === 'plan-review' || m.gate === 'design-review') {
     const step = m.gate === 'plan-review' ? '2b' : '3c';
+    // headless: checkpoint.mjs answer already recorded the approval (gate 2b / 3c passed); a second `gate approve` is not needed
+    if (/^approve/i.test(label) && gateState(read(join(x.c.team, 'checkpoint.md')), step) === 'passed') { N.commitTeam(x.c, `docs(${x.lane.lane}): gate ${step} approved for ${x.task}`); return undefined; }
     if (/^approve/i.test(label)) {
       const g = node('checkpoint.mjs', [...GATE_OF[step].approve(x), '--by', label], { cwd: x.W });
       if (g.status !== 0) { push('action=stop'); say('reason', `checkpoint.mjs gate ${step} approve was refused`); for (const l of lines(g.stdout + g.stderr).slice(0, 6)) say('detail', l); return flush(1); }

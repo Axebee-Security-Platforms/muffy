@@ -44,10 +44,10 @@ test('maxPrice returns the highest unit price', () => assert.equal(maxPrice(item
 test('lastItem returns the item added last', () => assert.deepEqual(lastItem(items), { price: 40, qty: 3 }));
 `;
 // onboarded already, so no run spends requests on onboarding
-const baselineMd = (sha) => `---
+const baselineMd = (sha, depth = 'quick') => `---
 commit: ${sha}
 date: 2026-11-26
-depth: quick
+depth: ${depth}
 ---
 
 # Baseline
@@ -72,7 +72,7 @@ depth: quick
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 const testsPass = (cwd) => spawnSync(process.execPath, ['--test'], { cwd, encoding: 'utf8' }).status === 0;
 
-export function buildRepo(dir, c) {
+export function buildRepo(dir, c, depth = 'quick') {
   if (existsSync(dir)) die(`${dir} already exists: use a new --out folder`);
   const write = (p, text) => { mkdirSync(dirname(join(dir, p)), { recursive: true }); writeFileSync(join(dir, p), text); };
   write('cart.js', cartJs(c.fn));
@@ -86,7 +86,7 @@ export function buildRepo(dir, c) {
   git(dir, 'config', 'core.autocrlf', 'false');
   git(dir, 'add', '-A');
   git(dir, 'commit', '-q', '-m', 'init bench cart');
-  write('docs/architecture/baseline.md', baselineMd(git(dir, 'rev-parse', 'HEAD')));
+  write('docs/architecture/baseline.md', baselineMd(git(dir, 'rev-parse', 'HEAD'), depth));
   git(dir, 'add', '-A');
   git(dir, 'commit', '-q', '-m', 'docs(baseline): quick onboard');
   if (testsPass(dir)) die(`${c.id}: the fixture's tests pass, so the bug is not there`);
