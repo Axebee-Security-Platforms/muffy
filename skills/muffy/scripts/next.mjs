@@ -33,6 +33,7 @@ import { simulate, triage, baselineAction, FIX_MAX_FILES } from './next-action.m
 import { planCard, parseRunProfile, STEP_ORDER } from './lanes.mjs';
 import { headlessOf } from './headless.mjs';
 import { mainCheckout } from './sync-worktree.mjs';
+import { checkTask } from './check-checkpoint.mjs';
 import { flowStart, flowStep, flowAnswer, flowRecord } from './next-flow.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -285,6 +286,7 @@ export function start(o) {
 }
 
 function commitTeam(c, message) {
+  compactCheckpoint(c);
   git(c.feature, 'add', '.team');
   if (!gitOk(c.feature, 'diff', '--cached', '--quiet')) git(c.feature, 'commit', '-q', '-m', `${message}${trailerOf(c) ? `\n\n${trailerOf(c)}` : ''}`);
 }
@@ -361,6 +363,7 @@ export function step(o) {
     const round = (lh?.round ?? 1) + 1;
     const errs = lh ? validate(handoffSchema, lh) : ['the file is not valid JSON'];
     writeFileSync(join(T, `retry-${stepId}-${role}-r${round}.md`), `# ${role} ${stepId}: the last hand-off was sent back (${act})\n\n${[...errs, ...(lh?.quality_checks?.failed ?? [])].map((e) => `- ${e}`).join('\n') || '- quality_checks.passed was false'}\n`);
+    if (stepId === '6') return fixReviewer(c, hs, spec, { fixRel, ho, task, round, retry: `${slash(T)}/retry-6-${role}-r${round}.md` });
     if (stepId === '4') {
       const side = Object.keys(DEV).find((s) => DEV[s] === role);
       return devSpawn(c, hs, lastOf(hs, '4a').handoff, spec, { fixRel, ho, task, W, round, only: [side], retry: `${slash(T)}/retry-4-${role}-r${round}.md` });
@@ -482,11 +485,21 @@ function afterDev(c, hs, diag4a, spec, { fixRel, ho, task, W, base }) {
   const patch = join(c.team, `diff-${round}.patch`);
   writeFileSync(patch, execFileSync('git', ['-C', c.feature, 'diff', base, '--', '.', ':!.team'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
   commitTeam(c, `chore(muffy): diff for review ${round} of ${task}`);
+  return fixReviewer(c, hs, spec, { fixRel, ho, task, round });
+}
+
+// the code-reviewer of the fix lane; `retry`: a reviewer message with no valid hand-off line starts a fresh reviewer at the next round
+function fixReviewer(c, hs, spec, { fixRel, ho, task, round, retry }) {
   const T = slash(c.team);
+  const dev = Math.max(0, ...hs.filter((x) => String(x.handoff?.step) === '4').map((x) => x.handoff.round));
+  if (!existsSync(join(c.team, `diff-${round}.patch`))) {
+    writeFileSync(join(c.team, `diff-${round}.patch`), execFileSync('git', ['-C', c.feature, 'diff', statusLine(c, 'base') ?? 'main', '--', '.', ':!.team'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
+    commitTeam(c, `chore(muffy): diff for review ${round} of ${task}`);
+  }
   spawnAction(c, spec('code-reviewer', '6', round, {
     goal: 'Review the fix diff against fix.md (Cause, Repro, AC) for correctness, quality and security.',
     doneWhen: 'a verdict line, then the one-line JSON hand-off with verdict Approve or Reject',
-    read: [fixRel, `${T}/diff-${round}.patch`, ho(lastOf(hs, '4a').name), ...(lastOf(hs, '4b') ? [ho(lastOf(hs, '4b').name)] : []), ...hs.filter((x) => x.handoff && String(x.handoff.step) === '4' && x.handoff.round === round).map((x) => ho(x.name))],
+    read: [fixRel, `${T}/diff-${round}.patch`, ho(lastOf(hs, '4a').name), ...(lastOf(hs, '4b') ? [ho(lastOf(hs, '4b').name)] : []), ...hs.filter((x) => x.handoff && String(x.handoff.step) === '4' && x.handoff.round === dev).map((x) => ho(x.name)), ...(retry ? [retry] : [])],
     write: [`${T}/review-${round}.md`], dontTouch: ['everything: read-only'], worktree: c.feature, branch: `feature/${task}`,
   }));
   say('then', `when it returns, pipe its whole final message to: node next.mjs review ${task}`);
@@ -499,20 +512,47 @@ function afterDev(c, hs, diag4a, spec, { fixRel, ho, task, W, base }) {
 // brackets from code such as `items[items.length]` become parentheses; one line, at most 120 characters.
 const oneLine = (s) => String(s).replace(/\s+/g, ' ').replace(/\[/g, '(').replace(/\]/g, ')').trim().slice(0, 120);
 
+// checkpoint.md stays within 40 lines outside ## Goal (check-checkpoint.mjs). Every hand-off adds a History line and a link definition,
+// so a run of ten or more hand-offs overflows it and every later `checkpoint.mjs gate` or `ask` would fail. The two oldest History lines
+// become one line that points at rounds/ (memory-model.md: "summarize on a schedule"), their link definitions go with them.
+// `spare`: lines to leave free, for the History line and link a coming `checkpoint.mjs round` adds
+export function compactCheckpoint(c, spare = 0) {
+  const f = join(c.team, 'checkpoint.md');
+  const outside = () => { const t = read(f).replace(/\n+$/, ''); return t.split('\n').length - (t.match(/^## Goal[^\n]*\n[\s\S]*?(?=^## |(?![\s\S]))/m)?.[0].replace(/\n+$/, '').split('\n').length ?? 0); };
+  for (let guard = 0; guard < 40; guard++) {
+    if (outside() + spare <= 40 && !checkTask(c.team).some((e) => /lines outside/.test(e))) return;
+    const t = read(f);
+    const h = t.match(/^## History\n([\s\S]*?)(?=^## |^\[[A-Za-z0-9.-]+\]:|(?![\s\S]))/m);
+    const items = (h?.[1] ?? '').split('\n').filter((l) => l.startsWith('- ') && !/^- none$/i.test(l));
+    if (items.length < 2) return;
+    const labels = items.slice(0, 2).map((l) => l.match(/\[([A-Za-z0-9.-]+)\]\s*$/)?.[1]).filter(Boolean);
+    const merged = `- earlier rounds, one line each in rounds/: ${items.slice(0, 2).map((l) => l.replace(/^- /, '').replace(/:.*$/, '')).join(' and ')}`;
+    let next = t.replace(items[0], merged).replace(`${items[1]}\n`, '');
+    for (const l of labels) next = next.replace(new RegExp(`^\\[${l}\\]:.*\\n?`, 'm'), '');
+    writeFileSync(f, next);
+  }
+}
+
 function consumeHandoff(c, x) {
   if (!x.handoff) return;
   const h = x.handoff;
   const key = `consumed:${x.name}`;
   if (issued(c, key)) return;
+  // an invalid hand-off (no step or round) is the retry rules' business, not the spawn log's
+  if (!h.step || !h.round || !h.role) return;
+  compactCheckpoint(c, 3);
   const was = issuedWith(c, `${h.step}:${h.role}:r${h.round}`);
   const model = was?.[2] ?? 'sonnet';
   const effort = was?.[3] ?? 'medium';
   const results = [
     node('checkpoint.mjs', ['spawn', slash(c.team), '--step', String(h.step), '--role', h.role, '--model', model, '--effort', effort, '--round', String(h.round), '--handoff', x.file]),
-    node('checkpoint.mjs', ['round', slash(c.team), '--step', String(h.step), '--round', String(h.round), '--handoff', x.file, '--summary', oneLine(h.summary ?? `${h.role} ${h.status}`)]),
+    // round files are written once per step and round: the second of two agents that ran side by side (designer and architect, FE and BE) has its line in the spawn log only
+    issued(c, `rounded:${h.step}:r${h.round}`) ? { status: 0, stdout: '', stderr: '' } : node('checkpoint.mjs', ['round', slash(c.team), '--step', String(h.step), '--round', String(h.round), '--handoff', x.file, '--summary', oneLine(h.summary ?? `${h.role} ${h.status}`)]),
   ];
+  log(c, `rounded:${h.step}:r${h.round}`);
   // a bookkeeping script that failed is reported, never ignored: the next gate reads what it should have written
   for (const r of results.filter((r) => r.status !== 0)) say('warning', `${x.name}: ${lines(r.stdout + r.stderr).join(' / ').slice(0, 300)}`);
+  compactCheckpoint(c);
   log(c, key);
   commitTeam(c, `chore(muffy): ${h.role} ${h.step} r${h.round} back`);
 }
@@ -562,15 +602,14 @@ export function review(o, message) {
   const jsonLine = lines(text).filter((l) => l.trim().startsWith('{') && l.includes('"role"')).at(-1);
   const rounds = handoffsOf(c).filter((x) => x.handoff && String(x.handoff.step) === '6').length;
   const round = rounds + 1;
-  if (!jsonLine) throw new Error('the reviewer message has no one-line JSON hand-off block: send it back once');
-  let h;
-  try { h = JSON.parse(jsonLine); } catch (e) { throw new Error(`the reviewer's hand-off line is not JSON: ${e.message}`); }
+  // a message with no valid hand-off line is saved as an invalid hand-off: the loop rules then retry the reviewer once with a fresh
+  // spawn a round later (the lanes are silent: no SendMessage), and escalate the second time
+  let h = {};
+  if (jsonLine) { try { h = JSON.parse(jsonLine); } catch { h = {}; } }
   if (h.verdict) h.verdict = String(h.verdict).replace(/^./, (x) => x.toUpperCase()).toLowerCase().replace(/^./, (x) => x.toUpperCase());
-  h.round = round;
+  h.role = 'code-reviewer'; h.step = '6'; h.round = round;
   writeFileSync(join(c.team, `review-${round}.md`), `${text.trim()}\n`);
-  const errs = validate(handoffSchema, h);
-  if (!errs.length) writeFileSync(join(c.handoffs, `6-code-reviewer-r${round}.json`), JSON.stringify(h));
-  if (errs.length) { out.push('action=retry'); say('role', 'code-reviewer'); errs.forEach((e) => say('error', e)); say('then', 'send the reviewer these errors once; then pipe its new message to review again'); return flush(1); }
+  writeFileSync(join(c.handoffs, `6-code-reviewer-r${round}.json`), JSON.stringify(h));
   return step({ ...o, _: [task] });
 }
 

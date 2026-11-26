@@ -125,6 +125,23 @@ export async function runNextEvals({ check, root }) {
     const back = rv.run(['review', T], rv.reviewMsg('Reject', 1, [{ id: 'B-1', problem: 'no empty-cart test', file: 'test/cart.test.js:1', owner: 'BE' }]));
     check('next: a reviewer Reject spawns the dev again, round 2, with review-1.md to read', back.action === 'spawn' && back.role === 'backend-dev' && back.round === '2' && back.prompt.includes('review-1.md'), back.out.slice(0, 400));
 
+    /* a reviewer message with no hand-off line: a fresh reviewer, a round later, with the errors in a file */
+    const rb = world('reviewbad');
+    rb.run(rb.startArgs); rb.diagnosed(); rb.run(['step', T]); rb.audited(); rb.run(['step', T]); rb.developed(); rb.run(['step', T]);
+    const rb1 = rb.run(['review', T], 'Approved, nothing to add. (no JSON line)');
+    check('next: a reviewer message with no hand-off line starts a fresh code-reviewer, round 2, with the errors to read', rb1.action === 'spawn' && rb1.role === 'code-reviewer' && rb1.round === '2' && /retry-6-code-reviewer-r2\.md/.test(rb1.prompt), rb1.out.slice(0, 400));
+
+    /* a real remote: a full fix run leaves every ref of it as it was */
+    const rr = world('remote');
+    const bare = join(base, 'origin.git').split('\\').join('/');
+    execFileSync('git', ['init', '-q', '--bare', bare]);
+    git(rr.repo, 'remote', 'add', 'origin', bare);
+    git(rr.repo, 'push', '-q', 'origin', 'main');
+    const refsOf = () => execFileSync('git', ['-C', bare, 'for-each-ref', '--format=%(refname) %(objectname)'], { encoding: 'utf8' });
+    const refsBefore = refsOf();
+    rr.run(rr.startArgs); rr.diagnosed(); rr.run(['step', T]); rr.audited(); rr.run(['step', T]); rr.developed(); rr.run(['step', T]); rr.run(['review', T], rr.reviewMsg('Approve'));
+    check('next: a full fix run leaves every ref of a real remote as it was', refsOf() === refsBefore && git(rr.repo, 'rev-parse', 'main') === git(rr.repo, 'rev-parse', 'origin/main'), refsOf());
+
     /* usage errors */
     const missing = spawnSync(process.execPath, [NEXT, 'step', 'no-such-task'], { cwd: rv.repo, env: rv.env, encoding: 'utf8' });
     check('next: a task that never started is a usage error (exit 2)', missing.status === 2 && /run start first/.test(missing.stderr), missing.stderr);

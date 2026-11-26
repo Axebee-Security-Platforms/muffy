@@ -96,12 +96,14 @@ export function flowStart(o) {
   const lane = o.lane;
   if (!LANES.includes(lane)) throw new Error(`--lane is one of fix, ${LANES.join(', ')}`);
   if (!ENABLED.includes(lane)) throw new Error(`the ${lane} lane is not driven by next.mjs yet: follow its reference (${laneSpec(lane, lane === 'change' ? 'internal' : undefined)?.ref ?? 'run-profile.md'})`);
-  const need = ['task', 'request', ...(lane === 'verify' ? ['branch'] : []), ...(lane === 'upgrade' ? ['target'] : []), ...(lane === 'change' ? ['scope'] : [])].filter((k) => !o[k]);
+  // verify diffs `<base>...verify/<task>`: a base left to the current branch is the requester's own branch when they are on it, an empty diff
+  const need = ['task', 'request', ...(lane === 'verify' ? ['branch', 'base'] : []), ...(lane === 'upgrade' ? ['target'] : []), ...(lane === 'change' ? ['scope'] : [])].filter((k) => !o[k]);
   const internal = lane === 'change' && o.scope === 'internal';
   if (internal) for (const k of ['kind', 'owner']) if (!o[k]) need.push(k);
   if (lane === 'upgrade') o.ac = o.ac?.length ? o.ac : ['AC-1 | the app builds and boots on the new version | the project build and boot', 'AC-2 | the existing tests pass | the test gate'];
   if ((internal || lane === 'verify') && !o.ac?.length) need.push('ac');
   if (need.length) throw new Error(`start --lane ${lane} needs ${need.map((k) => `--${k}`).join(', ')}`);
+  if (lane === 'verify' && o.base === o.branch) throw new Error('--base and --branch are the same branch: the diff would be empty (name the branch it was cut from)');
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(o.task)) throw new Error(`--task ${o.task}: lower-case words joined by hyphens`);
   if (lane === 'change' && ![...VISIBLE, 'internal'].includes(o.scope)) throw new Error('--scope is internal, ui-only, ui+logic or logic-only');
   if (o.owner && !['FE', 'BE', 'both'].includes(o.owner)) throw new Error('--owner is FE, BE or both');
@@ -235,6 +237,7 @@ function spawn(x, spec, extra = []) {
 /* ---------- the loop rules, then the pipeline ---------- */
 
 export function flowStep(o) {
+  N.compactCheckpoint(N.locate(o.repo ?? '.', o._[0]));
   const x = ctxOf(o);
   if (/^closed\b/m.test(x.cp.split('## Status')[1] ?? '')) { push('action=done'); say('note', 'the task is already closed'); return flush(0); }
   if (x.lane.until) { push('action=stop'); say('reason', `the lane line has a stop point (until ${x.lane.until}): close it as closing.md says, or drop it with checkpoint.mjs profile`); return flush(1); }
@@ -244,7 +247,10 @@ export function flowStep(o) {
     const a = node('checkpoint.mjs', ['answer', slash(x.c.team)], { cwd: x.c.main });
     if (/next=stop/.test(a.stdout)) return N.stopFromAsk(a.stdout, a.stderr);
     if (a.status === 2) return N.stopFromAsk(a.stdout, a.stderr);
-    const handled = afterAnswer(x, (a.stdout.match(/^answer=(.*)$/m) ?? [])[1] ?? '', a.stdout);
+    // one question: `answer=<label>`; several: `answer.<n>=<header>: <label>` in question order (checkpoint.mjs answer)
+    const numbered = [...a.stdout.matchAll(/^answer\.(\d+)=(.*)$/gm)].sort((p, q) => Number(p[1]) - Number(q[1])).map((m) => m[2].replace(/^[^:]*:\s*/, ''));
+    const answer = numbered.length ? numbered.join(' | ') : (a.stdout.match(/^answer=(.*)$/m) ?? [])[1] ?? '';
+    const handled = afterAnswer(x, answer, a.stdout);
     if (handled !== undefined) return handled;
     return flowStep(o);
   }
@@ -431,7 +437,7 @@ const diagramStep = (x) => {
   }
   return doAction(x, 'publish-diagrams', [
     'run check-diagram.mjs then check-diagram-render.mjs on every file the diagrammer wrote', 'publish each file as its own Artifact (diagram-publish.md), a failing or unpublishable one is skipped: it never blocks',
-  ], `node next.mjs record ${x.task} diagrams "<n> published"   (or "skipped: <why>")`);
+  ], `node next.mjs record ${x.task} diagrams "<n> published"   (none published: "0 published", and the reason in the task note; check-checkpoint.mjs reads only this form)`);
 };
 
 const designReviewStep = (x) => {

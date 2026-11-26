@@ -15,6 +15,7 @@ export async function runNextFlowEvals({ check, root }) {
   const NEXT = join(root, 'skills/muffy/scripts/next.mjs');
   const base = realpathSync(mkdtempSync(join(tmpdir(), 'muffy-flow-')));
   const git = (repo, ...a) => execFileSync('git', ['-C', repo, ...a], { encoding: 'utf8' }).trim();
+  const noisy = [];
   const baseEnv = { ...process.env };
   delete baseEnv.SECOND_BRAIN_VAULT;
   for (const k of Object.keys(baseEnv)) if (k.startsWith('MUFFY_')) delete baseEnv[k];
@@ -28,6 +29,8 @@ export async function runNextFlowEvals({ check, root }) {
     const log = [];
     const run = (args, input) => {
       const r = spawnSync(process.execPath, [NEXT, ...args], { cwd: repo, env, encoding: 'utf8', input });
+      // a bookkeeping script that failed prints `warning=`, and a stop shows its script's `error=` lines: a run that hides one is how phase 1 lost two runs
+      for (const l of r.stdout.split('\n').filter((l) => /^(warning|error)=/.test(l))) noisy.push(`${name} ${args[0]}: ${l.slice(0, 200)}`);
       const spawns = [...r.stdout.matchAll(/^action=spawn\nrole=(\S+)\nstep=(\S+)\nround=(\S+)/gm)].map((m) => `${m[1]}:${m[2]}:r${m[3]}`);
       const action = r.stdout.match(/^action=(\S+)/m)?.[1] ?? null;
       const res = { status: r.status, out: r.stdout, err: r.stderr, action, spawns, prompts: [...r.stdout.matchAll(/---prompt---\n([\s\S]*?)\n---prompt---/g)].map((m) => m[1]), gate: r.stdout.match(/^gate=(\S+)/m)?.[1] };
@@ -395,6 +398,9 @@ export async function runNextFlowEvals({ check, root }) {
     check('flow feature: both devs back: both branches merged into the feature branch, then the reviewer', fMerge.spawns.join() === 'code-reviewer:6:r1' && fw.git('show', `feature/${F}:header.js`).includes('Cart') && fw.git('show', `feature/${F}:cart.js`).includes('reduce'), fMerge.out.slice(0, 300));
     const fHg = fw.run(['review', F], fw.reviewMsg('Approve'));
     const fDocs = fw.run(['answer', F, 'Approve']);
+    // the longest run, just before closing: the checkpoint (a History line and a link per hand-off) still passes its own check
+    const ck = spawnSync(process.execPath, [join(root, 'skills/muffy/scripts/check-checkpoint.mjs'), fw.team], { encoding: 'utf8' });
+    check('flow feature: after about ten hand-offs the checkpoint still passes check-checkpoint (40 lines outside the goal)', ck.status === 0, `${ck.stdout}${ck.stderr}`.slice(0, 400) + ` lines=${readFileSync(`${fw.team}/checkpoint.md`, 'utf8').split('\n').length}`);
     fw.docs();
     const fDone = fw.run(['step', F]);
     check('flow feature: review, test gate, Human gate, docs-writer, closing', fHg.gate === 'human-gate' && fDocs.spawns.join() === 'docs-writer:11:r1' && fDone.action === 'done' && fw.git('rev-parse', 'main') === fw.mainSha, `${fHg.out.slice(0, 100)} | ${fDocs.out.slice(0, 100)} | ${fDone.out.slice(0, 200)}`);
@@ -454,8 +460,88 @@ export async function runNextFlowEvals({ check, root }) {
     fn2.run(fn2.start); fn2.run([...fn2.start, '--approved']); fn2.researcher(); fn2.run(['step', F]); fn2.product(); fn2.run(['step', F]); fn2.run(['answer', F, 'Approve']); fn2.architect(); fn2.run(['step', F]);
     check('flow feature: the same run twice gives the same actions', fn2.log.join(' ') === fn.log.join(' '), `${fn2.log.join(' ')} != ${fn.log.join(' ')}`);
 
-    /* ---------- the lanes that follow are added below ---------- */
-    void mkdirSync;
+    /* ---------- the review's gaps: verify base, the ui-only scope, headless interviews, prohibitions on a real remote ---------- */
+
+    // verify with their branch checked out and no --base would diff the branch against itself: refused, with the reason
+    const vb = verifyWorld('verify-nobase');
+    vb.git('switch', '-q', 'their-fix');
+    const noBase = vb.run(vb.start.filter((a, i, all) => a !== '--base' && all[i - 1] !== '--base'));
+    check('flow verify: no --base is refused (a diff against the branch itself approves nothing) and nothing is written', noBase.status === 2 && /--base/.test(noBase.err) && !existsSync(join(vb.repo, '.worktrees')), noBase.err);
+    const sameBase = vb.run([...vb.start.filter((a, i, all) => a !== '--base' && all[i - 1] !== '--base'), '--base', 'their-fix']);
+    check('flow verify: --base equal to --branch is refused', sameBase.status === 2 && /same/.test(sameBase.err), sameBase.err);
+
+    // ui-only: no plan gate (recorded as skipped), the designer only, the canvas and the design review as `do`, FE only
+    const uo = changeWorld('change-uo', 'ui-only');
+    gitIn(uo);
+    uo.run(uo.start); const uoPm = uo.run([...uo.start, '--approved']);
+    check('flow change (ui-only): the product-manager first; gate 2b is recorded as skipped (the AC are shown at the design gate)', uoPm.spawns.join() === 'product-manager:2:r1' && /gate 2b skipped/.test(readFileSync(`${uo.team}/checkpoint.md`, 'utf8')), uoPm.out.slice(0, 300));
+    uo.pm();
+    const uoD = uo.run(['step', C]);
+    check('flow change (ui-only): with no plan gate the designer alone starts right after the AC', uoD.spawns.join() === 'designer:3:r1', uoD.out.slice(0, 300));
+    writeFileSync(`${uo.team}/design.md`, '# Design\nCanvas: https://claude.ai/design/cart-canvas\n## AC id -> artboard\n| AC | artboard |\n|---|---|\n| AC-1 | cart-phone |\n## Design system changes\nnone\n');
+    uo.ho('3-designer-r1.json', { role: 'designer', step: '3', round: 1, paths_written: [`.team/${C}/design.md`], decisions: [{ id: 'D-1', decision: 'badge', why: 'the AC' }], summary: 'design' });
+    const uoC = uo.run(['step', C]);
+    uo.run(['record', C, 'canvas', 'https://claude.ai/design/cart-canvas']);
+    const uoG = uo.run(['record', C, 'design-review', 'clean']);
+    check('flow change (ui-only): canvas and review are `do`; the design gate shows the AC with the design and no architect ran', uoC.action === 'do' && uoG.gate === 'design-review' && /Acceptance criteria/.test(uoG.out) && !existsSync(`${uo.team}/contract.md`), uoG.out.slice(0, 400));
+    const uoF = uo.run(['answer', C, 'Approve']);
+    check('flow change (ui-only): Approve starts the frontend-dev only', uoF.spawns.join() === 'frontend-dev:4:r1', uoF.out.slice(0, 300));
+    const uu = changeWorld('change-uu', 'ui+logic');
+    gitIn(uu);
+    uu.run(uu.start); uu.run([...uu.start, '--approved']); uu.pm(); uu.run(['step', C]);
+    const uuD = uu.run(['answer', C, 'Approve']);
+    check('flow change (ui+logic): the plan gate applies and the designer and the architect start together', uuD.spawns.slice().sort().join('+') === 'architect:3:r1+designer:3:r1', uuD.out.slice(0, 300));
+
+    // headless interview with two questions: each answer reaches requirements.md (they were once all read as defaults)
+    const hq = changeWorld('change-hq', 'logic-only', { headless: true });
+    gitIn(hq);
+    hq.run(hq.start);
+    hq.status(`- scope answered: go (recommended) | logic-only by eval (test) ${new Date().toISOString()}`);
+    hq.run(['step', C]);
+    hq.ho('2-product-manager-r1.json', { role: 'product-manager', step: '2', round: 1, status: 'needs-input', summary: 'questions', questions: [
+      { id: 'Q-1', question: 'Count units or lines?', why: 'the AC', options: ['units', 'lines'], default: 'units', blocking: true },
+      { id: 'Q-2', question: 'Show zero?', why: 'the header', options: ['show', 'hide'], default: 'show', blocking: true }] });
+    const hqa = hq.run(['step', C]);
+    hq.status(`- question answered: lines | hide by eval (test) ${new Date().toISOString()}`);
+    const hqb = hq.run(['step', C]);
+    const reqs = existsSync(`${hq.team}/requirements.md`) ? readFileSync(`${hq.team}/requirements.md`, 'utf8') : '';
+    check('flow change: a headless interview waits for the person, then both answers (not the defaults) reach requirements.md and the agent starts again', hqa.action === 'stop' && /waiting:question/.test(hqa.out) && hqb.spawns.join() === 'product-manager:2:r2' && /Q-1[^\n]*· lines ·/.test(reqs) && /Q-2[^\n]*· hide ·/.test(reqs), `${hqb.out.slice(0, 200)} / ${reqs}`);
+
+    // a reviewer message with no hand-off line: a fresh reviewer a round later with the errors in a file, then a stop (no `retry` action, no SendMessage)
+    const rb = verifyWorld('verify-rb');
+    rb.run(rb.start); rb.run([...rb.start, '--approved']);
+    const rb1 = rb.run(['review', V], 'Looks fine to me, no JSON line here.');
+    check('flow verify: a reviewer message without a hand-off line starts a fresh reviewer at round 2 with the errors to read', rb1.spawns.join() === 'code-reviewer:6:r2' && /retry-6-code-reviewer-r2\.md/.test(rb1.prompts[0] ?? '') && rb1.action === 'spawn', rb1.out.slice(0, 400));
+    const rb2 = rb.run(['review', V], 'Still no JSON.');
+    check('flow verify: a second message without one escalates', rb2.action === 'stop' && rb2.status === 1, rb2.out.slice(0, 300));
+
+    // the prohibitions on a real remote: a bare origin gets main and their branch, a full run leaves every ref of it as it was
+    const rm = verifyWorld('verify-remote');
+    const bare = slash(join(base, 'origin.git'));
+    execFileSync('git', ['init', '-q', '--bare', bare]);
+    rm.git('remote', 'add', 'origin', bare);
+    rm.git('push', '-q', 'origin', 'main', 'their-fix');
+    const refs = () => execFileSync('git', ['-C', bare, 'for-each-ref', '--format=%(refname) %(objectname)'], { encoding: 'utf8' });
+    const before = refs();
+    rm.run(rm.start); rm.run([...rm.start, '--approved']); rm.run(['review', V], rm.reviewMsg('Approve')); rm.run(['answer', V, 'Approve']);
+    check('flow verify: a full run leaves every ref of a real remote as it was, and the base and their branch where they were', refs() === before && rm.git('rev-parse', 'main') === rm.mainSha && rm.git('rev-parse', 'their-fix') === rm.theirSha && /closed/.test(rm.git('show', `verify/${V}:.team/${V}/checkpoint.md`)), refs());
+    const rc = changeWorld('change-remote', 'internal');
+    gitIn(rc);
+    const bare2 = slash(join(base, 'origin2.git'));
+    execFileSync('git', ['init', '-q', '--bare', bare2]);
+    rc.git('remote', 'add', 'origin', bare2);
+    rc.git('push', '-q', 'origin', 'main');
+    const refs2 = () => execFileSync('git', ['-C', bare2, 'for-each-ref', '--format=%(refname) %(objectname)'], { encoding: 'utf8' });
+    const before2 = refs2();
+    rc.run(rc.start); rc.run([...rc.start, '--approved']); rc.contract(); rc.run(['step', C]); rc.dev(); rc.run(['step', C]); rc.run(['review', C], rc.reviewMsg('Approve')); rc.run(['answer', C, 'Approve']);
+    check('flow change: a full run leaves every ref of a real remote as it was and main unmoved', refs2() === before2 && rc.git('rev-parse', 'main') === rc.mainSha, refs2());
+
+    // the engines never build a git command that pushes, resets, forces, deletes a branch or switches the checked-out branch
+    const src = ['skills/muffy/scripts/next.mjs', 'skills/muffy/scripts/next-flow.mjs'].map((f) => readFileSync(join(root, f), 'utf8')).join('\n');
+    const bad = [...src.matchAll(/\b(?:git|gitOk)\([^)]*\)/g)].map((m) => m[0]).filter((c) => /'(push|reset|checkout|switch|rebase|clean|restore|stash)'|'--force'|'-f'|'-D'|'--hard'/.test(c));
+    check('next: no git command in next.mjs or next-flow.mjs pushes, resets, forces, deletes a branch or switches branches', bad.length === 0, bad.join(' | '));
+
+    check('flow: no step of any world printed a warning= or error= line (except the refused-input checks above)', noisy.filter((n) => !/verify-nobase/.test(n)).length === 0, noisy.slice(0, 6).join(' | '));
   } finally {
     try { rmSync(base, { recursive: true, force: true, maxRetries: 3 }); } catch { /* Windows may still hold a worktree for a moment; the OS cleans the temp folder */ }
   }
