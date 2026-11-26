@@ -33,6 +33,7 @@ import { simulate, triage, baselineAction, FIX_MAX_FILES } from './next-action.m
 import { planCard, parseRunProfile, STEP_ORDER } from './lanes.mjs';
 import { headlessOf } from './headless.mjs';
 import { mainCheckout } from './sync-worktree.mjs';
+import { flowStart, flowStep, flowAnswer, flowRecord } from './next-flow.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SCHEMAS = join(here, '..', 'schemas');
@@ -45,7 +46,7 @@ const read = (p, d = '') => { try { return readFileSync(p, 'utf8').replace(/\r\n
 /* ---------- arguments ---------- */
 
 export function parseArgs(argv, multi = ['ac']) {
-  const BOOL = new Set(['approved', 'line-known', 'dry-run']);
+  const BOOL = new Set(['approved', 'line-known', 'dry-run', 'lost']);
   const o = { _: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -118,7 +119,7 @@ function sayPrompt(prompt) { out.push('---prompt---', prompt.trimEnd(), '---prom
 // Builds the prompt with make-envelope.mjs and tells the Orchestrator to spawn. `spec` = { role, step, round, goal, doneWhen, read, write, dontTouch, worktree, branch, lineKnown }
 function spawnAction(c, spec, extra = []) {
   const flags = ['--role', spec.role, '--step', spec.step, '--round', String(spec.round), '--task', spec.task, '--brain', brainArg(c),
-    '--profile', 'fix', '--goal', spec.goal, '--done-when', spec.doneWhen, '--read', spec.read.join(','), '--write', spec.write.join(','), '--dont-touch', spec.dontTouch.join(','), ...extra];
+    ...(spec.header ?? ['--profile', 'fix']), '--goal', spec.goal, '--done-when', spec.doneWhen, '--read', spec.read.join(','), '--write', spec.write.join(','), '--dont-touch', spec.dontTouch.join(','), ...extra];
   if (spec.worktree) flags.push('--worktree', slash(spec.worktree), '--branch', spec.branch);
   if (spec.round > 1) flags.push('--checkpoint', `${slash(c.team)}/checkpoint.md`);
   if (spec.lineKnown) flags.push('--line-known');
@@ -203,6 +204,7 @@ function questionsFor(o, plan) {
 }
 
 export function start(o) {
+  if (o.lane && o.lane !== 'fix') return flowStart(o);
   const need = ['task', 'scope', 'owner', 'request', 'symptom'].filter((k) => !o[k]);
   if (need.length || !o.ac?.length) throw new Error(`start needs ${[...need.map((k) => `--${k}`), ...(o.ac?.length ? [] : ['--ac'])].join(', ')}`);
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(o.task)) throw new Error(`--task ${o.task}: lower-case words joined by hyphens`);
@@ -308,7 +310,7 @@ export function step(o) {
   if (!existsSync(join(c.team, 'checkpoint.md'))) throw new Error(`no task ${task} at ${c.team}: run start first`);
   const cp = read(join(c.team, 'checkpoint.md'));
   const lane = parseRunProfile(cp);
-  if (lane.lane !== 'fix') throw new Error(`task ${task} is on the ${lane.lane} lane: this script drives the fix lane only`);
+  if (lane.lane !== 'fix') return flowStep(o);
   const hs = handoffsOf(c);
   const base = statusLine(c, 'base') ?? 'main';
   const owner = statusLine(c, 'owner') ?? 'BE';
@@ -597,6 +599,7 @@ export function answer(o) {
   const task = o._[0];
   const label = String(o._[1] ?? '').trim();
   const c = locate(o.repo ?? '.', task);
+  if (parseRunProfile(read(join(c.team, 'checkpoint.md'))).lane !== 'fix') return flowAnswer(o);
   const cp = read(join(c.team, 'checkpoint.md'));
   const gate = cp.match(/paused at pause:([a-z-]+)/)?.[1];
   const base = statusLine(c, 'base') ?? 'main';
@@ -620,14 +623,21 @@ export function answer(o) {
 
 /* ---------- closing ---------- */
 
-function closeTask(c, { task, base, W, gateText, facts, docs }) {
+// the newest diff the reviewer saw: after a reviewer Reject the final diff is `diff-<latest round>`, never `diff-1`
+export function latestDiff(c) {
+  const rounds = existsSync(c.team) ? readdirSync(c.team).map((f) => f.match(/^diff-(\d+)\.patch$/)?.[1]).filter(Boolean).map(Number) : [];
+  return `${slash(c.team)}/diff-${rounds.length ? Math.max(...rounds) : 1}.patch`;
+}
+
+// `lane`: what the closing note says about the work (the fix lane names the cause); `branch`: the branch the user takes (verify: the copy)
+export function closeTask(c, { task, base, W, gateText, facts, docs, branch = `feature/${task}`, lane = 'fix' }) {
   node('remove-worktrees.mjs', [task, '--stage', 'roles', '--cwd', slash(c.main)], { cwd: c.main });
   if (!docs) {
     const sf = node('small-fix.mjs', [slash(c.team), '--base', base], { cwd: c.main });
     if (/next=spawn-docs-writer/.test(sf.stdout)) {
       const T = slash(c.team);
       spawnAction(c, { role: 'docs-writer', step: '11', round: 1, task, goal: 'Write the release notes and any doc the fix made wrong, with a Deploy hand-off.', doneWhen: 'release-notes.md exists and the hand-off validates',
-        read: [`${T}/fix.md`, `${T}/diff-1.patch`, `${T}/qa-report.md`], write: [`${T}/release-notes.md`], dontTouch: ['source files', 'tests'], worktree: c.feature, branch: `feature/${task}` }, ['--human-approved', new Date().toISOString().slice(0, 10)]);
+        read: [`${T}/fix.md`, latestDiff(c), `${T}/qa-report.md`], write: [`${T}/release-notes.md`], dontTouch: ['source files', 'tests'], worktree: c.feature, branch }, ['--human-approved', new Date().toISOString().slice(0, 10)]);
       say('note', sf.stdout.trim().split('\n').join(' ; '));
       return flush(0);
     }
@@ -638,18 +648,18 @@ function closeTask(c, { task, base, W, gateText, facts, docs }) {
   const notes = read(join(c.team, 'release-notes.md'));
   const commit = git(c.feature, 'rev-parse', '--short', 'HEAD');
   const fix = read(join(c.team, 'fix.md'));
-  const cause = fix.match(/## Cause\n([\s\S]*?)\n## /)?.[1].trim() ?? '';
+  const cause = lane === 'fix' ? fix.match(/## Cause\n([\s\S]*?)\n## /)?.[1].trim() ?? '' : '';
   const notePath = join(c.brain, 'tasks', `${task}.md`);
-  writeFileSync(notePath, `---\nproject: ${basename(c.main)}\ntask: ${task}\ndate: ${date}\nstatus: done\n---\n# ${task}\n\nBranch feature/${task} at ${commit}, accepted at the Human gate. Cause: ${cause}\n\n## Lessons\n- none recorded: fewer than 3 spawns of any one agent and model\n\n## Open issues\n- none\n\n## Usage\n${usage}\n\n## Spawns\n${sp.map((l) => `- ${l.split('\t').join(' · ')}`).join('\n')}\n`);
+  writeFileSync(notePath, `---\nproject: ${basename(c.main)}\ntask: ${task}\ndate: ${date}\nstatus: done\n---\n# ${task}\n\nBranch ${branch} at ${commit}, accepted at the Human gate.${cause ? ` Cause: ${cause}` : ''}\n\n## Lessons\n- none recorded: fewer than 3 spawns of any one agent and model\n\n## Open issues\n- none\n\n## Usage\n${usage}\n\n## Spawns\n${sp.map((l) => `- ${l.split('\t').join(' · ')}`).join('\n')}\n`);
   const proj = join(c.brain, 'project.md');
-  writeFileSync(proj, read(proj).replace(new RegExp(`^- ${task}:.*$`, 'm'), `- ${task}: done · fixed on feature/${task} [[tasks/${task}]]`));
+  writeFileSync(proj, read(proj).replace(new RegExp(`^- ${task}:.*$`, 'm'), `- ${task}: done · ${lane} on ${branch} [[tasks/${task}]]`));
   const cpPath = join(c.team, 'checkpoint.md');
   writeFileSync(cpPath, read(cpPath).replace(/^(## Status\n)[\s\S]*?(?=\n## )/m, `$1closed\n`).replace(/^Updated:.*$/m, 'Updated: step 12 · closed'));
   commitTeam(c, `docs(fix): close ${task}`);
   const rm = node('remove-worktrees.mjs', [task, '--stage', 'all', '--cwd', slash(c.main)], { cwd: c.main });
   const chk = node('remove-worktrees.mjs', [task, '--stage', 'all', '--check', '--cwd', slash(c.main)], { cwd: c.main });
   out.push('action=done');
-  say('task', task); say('branch', `feature/${task}`); say('commit', commit); say('base', base);
+  say('task', task); say('branch', branch); say('commit', commit); say('base', base);
   for (const l of lines(usage)) say('usage', l);
   for (const l of [...lines(rm.stdout), ...lines(chk.stdout)].filter((x) => /kept=|unmerged:|remaining=/.test(x))) say('worktrees', l);
   if (gateText) say('gate-summary', gateText.split('\n').join(' ; '));
@@ -669,12 +679,16 @@ function main() {
     if (cmd === 'step') process.exit(step(o));
     if (cmd === 'review') process.exit(review(o, readFileSync(0, 'utf8')));
     if (cmd === 'answer') process.exit(answer(o));
-    console.error('usage: next.mjs start|step|review|answer ... (see the header of this file)');
+    if (cmd === 'record') process.exit(flowRecord(o));
+    console.error('usage: next.mjs start|step|review|answer|record ... (see the header of this file)');
     process.exit(2);
   } catch (e) {
     console.error(`next: ${e.message}`);
     process.exit(2);
   }
 }
+
+// what the other lanes' engine (next-flow.mjs) shares with the fix lane
+export { out, say, flush, spawnAction, commitTeam, stopFromAsk, consumeHandoff, issued, log, read, git, gitOk, node, lines, slash, trailerOf, statusLine, DEV, SIDE, oneLine };
 
 if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) main();
