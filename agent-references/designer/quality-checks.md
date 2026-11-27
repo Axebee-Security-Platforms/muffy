@@ -12,6 +12,7 @@ At step 3 (first round, parallel with architect) the canvas source is ready to p
 - [ ] On-screen text is final copy (FE can copy it verbatim)
 - [ ] Works at the sizes the platform needs, per `<muffy>/references/platforms.md#routing`: web, phone width (no horizontal scroll); mobile, the phone frame; desktop, the window's min and default sizes
 - [ ] Every value on the canvas comes from `tokens.css`; no raw hex/px outside it (native targets: the same tokens, named so the stack's theme layer can bind them)
+- [ ] `## Component inventory` is at the top of `design.md` and matches the canvas: every row is drawn with every state it lists, and no component on the canvas lacks a row
 - [ ] Every component used is documented in `docs/design-system/README.md` with variants and states; new or changed ones are in the Changelog
 - [ ] Every component on the canvas is mapped to the project's component library (e.g. shadcn/ui Button, shadcn/ui Input); no custom base components; a component the library lacks is added to `docs/design-system/` first (with a Changelog entry), never a one-off
 - [ ] Semantic color pairs meet contrast in both light and dark (`A11Y-1`)
@@ -19,6 +20,9 @@ At step 3 (first round, parallel with architect) the canvas source is ready to p
 - [ ] Persona and journey map exist; every journey drop-off risk has a designed state or message
 - [ ] Every button, error, empty state and helper text is final copy (verb + object buttons, actionable errors, consistent terminology)
 - [ ] Interaction spec covers every interactive element (trigger, feedback, timing, keyboard, reduced motion)
+- [ ] `check-design.mjs` prints `ok`: no layout-animating transition, every duration and easing a token, a reduced-motion block, glass only from tokens with a reduced-transparency fallback, safe areas reserved, hover behind `(hover: hover)`, intrinsic layout, no raw hex, every inventory component on a canvas
+- [ ] Adaptive: the compact, medium and expanded layouts are each drawn or specified, and navigation changes pattern between them (`LAYOUT-11`, `LAYOUT-12`)
+- [ ] Glass, only when the design system chooses it: `GLASS-1` and `GLASS-4` hold (floating functional layer only, contrast over the worst content under it)
 - [ ] Heuristic evaluation done; no open violation with severity ≥3
 - [ ] A11y audit (WCAG 2.2 AA) passed: keyboard path, focus order, accessible names, target size, contrast
 - [ ] Icons and illustrations are optimized SVG with `viewBox`, metadata stripped, alt text or `aria-hidden` set
@@ -34,7 +38,7 @@ Check in tier order. Start each `quality_checks.failed[]` entry with the rule id
 - [ ] P2 Touch: target size and the 8 px gap (`TOUCH-1`, `TOUCH-2`), press/loading/disabled states (`TOUCH-3`), no gesture-only action (`TOUCH-5`)
 - [ ] P3 Performance: reserved space for async content, skeleton for waits over ~1 s, no layout shift on state change (`PERF-1` to `PERF-3`)
 - [ ] P4 Style and icons: one icon family and stroke, no emoji icons, one primary action per screen (`STYLE-2` to `STYLE-4`)
-- [ ] P5 Layout: 375 px has no horizontal scroll, the spacing scale is followed, fixed bars hide no content (`LAYOUT-2`, `LAYOUT-3`, `LAYOUT-6`)
+- [ ] P5 Layout: 375 px has no horizontal scroll, the spacing scale is followed, fixed bars hide no content and reserve safe areas (`LAYOUT-2`, `LAYOUT-3`, `LAYOUT-6`, `LAYOUT-9`)
 - [ ] P9 Navigation: back restores state, current location is marked, navigation is in the same place on every page (`NAV-1`, `NAV-2`, `NAV-4`)
 
 **Record** (MEDIUM: a failure is written in `design.md` as rule id, what differs, why; it does not block)

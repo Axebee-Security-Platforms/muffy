@@ -40,7 +40,7 @@ Results from `style` and `reasoning` carry a `Provenance` line (status, verifica
 | 4 | Style selection and icons (`STYLE`) | HIGH | Block: `not-ready` |
 | 5 | Layout and responsive (`LAYOUT`) | HIGH | Block: `not-ready` |
 | 6 | Typography and color (`TYPE`) | MEDIUM | Record in `design.md` with the reason |
-| 7 | Motion (`MOTION`) | MEDIUM | Record in `design.md` with the reason |
+| 7 | Motion (`MOTION`) | MEDIUM | Record in `design.md` with the reason. A rule tagged `[scripted]` is checked by `check-design.mjs`: a line it prints is not-ready whatever the tier |
 | 8 | Forms and feedback (`FORM`) | MEDIUM | Record in `design.md` with the reason |
 | 9 | Navigation (`NAV`) | HIGH | Block: `not-ready` |
 | 10 | Charts and data (`CHART`) | LOW | Suggestion only; load this section only when the task has a chart |
@@ -101,6 +101,17 @@ Must
 
 Avoid: mixing flat and skeuomorphic, random shadow values, raster icons.
 
+#### Liquid glass (optional style, off by default)
+A translucent, blurred, light-refracting material (Apple's Liquid Glass, Material's glass-like surfaces). It is a style choice recorded in the design system's `Style:` line, never a default and never added "to look modern". When used:
+- `GLASS-1` Glass is for the functional layer that floats above content (navigation bars, toolbars, tab bars, sheets, floating controls, menus), never for the content itself, cards in a list, or text bodies. One glass layer deep: no glass on glass
+- `GLASS-2` [scripted] Blur, tint and border come from tokens (`--glass-blur`, `--glass-tint`, `--glass-border`, plus a highlight or shadow token if used); `backdrop-filter` takes `var(--glass-blur)`, never a raw px value
+- `GLASS-3` [scripted] A `prefers-reduced-transparency` (or `prefers-contrast`) fallback turns glass into an opaque surface token; no `backdrop-filter` support falls back to it too (`@supports not (backdrop-filter: blur(1px))`)
+- `GLASS-4` Text and icons on glass meet contrast over the worst content that can scroll under it, in light and dark (`A11Y-1`); raise the tint until they do, never dim the content for it
+- `GLASS-5` [scripted] `design.md` has a `## Glass` section: each glass surface, what scrolls under it, and why that layer should float. A platform that already provides the material (SwiftUI, Material) uses its own, and the design names it instead of drawing a lookalike
+- `GLASS-6` Glass shapes follow the radius tokens; edges and highlights stay subtle, and glass is never the only signal of elevation or state
+
+When glass is not in the `Style:` line, the anti-slop ban on glassmorphism without reason stands.
+
 ### P5 Layout and responsive (HIGH)
 Must
 - `LAYOUT-1` Design mobile first, then tablet and desktop, at systematic breakpoints (e.g. 375 / 768 / 1024 / 1440)
@@ -109,17 +120,25 @@ Must
 - `LAYOUT-4` Body text line length 35 to 60 characters on mobile, 60 to 75 on desktop
 - `LAYOUT-5` Visual hierarchy comes from size, spacing and contrast, not color alone; core content comes first on mobile
 - `LAYOUT-6` Fixed headers and bars reserve space so scrolling content is never hidden behind them
-- `LAYOUT-7` Layers use a defined z-index scale; no nested scroll regions that fight the page scroll
+- `LAYOUT-7` [scripted, see below] Layers use a defined z-index scale; no nested scroll regions that fight the page scroll
 - `LAYOUT-8` Long labels and user content wrap before they truncate; truncation shows full text on demand
 
-Avoid: fixed pixel container widths, edge-to-edge paragraphs on wide screens.
+Adaptive first: the layout adapts to the space and the input it gets, not to a list of device widths. Design the compact, medium and expanded window classes (below about 600 / 600 to 840 / above 840 dp or css px; on a phone, the 375 frame is compact) as three layouts of the same content, and specify what each component does when its own container resizes.
+- `LAYOUT-9` [scripted] Fixed and sticky bars, sheets and tab bars reserve `env(safe-area-inset-*)`; nothing sits under a notch, home indicator, rounded corner or foldable hinge
+- `LAYOUT-10` [scripted] Hover effects exist only for pointers (`@media (hover: hover)`); every hover-revealed action also has a touch and a keyboard path. Targets grow for coarse pointers (`@media (pointer: coarse)`, `TOUCH-1`)
+- `LAYOUT-11` Components adapt to their container (container queries, `minmax()`, `auto-fit`, `clamp()`), so one card works in a sidebar, a grid cell or a full-width slot. Navigation changes pattern by window class (bottom bar, rail, sidebar), not just size
+- `LAYOUT-12` Orientation, split view and text scaling to 200% each have their own check; one pane's content never depends on the other pane being visible
+
+`LAYOUT-7` is scripted too: no fixed container width of 480 px or more, and the canvas uses at least one intrinsic technique (`@container`, `minmax()`, `auto-fit`, `clamp()`, `flex-wrap`), not only screen breakpoints.
+
+Avoid: fixed pixel container widths, edge-to-edge paragraphs on wide screens, a desktop layout that is only the phone layout stretched.
 
 ### P6 Typography and color (MEDIUM)
 Must
 - `TYPE-1` Body text at least 16 px (12 px is the floor for captions); line height 1.5 to 1.75 for body
 - `TYPE-2` One type scale with set weights per step; weight carries hierarchy (headings 600 to 700, body 400, labels 500)
 - `TYPE-3` Numbers in columns, prices and timers use tabular figures
-- `TYPE-4` Semantic color tokens only; dark mode is a designed tonal variant (lighter, desaturated), not an inversion
+- `TYPE-4` [scripted] Semantic color tokens only (no raw hex in the canvas CSS); dark mode is a designed tonal variant (lighter, desaturated), not an inversion
 - `TYPE-5` Functional color (error, success) has one meaning and comes with an icon or text
 - `TYPE-6` Short headings wrap in balanced lines; URLs and IDs wrap instead of overflowing
 
@@ -128,12 +147,15 @@ Avoid: raw hex in components, tight tracking on body text, more than three typef
 ### P7 Motion (MEDIUM)
 Must
 - `MOTION-1` Every animation shows cause and effect (state change, hierarchy, continuity); none is decoration
-- `MOTION-2` Durations and easing come from shared tokens; exit is shorter than enter (about 60 to 70%)
-- `MOTION-3` Animate transform and opacity only; never width, height, top or left
+- `MOTION-2` [scripted] Durations and easing come from shared tokens (`var(--duration-*)`, `var(--ease-*)`); exit is shorter than enter (about 60 to 70%)
+- `MOTION-3` [scripted] Animate transform and opacity only; never width, height, top, left, margin, padding or `all`
 - `MOTION-4` Animations are interruptible and never block input
 - `MOTION-5` At most 1 to 2 animated elements per view; list entrances stagger 30 to 50 ms per item
 - `MOTION-6` Modals and sheets animate from their trigger; navigation direction matches hierarchy (forward in, back out)
-- `MOTION-7` Every motion has a reduced-motion alternative, and data is readable without the animation
+- `MOTION-7` [scripted] Every motion has a reduced-motion alternative (`@media (prefers-reduced-motion)`), and data is readable without the animation
+- `MOTION-8` Motion tokens are named by role, not number: durations `--duration-instant` (feedback), `--duration-fast` (small changes), `--duration-base` (transitions), `--duration-slow` (page or sheet); easings `--ease-out` (enter), `--ease-in` (exit), `--ease-standard` (move), and `--ease-spring` only where physical feel matters (drag release, sheets, toggles). Reduced motion swaps spring and movement for a fade at `--duration-fast`
+- `MOTION-9` Continuity: an element that changes place or size between states (list to detail, collapsed to expanded, glass bar to sheet) animates as the same element (shared-element or morph), so the eye follows it; name the pair in the interaction spec
+- `MOTION-10` Every press answers within 100 ms, anything over 300 ms is a transition the user can watch progress through, and nothing over 500 ms blocks input
 
 Avoid: one duration for every transition, fade-and-slide on every section, hover lift on every card.
 

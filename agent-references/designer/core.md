@@ -44,7 +44,9 @@ The design system is the single source of truth for every task. Consistency beat
   - Spacing: 4px base scale (4, 8, 12, 16, 20, 24, 32, 40, 48); layout gaps and padding pick from it
   - Radius: a small set (e.g. sm 8 / md 12 / full 999) with a rule for which components use which
   - Elevation: at most 2-3 shadow levels; prefer borders/surface color over shadows
-  - Motion: 1-2 durations + one easing; respect `prefers-reduced-motion`
+  - Motion: tokens named by role (`MOTION-8`): `--duration-instant/-fast/-base/-slow`, `--ease-out/-in/-standard` (+ `--ease-spring` when used); respect `prefers-reduced-motion`
+  - Glass, only when the `Style:` line chooses liquid glass (`GLASS-1` to `GLASS-6`): `--glass-blur`, `--glass-tint`, `--glass-border` and an opaque fallback surface
+  - Layout: the window classes (compact / medium / expanded) and safe-area insets are named in the README; components size to their container (`LAYOUT-9` to `LAYOUT-12`)
 - **Components are defined once and reused**: each component has a documented anatomy, variants (e.g. button: primary / secondary / ghost / danger), sizes, and all interactive states (default, hover, focus-visible, active, disabled, loading). The same job always uses the same component, never two different-looking buttons for the same action level
 - **One primary action per view**; the hierarchy primary → secondary → ghost is consistent across screens
 - **Consistent patterns**: the same state looks the same everywhere: one pattern each for loading (skeleton or spinner, pick one), empty, inline field error, page-level error, and success feedback
@@ -53,7 +55,7 @@ The design system is the single source of truth for every task. Consistency beat
 - **Don't break existing screens**: changing an existing token or component is a breaking change: list the affected screens in `design.md` so the Orchestrator can route the follow-up to FE
 
 ### Anti-slop
-- No AI tropes: gradient wash, cards with a colored left border, emoji as icons, Inter/Roboto/Arial fonts, purple-blue gradients, glassmorphism without reason
+- No AI tropes: gradient wash, cards with a colored left border, emoji as icons, Inter/Roboto/Arial fonts, purple-blue gradients, glassmorphism without reason (liquid glass is allowed only when the design system's `Style:` line chooses it and `GLASS-1` to `GLASS-6` hold)
 - The overall look is defined once in the design system (1-3 typefaces, 1 background color, 0-2 accent colors) and every task follows it
 - No lorem ipsum, invented numbers/stats/reviews/logos; for data that doesn't exist yet, use clearly visible placeholders
 - On-screen text: only what users need to read, short and direct, no filler ("seamless", "powerful", "Welcome to…"), no design-rationale text inside artboards
@@ -66,4 +68,4 @@ The design system is the single source of truth for every task. Consistency beat
 - Write a separate HTML mockup outside the canvas as the primary deliverable (duplicates Claude Design)
 - Guess or write elsewhere if the prompt has no `<brain>` path or the folder can't be found: say so in your final message so the Orchestrator asks the user
 - Second brain writes: only `<brain>/agents/designer/<task>.md`, append-only (a new dated section per round, never rewrite earlier ones); never edit `tasks/`, `project.md` or other agents' folders
-- **Bash is for checks and rule lookup only.** You may run `node "<muffy>/scripts/validate-handoff.mjs"`, `check-artifacts.mjs`, `check-checkpoint.mjs` and `check-presentation.mjs` (a present-mode deck), `ux-search.mjs` (see [ux-ui-rules.md](ux-ui-rules.md#lookup), one plain command, no pipes), and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files
+- **Bash is for checks and rule lookup only.** You may run `node "<muffy>/scripts/validate-handoff.mjs"`, `check-artifacts.mjs`, `check-checkpoint.mjs`, `check-design.mjs <.team/task>` (the scripted adaptive, glass and motion rules: run it before every hand-off and fix every line it prints) and `check-presentation.mjs` (a present-mode deck), `ux-search.mjs` (see [ux-ui-rules.md](ux-ui-rules.md#lookup), one plain command, no pipes), and read-only `git status` / `git diff` / `git log`. Never commit, stage, install, run the app or its tests, or write files through the shell; the Orchestrator commits your files

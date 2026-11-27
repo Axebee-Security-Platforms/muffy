@@ -5,6 +5,7 @@
 //   gates       no hand-off past an open human gate (2b, 3c; gate-rules.mjs), gated lanes only (feature, redesign)
 //   checkpoint  check-checkpoint.mjs
 //   artifacts   check-artifacts.mjs (sizes, links, traceability brief → AC → contract → qa-report)
+//   design      check-design.mjs (adaptive, glass and motion rules of the canvas; nothing when there is no canvas)
 //   brain       each role of this step wrote <brain>/agents/<role>/<task>.md          (with --brain)
 //   runtime     the runtime in qa-report.md matches the deploy.md pin                  (when both exist)
 //   fix lane    from step 4 on: the 4a diagnosis is `known`, fix.md has ## Cause and ## Repro   (fix lane)
@@ -26,6 +27,7 @@ import { validate } from './schema.mjs';
 import { simulate, GATED_STEPS } from './next-action.mjs';
 import { checkTask as checkCheckpoint } from './check-checkpoint.mjs';
 import { checkTask as checkArtifacts } from './check-artifacts.mjs';
+import { checkTask as checkDesign } from './check-design.mjs';
 import { classify, laneVerdict, smokeOnRecord } from './diff-signals.mjs';
 import { parseOwnership } from './ownership.mjs';
 import { gateErrors, gateState } from './gate-rules.mjs';
@@ -99,6 +101,7 @@ export function checkAll(taskDir, { step, round, profile: given, skip = [], brai
 
   add('checkpoint', checkCheckpoint(taskDir));
   add('artifacts', checkArtifacts(taskDir));
+  add('design', checkDesign(taskDir));
 
   if (brain) add('brain', [...new Set(mine.map((h) => h.role))].filter((r) => !existsSync(join(brain, 'agents', r, `${task}.md`))).map((r) => `missing ${brain}/agents/${r}/${task}.md`));
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.1.1 — 2026-11-27
+
+### Added
+
+- **Designer: component inventory.** Step 2c lists every component, its library source, states and AC ids at the top of `design.md` before any wireframe; the finished canvas is checked against it.
+- **Designer: adaptive-first layout** (`LAYOUT-9` to `LAYOUT-12`): compact / medium / expanded window classes, container-based components, safe areas, hover only for pointers.
+- **Designer: optional liquid glass** (`GLASS-1` to `GLASS-6`): off unless the design system's `Style:` line chooses it; token-driven, reduced-transparency fallback, floating functional layer only.
+- **Designer: motion tokens by role and continuity** (`MOTION-8` to `MOTION-10`).
+- **`check-design.mjs`** checks the canvas deterministically for the rules tagged `[scripted]` (motion tokens, layout-only animation, reduced motion, glass tokens and fallback, safe areas, hover guard, intrinsic layout, raw hex, inventory match). It runs inside `check-all.mjs` and is on the designer's Bash allowlist.
+
 ## v2.1.0 — 2026-11-27
 
 ### Fixed

@@ -12,7 +12,7 @@ import { guardOff } from './plugin-gate.mjs';
 if (guardOff()) process.exit(0); // plugin install without MUFFY_GUARD=1: the project did not opt in
 
 const GUARDED = new Set(['architect', 'designer', 'diagrammer', 'product-manager', 'docs-writer', 'researcher']);
-const CHECKS = new Set(['validate-handoff', 'check-artifacts', 'check-checkpoint', 'check-diagram', 'check-diagram-render', 'check-stack-notes', 'check-presentation']);
+const CHECKS = new Set(['validate-handoff', 'check-artifacts', 'check-checkpoint', 'check-diagram', 'check-diagram-render', 'check-stack-notes', 'check-presentation', 'check-design']);
 // `node <script> <args>`: the script path bare or in quotes. Allowed paths: the relative forms (`.claude/skills/muffy/scripts/`
 // in a copied install, `skills/muffy/scripts/` in this repo), or this guard's own folder written out in full (the plugin
 // install, where `<muffy>` is an absolute path). Any other folder is refused, so a look-alike script written elsewhere never runs.
@@ -39,7 +39,7 @@ const TRAVERSAL = /(^|[\\/\s])\.\.([\\/\s]|$)/;
 
 const block = (why) => {
   console.error(
-    `[muffy] blocked: ${why}. Bash is for checks only: node "<muffy>/scripts/{validate-handoff,check-artifacts,check-checkpoint,check-diagram,check-diagram-render,diagram-import (no --html),check-stack-notes,check-presentation}.mjs" <args> (<muffy> exactly as your definition gives it) and read-only git status/diff/log/show, one command at a time (references/hooks-enforcement.md §9). The designer may also run ux-search.mjs.`,
+    `[muffy] blocked: ${why}. Bash is for checks only: node "<muffy>/scripts/{validate-handoff,check-artifacts,check-checkpoint,check-diagram,check-diagram-render,diagram-import (no --html),check-stack-notes,check-presentation,check-design}.mjs" <args> (<muffy> exactly as your definition gives it) and read-only git status/diff/log/show, one command at a time (references/hooks-enforcement.md §9). The designer may also run ux-search.mjs.`,
   );
   process.exit(2);
 };
