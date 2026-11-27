@@ -24,7 +24,7 @@
 //   onboard    the baseline needs onboarding first: depth, then run start again
 //   done       the task is closed: final-message facts
 // Exit 0 = an action to take, 1 = stop, 2 = usage or input error.
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, appendFileSync, rmSync, renameSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync, appendFileSync, rmSync, renameSync } from 'node:fs';
 import { join, dirname, resolve, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync, execFileSync } from 'node:child_process';
@@ -92,7 +92,25 @@ const agentName = (role) => (isPlugin() ? `muffy:${role}` : role);
 // every hand-off of the task, in the order check-all.mjs reads them: by round, then step order (a fix round comes after the review that sent it)
 // the file name carries step and round (`<step>-<role>-r<n>.json`), so a hand-off that is invalid, or has no round, still has its place in the order
 const keyOf = (x) => Number(x.name.match(/-r(\d+)\.json$/)?.[1] ?? x.handoff?.round ?? 0);
+// a dev sometimes writes its hand-off under its own worktree (`.worktrees/fe-<task>/.team/<task>/handoff/`) instead of the feature
+// worktree the envelope names: adopt any such file the feature worktree lacks, so the step does not wait on work that is done
+function adoptStrayHandoffs(c) {
+  const task = basename(c.team);
+  const wtRoot = join(c.main, '.worktrees');
+  if (!existsSync(wtRoot) || !existsSync(c.handoffs)) return;
+  for (const d of readdirSync(wtRoot)) {
+    const dir = join(wtRoot, d);
+    if (resolve(dir) === resolve(c.feature) || !d.endsWith(`-${task}`)) continue;
+    const src = join(dir, '.team', task, 'handoff');
+    if (!existsSync(src)) continue;
+    for (const f of readdirSync(src).filter((n) => n.endsWith('.json'))) {
+      if (!existsSync(join(c.handoffs, f)) && !existsSync(join(c.handoffs, `${f}.env`))) copyFileSync(join(src, f), join(c.handoffs, f));
+    }
+  }
+}
+
 export function handoffsOf(c) {
+  adoptStrayHandoffs(c);
   if (!existsSync(c.handoffs)) return [];
   return readdirSync(c.handoffs).filter((f) => f.endsWith('.json')).map((f) => {
     const file = join(c.handoffs, f);
@@ -657,7 +675,13 @@ export function review(o, message) {
   if (jsonLine) { try { h = JSON.parse(jsonLine); } catch { h = {}; } }
   if (h.verdict) h.verdict = String(h.verdict).replace(/^./, (x) => x.toUpperCase()).toLowerCase().replace(/^./, (x) => x.toUpperCase());
   h.role = 'code-reviewer'; h.step = '6'; h.round = round;
-  writeFileSync(join(c.team, `review-${round}.md`), `${text.trim()}\n`);
+  // the reviewer has no Write tool: its full review comes back as <<<FILE path>>> blocks (deferred_writes). Write the review block;
+  // never overwrite a review file that already holds content with the bare hand-off message.
+  const reviewFile = join(c.team, `review-${round}.md`);
+  const blocks = [...text.matchAll(/<<<FILE\s+([^>\n]+?)\s*>>>\n([\s\S]*?)\n?<<<END(?:\s+FILE)?>>>/g)];
+  const body = blocks.find((m) => /review-\d+\.md$/.test(m[1].replace(/\\/g, '/')))?.[2];
+  if (body !== undefined) writeFileSync(reviewFile, `${body.trim()}\n`);
+  else if (!existsSync(reviewFile) || !readFileSync(reviewFile, 'utf8').trim()) writeFileSync(reviewFile, `${text.trim()}\n`);
   writeFileSync(join(c.handoffs, `6-code-reviewer-r${round}.json`), JSON.stringify(h));
   return step({ ...o, _: [task] });
 }

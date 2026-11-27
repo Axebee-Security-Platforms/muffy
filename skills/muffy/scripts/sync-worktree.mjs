@@ -10,7 +10,7 @@
 // The main checkout is the first entry of `git worktree list`. Files only the worktree has are left alone.
 // A plugin install has no .claude/skills/muffy/ in the repo: the script prints `nothing to sync` and exits 0.
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, symlinkSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
 const SKILL = join('.claude', 'skills', 'muffy');
@@ -46,6 +46,22 @@ export function syncWorktree(worktree, { check = false } = {}) {
   return changed;
 }
 
+// A worktree has no node_modules, and a symlink needs rights Windows users lack: link every node_modules dir of the main checkout
+// (root and one level down, e.g. apps/web) into the worktree as a junction (`mklink /J` equivalent), a symlink elsewhere.
+export function linkNodeModules(worktree) {
+  const wt = resolve(worktree);
+  const main = mainCheckout(wt);
+  const linked = [];
+  const candidates = ['node_modules', ...readdirSync(main, { withFileTypes: true }).filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'node_modules').map((d) => join(d.name, 'node_modules'))];
+  for (const rel of candidates) {
+    const from = join(main, rel);
+    const to = join(wt, rel);
+    if (!existsSync(from) || existsSync(to) || !existsSync(dirname(to))) continue;
+    try { symlinkSync(from, to, process.platform === 'win32' ? 'junction' : 'dir'); linked.push(rel); } catch { /* best effort */ }
+  }
+  return linked;
+}
+
 if (resolve(process.argv[1] ?? '') === resolve(new URL(import.meta.url).pathname.replace(/^\/(\w:)/, '$1'))) {
   const args = process.argv.slice(2);
   const check = args.includes('--check');
@@ -53,6 +69,7 @@ if (resolve(process.argv[1] ?? '') === resolve(new URL(import.meta.url).pathname
   if (!target) { console.error('usage: sync-worktree.mjs <worktree> [--check]'); process.exit(2); }
   try {
     const changed = syncWorktree(target, { check });
+    if (!check) { const l = linkNodeModules(target); if (l.length) console.log(`linked node_modules: ${l.join(', ')}`); }
     if (changed === null) { console.log(`OK nothing to sync: no ${SKILL} in the main checkout (plugin install)`); process.exit(0); }
     if (check) {
       console.log(changed.length ? `stale: ${changed.length} file(s) differ from the main checkout\n${changed.join('\n')}` : 'OK worktree matches the main checkout');

@@ -31,11 +31,28 @@ const section = (text, title) => text?.match(new RegExp(`^## ${title}[^\\n]*\\n(
 // .team/config.json: next to the task folder, else in the main repo's .team/ (the task folder may sit in a feature worktree)
 const mainRoot = (() => { const r = spawnSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: task, encoding: 'utf8' }); return r.status === 0 ? dirname(r.stdout.trim()) : null; })();
 let command = null;
+let perFolder = null; // optional `test_commands`: { "<folder>": "<command>" }, chosen by the folders the diff touches
 for (const p of [join(dirname(task), 'config.json'), mainRoot && join(mainRoot, '.team', 'config.json')].filter(Boolean)) {
-  try { command = JSON.parse(readIf(p) ?? '{}').test_command ?? null; } catch { command = null; }
-  if (command) break;
+  try {
+    const cfg = JSON.parse(readIf(p) ?? '{}');
+    command = cfg.test_command ?? null;
+    if (cfg.test_commands && typeof cfg.test_commands === 'object') perFolder = cfg.test_commands;
+  } catch { command = null; }
+  if (command || perFolder) break;
 }
 command = typeof command === 'string' && command.trim() ? command.trim() : null;
+// folders changed on the feature branch (vs the merge-base with main), for choosing commands and for the coverage line
+const changedFolders = (() => {
+  const g = (a) => spawnSync('git', ['-C', cwd, ...a], { encoding: 'utf8' });
+  const base = ['main', 'master'].map((b) => g(['merge-base', 'HEAD', b])).find((r) => r.status === 0)?.stdout.trim();
+  const names = [...(base ? g(['diff', '--name-only', base]).stdout.split('\n') : []), ...g(['status', '--porcelain']).stdout.split('\n').map((l) => l.slice(3))]
+    .map((s) => s.trim().replace(/\\/g, '/')).filter((f) => f && !f.startsWith('.team/'));
+  return [...new Set(names)];
+})();
+const folderCommands = perFolder
+  ? Object.entries(perFolder).filter(([dir, cmd]) => typeof cmd === 'string' && cmd.trim() && changedFolders.some((f) => f === dir || f.startsWith(`${dir.replace(/\/$/, '')}/`)))
+  : [];
+if (perFolder && !command && !folderCommands.length) command = null;
 
 const rows = new Map();
 for (const f of readdirSync(task).filter((n) => /^ac-tests.*\.md$/.test(n)).sort()) {
@@ -51,15 +68,25 @@ const acMap = rows.size ? ['| AC | test |', '|---|---|', ...[...rows].map(([id, 
 let code;
 let results;
 let output = '';
-if (!command) {
+const toRun = folderCommands.length ? folderCommands.map(([dir, cmd]) => [cmd.trim(), dir]) : command ? [[command, null]] : [];
+if (!toRun.length) {
   code = 3;
-  results = 'test gate skipped: no `test_command` in .team/config.json, so no test was run. Setup writes it from package.json (init-config.mjs); set it by hand for another stack, e.g. {"test_command": "go test ./..."}';
+  results = perFolder
+    ? `test gate skipped: no \`test_commands\` entry matches the changed folders (${changedFolders.map((f) => f.split('/')[0]).filter((v, i, a) => a.indexOf(v) === i).join(', ') || 'none'}), so no test was run`
+    : 'test gate skipped: no `test_command` in .team/config.json, so no test was run. Setup writes it from package.json (init-config.mjs); set it by hand for another stack, e.g. {"test_command": "go test ./..."}, or per folder with {"test_commands": {"web": "pnpm -C web test"}}';
 } else {
-  const r = spawnSync(command, { cwd, shell: true, encoding: 'utf8', timeout: timeoutS * 1000, maxBuffer: 64 * 1024 * 1024 });
-  output = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim().split('\n').slice(-25).join('\n');
-  const timedOut = r.error?.code === 'ETIMEDOUT';
-  code = r.status === 0 ? 0 : 1;
-  results = `\`${command}\` in ${cwd}: ${code === 0 ? 'exit 0, tests passed' : timedOut ? `timed out after ${timeoutS}s` : `exit ${r.status ?? 'none'}, tests did not pass`}`;
+  code = 0;
+  const lines = [];
+  for (const [cmd, dir] of toRun) {
+    const r = spawnSync(cmd, { cwd, shell: true, encoding: 'utf8', timeout: timeoutS * 1000, maxBuffer: 64 * 1024 * 1024 });
+    output += `${output ? '\n' : ''}${`${r.stdout ?? ''}${r.stderr ?? ''}`.trim().split('\n').slice(-25).join('\n')}`;
+    const timedOut = r.error?.code === 'ETIMEDOUT';
+    if (r.status !== 0) code = 1;
+    lines.push(`\`${cmd}\`${dir ? ` (for ${dir}/)` : ''} in ${cwd}: ${r.status === 0 ? 'exit 0, tests passed' : timedOut ? `timed out after ${timeoutS}s` : `exit ${r.status ?? 'none'}, tests did not pass`}`);
+  }
+  results = lines.join('\n');
+  const top = changedFolders.map((f) => f.split('/')[0]).filter((v, i, a) => a.indexOf(v) === i);
+  results += `\n\nCoverage: ${folderCommands.length ? `ran the command for ${folderCommands.map(([d]) => d).join(', ')}` : 'one project-wide command (no per-folder `test_commands`), which may not exercise the changed code'}. Folders changed in the diff: ${top.join(', ') || 'none found'}.`;
 }
 
 const bugs = [];

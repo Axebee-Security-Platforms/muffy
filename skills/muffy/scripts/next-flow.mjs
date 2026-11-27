@@ -219,7 +219,14 @@ const latestOf = (x, step, role) => doneH(x, step, role).at(-1);
 const maxRound = (x, step) => Math.max(0, ...x.hs.filter((h) => stepOfName(h.name) === step).map((h) => roundOfName(h.name)));
 
 function devRoles(x) {
-  const sides = x.owner === 'both' ? ['FE', 'BE'] : [x.owner];
+  let sides = x.owner === 'both' ? ['FE', 'BE'] : [x.owner];
+  // `both` is the default when start got no --owner: the contract's ownership.md says who really has files, so a pure FE task spawns no backend-dev
+  const ownPath = join(x.c.team, 'contract', 'ownership.md');
+  if (x.owner === 'both' && existsSync(ownPath)) {
+    const named = new Set(parseOwnership(read(ownPath)).map((r) => r.owner));
+    const narrowed = sides.filter((s) => named.has(s));
+    if (narrowed.length) sides = narrowed;
+  }
   return sides.filter((s) => !x.tokens.has(N.DEV[s])).map((s) => N.DEV[s]);
 }
 
@@ -327,7 +334,7 @@ function spawnStep(x, step, role, round, retry) {
   const specs = {
     researcher: { goal: 'Research the request: options and trade-offs, constraints, the must-not-miss items; write brief.md with the level reached.', doneWhen: 'brief.md exists and the hand-off validates', read: [`${T}/request.md`], write: [`${T}/brief.md`, `${T}/brief/`] },
     'product-manager': { goal: 'Turn the request into user stories, testable AC, a phased plan and the product ADR.', doneWhen: 'ac.md and the plan exist and the hand-off validates', read: [`${T}/request.md`, ...(existsSync(join(x.c.team, 'brief.md')) ? [`${T}/brief.md`] : [])], write: [`${T}/ac.md`, rel(x, `docs/plan/${x.task}.md`), rel(x, 'docs/adr/')] },
-    designer: { goal: 'Design the screens for every AC from the design system: flow, states, component specs, as a canvas.', doneWhen: 'design.md and the canvas exist and the hand-off validates', read: [`${T}/ac.md`, `${T}/request.md`, ...(existsSync(join(x.c.team, 'brief.md')) ? [`${T}/brief.md`] : [])], write: [`${T}/design.md`, `${T}/canvas/`, rel(x, 'docs/design-system/'), rel(x, 'docs/design/')] },
+    designer: { goal: 'Design the screens for every AC from the design system: flow, states, component specs, as a canvas.', doneWhen: 'design.md and the canvas exist, design.md has a `## AC id -> artboard` table with one row per AC (gate 3c reads it), and the hand-off validates', read: [`${T}/ac.md`, `${T}/request.md`, ...(existsSync(join(x.c.team, 'brief.md')) ? [`${T}/brief.md`] : [])], write: [`${T}/design.md`, `${T}/canvas/`, rel(x, 'docs/design-system/'), rel(x, 'docs/design/')] },
     architect: { goal: x.lane.lane === 'upgrade' ? 'Write the upgrade ADR (what changes in the code, the order, the rollback) and the contract it implies.' : 'Write the contract and ownership table for the AC, and the technical ADR.', doneWhen: 'contract.md exists and the hand-off validates', read: [`${T}/ac.md`, `${T}/request.md`, ...(existsSync(join(x.c.team, 'brief.md')) ? [`${T}/brief.md`] : []), ...(existsSync(join(x.c.team, 'design.md')) ? [`${T}/design.md`] : [])], write: [`${T}/contract.md`, `${T}/contract/`, rel(x, 'docs/adr/')] },
     'docs-writer': { goal: 'Write the release notes and the docs the diff touched, with a Deploy hand-off.', doneWhen: 'release-notes.md exists and the hand-off validates', read: [`${T}/ac.md`, N.latestDiff(x.c), `${T}/qa-report.md`, ...(existsSync(join(x.c.team, 'contract.md')) ? [`${T}/contract.md`] : [])], write: [`${T}/release-notes.md`, rel(x, 'docs/')] },
     diagrammer: { goal: 'Draw every diagram in diagrams-spec.json as one self-contained HTML file.', doneWhen: 'each spec has its file and the hand-off validates', read: [`${T}/diagrams-spec.json`], write: [`${T}/diagrams/`] },

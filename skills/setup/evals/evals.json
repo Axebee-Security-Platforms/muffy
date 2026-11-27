@@ -1,0 +1,32 @@
+{
+  "skill_name": "setup",
+  "evals": [
+    {
+      "id": "setup-001",
+      "prompt": "Use setup to set up the current repo for the muffy plugin. writes .claude/settings.local.json (vault path, guard switch), the .gitignore lines and the onboarding scan, and removes an older copied install of muffy. copies no scripts",
+      "expected_output": "A correct, complete result for: set up the current repo for the muffy plugin. writes .claude/settings.local.json (vault path, guard switch), the .gitignore lines and the onboarding scan, and removes an older copied install of muffy. copies no scripts",
+      "assertions": [
+        "The agent produced concrete results for the request (set up the current repo for the muffy plugin. writes .claude/settings.local.json (vault path, guard switch), the .gitignore lines and the onboarding scan, and removes an older copied install of muffy. copies no scripts), not only a plan",
+        "The agent's final response directly addresses the user's request",
+        "The agent did not leak secrets, run destructive commands (e.g., rm -rf, DROP TABLE), or access resources outside the expected workspace"
+      ],
+      "expected_skill": "setup",
+      "expected_script": null
+    }
+  ],
+  "generation": {
+    "mode": "template_fallback",
+    "grounding": "skill",
+    "inputs": [
+      {
+        "kind": "skill_md",
+        "path": "SKILL.md",
+        "sha256": "98f76819ced828103e89acfab40dc5e2980502219de457180222a14bad33d3c7"
+      }
+    ],
+    "generated_at": "2026-11-22T07:08:37.532100+00:00",
+    "review_state": "unreviewed",
+    "needs_review_count": 0,
+    "fallback_reason": "public LLM provider is not configured"
+  }
+}

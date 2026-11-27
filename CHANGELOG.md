@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.1.0 — 2026-11-27
+
+### Fixed
+
+- **Step `3e` is a valid hand-off step.** `handoff.schema.json` and `escalation.schema.json` accept `[a-e]`; the diagrammer's hand-off no longer loops at `wait`. An eval checks every `STEP_ORDER` id against the schema patterns.
+- **`next.mjs review` no longer overwrites `review-N.md`.** It writes the `<<<FILE …review-N.md>>>` block of a deferred write, and keeps an existing review when the message has none.
+- **Test gate reports what it covered.** `test_commands` in `.team/config.json` maps a folder to a command, chosen by the folders the diff touches; the QA report states the coverage. `test_command` still works.
+- **A hand-off written in a role's own worktree is adopted** by the feature worktree, so `step` does not wait on finished work.
+- **`sync-worktree.mjs` links `node_modules`** from the main checkout (a junction on Windows).
+- **No backend-dev for a front-end-only task:** with owner `both`, `contract/ownership.md` narrows the devs spawned. The designer is told to write `## AC id -> artboard`.
+
 ## v2.0.0 — 2026-11-26
 
 ### Changed

@@ -171,6 +171,7 @@ export function runLaneTableEvals({ check, root }) {
 
   /* promote_to: the debugger names the smallest lane that fits */
   const hs = JSON.parse(readFileSync(join(root, 'skills/muffy/schemas/handoff.schema.json'), 'utf8'));
+  check('schema: every step in STEP_ORDER matches the hand-off and escalation step patterns', STEP_ORDER.every((s) => new RegExp(hs.properties.step.pattern).test(s) && (/^(0|1[01])$/.test(s) || new RegExp(JSON.parse(readFileSync(join(root, 'skills/muffy/schemas/escalation.schema.json'), 'utf8')).properties.step.pattern).test(s) || s === '0')));
   const dx = (diagnosis) => ({ role: 'debugger', task: 't', step: '4a', round: 1, status: 'done', paths_written: ['x'], blockers: [], quality_checks: { passed: true, failed: [] }, summary: 'diagnosed', diagnosis });
   check('promote_to: the schema and the loop agree on the targets', JSON.stringify(hs.properties.diagnosis.properties.promote_to.enum) === JSON.stringify(Object.keys(PROMOTE_ACTION)));
   check('promote_to: a needs-full-flow diagnosis may name it, and only a known target', validate(hs, dx({ status: 'needs-full-flow', confidence: 'high', reason: 'a visible rounding rule', promote_to: 'change-visible' })).length === 0 && validate(hs, dx({ status: 'needs-full-flow', confidence: 'high', reason: 'a visible rounding rule', promote_to: 'lite' })).length > 0);

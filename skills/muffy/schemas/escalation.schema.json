@@ -8,7 +8,7 @@
   "required": ["task", "step", "trigger", "loops_used", "loop_limit", "owner", "open_blockers", "attempts", "options"],
   "properties": {
     "task": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
-    "step": { "type": "string", "pattern": "^([1-9]|1[0-2])[a-d]?$" },
+    "step": { "type": "string", "pattern": "^([1-9]|1[0-2])[a-e]?$" },
     "trigger": { "enum": ["loop-limit", "repeated-blocker", "invalid-handoff", "quality-check-failed-twice", "agent-unavailable", "human-reject-limit"] },
     "loops_used": { "type": "integer", "minimum": 1 },
     "loop_limit": { "type": "integer", "minimum": 1 },
